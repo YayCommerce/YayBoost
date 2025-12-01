@@ -1,0 +1,15 @@
+/vendor/
+node_modules/
+/assets/dist/*
+/release/*.zip
+/release/code
+/release/*
+/tools
+yarn.lock
+package-lock.json
+.DS_Store
+.vscode/
+.vscode/launch.json
+log.xml
+*.xml
+.gitattributes

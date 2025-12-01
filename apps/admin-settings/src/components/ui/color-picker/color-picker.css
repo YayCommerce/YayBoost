@@ -1,0 +1,29 @@
+.yay-wp-color-picker > div:not(.react-colorful) {
+    display: none;
+}
+
+.yay-wp-color-picker, .yay-wp-color-picker .react-colorful {
+    width: 100% !important;
+}
+.yay-wp-color-picker .react-colorful .react-colorful__hue {
+    width: 92% !important;
+}
+.yay-wp-color-palette .components-circular-option-picker .components-circular-option-picker__swatches {
+    gap: 6px;
+}
+
+.yay-wp-color-input {
+    width: 100px;
+}
+
+.yay-wp-color-input .components-input-control__container{
+    border-radius: 6px;
+
+}
+.yay-wp-color-input .components-input-control__container input{
+    height: 36px !important;
+    min-height: 36px !important;
+}
+.components-button:focus:not(:disabled){
+    box-shadow: none;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "yaycommerce/yayboost",
+  "description": "Boost your WooCommerce sales with intelligent features",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "YayCommerce",
+      "email": "support@yaycommerce.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "YayBoost\\": "includes/"
+    }
+  },
+  "scripts": {
+    "install-dev": [
+      "composer install --prefer-dist"
+    ]
+  }
+}
+

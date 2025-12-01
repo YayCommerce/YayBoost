@@ -1,0 +1,64 @@
+# Version Control
+.git/
+.gitignore
+.gitattributes
+.distignore
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Development Files
+/apps/
+/release/
+/tools/
+node_modules/
+*.log
+log.xml
+
+# Build Scripts and Config
+release.sh
+run.sh
+phpcs.xml
+phpunit.xml
+.phpcs.xml.dist
+webpack.config.js
+vite.config.ts
+tsconfig.json
+tsconfig.node.json
+
+# Package Managers
+package.json
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+composer.json
+composer.lock
+
+# Documentation (keep only essential ones)
+RELEASE.md
+CONTRIBUTING.md
+QUICK_START.md
+.github/
+
+# Test Files
+/tests/
+/test/
+*.test.js
+*.test.ts
+*.test.php
+*.spec.js
+*.spec.ts
+
+# Misc
+*.md.bak
+*.swp
+*.swo
+*~
