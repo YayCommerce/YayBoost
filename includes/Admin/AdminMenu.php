@@ -16,6 +16,14 @@ class AdminMenu {
 		RegisterFacade::get_instance();
 		\add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
 		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
+	}
+
+	public function admin_body_class( $classes ) {
+		if ( strpos( $classes, 'yayboost-ui' ) === false ) {
+			$classes .= ' yayboost-ui';
+		}
+		return $classes;
 	}
 
 	public function add_menu_page() {
