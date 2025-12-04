@@ -1,68 +1,78 @@
 /**
  * Dashboard Layout - Main layout for YayBoost admin
+ * Uses tab-based navigation synced with React Router
  */
 
-import { Gear, Lightning, Package } from '@phosphor-icons/react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Gear, House, Lightning, Package } from '@phosphor-icons/react';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
+import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
 
 const navigation = [
-  { name: 'Features', href: '/features', icon: Lightning },
-  { name: 'Settings', href: '/settings', icon: Gear },
+  { name: 'Dashboard', key: 'dashboard', path: '/', icon: House },
+  { name: 'Features', key: 'features', path: '/features', icon: Lightning },
+  { name: 'Settings', key: 'settings', path: '/settings', icon: Gear },
 ];
+
+// Get current tab from location pathname
+function getCurrentTab(pathname: string): string {
+  if (pathname === '/settings') {
+    return 'settings';
+  }
+  if (pathname === '/features' || pathname.startsWith('/features/')) {
+    return 'features';
+  }
+  // Default to 'dashboard' for '/' (index route)
+  return 'dashboard';
+}
 
 export function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const currentTab = getCurrentTab(location.pathname);
+
+  const handleTabChange = (value: string) => {
+    const menu = navigation.find((m) => m.key === value);
+    if (menu) {
+      navigate(menu.path);
+    }
+  };
 
   return (
-    <div className="yayboost-admin min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="flex h-16 items-center justify-between px-6">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Package weight="duotone" className="h-5 w-5" />
+    <div className="yayboost-admin bg-background min-h-screen">
+      <TabsPrimitive.Root value={currentTab} onValueChange={handleTabChange}>
+        {/* Header */}
+        <header className="bg-card border-b">
+          <div className="flex h-16 items-center justify-between px-6">
+            {/* Logo */}
+            <div className="flex items-center gap-3 pr-6">
+              <div className="bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-lg">
+                <Package weight="duotone" className="h-5 w-5" />
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold">YayBoost</h1>
-              <p className="text-xs text-muted-foreground">Boost your sales</p>
-            </div>
+
+            {/* Tab Navigation */}
+            <TabsPrimitive.List asChild>
+              <HeaderNavMenuList className="h-16 justify-start gap-0" activeValue={currentTab}>
+                {navigation.map((item) => (
+                  <TabsPrimitive.Trigger key={item.key} value={item.key} asChild>
+                    <HeaderNavMenuItem className="flex min-w-[50px] items-center justify-center gap-2 px-2 py-3 sm:px-5">
+                      <item.icon className="h-4 w-4" />
+                      <span className="hidden sm:flex">{item.name}</span>
+                    </HeaderNavMenuItem>
+                  </TabsPrimitive.Trigger>
+                ))}
+              </HeaderNavMenuList>
+            </TabsPrimitive.List>
           </div>
+        </header>
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-1">
-            {navigation.map((item) => {
-              const isActive =
-                item.href === '/'
-                  ? location.pathname === '/'
-                  : location.pathname.startsWith(item.href);
-
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={cn(
-                    'flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="p-6">
-        <Outlet />
-      </main>
+        {/* Main content */}
+        <main className="p-6">
+          <Outlet />
+        </main>
+      </TabsPrimitive.Root>
     </div>
   );
 }
