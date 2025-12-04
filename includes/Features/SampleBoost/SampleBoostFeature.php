@@ -35,11 +35,32 @@ class SampleBoostFeature extends AbstractFeature {
     protected $description = 'Track and display recently viewed products to boost engagement and sales';
 
     /**
+     * Feature category
+     *
+     * @var string
+     */
+    protected $category = 'product_discovery';
+
+    /**
+     * Feature icon
+     *
+     * @var string
+     */
+    protected $icon = 'eye';
+
+    /**
+     * Display priority
+     *
+     * @var int
+     */
+    protected $priority = 10;
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
-    public function init() {
+    public function init(): void {
         // Track product views
         add_action('woocommerce_after_single_product', [$this, 'track_product_view']);
 
@@ -223,7 +244,7 @@ class SampleBoostFeature extends AbstractFeature {
      *
      * @return array
      */
-    protected function get_default_settings() {
+    protected function get_default_settings(): array {
         return array_merge(parent::get_default_settings(), [
             'enabled' => false,
             'max_products' => 10,

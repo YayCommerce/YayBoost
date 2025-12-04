@@ -8,7 +8,6 @@
 namespace YayBoost\API;
 
 use YayBoost\Container\Container;
-use WP_REST_Server;
 
 /**
  * Handles REST API route registration
@@ -49,10 +48,13 @@ class Router {
      *
      * @return void
      */
-    public function register_routes() {
+    public function register_routes(): void {
         // Register feature routes
         $this->register_controller(new Controllers\FeatureController($this->container));
-        
+
+        // Register entity routes
+        $this->register_controller(new Controllers\EntityController($this->container));
+
         // Register settings routes
         $this->register_controller(new Controllers\SettingsController($this->container));
     }
@@ -63,7 +65,7 @@ class Router {
      * @param Controllers\BaseController $controller
      * @return void
      */
-    protected function register_controller($controller) {
+    protected function register_controller(Controllers\BaseController $controller): void {
         $controller->register_routes();
         $this->controllers[] = $controller;
     }
@@ -73,8 +75,7 @@ class Router {
      *
      * @return string
      */
-    public static function get_namespace() {
+    public static function get_namespace(): string {
         return self::NAMESPACE;
     }
 }
-

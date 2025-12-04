@@ -1,5 +1,13 @@
+import { Toaster } from '@/components/ui/sonner';
+import { Router } from '@/router';
+
 function App() {
-  return <div>Hello World</div>
+  return (
+    <>
+      <Router />
+      <Toaster />
+    </>
+  );
 }
 
 export default App;
