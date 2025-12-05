@@ -3,12 +3,12 @@
  */
 
 import { Suspense } from 'react';
-import { useParams } from 'react-router-dom';
-
 import { getFeatureComponent, hasFeatureComponent } from '@/features';
 import { FeatureLayout } from '@/layouts/feature-layout';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useParams } from 'react-router-dom';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function FeatureLoading() {
   return (
@@ -28,8 +28,8 @@ function DefaultFeatureContent({ featureId }: { featureId: string }) {
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground text-sm">
-          This feature doesn&apos;t have a custom settings page yet.
-          Use the toggle in the header to enable or disable it.
+          This feature doesn&apos;t have a custom settings page yet. Use the toggle in the header to
+          enable or disable it.
         </p>
       </CardContent>
     </Card>
@@ -41,7 +41,7 @@ export default function FeaturePage() {
 
   if (!featureId) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">Feature not specified</p>
       </div>
     );

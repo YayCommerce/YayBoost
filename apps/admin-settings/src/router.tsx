@@ -9,7 +9,8 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 
 // Lazy load pages
 const Dashboard = lazy(() => import('@/pages/dashboard'));
-const FeaturePage = lazy(() => import('@/pages/feature'));
+const FeatureContainer = lazy(() => import('@/pages/Feature/FeatureContainer'));
+const FeaturePage = lazy(() => import('@/pages/Feature'));
 const GlobalSettings = lazy(() => import('@/pages/settings'));
 
 // Loading component
@@ -38,7 +39,7 @@ export function Router() {
             path="features"
             element={
               <Suspense fallback={<PageLoading />}>
-                <FeaturePage />
+                <FeatureContainer />
               </Suspense>
             }
           />
