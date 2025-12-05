@@ -5,10 +5,10 @@
 import { ArrowLeft } from '@phosphor-icons/react';
 import { Link, Outlet } from 'react-router-dom';
 
-import { useFeature, useToggleFeature } from '@/hooks/use-features';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
+import { useFeature, useToggleFeature } from '@/hooks/use-features';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 
 interface FeatureLayoutProps {
   featureId: string;
@@ -37,9 +37,9 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
 
   if (!feature) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-muted-foreground">Feature not found</p>
-        <Link to="/" className="text-primary hover:underline mt-2 inline-block">
+        <Link to="/" className="text-primary mt-2 inline-block hover:underline">
           Back to dashboard
         </Link>
       </div>
@@ -53,18 +53,18 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
         <div className="flex items-center gap-4">
           <Link
             to="/"
-            className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
+            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
             <h1 className="text-2xl font-semibold">{feature.name}</h1>
-            <p className="text-sm text-muted-foreground">{feature.description}</p>
+            <p className="text-muted-foreground text-sm">{feature.description}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
+        {/* <div className="flex items-center gap-3">
+          <span className="text-muted-foreground text-sm">
             {feature.enabled ? 'Enabled' : 'Disabled'}
           </span>
           <Switch
@@ -72,15 +72,11 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
             onCheckedChange={handleToggle}
             disabled={toggleMutation.isPending}
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Feature content */}
-      <div
-        className={cn('rounded-lg border bg-card p-6', !feature.enabled && 'opacity-60')}
-      >
-        {children || <Outlet />}
-      </div>
+      <div className={cn('bg-card rounded-lg border p-6')}>{children || <Outlet />}</div>
     </div>
   );
 }
