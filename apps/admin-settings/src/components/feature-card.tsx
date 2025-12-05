@@ -45,7 +45,12 @@ export function FeatureCard({ feature }: FeatureCardProps) {
   };
 
   return (
-    <Card className={cn('group transition-all hover:shadow-md', !feature.enabled && 'opacity-60')}>
+    <Card
+      className={cn(
+        'group rounded-[10px] transition-all hover:shadow-md',
+        !feature.enabled && 'opacity-60',
+      )}
+    >
       <CardHeader className="pb-3">
         {/* Top row: Icon + Title + Badge */}
         <div className="flex items-start gap-3">
@@ -58,14 +63,14 @@ export function FeatureCard({ feature }: FeatureCardProps) {
             <Icon weight="duotone" className="h-5 w-5" />
           </div>
           <div className="flex flex-1 items-start justify-between gap-2">
-            <CardTitle className="group-hover:text-primary text-base font-semibold">
+            <CardTitle className="group-hover:text-primary text-base font-medium">
               {feature.name}
             </CardTitle>
             {getStatusBadge()}
           </div>
         </div>
         {/* Description */}
-        <CardDescription className="mt-2 line-clamp-2 text-sm">
+        <CardDescription className="mt-2 line-clamp-2 text-sm font-normal">
           {feature.description}
         </CardDescription>
       </CardHeader>
@@ -73,7 +78,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
       <CardContent className="flex items-center justify-between pt-0">
         {hasComponent ? (
           <Link to={`/features/${feature.id}`} onClick={(e) => e.stopPropagation()}>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="rounded-[8px]">
               Settings
             </Button>
           </Link>

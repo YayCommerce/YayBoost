@@ -152,7 +152,7 @@ export default function FeatureContainer() {
             const filteredFeatures = getFilteredFeatures(tab.value);
             return (
               <TabsContent key={tab.value} value={tab.value} className="mt-6">
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredFeatures.map((feature) => (
                     <FeatureCard key={feature.id} feature={feature} />
                   ))}
