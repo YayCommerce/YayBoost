@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { MagnifyingGlass } from '@phosphor-icons/react';
 import * as PhosphorIcons from '@phosphor-icons/react';
+import { __ } from '@wordpress/i18n';
 
 import { Feature, FeatureCategory } from '@/lib/api';
 import { useFeaturesByCategory } from '@/hooks/use-features';
@@ -28,9 +29,9 @@ function getIcon(iconName: string) {
 function FeatureHeader() {
   return (
     <div>
-      <h1 className="text-2xl font-semibold">Features</h1>
+      <h1 className="text-2xl font-semibold">{__('Features', 'yayboost')}</h1>
       <p className="text-muted-foreground mt-1">
-        Connect your favorite tools and enhance your workflow
+        {__('Connect your favorite tools and enhance your workflow', 'yayboost')}
       </p>
     </div>
   );
@@ -45,7 +46,7 @@ export default function FeatureContainer() {
 
   // Build tabs dynamically from categories
   const tabs = [
-    { value: 'all', label: 'All Features', icon: null },
+    { value: 'all', label: __('All Features', 'yayboost'), icon: null },
     ...(categories || []).map((category: FeatureCategory) => ({
       value: category.id,
       label: category.name,
@@ -100,7 +101,7 @@ export default function FeatureContainer() {
       {error && (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>Failed to load features</EmptyTitle>
+            <EmptyTitle>{__('Failed to load features', 'yayboost')}</EmptyTitle>
             <EmptyDescription>{error.message}</EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -110,8 +111,10 @@ export default function FeatureContainer() {
       {!isLoading && !error && !hasFeatures && (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>No features available</EmptyTitle>
-            <EmptyDescription>Features will appear here once configured.</EmptyDescription>
+            <EmptyTitle>{__('No features available', 'yayboost')}</EmptyTitle>
+            <EmptyDescription>
+              {__('Features will appear here once configured.', 'yayboost')}
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
@@ -139,7 +142,7 @@ export default function FeatureContainer() {
               </InputPrefix>
               <Input
                 type="search"
-                placeholder="Search"
+                placeholder={__('Search', 'yayboost')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -158,7 +161,9 @@ export default function FeatureContainer() {
                   ))}
                 </div>
                 {filteredFeatures.length === 0 && (
-                  <p className="text-muted-foreground py-8 text-center">No features found</p>
+                  <p className="text-muted-foreground py-8 text-center">
+                    {__('No features found', 'yayboost')}
+                  </p>
                 )}
               </TabsContent>
             );

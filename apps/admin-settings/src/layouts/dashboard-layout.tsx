@@ -5,14 +5,15 @@
 
 import { Gear, House, Lightning, Package } from '@phosphor-icons/react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { __ } from '@wordpress/i18n';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
 
 const navigation = [
-  { name: 'Dashboard', key: 'dashboard', path: '/', icon: House },
-  { name: 'Features', key: 'features', path: '/features', icon: Lightning },
-  { name: 'Settings', key: 'settings', path: '/settings', icon: Gear },
+  { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: House },
+  { name: __('Features', 'yayboost'), key: 'features', path: '/features', icon: Lightning },
+  { name: __('Settings', 'yayboost'), key: 'settings', path: '/settings', icon: Gear },
 ];
 
 // Get current tab from location pathname

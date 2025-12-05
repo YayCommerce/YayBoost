@@ -5,6 +5,7 @@
 import { Suspense } from 'react';
 import { getFeatureComponent, hasFeatureComponent } from '@/features';
 import { FeatureLayout } from '@/layouts/feature-layout';
+import { __ } from '@wordpress/i18n';
 import { useParams } from 'react-router-dom';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,13 +24,17 @@ function DefaultFeatureContent({ featureId }: { featureId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Feature Settings</CardTitle>
-        <CardDescription>Configure this feature&apos;s behavior</CardDescription>
+        <CardTitle>{__('Feature Settings', 'yayboost')}</CardTitle>
+        <CardDescription>
+          {__('Configure this feature&apos;s behavior', 'yayboost')}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground text-sm">
-          This feature doesn&apos;t have a custom settings page yet. Use the toggle in the header to
-          enable or disable it.
+          {__(
+            'This feature doesn&apos;t have a custom settings page yet. Use the toggle in the header toenable or disable it.',
+            'yayboost',
+          )}
         </p>
       </CardContent>
     </Card>
@@ -42,7 +47,7 @@ export default function FeaturePage() {
   if (!featureId) {
     return (
       <div className="py-12 text-center">
-        <p className="text-muted-foreground">Feature not specified</p>
+        <p className="text-muted-foreground">{__('Feature not specified', 'yayboost')}</p>
       </div>
     );
   }

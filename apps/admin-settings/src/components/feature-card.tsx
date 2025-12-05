@@ -4,6 +4,7 @@
 
 import { hasFeatureComponent } from '@/features';
 import * as PhosphorIcons from '@phosphor-icons/react';
+import { __ } from '@wordpress/i18n';
 import { Link } from 'react-router-dom';
 
 import { Feature } from '@/lib/api';
@@ -39,9 +40,9 @@ export function FeatureCard({ feature }: FeatureCardProps) {
 
   const getStatusBadge = () => {
     if (feature.enabled) {
-      return <Badge variant="success">Active</Badge>;
+      return <Badge variant="success">{__('Active', 'yayboost')}</Badge>;
     }
-    return <Badge variant="muted">Inactive</Badge>;
+    return <Badge variant="muted">{__('Inactive', 'yayboost')}</Badge>;
   };
 
   return (
@@ -79,12 +80,12 @@ export function FeatureCard({ feature }: FeatureCardProps) {
         {hasComponent ? (
           <Link to={`/features/${feature.id}`} onClick={(e) => e.stopPropagation()}>
             <Button variant="outline" size="sm" className="rounded-[8px]">
-              Settings
+              {__('Settings', 'yayboost')}
             </Button>
           </Link>
         ) : (
           <Button variant="primary" size="sm">
-            Buy Now
+            {__('Buy Now', 'yayboost')}
           </Button>
         )}
         <Switch
