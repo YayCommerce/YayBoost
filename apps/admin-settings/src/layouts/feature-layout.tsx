@@ -52,7 +52,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            to="/"
+            to="/features"
             className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -63,7 +63,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
           </div>
         </div>
 
-        {/* <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <span className="text-muted-foreground text-sm">
             {feature.enabled ? 'Enabled' : 'Disabled'}
           </span>
@@ -72,7 +72,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
             onCheckedChange={handleToggle}
             disabled={toggleMutation.isPending}
           />
-        </div> */}
+        </div>
       </div>
 
       {/* Feature content */}

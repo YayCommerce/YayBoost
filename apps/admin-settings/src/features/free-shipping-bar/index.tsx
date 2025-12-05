@@ -13,7 +13,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { cn } from '@/lib/utils';
-import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -123,6 +123,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
   console.log('FreeShippingBarFeature', featureId);
   const { data: feature, isLoading } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
+  const toggleMutation = useToggleFeature();
   const [previewValue, setPreviewValue] = useState(30);
 
   const form = useForm<SettingsFormData>({
@@ -198,17 +199,30 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                       <FormControl>
                         <RadioGroup
                           value={field.value ? 'on' : 'off'}
-                          onValueChange={(value) => field.onChange(value === 'on')}
+                          onValueChange={(value) => {
+                            const newEnabled = value === 'on';
+                            field.onChange(newEnabled);
+                            toggleMutation.mutate({ id: featureId, enabled: newEnabled });
+                          }}
+                          disabled={toggleMutation.isPending}
                           className="flex items-center gap-6"
                         >
                           <div className="flex items-center gap-2">
-                            <RadioGroupItem value="on" id="enabled-on" />
+                            <RadioGroupItem
+                              value="on"
+                              id="enabled-on"
+                              disabled={toggleMutation.isPending}
+                            />
                             <label htmlFor="enabled-on" className="cursor-pointer">
                               {__('On', 'yayboost')}
                             </label>
                           </div>
                           <div className="flex items-center gap-2">
-                            <RadioGroupItem value="off" id="enabled-off" />
+                            <RadioGroupItem
+                              value="off"
+                              id="enabled-off"
+                              disabled={toggleMutation.isPending}
+                            />
                             <label htmlFor="enabled-off" className="cursor-pointer">
                               {__('Off', 'yayboost')}
                             </label>
@@ -523,11 +537,8 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
                   <div className="space-y-1 text-sm">
                     <p className="text-blue-900 dark:text-blue-100">
-                      {__(
-                        'Use the &quot;Free Shipping Bar&quot; block in Gutenberg editor to place the',
-                        'yayboost',
-                      )}
-                      {__('bar anywhere on your site.', 'yayboost')}
+                      Use the <strong className="font-bold">"Free Shipping Bar"</strong> block in
+                      Gutenberg editor to place the bar anywhere on your site.
                     </p>
                     <p className="text-blue-700 dark:text-blue-300">
                       {__(
