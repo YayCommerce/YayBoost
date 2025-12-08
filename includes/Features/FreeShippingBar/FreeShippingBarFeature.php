@@ -72,7 +72,8 @@ class FreeShippingBarFeature extends AbstractFeature {
         $show_on = $settings['show_on'] ?? ['cart', 'checkout'];
 
         if (in_array('cart', $show_on, true)) {
-            add_action('woocommerce_before_cart', [$this, 'render_bar']);
+            $show_cart_position = $position === 'top' ? 'woocommerce_before_cart' : 'woocommerce_after_cart';
+            add_action($show_cart_position, [$this, 'render_bar']);
         }
 
         if (in_array('checkout', $show_on, true)) {
@@ -97,11 +98,42 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return void
      */
     public function enqueue_assets(): void {
-        if (!is_cart() && !is_checkout()) {
+        // Check if feature is enabled
+        if (!$this->is_enabled()) {
             return;
         }
 
         $settings = $this->get_settings();
+        $show_on = $settings['show_on'] ?? ['cart', 'checkout'];
+
+        // Check if we should show on current page
+        $should_show = false;
+        if (in_array('cart', $show_on, true) && is_cart()) {
+            $should_show = true;
+        }
+        if (in_array('checkout', $show_on, true) && is_checkout()) {
+            $should_show = true;
+        }
+        // Mini cart can appear on any page, so always enqueue if enabled
+        if (in_array('mini_cart', $show_on, true)) {
+            $should_show = true;
+        }
+
+        if (!$should_show) {
+            return;
+        }
+
+        // Register and enqueue frontend style handle if not already done
+        if (!wp_style_is('yayboost-frontend', 'registered')) {
+            wp_register_style(
+                'yayboost-frontend',
+                false, // No external file, inline only
+                [],
+                YAYBOOST_VERSION
+            );
+        }
+
+        wp_enqueue_style('yayboost-frontend');
 
         // Inline styles for the bar
         $custom_css = $this->generate_custom_css($settings);

@@ -49,8 +49,7 @@ const settingsSchema = z.object({
   bar_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   background_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   text_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  position: z.enum(['top', 'bottom', 'floating']),
-  sticky_position: z.enum(['top', 'bottom', 'mini_cart']),
+  position: z.enum(['top', 'bottom', 'mini_cart']),
   show_on: z.array(z.string()),
   show_progress_bar: z.boolean(),
   display_style: z.enum(['minimal_text', 'progress_bar', 'compact_progress']),
@@ -140,7 +139,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
       background_color: '#e8f5e9',
       text_color: '#2e7d32',
       position: 'top',
-      sticky_position: 'mini_cart',
       show_on: ['cart', 'checkout'],
       show_progress_bar: true,
       display_style: 'minimal_text',
@@ -256,6 +254,52 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               </CardContent>
             </Card>
 
+            <Card>
+              <CardHeader>
+                <CardTitle>{__('Show On', 'yayboost')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="show_on"
+                  render={() => (
+                    <FormItem>
+                      <div className="space-y-2">
+                        {showOnOptions.map((option) => (
+                          <FormField
+                            key={option.id}
+                            control={form.control}
+                            name="show_on"
+                            render={({ field }) => (
+                              <FormItem className="flex items-center space-y-0 space-x-3">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(option.id)}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      if (checked) {
+                                        field.onChange([...current, option.id]);
+                                      } else {
+                                        field.onChange(current.filter((v) => v !== option.id));
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal">
+                                  {option.label}
+                                </FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
             {/* Sticky Display Section */}
             <Card>
               <CardHeader>
@@ -264,7 +308,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               <CardContent className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="sticky_position"
+                  name="position"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{__('Show on', 'yayboost')}</FormLabel>
