@@ -219,7 +219,6 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
                 'cartTotal'     => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
                 'thresholdInfo' => $this->get_threshold_info_for_js(),
-                'templates'     => $this->get_html_templates(),
                 'settingsHash'  => $this->get_settings_hash(),
                 'settings'      => [
                     'messageProgress' => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
@@ -231,15 +230,14 @@ class FreeShippingBarFeature extends AbstractFeature {
                 ],
             ]
         );
-    }
-
-
-    /**
-     * Render the shipping bar
-     *
-     * @return void
-     */
-    public function render_bar(): void {
+        // Check if we should show on current page
+        $should_show = false;
+        if (in_array( 'cart', $show_on, true ) && is_cart()) {
+            $should_show = true;
+        }
+        if (in_array( 'checkout', $show_on, true ) && is_checkout()) {
+            $should_show = true;
+        }
         echo $this->get_bar_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 
