@@ -71,16 +71,25 @@ class FreeShippingBarFeature extends AbstractFeature {
         // Map show_on values to WooCommerce hooks
         $hook_map = [
             'top_cart'       => 'woocommerce_before_cart',
-            'bottom_cart'    => 'woocommerce_after_cart',
+            'bottom_cart'    => 'woocommerce_before_cart_collaterals',
             'top_checkout'   => 'woocommerce_before_checkout_form',
             'bottom_checkout' => 'woocommerce_after_checkout_form',
-            'mini_cart'      => 'woocommerce_before_mini_cart',
         ];
 
         foreach ($show_on as $location) {
             if (isset($hook_map[$location])) {
                 add_action($hook_map[$location], [$this, 'render_bar']);
             }
+        }
+
+        // Mini cart: Support both widget (hook) and block (JavaScript)
+        if (in_array('mini_cart', $show_on, true)) {
+            // Method 1: Hook for widget-based mini cart
+            add_action('woocommerce_before_mini_cart', [$this, 'render_bar']);
+            add_action('woocommerce_widget_shopping_cart_before_buttons', [$this, 'render_bar']);
+            
+            // Method 2: JavaScript for block-based mini cart
+            add_action('wp_footer', [$this, 'render_bar_in_mini_cart_block']);
         }
 
         // Enqueue styles
@@ -180,6 +189,10 @@ class FreeShippingBarFeature extends AbstractFeature {
                 background: {$bar_color};
                 color: #ffffff;
             }
+            #yayboost-mini-cart-bar {
+                z-index: 20;
+                padding: 16px;
+            }
         ";
     }
 
@@ -189,14 +202,89 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return void
      */
     public function render_bar(): void {
+        echo $this->get_bar_html();
+    }
+
+    /**
+     * Render JavaScript to inject bar into block mini cart
+     *
+     * @return void
+     */
+    public function render_bar_in_mini_cart_block(): void {
+        $data = $this->get_bar_data();
+        if (!$data) {
+            return;
+        }
+        
+        $bar_html = $this->get_bar_html();
+        $bar_html_escaped = wp_json_encode($bar_html);
+        ?>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const barHtml = <?php echo $bar_html_escaped; ?>;
+            const barId = 'yayboost-mini-cart-bar';
+            
+            function injectBar() {
+                const miniCartContent = document.querySelector('.wc-block-mini-cart__template-part');
+                if (!miniCartContent) return;
+                
+                // Check if already injected
+                if (miniCartContent.querySelector('#' + barId)) return;
+                
+                // Find position to inject (after title block)
+                const titleBlock = miniCartContent.querySelector('.wp-block-woocommerce-mini-cart-title-block');
+                if (titleBlock) {
+                    const wrapper = document.createElement('div');
+                    wrapper.id = barId;
+                    wrapper.innerHTML = barHtml;
+                    titleBlock.insertAdjacentElement('afterend', wrapper);
+                } else {
+                    // Fallback: inject at beginning
+                    const wrapper = document.createElement('div');
+                    wrapper.id = barId;
+                    wrapper.innerHTML = barHtml;
+                    miniCartContent.insertAdjacentElement('afterbegin', wrapper);
+                }
+            }
+            
+            // Run immediately
+            injectBar();
+            
+            // Run again when mini cart opens
+            document.body.addEventListener('click', function(e) {
+                if (e.target.closest('.wc-block-mini-cart__button')) {
+                    setTimeout(injectBar, 300);
+                }
+            });
+            
+            // Also update when cart changes
+            document.body.addEventListener('wc-blocks_added_to_cart', function() {
+                setTimeout(injectBar, 200);
+            });
+            document.body.addEventListener('wc-blocks_removed_from_cart', function() {
+                setTimeout(injectBar, 200);
+            });
+        });
+        </script>
+        <?php
+    }
+
+    /**
+     * Get bar HTML as string (for block injection)
+     *
+     * @return string
+     */
+    protected function get_bar_html(): string {
         $data = $this->get_bar_data();
 
         if (!$data) {
-            return;
+            return '';
         }
 
         $settings = $this->get_settings();
         $achieved_class = $data['achieved'] ? ' yayboost-shipping-bar--achieved' : '';
+
+        ob_start();
         ?>
         <div class="yayboost-shipping-bar<?php echo esc_attr($achieved_class); ?>">
             <div class="yayboost-shipping-bar__message">
@@ -212,6 +300,7 @@ class FreeShippingBarFeature extends AbstractFeature {
             <?php endif; ?>
         </div>
         <?php
+        return ob_get_clean();
     }
 
     /**
@@ -261,6 +350,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         $data = $this->get_bar_data();
         wp_send_json_success($data);
     }
+
 
     /**
      * Get default settings
