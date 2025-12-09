@@ -2,6 +2,7 @@
  * Feature Card - Displays a single feature with toggle
  */
 
+import { useMemo } from 'react';
 import { hasFeatureComponent } from '@/features';
 import * as PhosphorIcons from '@phosphor-icons/react';
 import { __ } from '@wordpress/i18n';
@@ -19,6 +20,7 @@ interface FeatureCardProps {
   feature: Feature;
 }
 
+// TODO: change this to use PHP declaration. SVG get from phosphor website
 // Get Phosphor icon by name
 function getIcon(iconName: string) {
   const pascalCase = iconName
@@ -38,23 +40,18 @@ export function FeatureCard({ feature }: FeatureCardProps) {
     toggleMutation.mutate({ id: feature.id, enabled: checked });
   };
 
-  const getStatusBadge = () => {
+  const StatusBadge = useMemo(() => {
     if (feature.enabled) {
-      return <Badge variant="success">{__('Active', 'yayboost')}</Badge>;
+      return () => <Badge variant="success">{__('Active', 'yayboost')}</Badge>;
     }
-    return <Badge variant="muted">{__('Inactive', 'yayboost')}</Badge>;
-  };
+    return () => <Badge variant="muted">{__('Inactive', 'yayboost')}</Badge>;
+  }, [feature.enabled]);
 
   return (
-    <Card
-      className={cn(
-        'group rounded-[10px] transition-all hover:shadow-md',
-        !feature.enabled && 'opacity-60',
-      )}
-    >
+    <Card className="group rounded-[10px] transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         {/* Top row: Icon + Title + Badge */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <div
             className={cn(
               'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
@@ -63,11 +60,9 @@ export function FeatureCard({ feature }: FeatureCardProps) {
           >
             <Icon weight="duotone" className="h-5 w-5" />
           </div>
-          <div className="flex flex-1 items-start justify-between gap-2">
-            <CardTitle className="group-hover:text-primary text-base font-medium">
-              {feature.name}
-            </CardTitle>
-            {getStatusBadge()}
+          <div className="flex flex-1 items-center justify-between gap-2">
+            <CardTitle className="text-base font-medium">{feature.name}</CardTitle>
+            <StatusBadge />
           </div>
         </div>
         {/* Description */}
@@ -78,7 +73,11 @@ export function FeatureCard({ feature }: FeatureCardProps) {
       {/* Bottom row: Settings Button + Toggle Switch */}
       <CardContent className="flex items-center justify-between pt-0">
         {hasComponent ? (
-          <Link to={`/features/${feature.id}`} onClick={(e) => e.stopPropagation()}>
+          <Link
+            to={feature.enabled ? `/features/${feature.id}` : '#'}
+            onClick={(e) => e.stopPropagation()}
+            className={cn('text-foreground cursor-auto', !feature.enabled && 'opacity-50')}
+          >
             <Button variant="outline" size="sm" className="rounded-[8px]">
               {__('Settings', 'yayboost')}
             </Button>

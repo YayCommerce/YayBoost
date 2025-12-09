@@ -52,7 +52,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            to="/"
+            to="/features"
             className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
           >
             <ArrowLeft className="h-4 w-4" />
