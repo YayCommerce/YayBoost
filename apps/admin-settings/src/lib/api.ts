@@ -7,7 +7,7 @@ import axios, { AxiosError, AxiosInstance } from 'axios';
 // Types from WordPress localized data
 declare global {
   interface Window {
-    yayboost?: {
+    yayboostData?: {
       apiUrl: string;
       nonce: string;
       version: string;
@@ -68,8 +68,8 @@ export interface EntityListResponse {
 
 // Create axios instance
 const createApiClient = (): AxiosInstance => {
-  const baseURL = window.yayboost?.apiUrl || '/wp-json/yayboost/v1';
-  const nonce = window.yayboost?.nonce || '';
+  const baseURL = window.yayboostData?.apiUrl || '/wp-json/yayboost/v1';
+  const nonce = window.yayboostData?.nonce || '';
 
   const client = axios.create({
     baseURL,

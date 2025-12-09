@@ -50,10 +50,16 @@ class AdminMenu {
 
 		// Enqueue JS
 		wp_enqueue_script( ScriptName::ADMIN_SETTINGS );
+		
+		// Localize script with API data
 		wp_localize_script(
 			ScriptName::ADMIN_SETTINGS,
 			'yayboostData',
-			array()
+			array(
+				'apiUrl' => rest_url( 'yayboost/v1/' ),
+				'nonce'  => wp_create_nonce( 'wp_rest' ),
+				'version' => YAYBOOST_VERSION,
+			)
 		);
 	}
 

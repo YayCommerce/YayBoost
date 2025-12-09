@@ -3,21 +3,21 @@
  * Uses hash-based routing for WordPress admin compatibility
  */
 
-import { Suspense, lazy } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
-
+import { lazy, Suspense } from 'react';
 import { DashboardLayout } from '@/layouts/dashboard-layout';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 
 // Lazy load pages
 const Dashboard = lazy(() => import('@/pages/dashboard'));
-const FeaturePage = lazy(() => import('@/pages/feature'));
+const FeatureContainer = lazy(() => import('@/pages/Feature/FeatureContainer'));
+const FeaturePage = lazy(() => import('@/pages/Feature'));
 const GlobalSettings = lazy(() => import('@/pages/settings'));
 
 // Loading component
 function PageLoading() {
   return (
     <div className="flex items-center justify-center p-8">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
     </div>
   );
 }
@@ -32,6 +32,14 @@ export function Router() {
             element={
               <Suspense fallback={<PageLoading />}>
                 <Dashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="features"
+            element={
+              <Suspense fallback={<PageLoading />}>
+                <FeatureContainer />
               </Suspense>
             }
           />
