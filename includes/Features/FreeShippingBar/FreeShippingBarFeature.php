@@ -78,7 +78,7 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         foreach ($show_on as $location) {
             if (isset($hook_map[$location])) {
-                add_action($hook_map[$location], [$this, 'render_bar']);
+               add_action($hook_map[$location], [$this, 'render_bar']);
             }
         }
 
@@ -87,17 +87,20 @@ class FreeShippingBarFeature extends AbstractFeature {
             // Method 1: Hook for widget-based mini cart
             add_action('woocommerce_before_mini_cart', [$this, 'render_bar']);
             add_action('woocommerce_widget_shopping_cart_before_buttons', [$this, 'render_bar']);
-            
+        
             // Method 2: JavaScript for block-based mini cart
             add_action('wp_footer', [$this, 'render_bar_in_mini_cart_block']);
         }
 
-        // Enqueue styles
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+    
+        if (array_intersect(['top_cart', 'bottom_cart', 'top_checkout', 'bottom_checkout', 'mini_cart'], $show_on)) {
+            // Enqueue styles
+            add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
 
-        // AJAX endpoint for dynamic updates
-        add_action('wp_ajax_yayboost_get_shipping_bar', [$this, 'ajax_get_bar_data']);
-        add_action('wp_ajax_nopriv_yayboost_get_shipping_bar', [$this, 'ajax_get_bar_data']);
+            // AJAX endpoint for dynamic updates
+            add_action('wp_ajax_yayboost_get_shipping_bar', [$this, 'ajax_get_bar_data']);
+            add_action('wp_ajax_nopriv_yayboost_get_shipping_bar', [$this, 'ajax_get_bar_data']);
+        }
     }
 
     /**
