@@ -90,9 +90,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         // AJAX endpoint for dynamic updates
         add_action('wp_ajax_yayboost_get_shipping_bar', [$this, 'ajax_get_bar_data']);
         add_action('wp_ajax_nopriv_yayboost_get_shipping_bar', [$this, 'ajax_get_bar_data']);
-   
-        // Initialize block with feature instance
-        Block::init($this);
     }
 
     /**
@@ -119,11 +116,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
         // Mini cart can appear on any page, so always enqueue if enabled
         if (in_array('mini_cart', $show_on, true)) {
-            $should_show = true;
-        }
-
-        // Also check if block is used on current page
-        if (has_block('yayboost/free-shipping-bar')) {
             $should_show = true;
         }
 
