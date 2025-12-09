@@ -64,24 +64,23 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return void
      */
     public function init(): void {
-        // Display bar based on position setting
-        $settings = $this->get_settings();
-        $position = $settings['position'] ?? 'top';
-
         // Hook into appropriate locations based on show_on setting
-        $show_on = $settings['show_on'] ?? ['cart', 'checkout'];
+        $settings = $this->get_settings();
+        $show_on = $settings['show_on'] ?? ['top_cart', 'top_checkout'];
 
-        if (in_array('cart', $show_on, true)) {
-            $show_cart_position = $position === 'top' ? 'woocommerce_before_cart' : 'woocommerce_after_cart';
-            add_action($show_cart_position, [$this, 'render_bar']);
-        }
+        // Map show_on values to WooCommerce hooks
+        $hook_map = [
+            'top_cart'       => 'woocommerce_before_cart',
+            'bottom_cart'    => 'woocommerce_after_cart',
+            'top_checkout'   => 'woocommerce_before_checkout_form',
+            'bottom_checkout' => 'woocommerce_after_checkout_form',
+            'mini_cart'      => 'woocommerce_before_mini_cart',
+        ];
 
-        if (in_array('checkout', $show_on, true)) {
-            add_action('woocommerce_before_checkout_form', [$this, 'render_bar']);
-        }
-
-        if (in_array('mini_cart', $show_on, true)) {
-            add_action('woocommerce_before_mini_cart', [$this, 'render_bar']);
+        foreach ($show_on as $location) {
+            if (isset($hook_map[$location])) {
+                add_action($hook_map[$location], [$this, 'render_bar']);
+            }
         }
 
         // Enqueue styles
@@ -104,16 +103,21 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
 
         $settings = $this->get_settings();
-        $show_on = $settings['show_on'] ?? ['cart', 'checkout'];
+        $show_on = $settings['show_on'] ?? ['top_cart', 'top_checkout'];
 
         // Check if we should show on current page
         $should_show = false;
-        if (in_array('cart', $show_on, true) && is_cart()) {
+        
+        // Check for cart page locations
+        if (is_cart() && (in_array('top_cart', $show_on, true) || in_array('bottom_cart', $show_on, true))) {
             $should_show = true;
         }
-        if (in_array('checkout', $show_on, true) && is_checkout()) {
+        
+        // Check for checkout page locations
+        if (is_checkout() && (in_array('top_checkout', $show_on, true) || in_array('bottom_checkout', $show_on, true))) {
             $should_show = true;
         }
+        
         // Mini cart can appear on any page, so always enqueue if enabled
         if (in_array('mini_cart', $show_on, true)) {
             $should_show = true;
@@ -271,8 +275,7 @@ class FreeShippingBarFeature extends AbstractFeature {
             'bar_color'         => '#4CAF50',
             'background_color'  => '#e8f5e9',
             'text_color'        => '#2e7d32',
-            'position'          => 'top',
-            'show_on'           => ['cart', 'checkout'],
+            'show_on'           => ['top_cart', 'top_checkout'],
             'show_progress_bar' => true,
         ]);
     }

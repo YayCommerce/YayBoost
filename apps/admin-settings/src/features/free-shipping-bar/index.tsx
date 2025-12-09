@@ -49,7 +49,6 @@ const settingsSchema = z.object({
   bar_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   background_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   text_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  position: z.enum(['top', 'bottom', 'mini_cart']),
   show_on: z.array(z.string()),
   show_progress_bar: z.boolean(),
   display_style: z.enum(['minimal_text', 'progress_bar', 'compact_progress']),
@@ -59,9 +58,11 @@ const settingsSchema = z.object({
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
 const showOnOptions = [
-  { id: 'cart', label: 'Cart Page' },
-  { id: 'checkout', label: 'Checkout Page' },
-  { id: 'mini_cart', label: 'Mini Cart Widget' },
+  { id: 'top_cart', label: __('Top Cart Page', 'yayboost') },
+  { id: 'bottom_cart', label: __('Bottom Cart Page', 'yayboost') },
+  { id: 'top_checkout', label: __('Top Checkout Page', 'yayboost') },
+  { id: 'bottom_checkout', label: __('Bottom Checkout Page', 'yayboost') },
+  { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
 ];
 
 // Preview component
@@ -138,8 +139,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
       bar_color: '#4CAF50',
       background_color: '#e8f5e9',
       text_color: '#2e7d32',
-      position: 'top',
-      show_on: ['cart', 'checkout'],
+      show_on: ['top_cart', 'top_checkout'],
       show_progress_bar: true,
       display_style: 'minimal_text',
       behavior_when_unlocked: 'show_message',
@@ -293,51 +293,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                           />
                         ))}
                       </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Sticky Display Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Sticky Display', 'yayboost')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="position"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Show on', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="top" id="sticky-top" />
-                            <label htmlFor="sticky-top" className="cursor-pointer">
-                              {__('Top of page', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="bottom" id="sticky-bottom" />
-                            <label htmlFor="sticky-bottom" className="cursor-pointer">
-                              {__('Bottom of page', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="mini_cart" id="sticky-mini-cart" />
-                            <label htmlFor="sticky-mini-cart" className="cursor-pointer">
-                              {__('Mini cart', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -514,24 +469,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={form.control}
-                  name="show_progress_bar"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>{__('Show Progress Bar', 'yayboost')}</FormLabel>
-                        <FormDescription>
-                          {__('Display visual progress indicator', 'yayboost')}
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
               </CardContent>
             </Card>
 
