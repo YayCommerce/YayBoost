@@ -87,9 +87,6 @@ class FreeShippingBarFeature extends AbstractFeature {
             // Method 1: Hook for widget-based mini cart
             add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
             add_action( 'woocommerce_widget_shopping_cart_before_buttons', [ $this, 'render_bar' ] );
-
-            // Method 2: JavaScript for block-based mini cart
-            add_action( 'wp_footer', [ $this, 'render_bar_in_mini_cart_block' ] );
         }
 
         // Always register AJAX endpoints (can be called from anywhere)
@@ -123,13 +120,16 @@ class FreeShippingBarFeature extends AbstractFeature {
             return;
         }
 
-        // Register style if not already registered
-        if ( ! wp_style_is( 'yayboost-frontend', 'registered' )) {
-            wp_register_style( 'yayboost-frontend', false, [], YAYBOOST_VERSION );
-        }
+        // Enqueue CSS file
+        wp_enqueue_style(
+            'yayboost-free-shipping-bar',
+            YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
+            [],
+            YAYBOOST_VERSION
+        );
 
-        wp_enqueue_style( 'yayboost-frontend' );
-        wp_add_inline_style( 'yayboost-frontend', $this->generate_custom_css( $this->get_settings() ) );
+        // Add inline styles for dynamic colors
+        wp_add_inline_style( 'yayboost-free-shipping-bar', $this->generate_custom_css( $this->get_settings() ) );
 
         wp_enqueue_script(
             'yayboost-free-shipping-bar',
@@ -155,6 +155,12 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @param array $settings
      * @return string
      */
+    /**
+     * Generate custom CSS for dynamic colors based on settings
+     *
+     * @param array $settings
+     * @return string
+     */
     protected function generate_custom_css(array $settings): string {
         $bar_color  = $settings['bar_color'] ?? '#4CAF50';
         $bg_color   = $settings['background_color'] ?? '#e0e0e0';
@@ -164,30 +170,15 @@ class FreeShippingBarFeature extends AbstractFeature {
             .yayboost-shipping-bar {
                 background: {$bg_color};
                 color: {$text_color};
-                padding: 15px 20px;
-                margin-bottom: 20px;
-                border-radius: 8px;
             }
             .yayboost-shipping-bar__progress {
                 background: {$bg_color};
-                border-radius: 10px;
-                height: 10px;
-                margin-top: 10px;
-                overflow: hidden;
             }
             .yayboost-shipping-bar__progress-fill {
                 background: {$bar_color};
-                height: 100%;
-                border-radius: 10px;
-                transition: width 0.3s ease;
             }
             .yayboost-shipping-bar--achieved {
                 background: {$bar_color};
-                color: #ffffff;
-            }
-            #yayboost-mini-cart-bar {
-                z-index: 20;
-                padding: 16px;
             }
         ";
     }
@@ -198,71 +189,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return void
      */
     public function render_bar(): void {
-        echo $this->get_bar_html();
-    }
-
-    /**
-     * Render JavaScript to inject bar into block mini cart
-     *
-     * @return void
-     */
-    public function render_bar_in_mini_cart_block(): void {
-        $data = $this->get_bar_data();
-        if ( ! $data) {
-            return;
-        }
-
-        $bar_html         = $this->get_bar_html();
-        $bar_html_escaped = wp_json_encode( $bar_html );
-        ?>
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const barHtml = <?php echo $bar_html_escaped; ?>;
-            const barId = 'yayboost-mini-cart-bar';
-            
-            function injectBar() {
-                const miniCartContent = document.querySelector('.wc-block-mini-cart__template-part');
-                if (!miniCartContent) return;
-                
-                // Check if already injected
-                if (miniCartContent.querySelector('#' + barId)) return;
-                
-                // Find position to inject (after title block)
-                const titleBlock = miniCartContent.querySelector('.wp-block-woocommerce-mini-cart-title-block');
-                if (titleBlock) {
-                    const wrapper = document.createElement('div');
-                    wrapper.id = barId;
-                    wrapper.innerHTML = barHtml;
-                    titleBlock.insertAdjacentElement('afterend', wrapper);
-                } else {
-                    // Fallback: inject at beginning
-                    const wrapper = document.createElement('div');
-                    wrapper.id = barId;
-                    wrapper.innerHTML = barHtml;
-                    miniCartContent.insertAdjacentElement('afterbegin', wrapper);
-                }
-            }
-            
-            // Run immediately
-            injectBar();
-            
-            // Run again when mini cart opens
-            document.body.addEventListener('click', function(e) {
-                if (e.target.closest('.wc-block-mini-cart__button')) {
-                    setTimeout(injectBar, 300);
-                }
-            });
-            
-            // Also update when cart changes
-            document.body.addEventListener('wc-blocks_added_to_cart', function() {
-                setTimeout(injectBar, 200);
-            });
-            document.body.addEventListener('wc-blocks_removed_from_cart', function() {
-                setTimeout(injectBar, 200);
-            });
-        });
-        </script>
-        <?php
+        echo wp_kses_post( $this->get_bar_html() );
     }
 
     /**

@@ -1,0 +1,41 @@
+/**
+ * Free Shipping Bar Styles
+ *
+ * Base styles for the free shipping bar component.
+ * Dynamic colors (bar_color, background_color, text_color) are added via inline styles.
+ */
+
+.yayboost-shipping-bar {
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  z-index: 20;
+}
+
+.yayboost-shipping-bar__message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.yayboost-shipping-bar__progress {
+  border-radius: 10px;
+  height: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.yayboost-shipping-bar__progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.yayboost-shipping-bar--achieved {
+  color: #ffffff;
+}
+
+.wp-block-woocommerce-mini-cart-contents .yayboost-shipping-bar {
+	margin: 16px;
+	z-index
+}
