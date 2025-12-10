@@ -57,17 +57,23 @@ class Bootstrap {
      */
     protected function register_core_services() {
         // Register container itself
-        $this->container->instance('container', $this->container);
+        $this->container->instance( 'container', $this->container );
 
         // Register admin services
-        $this->container->register('admin.menu', function($c) {
-            return new Admin\AdminMenu();
-        });
+        $this->container->register(
+            'admin.menu',
+            function ($c) {
+                return new Admin\AdminMenu();
+            }
+        );
 
         // Register API services
-        $this->container->register('api.router', function($c) {
-            return new API\Router($c);
-        });
+        $this->container->register(
+            'api.router',
+            function ($c) {
+                return new API\Router( $c );
+            }
+        );
     }
 
     /**
@@ -77,13 +83,13 @@ class Bootstrap {
      */
     protected function register_service_provider() {
         $provider = new ServiceProvider();
-        
+
         // Register phase
-        $provider->register($this->container);
-        
+        $provider->register( $this->container );
+
         // Boot phase
-        $provider->boot($this->container);
-        
+        $provider->boot( $this->container );
+
         $this->providers[] = $provider;
     }
 
@@ -95,12 +101,12 @@ class Bootstrap {
     protected function init_hooks() {
 
         // REST API initialization
-        add_action('rest_api_init', [$this, 'register_rest_routes']);
+        add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 
         // Plugin loaded hook
-        do_action('yayboost_loaded', $this->container);
+        do_action( 'yayboost_loaded', $this->container );
 
-        $this->container->resolve('admin.menu')->register();
+        $this->container->resolve( 'admin.menu' )->register();
     }
 
     /**
@@ -109,7 +115,7 @@ class Bootstrap {
      * @return void
      */
     public function register_rest_routes() {
-        $router = $this->container->resolve('api.router');
+        $router = $this->container->resolve( 'api.router' );
         $router->register_routes();
     }
 
@@ -122,4 +128,3 @@ class Bootstrap {
         return $this->container;
     }
 }
-

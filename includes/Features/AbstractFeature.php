@@ -76,7 +76,7 @@ abstract class AbstractFeature implements FeatureInterface {
      * @param Container $container
      */
     public function __construct(Container $container) {
-        $this->container = $container;
+        $this->container  = $container;
         $this->optionName = 'yayboost_feature_' . $this->id;
     }
 
@@ -141,7 +141,7 @@ abstract class AbstractFeature implements FeatureInterface {
      */
     public function is_enabled(): bool {
         $settings = $this->get_settings();
-        return isset($settings['enabled']) && $settings['enabled'];
+        return isset( $settings['enabled'] ) && $settings['enabled'];
     }
 
     /**
@@ -150,9 +150,9 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return void
      */
     public function enable(): void {
-        $settings = $this->get_settings();
+        $settings            = $this->get_settings();
         $settings['enabled'] = true;
-        $this->save_settings($settings);
+        $this->save_settings( $settings );
     }
 
     /**
@@ -161,9 +161,9 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return void
      */
     public function disable(): void {
-        $settings = $this->get_settings();
+        $settings            = $this->get_settings();
         $settings['enabled'] = false;
-        $this->save_settings($settings);
+        $this->save_settings( $settings );
     }
 
     /**
@@ -173,9 +173,9 @@ abstract class AbstractFeature implements FeatureInterface {
      */
     public function get_settings(): array {
         $defaults = $this->get_default_settings();
-        $settings = get_option($this->optionName, []);
+        $settings = get_option( $this->optionName, [] );
 
-        return array_merge($defaults, $settings);
+        return array_merge( $defaults, $settings );
     }
 
     /**
@@ -185,10 +185,10 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return void
      */
     public function update_settings(array $settings): void {
-        $current = $this->get_settings();
-        $sanitized = $this->sanitize_settings($settings);
-        $updated = array_merge($current, $sanitized);
-        $this->save_settings($updated);
+        $current   = $this->get_settings();
+        $sanitized = $this->sanitize_settings( $settings );
+        $updated   = array_merge( $current, $sanitized );
+        $this->save_settings( $updated );
     }
 
     /**
@@ -198,7 +198,7 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return array
      */
     protected function sanitize_settings(array $settings): array {
-        return $this->sanitize_array_recursive($settings);
+        return $this->sanitize_array_recursive( $settings );
     }
 
     /**
@@ -211,18 +211,18 @@ abstract class AbstractFeature implements FeatureInterface {
         $sanitized = [];
 
         foreach ($data as $key => $value) {
-            $key = sanitize_key($key);
+            $key = sanitize_key( $key );
 
-            if (is_array($value)) {
-                $sanitized[$key] = $this->sanitize_array_recursive($value);
-            } elseif (is_bool($value)) {
-                $sanitized[$key] = $value;
-            } elseif (is_int($value)) {
-                $sanitized[$key] = (int) $value;
-            } elseif (is_float($value)) {
-                $sanitized[$key] = (float) $value;
+            if (is_array( $value )) {
+                $sanitized[ $key ] = $this->sanitize_array_recursive( $value );
+            } elseif (is_bool( $value )) {
+                $sanitized[ $key ] = $value;
+            } elseif (is_int( $value )) {
+                $sanitized[ $key ] = (int) $value;
+            } elseif (is_float( $value )) {
+                $sanitized[ $key ] = (float) $value;
             } else {
-                $sanitized[$key] = sanitize_text_field((string) $value);
+                $sanitized[ $key ] = sanitize_text_field( (string) $value );
             }
         }
 
@@ -236,7 +236,7 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return void
      */
     protected function save_settings(array $settings): void {
-        update_option($this->optionName, $settings);
+        update_option( $this->optionName, $settings );
     }
 
     /**

@@ -15,3 +15,10 @@ log.xml
 .gitattributes
 
 **/pnpm-lock.yaml
+
+.claude/
+.opencode/
+docs/
+plans/
+.repomixignore
+CLAUDE.md

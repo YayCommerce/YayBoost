@@ -21,10 +21,10 @@ class SettingsController extends BaseController {
      */
     public function register_routes() {
         // Get settings
-        $this->register_route('/settings', WP_REST_Server::READABLE, [$this, 'get_settings']);
+        $this->register_route( '/settings', WP_REST_Server::READABLE, [ $this, 'get_settings' ] );
 
         // Update settings
-        $this->register_route('/settings', WP_REST_Server::EDITABLE, [$this, 'update_settings']);
+        $this->register_route( '/settings', WP_REST_Server::EDITABLE, [ $this, 'update_settings' ] );
     }
 
     /**
@@ -34,9 +34,9 @@ class SettingsController extends BaseController {
      * @return \WP_REST_Response|\WP_Error
      */
     public function get_settings($request) {
-        $settings = $this->container->resolve('settings');
-        
-        return $this->success($settings->get_all());
+        $settings = $this->container->resolve( 'settings' );
+
+        return $this->success( $settings->get_all() );
     }
 
     /**
@@ -46,15 +46,16 @@ class SettingsController extends BaseController {
      * @return \WP_REST_Response|\WP_Error
      */
     public function update_settings($request) {
-        $data = $request->get_json_params();
-        $settings = $this->container->resolve('settings');
+        $data     = $request->get_json_params();
+        $settings = $this->container->resolve( 'settings' );
 
-        $settings->update($data);
+        $settings->update( $data );
 
-        return $this->success([
-            'message' => __('Settings updated successfully.', 'yayboost'),
-            'data' => $settings->get_all(),
-        ]);
+        return $this->success(
+            [
+                'message' => __( 'Settings updated successfully.', 'yayboost' ),
+                'data'    => $settings->get_all(),
+            ]
+        );
     }
 }
-

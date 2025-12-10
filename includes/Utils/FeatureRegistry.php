@@ -35,7 +35,7 @@ class FeatureRegistry {
      * @return void
      */
     public function register(FeatureInterface $feature): void {
-        $this->features[$feature->get_id()] = $feature;
+        $this->features[ $feature->get_id() ] = $feature;
     }
 
     /**
@@ -53,7 +53,7 @@ class FeatureRegistry {
          *
          * @param FeatureRegistry $registry
          */
-        do_action('yayboost_register_features', $this);
+        do_action( 'yayboost_register_features', $this );
 
         $this->addon_hook_fired = true;
     }
@@ -65,7 +65,7 @@ class FeatureRegistry {
      * @return FeatureInterface|null
      */
     public function get(string $id): ?FeatureInterface {
-        return $this->features[$id] ?? null;
+        return $this->features[ $id ] ?? null;
     }
 
     /**
@@ -85,9 +85,12 @@ class FeatureRegistry {
     public function get_all_sorted(): array {
         $features = $this->features;
 
-        uasort($features, function($a, $b) {
-            return $a->get_priority() - $b->get_priority();
-        });
+        uasort(
+            $features,
+            function ($a, $b) {
+                return $a->get_priority() - $b->get_priority();
+            }
+        );
 
         return $features;
     }
@@ -99,7 +102,7 @@ class FeatureRegistry {
      * @return bool
      */
     public function has(string $id): bool {
-        return isset($this->features[$id]);
+        return isset( $this->features[ $id ] );
     }
 
     /**
@@ -108,9 +111,12 @@ class FeatureRegistry {
      * @return array<string, FeatureInterface>
      */
     public function get_enabled(): array {
-        return array_filter($this->features, function($feature) {
-            return $feature->is_enabled();
-        });
+        return array_filter(
+            $this->features,
+            function ($feature) {
+                return $feature->is_enabled();
+            }
+        );
     }
 
     /**
@@ -119,9 +125,12 @@ class FeatureRegistry {
      * @return array<string, FeatureInterface>
      */
     public function get_disabled(): array {
-        return array_filter($this->features, function($feature) {
-            return !$feature->is_enabled();
-        });
+        return array_filter(
+            $this->features,
+            function ($feature) {
+                return ! $feature->is_enabled();
+            }
+        );
     }
 
     /**
@@ -131,9 +140,12 @@ class FeatureRegistry {
      * @return array<string, FeatureInterface>
      */
     public function get_by_category(string $category): array {
-        return array_filter($this->features, function($feature) use ($category) {
-            return $feature->get_category() === $category;
-        });
+        return array_filter(
+            $this->features,
+            function ($feature) use ($category) {
+                return $feature->get_category() === $category;
+            }
+        );
     }
 
     /**
@@ -149,14 +161,17 @@ class FeatureRegistry {
          *
          * @param array $categories
          */
-        $categories = apply_filters('yayboost_feature_categories', $base_categories);
+        $categories = apply_filters( 'yayboost_feature_categories', $base_categories );
 
         // Sort by priority
-        uasort($categories, function($a, $b) {
-            $priority_a = $a['priority'] ?? 100;
-            $priority_b = $b['priority'] ?? 100;
-            return $priority_a - $priority_b;
-        });
+        uasort(
+            $categories,
+            function ($a, $b) {
+                $priority_a = $a['priority'] ?? 100;
+                $priority_b = $b['priority'] ?? 100;
+                return $priority_a - $priority_b;
+            }
+        );
 
         return $categories;
     }
@@ -168,18 +183,21 @@ class FeatureRegistry {
      */
     public function get_grouped_by_category(): array {
         $categories = $this->get_categories();
-        $grouped = [];
+        $grouped    = [];
 
         foreach ($categories as $category_id => $category_info) {
-            $features = $this->get_by_category($category_id);
+            $features = $this->get_by_category( $category_id );
 
-            if (!empty($features)) {
+            if ( ! empty( $features )) {
                 // Sort features by priority
-                uasort($features, function($a, $b) {
-                    return $a->get_priority() - $b->get_priority();
-                });
+                uasort(
+                    $features,
+                    function ($a, $b) {
+                        return $a->get_priority() - $b->get_priority();
+                    }
+                );
 
-                $grouped[$category_id] = [
+                $grouped[ $category_id ] = [
                     'info'     => $category_info,
                     'features' => $features,
                 ];
@@ -195,6 +213,6 @@ class FeatureRegistry {
      * @return int
      */
     public function count(): int {
-        return count($this->features);
+        return count( $this->features );
     }
 }

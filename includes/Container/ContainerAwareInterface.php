@@ -26,4 +26,3 @@ interface ContainerAwareInterface {
      */
     public function get_container();
 }
-

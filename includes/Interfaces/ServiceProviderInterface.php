@@ -29,4 +29,3 @@ interface ServiceProviderInterface {
      */
     public function boot(Container $container);
 }
-

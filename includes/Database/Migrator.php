@@ -28,13 +28,13 @@ class Migrator {
      */
     public static function run(): void {
         // Skip if not needed (avoids DB query on every request)
-        if (!self::needs_migration()) {
+        if ( ! self::needs_migration()) {
             return;
         }
 
-        $installed_version = get_option(self::DB_VERSION_OPTION, '0.0.0');
-        self::migrate($installed_version);
-        update_option(self::DB_VERSION_OPTION, self::CURRENT_VERSION);
+        $installed_version = get_option( self::DB_VERSION_OPTION, '0.0.0' );
+        self::migrate( $installed_version );
+        update_option( self::DB_VERSION_OPTION, self::CURRENT_VERSION );
     }
 
     /**
@@ -43,11 +43,11 @@ class Migrator {
      * @return void
      */
     public static function activate(): void {
-        $installed_version = get_option(self::DB_VERSION_OPTION, '0.0.0');
+        $installed_version = get_option( self::DB_VERSION_OPTION, '0.0.0' );
 
-        if (version_compare($installed_version, self::CURRENT_VERSION, '<')) {
-            self::migrate($installed_version);
-            update_option(self::DB_VERSION_OPTION, self::CURRENT_VERSION);
+        if (version_compare( $installed_version, self::CURRENT_VERSION, '<' )) {
+            self::migrate( $installed_version );
+            update_option( self::DB_VERSION_OPTION, self::CURRENT_VERSION );
         }
     }
 
@@ -59,13 +59,13 @@ class Migrator {
      */
     protected static function migrate(string $from_version): void {
         // Initial installation or upgrade from pre-1.0.0
-        if (version_compare($from_version, '1.0.0', '<')) {
+        if (version_compare( $from_version, '1.0.0', '<' )) {
             self::migrate_to_1_0_0();
         }
 
         // Future migrations go here:
         // if (version_compare($from_version, '1.1.0', '<')) {
-        //     self::migrate_to_1_1_0();
+        // self::migrate_to_1_1_0();
         // }
     }
 
@@ -86,17 +86,17 @@ class Migrator {
      */
     public static function needs_migration(): bool {
         // Check transient first to avoid DB query on every request
-        $cached = get_transient('yayboost_migration_check');
+        $cached = get_transient( 'yayboost_migration_check' );
         if ($cached === 'no') {
             return false;
         }
 
-        $installed_version = get_option(self::DB_VERSION_OPTION, '0.0.0');
-        $needs = version_compare($installed_version, self::CURRENT_VERSION, '<');
+        $installed_version = get_option( self::DB_VERSION_OPTION, '0.0.0' );
+        $needs             = version_compare( $installed_version, self::CURRENT_VERSION, '<' );
 
         // Cache the result for 1 hour if no migration needed
-        if (!$needs) {
-            set_transient('yayboost_migration_check', 'no', HOUR_IN_SECONDS);
+        if ( ! $needs) {
+            set_transient( 'yayboost_migration_check', 'no', HOUR_IN_SECONDS );
         }
 
         return $needs;
@@ -108,7 +108,7 @@ class Migrator {
      * @return string
      */
     public static function get_installed_version(): string {
-        return get_option(self::DB_VERSION_OPTION, '0.0.0');
+        return get_option( self::DB_VERSION_OPTION, '0.0.0' );
     }
 
     /**
@@ -118,7 +118,7 @@ class Migrator {
      */
     public static function reset(): void {
         EntityTable::drop();
-        delete_option(self::DB_VERSION_OPTION);
-        delete_transient('yayboost_migration_check');
+        delete_option( self::DB_VERSION_OPTION );
+        delete_transient( 'yayboost_migration_check' );
     }
 }
