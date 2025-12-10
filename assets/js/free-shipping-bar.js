@@ -3,7 +3,6 @@
 
     // Store original fetch function
     const originalFetch = window.fetch;
-    let pendingCartTotal = null;
 
     /**
      * Check if we're in mini cart block context
@@ -23,26 +22,16 @@
             // Only intercept batch API calls in mini cart context
             if (isMiniCartBlock() && url && url.includes('/wc/store/v1/batch')) {
                 return originalFetch.apply(this, arguments).then(function(response) {
-                    // Clone response to read it without consuming
                     response.clone().json().then(function(data) {
-                        // Batch response contains "responses" array
                         if (data && data.responses && Array.isArray(data.responses)) {
                             data.responses.forEach(function(res) {
-                                // Find cart response that contains totals
                                 if (res.body && res.body.totals && res.body.totals.total_items !== undefined) {
                                     const totals = res.body.totals;
-                                    const cartTotal = totals.total_price;
-                                    
-                                    // Store cart total for later use
-                                    pendingCartTotal = cartTotal;
-                                    
-                                    // Update shipping bar with fresh cart total
-                                    updateShippingBar(cartTotal);
+                                    updateShippingBar(totals.total_price);
                                 }
                             });
                         }
                     }).catch(function(e) {
-                        // Ignore JSON parse errors
                         console.log(e);
                     });
                     
