@@ -60,6 +60,87 @@
   }
 
   /**
+   * Build bar HTML from data
+   * @param {object} data Bar data from API
+   * @param {string} barId Optional bar ID (for mini cart)
+   * @return {string|null} HTML string or null if no data
+   */
+  function buildBarHtml(data, barId) {
+    if (!data || !data.message) {
+      return null;
+    }
+
+    // Build achieved class
+    const achievedClass =
+      data.achieved && !data.show_coupon_message
+        ? " yayboost-shipping-bar--achieved"
+        : "";
+
+    // Build progress bar HTML
+    let progressHtml = "";
+    if (
+      data.threshold &&
+      data.threshold > 0 &&
+      !data.achieved &&
+      !data.show_coupon_message
+    ) {
+      progressHtml =
+        '<div class="yayboost-shipping-bar__progress">' +
+        '<div class="yayboost-shipping-bar__progress-fill" style="width: ' +
+        data.progress +
+        '%"></div>' +
+        "</div>";
+    }
+
+    // Build complete bar HTML
+    const idAttr = barId ? ' id="' + barId + '"' : "";
+    return (
+      '<div class="yayboost-shipping-bar' +
+      achievedClass +
+      '"' +
+      idAttr +
+      ">" +
+      '<div class="yayboost-shipping-bar__message">' +
+      data.message +
+      "</div>" +
+      progressHtml +
+      "</div>"
+    );
+  }
+
+  /**
+   * Fetch bar data from API
+   * @param {number|null} cartTotal Optional cart total override
+   * @param {function} callback Success callback with (data) parameter
+   */
+  function fetchBarData(cartTotal, callback) {
+    const ajaxData = {
+      action: "yayboost_get_shipping_bar",
+      nonce: yayboostShippingBar.nonce,
+    };
+
+    if (cartTotal !== null && cartTotal !== undefined) {
+      ajaxData.cart_total = cartTotal;
+    }
+
+    $.ajax({
+      url: yayboostShippingBar.ajaxUrl,
+      type: "POST",
+      data: ajaxData,
+      success: function (response) {
+        if (response.success && response.data) {
+          callback(response.data);
+        } else {
+          callback(null);
+        }
+      },
+      error: function () {
+        callback(null);
+      },
+    });
+  }
+
+  /**
    * Inject shipping bar into mini cart block
    */
   function injectBarIntoMiniCartBlock() {
@@ -77,70 +158,23 @@
       return;
     }
 
-    // Get bar HTML via AJAX and inject
-    const ajaxData = {
-      action: "yayboost_get_shipping_bar",
-      nonce: yayboostShippingBar.nonce,
-    };
+    // Fetch and inject
+    fetchBarData(null, function (data) {
+      if (!data) return;
 
-    $.ajax({
-      url: yayboostShippingBar.ajaxUrl,
-      type: "POST",
-      data: ajaxData,
-      success: function (response) {
-        if (response.success && response.data && response.data.message) {
-          const data = response.data;
+      const barHtml = buildBarHtml(data, barId);
+      if (!barHtml) return;
 
-          // Build achieved class
-          const achievedClass =
-            data.achieved && !data.show_coupon_message
-              ? " yayboost-shipping-bar--achieved"
-              : "";
-
-          // Build progress bar HTML
-          let progressHtml = "";
-          if (
-            data.threshold &&
-            data.threshold > 0 &&
-            !data.achieved &&
-            !data.show_coupon_message
-          ) {
-            progressHtml =
-              '<div class="yayboost-shipping-bar__progress">' +
-              '<div class="yayboost-shipping-bar__progress-fill" style="width: ' +
-              data.progress +
-              '%"></div>' +
-              "</div>";
-          }
-
-          // Build complete bar HTML
-          const barHtml =
-            '<div class="yayboost-shipping-bar' +
-            achievedClass +
-            '" id="' +
-            barId +
-            '">' +
-            '<div class="yayboost-shipping-bar__message">' +
-            data.message +
-            "</div>" +
-            progressHtml +
-            "</div>";
-
-          // Find position to inject (after title block)
-          const titleBlock = miniCartContent.querySelector(
-            ".wp-block-woocommerce-mini-cart-title-block"
-          );
-          if (titleBlock) {
-            titleBlock.insertAdjacentHTML("afterend", barHtml);
-          } else {
-            // Fallback: inject at beginning
-            miniCartContent.insertAdjacentHTML("afterbegin", barHtml);
-          }
-        }
-      },
-      error: function () {
-        console.log("Failed to inject shipping bar into mini cart");
-      },
+      // Find position to inject (after title block)
+      const titleBlock = miniCartContent.querySelector(
+        ".wp-block-woocommerce-mini-cart-title-block"
+      );
+      if (titleBlock) {
+        titleBlock.insertAdjacentHTML("afterend", barHtml);
+      } else {
+        // Fallback: inject at beginning
+        miniCartContent.insertAdjacentHTML("afterbegin", barHtml);
+      }
     });
   }
 
@@ -152,79 +186,26 @@
     const $bar = $(".yayboost-shipping-bar");
     if ($bar.length === 0) return;
 
-    const ajaxData = {
-      action: "yayboost_get_shipping_bar",
-      nonce: yayboostShippingBar.nonce,
-    };
+    fetchBarData(cartTotal, function (data) {
+      if (!data || !data.message) {
+        // No data or error, remove bar
+        $bar.remove();
+        return;
+      }
 
-    // If cartTotal is provided (from batch API), include it in request
-    if (cartTotal !== null && cartTotal !== undefined) {
-      ajaxData.cart_total = cartTotal;
-    }
-
-    $.ajax({
-      url: yayboostShippingBar.ajaxUrl,
-      type: "POST",
-      data: ajaxData,
-      success: function (response) {
-        if (response.success && response.data) {
-          const data = response.data;
-
-          // If no message, remove bar
-          if (!data.message) {
-            $bar.remove();
-            return;
-          }
-
-          // Build achieved class
-          const achievedClass =
-            data.achieved && !data.show_coupon_message
-              ? " yayboost-shipping-bar--achieved"
-              : "";
-
-          // Build progress bar HTML
-          let progressHtml = "";
-          if (
-            data.threshold &&
-            data.threshold > 0 &&
-            !data.achieved &&
-            !data.show_coupon_message
-          ) {
-            progressHtml =
-              '<div class="yayboost-shipping-bar__progress">' +
-              '<div class="yayboost-shipping-bar__progress-fill" style="width: ' +
-              data.progress +
-              '%"></div>' +
-              "</div>";
-          }
-
-          // Build complete bar HTML
-          const barHtml =
-            '<div class="yayboost-shipping-bar' +
-            achievedClass +
-            '">' +
-            '<div class="yayboost-shipping-bar__message">' +
-            data.message +
-            "</div>" +
-            progressHtml +
-            "</div>";
-
-          // Replace existing bar
-          $bar.replaceWith(barHtml);
-        } else {
-          // No data or error, remove bar
-          $bar.remove();
-        }
-      },
-      error: function () {
-        // On error, keep existing bar (don't remove it)
-        console.log("Failed to update shipping bar");
-      },
+      const barHtml = buildBarHtml(data);
+      if (barHtml) {
+        // Replace existing bar
+        $bar.replaceWith(barHtml);
+      } else {
+        $bar.remove();
+      }
     });
   }
 
   $(document).ready(function () {
     let shippingBarTimeout;
+    let quantityTimeout;
 
     /**
      * Debounced update function
@@ -235,56 +216,39 @@
       shippingBarTimeout = setTimeout(updateShippingBar, delay);
     }
 
-    /**
-     * Main cart update events (Classic WooCommerce)
-     * Only needed for classic cart/checkout pages, not mini cart block
-     */
-    $(document.body).on(
+    // Classic cart events - all trigger debounced update
+    const classicCartEvents = [
+      // Main cart update events (Classic WooCommerce)
+      // Triggered when: Add/remove items, update cart via AJAX
       "added_to_cart removed_from_cart wc_update_cart",
-      function () {
-        // Only update if not in mini cart block (classic cart uses these events)
-        debouncedUpdateShippingBar();
-      }
-    );
 
-    /**
-     * Fragment refresh events (covers mini cart widget updates)
-     * Only needed for widget-based mini cart, not block-based
-     */
-    $(document.body).on(
+      // Fragment refresh events (widget-based mini cart)
+      // Triggered when: Mini cart widget updates via fragments
       "wc_fragments_refreshed wc_fragments_loaded",
-      function () {
-        // Only update if not in mini cart block (widget-based mini cart uses fragments)
-        debouncedUpdateShippingBar();
-      }
+
+      // Updated WC div event (cart page)
+      // Triggered when: Cart page updates, product removed via custom event
+      "updated_wc_div product-remove",
+
+      // Coupon events
+      // Triggered when: Coupon applied or removed
+      "applied_coupon removed_coupon",
+    ];
+
+    classicCartEvents.forEach(function (events) {
+      $(document.body).on(events, debouncedUpdateShippingBar);
+    });
+
+    // Click event: Remove product button (direct child of .product-remove)
+    // Triggered when: User clicks remove button in cart
+    $(document.body).on(
+      "click",
+      ".product-remove > .remove",
+      debouncedUpdateShippingBar
     );
 
-    /**
-     * Updated WC div event (cart page)
-     * Only for classic cart page
-     */
-    $(document.body).on("updated_wc_div product-remove", function () {
-      debouncedUpdateShippingBar();
-    });
-    $(document.body).on("click", ".product-remove .remove", function () {
-      debouncedUpdateShippingBar();
-    });
-
-    /**
-     * Coupon events
-     * Needed for both classic and mini cart block (coupons affect cart totals)
-     * But for mini cart block, batch API will handle it when coupon is applied via blocks
-     */
-    $(document.body).on("applied_coupon removed_coupon", function () {
-      // For mini cart block, batch API will handle this automatically
-      // For classic cart, need to update manually
-      debouncedUpdateShippingBar();
-    });
-
-    /**
-     * Direct quantity input changes (cart page - Classic)
-     */
-    let quantityTimeout;
+    // Quantity input changes (cart page - Classic)
+    // Triggered when: User changes quantity in cart form
     $(document.body).on(
       "change input",
       ".woocommerce-cart-form input.qty",
@@ -296,23 +260,22 @@
       }
     );
 
-    /**
-     * Form submit (cart page - backup)
-     */
+    // Form submit event (cart page - backup)
+    // Triggered when: User submits cart form (update cart button)
     $(document.body).on("submit", ".woocommerce-cart-form", function () {
       debouncedUpdateShippingBar(300);
     });
 
-    /**
-     * Mini cart block: Inject bar when drawer opens
-     */
+    // Mini cart block events
     if (isMiniCartBlock()) {
-      // Inject when mini cart button clicked
+      // Click event: Mini cart button
+      // Triggered when: User clicks to open mini cart drawer
       $(document.body).on("click", ".wc-block-mini-cart__button", function () {
         setTimeout(injectBarIntoMiniCartBlock, 300);
       });
 
-      // Update when cart changes (block events)
+      // Block cart events
+      // Triggered when: Items added/removed via WooCommerce Blocks
       $(document.body).on(
         "wc-blocks_added_to_cart wc-blocks_removed_from_cart",
         function () {
