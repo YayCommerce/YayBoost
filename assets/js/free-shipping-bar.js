@@ -2,8 +2,8 @@
     'use strict';
 
     // Store original fetch function
-    var originalFetch = window.fetch;
-    var pendingCartTotal = null;
+    const originalFetch = window.fetch;
+    let pendingCartTotal = null;
 
     /**
      * Check if we're in mini cart block context
@@ -17,8 +17,8 @@
      */
     if (originalFetch) {
         window.fetch = function() {
-            var args = arguments;
-            var url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
+            const args = arguments;
+            const url = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url ? args[0].url : '');
             
             // Only intercept batch API calls in mini cart context
             if (isMiniCartBlock() && url && url.includes('/wc/store/v1/batch')) {
@@ -30,8 +30,8 @@
                             data.responses.forEach(function(res) {
                                 // Find cart response that contains totals
                                 if (res.body && res.body.totals && res.body.totals.total_items !== undefined) {
-                                    var totals = res.body.totals;
-                                    var cartTotal = totals.total_price;
+                                    const totals = res.body.totals;
+                                    const cartTotal = totals.total_price;
                                     
                                     // Store cart total for later use
                                     pendingCartTotal = cartTotal;
@@ -59,10 +59,10 @@
      * @param {number|null} cartTotal Optional cart total from batch API (for mini cart block)
      */
     function updateShippingBar(cartTotal) {
-        var $bar = $('.yayboost-shipping-bar');
+        const $bar = $('.yayboost-shipping-bar');
         if ($bar.length === 0) return;
 
-        var ajaxData = {
+        const ajaxData = {
             action: 'yayboost_get_shipping_bar',
             nonce: yayboostShippingBar.nonce
         };
@@ -78,7 +78,7 @@
             data: ajaxData,
             success: function(response) {
                 if (response.success && response.data) {
-                    var data = response.data;
+                    const data = response.data;
 
                     // If no message, remove bar
                     if (!data.message) {
@@ -87,11 +87,11 @@
                     }
 
                     // Build achieved class
-                    var achievedClass = data.achieved && !data.show_coupon_message 
+                    const achievedClass = data.achieved && !data.show_coupon_message 
                         ? ' yayboost-shipping-bar--achieved' : '';
 
                     // Build progress bar HTML
-                    var progressHtml = '';
+                    let progressHtml = '';
                     if (data.threshold && data.threshold > 0 && !data.achieved && !data.show_coupon_message) {
                         progressHtml = '<div class="yayboost-shipping-bar__progress">' +
                             '<div class="yayboost-shipping-bar__progress-fill" style="width: ' + data.progress + '%"></div>' +
@@ -99,7 +99,7 @@
                     }
 
                     // Build complete bar HTML
-                    var barHtml = '<div class="yayboost-shipping-bar' + achievedClass + '">' +
+                    const barHtml = '<div class="yayboost-shipping-bar' + achievedClass + '">' +
                         '<div class="yayboost-shipping-bar__message">' + data.message + '</div>' +
                         progressHtml +
                         '</div>';
@@ -119,7 +119,7 @@
     }
 
     $(document).ready(function() {
-        var shippingBarTimeout;
+        let shippingBarTimeout;
 
         /**
          * Debounced update function
@@ -184,7 +184,7 @@
         /**
          * Direct quantity input changes (cart page - Classic)
          */
-        var quantityTimeout;
+        let quantityTimeout;
         $(document.body).on('change input', '.woocommerce-cart-form input.qty', function() {
             clearTimeout(quantityTimeout);
             quantityTimeout = setTimeout(function() {
