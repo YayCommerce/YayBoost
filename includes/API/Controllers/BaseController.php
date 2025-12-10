@@ -43,22 +43,22 @@ abstract class BaseController {
     /**
      * Register a route
      *
-     * @param string $route Route path
-     * @param string $method HTTP method
+     * @param string   $route Route path
+     * @param string   $method HTTP method
      * @param callable $callback Callback function
-     * @param array $args Additional arguments
+     * @param array    $args Additional arguments
      * @return void
      */
     protected function register_route($route, $method, $callback, $args = []) {
         $defaultArgs = [
-            'methods' => $method,
-            'callback' => $callback,
-            'permission_callback' => [$this, 'check_permission'],
+            'methods'             => $method,
+            'callback'            => $callback,
+            'permission_callback' => [ $this, 'check_permission' ],
         ];
 
-        $args = array_merge($defaultArgs, $args);
+        $args = array_merge( $defaultArgs, $args );
 
-        register_rest_route(Router::get_namespace(), $route, $args);
+        register_rest_route( Router::get_namespace(), $route, $args );
     }
 
     /**
@@ -68,11 +68,11 @@ abstract class BaseController {
      * @return bool|WP_Error
      */
     public function check_permission($request) {
-        if (!current_user_can('manage_woocommerce')) {
+        if ( ! current_user_can( 'manage_woocommerce' )) {
             return new WP_Error(
                 'rest_forbidden',
-                __('You do not have permission to access this resource.', 'yayboost'),
-                ['status' => 403]
+                __( 'You do not have permission to access this resource.', 'yayboost' ),
+                [ 'status' => 403 ]
             );
         }
 
@@ -83,30 +83,32 @@ abstract class BaseController {
      * Success response
      *
      * @param mixed $data Response data
-     * @param int $status HTTP status code
+     * @param int   $status HTTP status code
      * @return WP_REST_Response
      */
     protected function success($data = null, $status = 200) {
-        return new WP_REST_Response([
-            'success' => true,
-            'data' => $data,
-        ], $status);
+        return new WP_REST_Response(
+            [
+                'success' => true,
+                'data'    => $data,
+            ],
+            $status
+        );
     }
 
     /**
      * Error response
      *
      * @param string $message Error message
-     * @param int $status HTTP status code
-     * @param array $data Additional data
+     * @param int    $status HTTP status code
+     * @param array  $data Additional data
      * @return WP_Error
      */
     protected function error($message, $status = 400, $data = []) {
         return new WP_Error(
             'yayboost_error',
             $message,
-            array_merge(['status' => $status], $data)
+            array_merge( [ 'status' => $status ], $data )
         );
     }
 }
-

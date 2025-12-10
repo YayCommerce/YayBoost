@@ -32,7 +32,7 @@ abstract class AbstractRepository {
      *
      * @var array
      */
-    protected $allowed_orderby = ['id', 'name', 'status', 'priority', 'created_at', 'updated_at'];
+    protected $allowed_orderby = [ 'id', 'name', 'status', 'priority', 'created_at', 'updated_at' ];
 
     /**
      * Get table name
@@ -62,11 +62,11 @@ abstract class AbstractRepository {
             ARRAY_A
         );
 
-        if (!$result) {
+        if ( ! $result) {
             return null;
         }
 
-        return $this->hydrate($result);
+        return $this->hydrate( $result );
     }
 
     /**
@@ -79,29 +79,29 @@ abstract class AbstractRepository {
         global $wpdb;
 
         $defaults = [
-            'status'   => null,
-            'orderby'  => 'priority',
-            'order'    => 'ASC',
-            'limit'    => 100,
-            'offset'   => 0,
+            'status'  => null,
+            'orderby' => 'priority',
+            'order'   => 'ASC',
+            'limit'   => 100,
+            'offset'  => 0,
         ];
 
-        $args = wp_parse_args($args, $defaults);
+        $args = wp_parse_args( $args, $defaults );
 
         $where = $wpdb->prepare(
-            "feature_id = %s AND entity_type = %s",
+            'feature_id = %s AND entity_type = %s',
             $this->feature_id,
             $this->entity_type
         );
 
         if ($args['status']) {
-            $where .= $wpdb->prepare(" AND status = %s", $args['status']);
+            $where .= $wpdb->prepare( ' AND status = %s', $args['status'] );
         }
 
         // Validate orderby column against whitelist to prevent SQL injection
-        $orderby_column = in_array($args['orderby'], $this->allowed_orderby, true) ? $args['orderby'] : 'priority';
-        $order_direction = strtoupper($args['order']) === 'DESC' ? 'DESC' : 'ASC';
-        $orderby = "{$orderby_column} {$order_direction}";
+        $orderby_column  = in_array( $args['orderby'], $this->allowed_orderby, true ) ? $args['orderby'] : 'priority';
+        $order_direction = strtoupper( $args['order'] ) === 'DESC' ? 'DESC' : 'ASC';
+        $orderby         = "{$orderby_column} {$order_direction}";
 
         $sql = "SELECT * FROM {$this->get_table()}
                 WHERE {$where}
@@ -110,11 +110,11 @@ abstract class AbstractRepository {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $results = $wpdb->get_results(
-            $wpdb->prepare($sql, $args['limit'], $args['offset']),
+            $wpdb->prepare( $sql, $args['limit'], $args['offset'] ),
             ARRAY_A
         );
 
-        return array_map([$this, 'hydrate'], $results ?: []);
+        return array_map( [ $this, 'hydrate' ], $results ?: [] );
     }
 
     /**
@@ -123,7 +123,7 @@ abstract class AbstractRepository {
      * @return array
      */
     public function get_active(): array {
-        return $this->get_all(['status' => 'active']);
+        return $this->get_all( [ 'status' => 'active' ] );
     }
 
     /**
@@ -138,15 +138,15 @@ abstract class AbstractRepository {
         $insert_data = [
             'feature_id'  => $this->feature_id,
             'entity_type' => $this->entity_type,
-            'name'        => sanitize_text_field($data['name'] ?? ''),
-            'settings'    => wp_json_encode($this->sanitize_settings($data['settings'] ?? [])),
-            'status'      => $this->sanitize_status($data['status'] ?? 'active'),
+            'name'        => sanitize_text_field( $data['name'] ?? '' ),
+            'settings'    => wp_json_encode( $this->sanitize_settings( $data['settings'] ?? [] ) ),
+            'status'      => $this->sanitize_status( $data['status'] ?? 'active' ),
             'priority'    => (int) ($data['priority'] ?? 10),
-            'created_at'  => current_time('mysql'),
-            'updated_at'  => current_time('mysql'),
+            'created_at'  => current_time( 'mysql' ),
+            'updated_at'  => current_time( 'mysql' ),
         ];
 
-        $result = $wpdb->insert($this->get_table(), $insert_data);
+        $result = $wpdb->insert( $this->get_table(), $insert_data );
 
         if ($result === false) {
             return false;
@@ -166,22 +166,22 @@ abstract class AbstractRepository {
         global $wpdb;
 
         $update_data = [
-            'updated_at' => current_time('mysql'),
+            'updated_at' => current_time( 'mysql' ),
         ];
 
-        if (isset($data['name'])) {
-            $update_data['name'] = sanitize_text_field($data['name']);
+        if (isset( $data['name'] )) {
+            $update_data['name'] = sanitize_text_field( $data['name'] );
         }
 
-        if (isset($data['settings'])) {
-            $update_data['settings'] = wp_json_encode($this->sanitize_settings($data['settings']));
+        if (isset( $data['settings'] )) {
+            $update_data['settings'] = wp_json_encode( $this->sanitize_settings( $data['settings'] ) );
         }
 
-        if (isset($data['status'])) {
-            $update_data['status'] = $this->sanitize_status($data['status']);
+        if (isset( $data['status'] )) {
+            $update_data['status'] = $this->sanitize_status( $data['status'] );
         }
 
-        if (isset($data['priority'])) {
+        if (isset( $data['priority'] )) {
             $update_data['priority'] = (int) $data['priority'];
         }
 
@@ -229,13 +229,13 @@ abstract class AbstractRepository {
         global $wpdb;
 
         $where = $wpdb->prepare(
-            "feature_id = %s AND entity_type = %s",
+            'feature_id = %s AND entity_type = %s',
             $this->feature_id,
             $this->entity_type
         );
 
         if ($status) {
-            $where .= $wpdb->prepare(" AND status = %s", $status);
+            $where .= $wpdb->prepare( ' AND status = %s', $status );
         }
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -251,11 +251,11 @@ abstract class AbstractRepository {
      * @return array
      */
     protected function hydrate(array $row): array {
-        if (isset($row['settings']) && is_string($row['settings'])) {
-            $row['settings'] = json_decode($row['settings'], true) ?: [];
+        if (isset( $row['settings'] ) && is_string( $row['settings'] )) {
+            $row['settings'] = json_decode( $row['settings'], true ) ?: [];
         }
 
-        $row['id'] = (int) $row['id'];
+        $row['id']       = (int) $row['id'];
         $row['priority'] = (int) $row['priority'];
 
         return $row;
@@ -271,18 +271,18 @@ abstract class AbstractRepository {
         $sanitized = [];
 
         foreach ($settings as $key => $value) {
-            $key = sanitize_key($key);
+            $key = sanitize_key( $key );
 
-            if (is_array($value)) {
-                $sanitized[$key] = $this->sanitize_settings($value);
-            } elseif (is_bool($value)) {
-                $sanitized[$key] = $value;
-            } elseif (is_int($value)) {
-                $sanitized[$key] = (int) $value;
-            } elseif (is_float($value)) {
-                $sanitized[$key] = (float) $value;
+            if (is_array( $value )) {
+                $sanitized[ $key ] = $this->sanitize_settings( $value );
+            } elseif (is_bool( $value )) {
+                $sanitized[ $key ] = $value;
+            } elseif (is_int( $value )) {
+                $sanitized[ $key ] = (int) $value;
+            } elseif (is_float( $value )) {
+                $sanitized[ $key ] = (float) $value;
             } else {
-                $sanitized[$key] = sanitize_text_field((string) $value);
+                $sanitized[ $key ] = sanitize_text_field( (string) $value );
             }
         }
 
@@ -296,7 +296,7 @@ abstract class AbstractRepository {
      * @return string
      */
     protected function sanitize_status(string $status): string {
-        $allowed = ['active', 'inactive', 'draft'];
-        return in_array($status, $allowed, true) ? $status : 'active';
+        $allowed = [ 'active', 'inactive', 'draft' ];
+        return in_array( $status, $allowed, true ) ? $status : 'active';
     }
 }

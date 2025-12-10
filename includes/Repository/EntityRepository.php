@@ -18,7 +18,7 @@ class EntityRepository extends AbstractRepository {
      * @param string $entity_type
      */
     public function __construct(string $feature_id, string $entity_type) {
-        $this->feature_id = $feature_id;
+        $this->feature_id  = $feature_id;
         $this->entity_type = $entity_type;
     }
 
@@ -32,9 +32,12 @@ class EntityRepository extends AbstractRepository {
     public function find_by_setting(string $key, $value): array {
         $all = $this->get_active();
 
-        return array_filter($all, function($entity) use ($key, $value) {
-            return isset($entity['settings'][$key]) && $entity['settings'][$key] === $value;
-        });
+        return array_filter(
+            $all,
+            function ($entity) use ($key, $value) {
+                return isset( $entity['settings'][ $key ] ) && $entity['settings'][ $key ] === $value;
+            }
+        );
     }
 
     /**
@@ -47,12 +50,12 @@ class EntityRepository extends AbstractRepository {
     public function bulk_update_status(array $ids, string $status): int {
         global $wpdb;
 
-        if (empty($ids)) {
+        if (empty( $ids )) {
             return 0;
         }
 
-        $ids = array_map('intval', $ids);
-        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $ids          = array_map( 'intval', $ids );
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
@@ -63,9 +66,9 @@ class EntityRepository extends AbstractRepository {
                  AND feature_id = %s
                  AND entity_type = %s",
                 array_merge(
-                    [$status, current_time('mysql')],
+                    [ $status, current_time( 'mysql' ) ],
                     $ids,
-                    [$this->feature_id, $this->entity_type]
+                    [ $this->feature_id, $this->entity_type ]
                 )
             )
         );
@@ -82,12 +85,12 @@ class EntityRepository extends AbstractRepository {
     public function bulk_delete(array $ids): int {
         global $wpdb;
 
-        if (empty($ids)) {
+        if (empty( $ids )) {
             return 0;
         }
 
-        $ids = array_map('intval', $ids);
-        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        $ids          = array_map( 'intval', $ids );
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
@@ -98,7 +101,7 @@ class EntityRepository extends AbstractRepository {
                  AND entity_type = %s",
                 array_merge(
                     $ids,
-                    [$this->feature_id, $this->entity_type]
+                    [ $this->feature_id, $this->entity_type ]
                 )
             )
         );
@@ -120,7 +123,7 @@ class EntityRepository extends AbstractRepository {
                 $this->get_table(),
                 [
                     'priority'   => (int) $priority,
-                    'updated_at' => current_time('mysql'),
+                    'updated_at' => current_time( 'mysql' ),
                 ],
                 [
                     'id'          => (int) $id,
@@ -140,17 +143,19 @@ class EntityRepository extends AbstractRepository {
      * @return int|false New entity ID or false on failure
      */
     public function duplicate(int $id) {
-        $entity = $this->find($id);
+        $entity = $this->find( $id );
 
-        if (!$entity) {
+        if ( ! $entity) {
             return false;
         }
 
-        return $this->create([
-            'name'     => $entity['name'] . ' (Copy)',
-            'settings' => $entity['settings'],
-            'status'   => 'inactive',
-            'priority' => $entity['priority'] + 1,
-        ]);
+        return $this->create(
+            [
+                'name'     => $entity['name'] . ' (Copy)',
+                'settings' => $entity['settings'],
+                'status'   => 'inactive',
+                'priority' => $entity['priority'] + 1,
+            ]
+        );
     }
 }

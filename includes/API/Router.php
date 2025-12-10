@@ -50,13 +50,13 @@ class Router {
      */
     public function register_routes(): void {
         // Register feature routes
-        $this->register_controller(new Controllers\FeatureController($this->container));
+        $this->register_controller( new Controllers\FeatureController( $this->container ) );
 
         // Register entity routes
-        $this->register_controller(new Controllers\EntityController($this->container));
+        $this->register_controller( new Controllers\EntityController( $this->container ) );
 
         // Register settings routes
-        $this->register_controller(new Controllers\SettingsController($this->container));
+        $this->register_controller( new Controllers\SettingsController( $this->container ) );
     }
 
     /**

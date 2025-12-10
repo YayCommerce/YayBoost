@@ -25,22 +25,22 @@ class Settings {
      */
     public function get_all() {
         $defaults = $this->get_defaults();
-        $settings = get_option(self::OPTION_NAME, []);
+        $settings = get_option( self::OPTION_NAME, [] );
 
-        return array_merge($defaults, $settings);
+        return array_merge( $defaults, $settings );
     }
 
     /**
      * Get a specific setting
      *
      * @param string $key Setting key
-     * @param mixed $default Default value
+     * @param mixed  $default Default value
      * @return mixed
      */
     public function get($key, $default = null) {
         $settings = $this->get_all();
-        
-        return isset($settings[$key]) ? $settings[$key] : $default;
+
+        return isset( $settings[ $key ] ) ? $settings[ $key ] : $default;
     }
 
     /**
@@ -51,20 +51,20 @@ class Settings {
      */
     public function update($data) {
         $current = $this->get_all();
-        $updated = array_merge($current, $data);
+        $updated = array_merge( $current, $data );
 
-        return update_option(self::OPTION_NAME, $updated);
+        return update_option( self::OPTION_NAME, $updated );
     }
 
     /**
      * Update a specific setting
      *
      * @param string $key Setting key
-     * @param mixed $value Setting value
+     * @param mixed  $value Setting value
      * @return bool
      */
     public function set($key, $value) {
-        return $this->update([$key => $value]);
+        return $this->update( [ $key => $value ] );
     }
 
     /**
@@ -75,10 +75,10 @@ class Settings {
      */
     public function delete($key) {
         $settings = $this->get_all();
-        
-        if (isset($settings[$key])) {
-            unset($settings[$key]);
-            return update_option(self::OPTION_NAME, $settings);
+
+        if (isset( $settings[ $key ] )) {
+            unset( $settings[ $key ] );
+            return update_option( self::OPTION_NAME, $settings );
         }
 
         return false;
@@ -90,7 +90,7 @@ class Settings {
      * @return bool
      */
     public function reset() {
-        return update_option(self::OPTION_NAME, $this->get_defaults());
+        return update_option( self::OPTION_NAME, $this->get_defaults() );
     }
 
     /**
@@ -101,10 +101,9 @@ class Settings {
     protected function get_defaults() {
         return [
             'features' => [],
-            'general' => [
+            'general'  => [
                 'enabled' => true,
             ],
         ];
     }
 }
-

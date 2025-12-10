@@ -33,10 +33,10 @@ class ServiceProvider implements ServiceProviderInterface {
      */
     public function register(Container $container): void {
         // Register features
-        $this->register_features($container);
+        $this->register_features( $container );
 
         // Register utilities
-        $this->register_utilities($container);
+        $this->register_utilities( $container );
     }
 
     /**
@@ -47,7 +47,7 @@ class ServiceProvider implements ServiceProviderInterface {
      */
     public function boot(Container $container): void {
         // Get registry and fire addon hook
-        $registry = $container->resolve('feature.registry');
+        $registry = $container->resolve( 'feature.registry' );
         $registry->fire_addon_hook();
 
         // Initialize all enabled features
@@ -66,35 +66,47 @@ class ServiceProvider implements ServiceProviderInterface {
      */
     protected function register_features(Container $container): void {
         // Register Sample Boost Feature (Recently Viewed Products)
-        $container->register('feature.sample_boost', function($c) {
-            return new SampleBoostFeature($c);
-        });
+        $container->register(
+            'feature.sample_boost',
+            function ($c) {
+                return new SampleBoostFeature( $c );
+            }
+        );
         $this->features[] = 'feature.sample_boost';
 
         // Register Free Shipping Bar Feature
-        $container->register('feature.free_shipping_bar', function($c) {
-            return new FreeShippingBarFeature($c);
-        });
+        $container->register(
+            'feature.free_shipping_bar',
+            function ($c) {
+                return new FreeShippingBarFeature( $c );
+            }
+        );
         $this->features[] = 'feature.free_shipping_bar';
 
         // Register Order Bump Feature
-        $container->register('feature.order_bump', function($c) {
-            return new OrderBumpFeature($c);
-        });
+        $container->register(
+            'feature.order_bump',
+            function ($c) {
+                return new OrderBumpFeature( $c );
+            }
+        );
         $this->features[] = 'feature.order_bump';
 
         // Register feature registry
-        $container->register('feature.registry', function($c) {
-            $registry = new FeatureRegistry();
+        $container->register(
+            'feature.registry',
+            function ($c) {
+                $registry = new FeatureRegistry();
 
-            // Register core features
-            foreach ($this->features as $featureKey) {
-                $feature = $c->resolve($featureKey);
-                $registry->register($feature);
+                // Register core features
+                foreach ($this->features as $featureKey) {
+                    $feature = $c->resolve( $featureKey );
+                    $registry->register( $feature );
+                }
+
+                return $registry;
             }
-
-            return $registry;
-        });
+        );
     }
 
     /**
@@ -105,9 +117,12 @@ class ServiceProvider implements ServiceProviderInterface {
      */
     protected function register_utilities(Container $container): void {
         // Register settings manager
-        $container->register('settings', function($c) {
-            return new Utils\Settings();
-        });
+        $container->register(
+            'settings',
+            function ($c) {
+                return new Utils\Settings();
+            }
+        );
     }
 
     /**

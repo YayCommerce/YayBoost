@@ -34,7 +34,7 @@ class EntityTable {
     public static function create(): bool {
         global $wpdb;
 
-        $table_name = self::get_table_name();
+        $table_name      = self::get_table_name();
         $charset_collate = $wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE {$table_name} (
@@ -54,7 +54,7 @@ class EntityTable {
         ) {$charset_collate};";
 
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-        dbDelta($sql);
+        dbDelta( $sql );
 
         // Verify table was created
         return self::exists();
@@ -69,12 +69,12 @@ class EntityTable {
         global $wpdb;
 
         $table_name = self::get_table_name();
-        $query = $wpdb->prepare(
-            "SHOW TABLES LIKE %s",
+        $query      = $wpdb->prepare(
+            'SHOW TABLES LIKE %s',
             $table_name
         );
 
-        return $wpdb->get_var($query) === $table_name;
+        return $wpdb->get_var( $query ) === $table_name;
     }
 
     /**
@@ -87,9 +87,9 @@ class EntityTable {
 
         $table_name = self::get_table_name();
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
+        $wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
 
-        return !self::exists();
+        return ! self::exists();
     }
 
     /**

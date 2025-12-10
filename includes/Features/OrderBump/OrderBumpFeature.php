@@ -77,16 +77,16 @@ class OrderBumpFeature extends AbstractFeature {
         $position = $settings['default_position'] ?? 'before_payment';
 
         // Hook into checkout based on position
-        $this->register_display_hooks($position);
+        $this->register_display_hooks( $position );
 
         // Enqueue assets
-        add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 
         // AJAX handlers
-        add_action('wp_ajax_yayboost_add_bump', [$this, 'ajax_add_bump']);
-        add_action('wp_ajax_nopriv_yayboost_add_bump', [$this, 'ajax_add_bump']);
-        add_action('wp_ajax_yayboost_remove_bump', [$this, 'ajax_remove_bump']);
-        add_action('wp_ajax_nopriv_yayboost_remove_bump', [$this, 'ajax_remove_bump']);
+        add_action( 'wp_ajax_yayboost_add_bump', [ $this, 'ajax_add_bump' ] );
+        add_action( 'wp_ajax_nopriv_yayboost_add_bump', [ $this, 'ajax_add_bump' ] );
+        add_action( 'wp_ajax_yayboost_remove_bump', [ $this, 'ajax_remove_bump' ] );
+        add_action( 'wp_ajax_nopriv_yayboost_remove_bump', [ $this, 'ajax_remove_bump' ] );
     }
 
     /**
@@ -98,19 +98,19 @@ class OrderBumpFeature extends AbstractFeature {
     protected function register_display_hooks(string $position): void {
         switch ($position) {
             case 'before_payment':
-                add_action('woocommerce_review_order_before_payment', [$this, 'render_bumps']);
+                add_action( 'woocommerce_review_order_before_payment', [ $this, 'render_bumps' ] );
                 break;
             case 'after_order_review':
-                add_action('woocommerce_checkout_after_order_review', [$this, 'render_bumps']);
+                add_action( 'woocommerce_checkout_after_order_review', [ $this, 'render_bumps' ] );
                 break;
             case 'before_billing':
-                add_action('woocommerce_before_checkout_billing_form', [$this, 'render_bumps']);
+                add_action( 'woocommerce_before_checkout_billing_form', [ $this, 'render_bumps' ] );
                 break;
             case 'after_billing':
-                add_action('woocommerce_after_checkout_billing_form', [$this, 'render_bumps']);
+                add_action( 'woocommerce_after_checkout_billing_form', [ $this, 'render_bumps' ] );
                 break;
             default:
-                add_action('woocommerce_review_order_before_payment', [$this, 'render_bumps']);
+                add_action( 'woocommerce_review_order_before_payment', [ $this, 'render_bumps' ] );
         }
     }
 
@@ -120,12 +120,12 @@ class OrderBumpFeature extends AbstractFeature {
      * @return void
      */
     public function enqueue_assets(): void {
-        if (!is_checkout()) {
+        if ( ! is_checkout()) {
             return;
         }
 
         // Inline styles
-        wp_add_inline_style('yayboost-frontend', $this->get_inline_styles());
+        wp_add_inline_style( 'yayboost-frontend', $this->get_inline_styles() );
     }
 
     /**
@@ -134,7 +134,7 @@ class OrderBumpFeature extends AbstractFeature {
      * @return string
      */
     protected function get_inline_styles(): string {
-        return "
+        return '
             .yayboost-order-bump {
                 border: 2px dashed #ddd;
                 border-radius: 8px;
@@ -185,7 +185,7 @@ class OrderBumpFeature extends AbstractFeature {
                 color: #666;
                 margin-top: 10px;
             }
-        ";
+        ';
     }
 
     /**
@@ -196,16 +196,16 @@ class OrderBumpFeature extends AbstractFeature {
     public function render_bumps(): void {
         $bumps = $this->get_applicable_bumps();
 
-        if (empty($bumps)) {
+        if (empty( $bumps )) {
             return;
         }
 
-        $settings = $this->get_settings();
+        $settings  = $this->get_settings();
         $max_bumps = (int) ($settings['max_bumps_per_page'] ?? 3);
-        $bumps = array_slice($bumps, 0, $max_bumps);
+        $bumps     = array_slice( $bumps, 0, $max_bumps );
 
         foreach ($bumps as $bump) {
-            $this->render_single_bump($bump);
+            $this->render_single_bump( $bump );
         }
     }
 
@@ -215,24 +215,30 @@ class OrderBumpFeature extends AbstractFeature {
      * @return array
      */
     protected function get_applicable_bumps(): array {
-        $all_bumps = $this->repository->get_active();
-        $cart_items = WC()->cart ? WC()->cart->get_cart() : [];
-        $cart_product_ids = array_map(function($item) {
-            return $item['product_id'];
-        }, $cart_items);
+        $all_bumps        = $this->repository->get_active();
+        $cart_items       = WC()->cart ? WC()->cart->get_cart() : [];
+        $cart_product_ids = array_map(
+            function ($item) {
+                return $item['product_id'];
+            },
+            $cart_items
+        );
 
         $applicable = [];
 
         foreach ($all_bumps as $bump) {
-            if ($this->is_bump_applicable($bump, $cart_product_ids)) {
+            if ($this->is_bump_applicable( $bump, $cart_product_ids )) {
                 $applicable[] = $bump;
             }
         }
 
         // Sort by priority
-        usort($applicable, function($a, $b) {
-            return ($a['priority'] ?? 10) - ($b['priority'] ?? 10);
-        });
+        usort(
+            $applicable,
+            function ($a, $b) {
+                return ($a['priority'] ?? 10) - ($b['priority'] ?? 10);
+            }
+        );
 
         return $applicable;
     }
@@ -249,7 +255,7 @@ class OrderBumpFeature extends AbstractFeature {
 
         // Check if bump product is not already in cart
         $bump_product_id = $settings['product_id'] ?? 0;
-        if (in_array($bump_product_id, $cart_product_ids, true)) {
+        if (in_array( $bump_product_id, $cart_product_ids, true )) {
             return false;
         }
 
@@ -262,26 +268,26 @@ class OrderBumpFeature extends AbstractFeature {
 
             case 'specific_products':
                 $trigger_products = $settings['trigger_products'] ?? [];
-                return !empty(array_intersect($trigger_products, $cart_product_ids));
+                return ! empty( array_intersect( $trigger_products, $cart_product_ids ) );
 
             case 'specific_categories':
                 $trigger_categories = $settings['trigger_categories'] ?? [];
                 foreach ($cart_product_ids as $product_id) {
-                    $product_cats = wp_get_post_terms($product_id, 'product_cat', ['fields' => 'ids']);
-                    if (!empty(array_intersect($trigger_categories, $product_cats))) {
+                    $product_cats = wp_get_post_terms( $product_id, 'product_cat', [ 'fields' => 'ids' ] );
+                    if ( ! empty( array_intersect( $trigger_categories, $product_cats ) )) {
                         return true;
                     }
                 }
                 return false;
 
             case 'cart_total':
-                $min_total = (float) ($settings['min_cart_total'] ?? 0);
+                $min_total  = (float) ($settings['min_cart_total'] ?? 0);
                 $cart_total = WC()->cart ? (float) WC()->cart->get_subtotal() : 0;
                 return $cart_total >= $min_total;
 
             default:
                 return true;
-        }
+        }//end switch
     }
 
     /**
@@ -291,60 +297,60 @@ class OrderBumpFeature extends AbstractFeature {
      * @return void
      */
     protected function render_single_bump(array $bump): void {
-        $settings = $bump['settings'] ?? [];
+        $settings   = $bump['settings'] ?? [];
         $product_id = $settings['product_id'] ?? 0;
-        $product = wc_get_product($product_id);
+        $product    = wc_get_product( $product_id );
 
-        if (!$product) {
+        if ( ! $product) {
             return;
         }
 
-        $discount_type = $settings['discount_type'] ?? 'none';
+        $discount_type  = $settings['discount_type'] ?? 'none';
         $discount_value = (float) ($settings['discount_value'] ?? 0);
 
-        $original_price = (float) $product->get_price();
-        $discounted_price = $this->calculate_discounted_price($original_price, $discount_type, $discount_value);
+        $original_price   = (float) $product->get_price();
+        $discounted_price = $this->calculate_discounted_price( $original_price, $discount_type, $discount_value );
 
-        $is_in_cart = $this->is_bump_in_cart($bump['id']);
+        $is_in_cart     = $this->is_bump_in_cart( $bump['id'] );
         $selected_class = $is_in_cart ? ' yayboost-order-bump--selected' : '';
         ?>
-        <div class="yayboost-order-bump<?php echo esc_attr($selected_class); ?>" data-bump-id="<?php echo esc_attr($bump['id']); ?>">
+        <div class="yayboost-order-bump<?php echo esc_attr( $selected_class ); ?>" data-bump-id="<?php echo esc_attr( $bump['id'] ); ?>">
             <div class="yayboost-order-bump__header">
                 <input
                     type="checkbox"
                     class="yayboost-order-bump__checkbox"
-                    <?php checked($is_in_cart); ?>
-                    data-bump-id="<?php echo esc_attr($bump['id']); ?>"
-                    data-product-id="<?php echo esc_attr($product_id); ?>"
+                    <?php checked( $is_in_cart ); ?>
+                    data-bump-id="<?php echo esc_attr( $bump['id'] ); ?>"
+                    data-product-id="<?php echo esc_attr( $product_id ); ?>"
                 />
                 <?php if ($image = $product->get_image_id()) : ?>
                     <img
-                        src="<?php echo esc_url(wp_get_attachment_image_url($image, 'thumbnail')); ?>"
-                        alt="<?php echo esc_attr($product->get_name()); ?>"
+                        src="<?php echo esc_url( wp_get_attachment_image_url( $image, 'thumbnail' ) ); ?>"
+                        alt="<?php echo esc_attr( $product->get_name() ); ?>"
                         class="yayboost-order-bump__image"
                     />
                 <?php endif; ?>
                 <div class="yayboost-order-bump__content">
                     <div class="yayboost-order-bump__title">
-                        <?php echo esc_html($settings['headline'] ?? $product->get_name()); ?>
+                        <?php echo esc_html( $settings['headline'] ?? $product->get_name() ); ?>
                     </div>
                     <div class="yayboost-order-bump__price">
                         <?php if ($discounted_price < $original_price) : ?>
                             <span class="yayboost-order-bump__price-original">
-                                <?php echo wp_kses_post(wc_price($original_price)); ?>
+                                <?php echo wp_kses_post( wc_price( $original_price ) ); ?>
                             </span>
                             <span class="yayboost-order-bump__price-discounted">
-                                <?php echo wp_kses_post(wc_price($discounted_price)); ?>
+                                <?php echo wp_kses_post( wc_price( $discounted_price ) ); ?>
                             </span>
                         <?php else : ?>
-                            <?php echo wp_kses_post(wc_price($original_price)); ?>
+                            <?php echo wp_kses_post( wc_price( $original_price ) ); ?>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
-            <?php if (!empty($settings['description'])) : ?>
+            <?php if ( ! empty( $settings['description'] )) : ?>
                 <div class="yayboost-order-bump__description">
-                    <?php echo wp_kses_post($settings['description']); ?>
+                    <?php echo wp_kses_post( $settings['description'] ); ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -364,7 +370,7 @@ class OrderBumpFeature extends AbstractFeature {
             case 'percentage':
                 return $price * (1 - ($discount_value / 100));
             case 'fixed':
-                return max(0, $price - $discount_value);
+                return max( 0, $price - $discount_value );
             default:
                 return $price;
         }
@@ -377,12 +383,12 @@ class OrderBumpFeature extends AbstractFeature {
      * @return bool
      */
     protected function is_bump_in_cart(int $bump_id): bool {
-        if (!WC()->cart) {
+        if ( ! WC()->cart) {
             return false;
         }
 
         foreach (WC()->cart->get_cart() as $cart_item) {
-            if (isset($cart_item['yayboost_bump_id']) && (int) $cart_item['yayboost_bump_id'] === $bump_id) {
+            if (isset( $cart_item['yayboost_bump_id'] ) && (int) $cart_item['yayboost_bump_id'] === $bump_id) {
                 return true;
             }
         }
@@ -396,28 +402,28 @@ class OrderBumpFeature extends AbstractFeature {
      * @return void
      */
     public function ajax_add_bump(): void {
-        check_ajax_referer('yayboost_nonce', 'nonce');
+        check_ajax_referer( 'yayboost_nonce', 'nonce' );
 
-        $bump_id = isset($_POST['bump_id']) ? (int) $_POST['bump_id'] : 0;
-        $bump = $this->repository->find($bump_id);
+        $bump_id = isset( $_POST['bump_id'] ) ? (int) $_POST['bump_id'] : 0;
+        $bump    = $this->repository->find( $bump_id );
 
-        if (!$bump) {
-            wp_send_json_error(['message' => __('Bump offer not found.', 'yayboost')]);
+        if ( ! $bump) {
+            wp_send_json_error( [ 'message' => __( 'Bump offer not found.', 'yayboost' ) ] );
         }
 
-        $settings = $bump['settings'] ?? [];
+        $settings   = $bump['settings'] ?? [];
         $product_id = $settings['product_id'] ?? 0;
-        $quantity = $settings['quantity'] ?? 1;
+        $quantity   = $settings['quantity'] ?? 1;
 
         // Calculate custom price
-        $product = wc_get_product($product_id);
-        if (!$product) {
-            wp_send_json_error(['message' => __('Product not found.', 'yayboost')]);
+        $product = wc_get_product( $product_id );
+        if ( ! $product) {
+            wp_send_json_error( [ 'message' => __( 'Product not found.', 'yayboost' ) ] );
         }
 
-        $discount_type = $settings['discount_type'] ?? 'none';
+        $discount_type  = $settings['discount_type'] ?? 'none';
         $discount_value = (float) ($settings['discount_value'] ?? 0);
-        $custom_price = $this->calculate_discounted_price((float) $product->get_price(), $discount_type, $discount_value);
+        $custom_price   = $this->calculate_discounted_price( (float) $product->get_price(), $discount_type, $discount_value );
 
         // Add to cart with custom data
         $cart_item_data = [
@@ -425,15 +431,17 @@ class OrderBumpFeature extends AbstractFeature {
             'yayboost_bump_price' => $custom_price,
         ];
 
-        $cart_item_key = WC()->cart->add_to_cart($product_id, $quantity, 0, [], $cart_item_data);
+        $cart_item_key = WC()->cart->add_to_cart( $product_id, $quantity, 0, [], $cart_item_data );
 
         if ($cart_item_key) {
-            wp_send_json_success([
-                'message'       => __('Added to cart!', 'yayboost'),
-                'cart_item_key' => $cart_item_key,
-            ]);
+            wp_send_json_success(
+                [
+                    'message'       => __( 'Added to cart!', 'yayboost' ),
+                    'cart_item_key' => $cart_item_key,
+                ]
+            );
         } else {
-            wp_send_json_error(['message' => __('Could not add to cart.', 'yayboost')]);
+            wp_send_json_error( [ 'message' => __( 'Could not add to cart.', 'yayboost' ) ] );
         }
     }
 
@@ -443,22 +451,22 @@ class OrderBumpFeature extends AbstractFeature {
      * @return void
      */
     public function ajax_remove_bump(): void {
-        check_ajax_referer('yayboost_nonce', 'nonce');
+        check_ajax_referer( 'yayboost_nonce', 'nonce' );
 
-        $bump_id = isset($_POST['bump_id']) ? (int) $_POST['bump_id'] : 0;
+        $bump_id = isset( $_POST['bump_id'] ) ? (int) $_POST['bump_id'] : 0;
 
-        if (!WC()->cart) {
-            wp_send_json_error(['message' => __('Cart not available.', 'yayboost')]);
+        if ( ! WC()->cart) {
+            wp_send_json_error( [ 'message' => __( 'Cart not available.', 'yayboost' ) ] );
         }
 
         foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
-            if (isset($cart_item['yayboost_bump_id']) && (int) $cart_item['yayboost_bump_id'] === $bump_id) {
-                WC()->cart->remove_cart_item($cart_item_key);
-                wp_send_json_success(['message' => __('Removed from cart.', 'yayboost')]);
+            if (isset( $cart_item['yayboost_bump_id'] ) && (int) $cart_item['yayboost_bump_id'] === $bump_id) {
+                WC()->cart->remove_cart_item( $cart_item_key );
+                wp_send_json_success( [ 'message' => __( 'Removed from cart.', 'yayboost' ) ] );
             }
         }
 
-        wp_send_json_error(['message' => __('Item not found in cart.', 'yayboost')]);
+        wp_send_json_error( [ 'message' => __( 'Item not found in cart.', 'yayboost' ) ] );
     }
 
     /**
@@ -467,11 +475,14 @@ class OrderBumpFeature extends AbstractFeature {
      * @return array
      */
     protected function get_default_settings(): array {
-        return array_merge(parent::get_default_settings(), [
-            'default_position'    => 'before_payment',
-            'max_bumps_per_page'  => 3,
-            'show_product_image'  => true,
-            'checkbox_style'      => 'default',
-        ]);
+        return array_merge(
+            parent::get_default_settings(),
+            [
+                'default_position'   => 'before_payment',
+                'max_bumps_per_page' => 3,
+                'show_product_image' => true,
+                'checkbox_style'     => 'default',
+            ]
+        );
     }
 }
