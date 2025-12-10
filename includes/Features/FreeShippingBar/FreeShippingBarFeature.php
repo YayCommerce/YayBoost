@@ -448,9 +448,10 @@ class FreeShippingBarFeature extends AbstractFeature {
     /**
      * Get bar data based on cart contents
      *
+     * @param float|null $cart_total_override Optional cart total override from batch API (for mini cart block)
      * @return array|null
      */
-    public function get_bar_data(): ?array {
+    public function get_bar_data(?float $cart_total_override = null): ?array {
         if (!WC()->cart) {
             return null;
         }
@@ -466,7 +467,11 @@ class FreeShippingBarFeature extends AbstractFeature {
         $min_amount = $free_shipping_info['min_amount'];
         $requires_coupon = $free_shipping_info['requires_coupon'];
         $has_coupon = $free_shipping_info['has_free_shipping_coupon'];
-        $cart_total = (float) WC()->cart->get_subtotal();
+        
+        // Use override from batch API if provided (mini cart block), otherwise get from cart
+        $cart_total = $cart_total_override !== null 
+            ? $cart_total_override 
+            : (float) WC()->cart->get_subtotal();
 
         // Case 1: Only coupon required (no min_amount) - don't show bar
         if ($requires_coupon && $min_amount === null) {
@@ -565,7 +570,10 @@ class FreeShippingBarFeature extends AbstractFeature {
             return;
         }
 
-        $data = $this->get_bar_data();
+        // Use cart_total from FE if provided (for mini cart block from batch API)
+        $cart_total = isset($_POST['cart_total']) ? floatval($_POST['cart_total']) : null;
+
+        $data = $this->get_bar_data($cart_total);
         wp_send_json_success($data);
     }
 
