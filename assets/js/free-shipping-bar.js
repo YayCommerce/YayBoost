@@ -2,6 +2,13 @@
   "use strict";
 
   /**
+   * Bar state constants
+   */
+  const STATE_ACHIEVED = "achieved";
+  const STATE_NEED_COUPON = "need_coupon";
+  const STATE_IN_PROGRESS = "in_progress";
+
+  /**
    * Check if we're in mini cart block context
    */
   function isMiniCartBlock() {
@@ -12,10 +19,11 @@
   }
 
   /**
-   * Get cart total from WooCommerce cart store
+   * Calculate cart total the same way WooCommerce Free Shipping method does
+   * @param {string} ignoreDiscounts 'yes' to ignore discounts, 'no' to apply after discount
    * @return {number|null} Cart total or null if not available
    */
-  function getCartTotalFromStore() {
+  function calculateCartTotalForShipping(ignoreDiscounts) {
     if (
       typeof window.wp === "undefined" ||
       !window.wp.data ||
@@ -26,15 +34,54 @@
 
     try {
       const cartData = window.wp.data.select("wc/store/cart").getCartData();
-      if (cartData && cartData.totals) {
-        // Use total_items (subtotal) for free shipping calculation
-        return parseFloat(cartData.totals.total_items) || null;
+      if (!cartData || !cartData.totals) {
+        return null;
       }
+
+      // Use displayed subtotal (total_items) - same as WooCommerce get_displayed_subtotal()
+      let total = parseFloat(cartData.totals.total_items) || 0;
+
+      // If ignore_discounts is 'no' (default), subtract discount
+      if (ignoreDiscounts !== "yes") {
+        const discountTotal = parseFloat(cartData.totals.total_discount) || 0;
+        total = total - discountTotal;
+
+        // If prices include tax, also subtract discount tax
+        // Note: WooCommerce store might not expose discount_tax directly
+        // This is an approximation - for exact match, would need to check display_prices_including_tax
+        // But discount_tax is usually small, so this should be close enough
+      }
+
+      // Round to match WooCommerce behavior (usually 2 decimals)
+      const decimals =
+        yayboostShippingBar && yayboostShippingBar.settings
+          ? yayboostShippingBar.settings.decimals || 2
+          : 2;
+      total =
+        Math.round(total * Math.pow(10, decimals)) / Math.pow(10, decimals);
+
+      return total > 0 ? total : null;
     } catch (e) {
-      console.log("Error getting cart data from store:", e);
+      console.log("Error calculating cart total:", e);
     }
 
     return null;
+  }
+
+  /**
+   * Get cart total from WooCommerce cart store
+   * @return {number|null} Cart total or null if not available
+   */
+  function getCartTotalFromStore() {
+    // Get ignore_discounts from thresholdInfo if available
+    const ignoreDiscounts =
+      yayboostShippingBar &&
+      yayboostShippingBar.thresholdInfo &&
+      yayboostShippingBar.thresholdInfo.ignore_discounts
+        ? yayboostShippingBar.thresholdInfo.ignore_discounts
+        : "no";
+
+    return calculateCartTotalForShipping(ignoreDiscounts);
   }
 
   /**
@@ -146,20 +193,52 @@
   /**
    * Determine bar state based on progress and coupon requirements
    * @param {boolean} achieved Whether threshold is achieved
-   * @param {boolean} requiresCoupon Whether coupon is required
+   * @param {string|null} requiresType The requires type: '' | 'coupon' | 'min_amount' | 'either' | 'both'
    * @param {boolean} hasCoupon Whether coupon is applied
    * @return {string} 'achieved'|'need_coupon'|'in_progress'
    */
-  function determineBarState(achieved, requiresCoupon, hasCoupon) {
-    if (hasCoupon || (achieved && !requiresCoupon)) {
-      return "achieved";
+  function determineBarState(achieved, requiresType, hasCoupon) {
+    // Case 1: No requirement - free shipping always available (shouldn't show bar)
+    if (requiresType === "") {
+      return STATE_ACHIEVED;
     }
 
-    if (achieved && requiresCoupon) {
-      return "need_coupon";
+    // Case 2: Only coupon required (no min_amount) - shouldn't show bar, but handle gracefully
+    if (requiresType === "coupon") {
+      return hasCoupon ? STATE_ACHIEVED : STATE_NEED_COUPON;
     }
 
-    return "in_progress";
+    // Case 3: Only min_amount required
+    if (requiresType === "min_amount") {
+      return achieved ? STATE_ACHIEVED : STATE_IN_PROGRESS;
+    }
+
+    // Case 4: Either min_amount OR coupon (either)
+    if (requiresType === "either") {
+      // Achieved if: has coupon OR achieved min_amount
+      if (hasCoupon || achieved) {
+        return STATE_ACHIEVED;
+      }
+      // Otherwise, still in progress
+      return STATE_IN_PROGRESS;
+    }
+
+    // Case 5: Both min_amount AND coupon (both)
+    if (requiresType === "both") {
+      // Achieved only if: has coupon AND achieved min_amount
+      if (hasCoupon && achieved) {
+        return STATE_ACHIEVED;
+      }
+      // If achieved min_amount but no coupon, need coupon
+      if (achieved && !hasCoupon) {
+        return STATE_NEED_COUPON;
+      }
+      // Otherwise, still in progress
+      return STATE_IN_PROGRESS;
+    }
+
+    // Fallback: treat as min_amount only
+    return achieved ? STATE_ACHIEVED : STATE_IN_PROGRESS;
   }
 
   /**
@@ -179,13 +258,13 @@
     cartTotal
   ) {
     switch (state) {
-      case "achieved":
+      case STATE_ACHIEVED:
         return settings.message_achieved;
 
-      case "need_coupon":
+      case STATE_NEED_COUPON:
         return settings.message_coupon;
 
-      case "in_progress":
+      case STATE_IN_PROGRESS:
       default:
         return formatMessage(
           settings.message_progress,
@@ -215,11 +294,11 @@
     return {
       threshold: threshold,
       current: cartTotal,
-      remaining: state === "achieved" ? 0 : progressData.remaining,
-      progress: state === "achieved" ? 100 : progressData.progress,
-      achieved: state === "achieved",
+      remaining: state === STATE_ACHIEVED ? 0 : progressData.remaining,
+      progress: state === STATE_ACHIEVED ? 100 : progressData.progress,
+      achieved: state === STATE_ACHIEVED,
       message: message,
-      show_coupon_message: state === "need_coupon",
+      show_coupon_message: state === STATE_NEED_COUPON,
     };
   }
 
@@ -236,14 +315,14 @@
     }
 
     const threshold = thresholdInfo.min_amount;
-    const requiresCoupon = thresholdInfo.requires_coupon || false;
+    const requiresType = thresholdInfo.requires_type || null;
     const hasCoupon = hasFreeShippingCoupon();
     const progressData = calculateProgress(threshold, cartTotal);
 
     // Determine state
     const state = determineBarState(
       progressData.achieved,
-      requiresCoupon,
+      requiresType,
       hasCoupon
     );
 

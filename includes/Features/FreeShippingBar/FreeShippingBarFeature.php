@@ -17,6 +17,21 @@ use YayBoost\Features\AbstractFeature;
  */
 class FreeShippingBarFeature extends AbstractFeature {
     /**
+     * Bar state: Free shipping achieved
+     */
+    const STATE_ACHIEVED = 'achieved';
+
+    /**
+     * Bar state: Need coupon to get free shipping
+     */
+    const STATE_NEED_COUPON = 'need_coupon';
+
+    /**
+     * Bar state: In progress (not yet achieved)
+     */
+    const STATE_IN_PROGRESS = 'in_progress';
+
+    /**
      * Feature ID
      *
      * @var string
@@ -282,6 +297,10 @@ class FreeShippingBarFeature extends AbstractFeature {
         $min_amounts        = [];
         $requires_coupon    = false;
         $has_no_requirement = false;
+        // Store the actual requires value: '' | 'coupon' | 'min_amount' | 'either' | 'both'
+        $requires_type = null;
+        // Default: apply minimum order rule after coupon discount
+        $ignore_discounts = 'no';
 
         foreach ($packages as $package) {
             // Get matching shipping zone
@@ -302,10 +321,27 @@ class FreeShippingBarFeature extends AbstractFeature {
 
                 $requires = $method->requires ?? '';
 
+                // Get ignore_discounts setting (use first found, or 'yes' if any method has it)
+                $method_ignore_discounts = $method->ignore_discounts ?? 'no';
+                if ($method_ignore_discounts === 'yes') {
+                    $ignore_discounts = 'yes';
+                }
+
                 // Check if no requirement (free shipping already available)
                 if ($requires === '') {
                     $has_no_requirement = true;
+                    $requires_type      = '';
                     continue;
+                }
+
+                // Store the requires type (use the first one found, or 'either'/'both' if multiple)
+                if ($requires_type === null) {
+                    $requires_type = $requires;
+                } elseif ($requires_type !== $requires) {
+                    // If multiple methods with different requires, prioritize 'both' > 'either' > others
+                    if ($requires === 'both' || ($requires === 'either' && $requires_type !== 'both')) {
+                        $requires_type = $requires;
+                    }
                 }
 
                 // Check if requires coupon
@@ -337,6 +373,8 @@ class FreeShippingBarFeature extends AbstractFeature {
         return [
             'min_amount'               => $min_amount,
             'requires_coupon'          => $requires_coupon,
+            'requires_type'            => $requires_type,
+            'ignore_discounts'         => $ignore_discounts,
             'has_free_shipping_coupon' => $has_coupon,
         ];
     }
@@ -378,6 +416,28 @@ class FreeShippingBarFeature extends AbstractFeature {
     }
 
     /**
+     * Calculate cart total the same way WooCommerce Free Shipping method does
+     *
+     * @param string|null $ignore_discounts 'yes' to ignore discounts, 'no' to apply after discount.
+     * @return float Cart total
+     */
+    protected function calculate_cart_total_for_shipping(?string $ignore_discounts = 'no'): float {
+        // Use displayed subtotal (same as WooCommerce)
+        $total = (float) WC()->cart->get_displayed_subtotal();
+
+        // If ignore_discounts is 'no' (default), subtract discount
+        if ($ignore_discounts !== 'yes') {
+            $total = $total - (float) WC()->cart->get_discount_total();
+            if (WC()->cart->display_prices_including_tax()) {
+                $total = $total - (float) WC()->cart->get_discount_tax();
+            }
+        }
+
+        // Round to match WooCommerce behavior
+        return round( $total, wc_get_price_decimals() );
+    }
+
+    /**
      * Get bar data based on cart contents
      *
      * @return array|null
@@ -394,22 +454,24 @@ class FreeShippingBarFeature extends AbstractFeature {
             return null;
         }
 
-        $min_amount      = $free_shipping_info['min_amount'];
-        $requires_coupon = $free_shipping_info['requires_coupon'];
-        $has_coupon      = $free_shipping_info['has_free_shipping_coupon'];
+        $min_amount       = $free_shipping_info['min_amount'];
+        $requires_type    = $free_shipping_info['requires_type'] ?? null;
+        $ignore_discounts = $free_shipping_info['ignore_discounts'] ?? 'no';
+        $has_coupon       = $free_shipping_info['has_free_shipping_coupon'];
 
         // Must have min_amount to show bar
         if ($min_amount === null) {
             return null;
         }
 
-        $cart_total    = (float) WC()->cart->get_subtotal();
+        // Calculate cart total the same way WooCommerce does
+        $cart_total    = $this->calculate_cart_total_for_shipping( $ignore_discounts );
         $progress_data = $this->calculate_progress( $min_amount, $cart_total );
 
         // Determine state
         $state = $this->determine_bar_state(
             $progress_data['achieved'],
-            $requires_coupon,
+            $requires_type,
             $has_coupon
         );
 
@@ -429,21 +491,53 @@ class FreeShippingBarFeature extends AbstractFeature {
     /**
      * Determine bar state based on progress and coupon requirements
      *
-     * @param bool $achieved Whether threshold is achieved.
-     * @param bool $requires_coupon Whether coupon is required.
-     * @param bool $has_coupon Whether coupon is applied.
+     * @param bool   $achieved Whether threshold is achieved.
+     * @param string $requires_type The requires type: '' | 'coupon' | 'min_amount' | 'either' | 'both'.
+     * @param bool   $has_coupon Whether coupon is applied.
      * @return string 'achieved'|'need_coupon'|'in_progress'
      */
-    protected function determine_bar_state(bool $achieved, bool $requires_coupon, bool $has_coupon): string {
-        if ($has_coupon || ($achieved && ! $requires_coupon)) {
-            return 'achieved';
+    protected function determine_bar_state(bool $achieved, ?string $requires_type, bool $has_coupon): string {
+        // Case 1: No requirement - free shipping always available (shouldn't show bar)
+        if ($requires_type === '') {
+            return self::STATE_ACHIEVED;
         }
 
-        if ($achieved && $requires_coupon) {
-            return 'need_coupon';
+        // Case 2: Only coupon required (no min_amount) - shouldn't show bar, but handle gracefully
+        if ($requires_type === 'coupon') {
+            return $has_coupon ? self::STATE_ACHIEVED : self::STATE_NEED_COUPON;
         }
 
-        return 'in_progress';
+        // Case 3: Only min_amount required
+        if ($requires_type === 'min_amount') {
+            return $achieved ? self::STATE_ACHIEVED : self::STATE_IN_PROGRESS;
+        }
+
+        // Case 4: Either min_amount OR coupon (either)
+        if ($requires_type === 'either') {
+            // Achieved if: has coupon OR achieved min_amount
+            if ($has_coupon || $achieved) {
+                return self::STATE_ACHIEVED;
+            }
+            // If achieved min_amount but no coupon, still achieved (OR logic)
+            return self::STATE_IN_PROGRESS;
+        }
+
+        // Case 5: Both min_amount AND coupon (both)
+        if ($requires_type === 'both') {
+            // Achieved only if: has coupon AND achieved min_amount
+            if ($has_coupon && $achieved) {
+                return self::STATE_ACHIEVED;
+            }
+            // If achieved min_amount but no coupon, need coupon
+            if ($achieved && ! $has_coupon) {
+                return self::STATE_NEED_COUPON;
+            }
+            // Otherwise, still in progress
+            return self::STATE_IN_PROGRESS;
+        }
+
+        // Fallback: treat as min_amount only
+        return $achieved ? self::STATE_ACHIEVED : self::STATE_IN_PROGRESS;
     }
 
     /**
@@ -458,13 +552,13 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     protected function build_message(string $state, array $settings, array $progress_data, float $threshold, float $cart_total): string {
         switch ($state) {
-            case 'achieved':
+            case self::STATE_ACHIEVED:
                 return $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' );
 
-            case 'need_coupon':
+            case self::STATE_NEED_COUPON:
                 return $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' );
 
-            case 'in_progress':
+            case self::STATE_IN_PROGRESS:
             default:
                 return $this->format_message(
                     $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
@@ -489,11 +583,11 @@ class FreeShippingBarFeature extends AbstractFeature {
         return [
             'threshold'           => $threshold,
             'current'             => $cart_total,
-            'remaining'           => $state === 'achieved' ? 0 : $progress_data['remaining'],
-            'progress'            => $state === 'achieved' ? 100 : $progress_data['progress'],
-            'achieved'            => $state === 'achieved',
+            'remaining'           => $state === self::STATE_ACHIEVED ? 0 : $progress_data['remaining'],
+            'progress'            => $state === self::STATE_ACHIEVED ? 100 : $progress_data['progress'],
+            'achieved'            => $state === self::STATE_ACHIEVED,
             'message'             => $message,
-            'show_coupon_message' => $state === 'need_coupon',
+            'show_coupon_message' => $state === self::STATE_NEED_COUPON,
         ];
     }
 
@@ -516,6 +610,7 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         $min_amount      = $free_shipping_info['min_amount'];
         $requires_coupon = $free_shipping_info['requires_coupon'];
+        $requires_type   = $free_shipping_info['requires_type'] ?? null;
 
         // Case 1: Only coupon required (no min_amount) - don't show bar
         if ($requires_coupon && $min_amount === null) {
@@ -528,8 +623,10 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
 
         return [
-            'min_amount'      => $min_amount,
-            'requires_coupon' => $requires_coupon,
+            'min_amount'       => $min_amount,
+            'requires_coupon'  => $requires_coupon,
+            'requires_type'    => $requires_type,
+            'ignore_discounts' => $free_shipping_info['ignore_discounts'] ?? 'no',
         ];
     }
 
