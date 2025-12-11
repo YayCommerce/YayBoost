@@ -139,12 +139,25 @@ class FreeShippingBarFeature extends AbstractFeature {
             true
         );
 
+        $settings = $this->get_settings();
+
         wp_localize_script(
             'yayboost-free-shipping-bar',
             'yayboostShippingBar',
             [
-                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-                'nonce'   => wp_create_nonce( 'yayboost_shipping_bar' ),
+                'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+                'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
+                'thresholdInfo' => $this->get_threshold_info_for_js(),
+                'settings'      => [
+                    'message_progress'   => $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
+                    'message_achieved'   => $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' ),
+                    'message_coupon'     => $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
+                    'currency_symbol'    => get_woocommerce_currency_symbol(),
+                    'currency_position'  => get_option( 'woocommerce_currency_pos', 'left' ),
+                    'decimals'           => wc_get_price_decimals(),
+                    'decimal_separator'  => wc_get_price_decimal_separator(),
+                    'thousand_separator' => wc_get_price_thousand_separator(),
+                ],
             ]
         );
     }
@@ -212,7 +225,7 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         ob_start();
         ?>
-        <div class="yayboost-shipping-bar<?php echo esc_attr( $achieved_class ); ?>">
+        <div class="yayboost-shipping-bar <?php echo esc_attr( $achieved_class ); ?>">
             <div class="yayboost-shipping-bar__message">
                 <?php echo wp_kses_post( $data['message'] ); ?>
             </div>
@@ -487,6 +500,42 @@ class FreeShippingBarFeature extends AbstractFeature {
             'requires_coupon'     => true,
             'has_coupon'          => false,
             'show_coupon_message' => $show_coupon_message,
+        ];
+    }
+
+    /**
+     * Get threshold info for JavaScript (no cart total needed)
+     *
+     * @return array|null
+     */
+    protected function get_threshold_info_for_js(): ?array {
+        if ( ! WC()->cart) {
+            return null;
+        }
+
+        $free_shipping_info = $this->get_free_shipping_info();
+
+        // If no free shipping methods found, don't show bar
+        if ($free_shipping_info === null) {
+            return null;
+        }
+
+        $min_amount      = $free_shipping_info['min_amount'];
+        $requires_coupon = $free_shipping_info['requires_coupon'];
+
+        // Case 1: Only coupon required (no min_amount) - don't show bar
+        if ($requires_coupon && $min_amount === null) {
+            return null;
+        }
+
+        // Must have min_amount to show bar
+        if ($min_amount === null) {
+            return null;
+        }
+
+        return [
+            'min_amount'      => $min_amount,
+            'requires_coupon' => $requires_coupon,
         ];
     }
 

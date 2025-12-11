@@ -35,7 +35,8 @@
   color: #ffffff;
 }
 
-.wp-block-woocommerce-mini-cart-contents .yayboost-shipping-bar {
-	margin: 16px;
-	z-index
+.wp-block-woocommerce-mini-cart-contents .yayboost-shipping-bar,
+#yayboost-mini-cart-shipping-bar {
+  margin: 16px;
+  z-index: 20;
 }
