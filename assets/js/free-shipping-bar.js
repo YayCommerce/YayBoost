@@ -330,10 +330,9 @@
 
   /**
    * Fetch bar data from API (fallback for classic cart)
-   * @param {number|null} cartTotal Optional cart total override
    * @param {function} callback Success callback with (data) parameter
    */
-  function fetchBarData(cartTotal, callback) {
+  function fetchBarData(callback) {
     // Try to get data without AJAX first
     const data = getBarDataWithoutAjax();
     if (data) {
@@ -346,10 +345,6 @@
       action: "yayboost_get_shipping_bar",
       nonce: yayboostShippingBar.nonce,
     };
-
-    if (cartTotal !== null && cartTotal !== undefined) {
-      ajaxData.cart_total = cartTotal;
-    }
 
     $.ajax({
       url: yayboostShippingBar.ajaxUrl,
@@ -508,9 +503,8 @@
 
   /**
    * Update shipping bar (for classic cart only, block-based handled by subscription)
-   * @param {number|null} cartTotal Optional cart total override
    */
-  function updateShippingBar(cartTotal) {
+  function updateShippingBar() {
     // Only update classic cart bars (not block-based)
     // Block-based cart bars are handled by subscribeToCartStore()
     const $bars = $(".yayboost-shipping-bar").filter(function () {
@@ -539,7 +533,7 @@
       }
     } else {
       // Fallback to AJAX for classic cart (when store not available)
-      fetchBarData(cartTotal, function (data) {
+      fetchBarData(function (data) {
         if (!data || !data.message) {
           // No data or error, remove bars
           $bars.remove();
@@ -624,7 +618,7 @@
     }
   }
 
-  $(document).ready(function () {
+  document.addEventListener("DOMContentLoaded", function () {
     let shippingBarTimeout;
     let quantityTimeout;
     let cartStoreUnsubscribe = null;
@@ -707,6 +701,9 @@
     // Mini cart block specific events (backup handlers)
     // These are fallback handlers in case store subscription doesn't catch everything
     if (isMiniCartBlock()) {
+      // Triggered when: User clicks to open mini cart drawer (block-based)
+      setTimeout(injectBarIntoMiniCartBlock, 300);
+
       // Click event: Mini cart button
       // Triggered when: User changes quantity in mini cart (block-based)
       $(document.body).on(
@@ -738,12 +735,5 @@
         cartStoreUnsubscribe();
       }
     });
-  });
-
-  document.addEventListener("DOMContentLoaded", function () {
-    if (isMiniCartBlock()) {
-      // Triggered when: User clicks to open mini cart drawer (block-based)
-      setTimeout(injectBarIntoMiniCartBlock, 300);
-    }
   });
 })(jQuery);
