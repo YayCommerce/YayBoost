@@ -144,6 +144,86 @@
   }
 
   /**
+   * Determine bar state based on progress and coupon requirements
+   * @param {boolean} achieved Whether threshold is achieved
+   * @param {boolean} requiresCoupon Whether coupon is required
+   * @param {boolean} hasCoupon Whether coupon is applied
+   * @return {string} 'achieved'|'need_coupon'|'in_progress'
+   */
+  function determineBarState(achieved, requiresCoupon, hasCoupon) {
+    if (hasCoupon || (achieved && !requiresCoupon)) {
+      return "achieved";
+    }
+
+    if (achieved && requiresCoupon) {
+      return "need_coupon";
+    }
+
+    return "in_progress";
+  }
+
+  /**
+   * Build message based on state
+   * @param {string} state Bar state
+   * @param {object} settings Settings object
+   * @param {object} progressData Progress data
+   * @param {number} threshold Threshold amount
+   * @param {number} cartTotal Cart total
+   * @return {string} Formatted message
+   */
+  function buildMessageForState(
+    state,
+    settings,
+    progressData,
+    threshold,
+    cartTotal
+  ) {
+    switch (state) {
+      case "achieved":
+        return settings.message_achieved;
+
+      case "need_coupon":
+        return settings.message_coupon;
+
+      case "in_progress":
+      default:
+        return formatMessage(
+          settings.message_progress,
+          progressData.remaining,
+          threshold,
+          cartTotal
+        );
+    }
+  }
+
+  /**
+   * Build bar response data
+   * @param {number} threshold Threshold amount
+   * @param {number} cartTotal Cart total
+   * @param {object} progressData Progress data
+   * @param {string} message Message to display
+   * @param {string} state Bar state
+   * @return {object} Bar data object
+   */
+  function buildBarResponse(
+    threshold,
+    cartTotal,
+    progressData,
+    message,
+    state
+  ) {
+    return {
+      threshold: threshold,
+      current: cartTotal,
+      remaining: state === "achieved" ? 0 : progressData.remaining,
+      progress: state === "achieved" ? 100 : progressData.progress,
+      achieved: state === "achieved",
+      message: message,
+      show_coupon_message: state === "need_coupon",
+    };
+  }
+
+  /**
    * Calculate bar data from threshold info and cart total
    * @param {object} thresholdInfo
    * @param {number} cartTotal
@@ -158,82 +238,26 @@
     const threshold = thresholdInfo.min_amount;
     const requiresCoupon = thresholdInfo.requires_coupon || false;
     const hasCoupon = hasFreeShippingCoupon();
-
     const progressData = calculateProgress(threshold, cartTotal);
-    const remaining = progressData.remaining;
-    const achieved = progressData.achieved;
-    const progress = progressData.progress;
 
-    // Case 1: Only min_amount required
-    if (!requiresCoupon) {
-      const message = achieved
-        ? settings.message_achieved
-        : formatMessage(
-            settings.message_progress,
-            remaining,
-            threshold,
-            cartTotal
-          );
+    // Determine state
+    const state = determineBarState(
+      progressData.achieved,
+      requiresCoupon,
+      hasCoupon
+    );
 
-      return {
-        threshold: threshold,
-        current: cartTotal,
-        remaining: remaining,
-        progress: progress,
-        achieved: achieved,
-        message: message,
-        requires_coupon: false,
-        has_coupon: false,
-        show_coupon_message: false,
-      };
-    }
+    // Build message based on state
+    const message = buildMessageForState(
+      state,
+      settings,
+      progressData,
+      threshold,
+      cartTotal
+    );
 
-    // Case 2: Requires coupon
-    // If coupon already applied, show success
-    if (hasCoupon) {
-      return {
-        threshold: threshold,
-        current: cartTotal,
-        remaining: 0,
-        progress: 100,
-        achieved: true,
-        message: settings.message_achieved,
-        requires_coupon: false,
-        has_coupon: true,
-        show_coupon_message: false,
-      };
-    }
-
-    // Show progress bar or coupon message based on threshold
-    let message;
-    let showCouponMessage = false;
-
-    if (achieved) {
-      // Threshold met, show coupon message
-      message = settings.message_coupon;
-      showCouponMessage = true;
-    } else {
-      // Show progress bar
-      message = formatMessage(
-        settings.message_progress,
-        remaining,
-        threshold,
-        cartTotal
-      );
-      showCouponMessage = false;
-    }
-
-    return {
-      threshold: threshold,
-      current: cartTotal,
-      remaining: remaining,
-      progress: progress,
-      achieved: achieved,
-      message: message,
-      requires_coupon: true,
-      has_coupon: false,
-      show_coupon_message: showCouponMessage,
-    };
+    // Build response
+    return buildBarResponse(threshold, cartTotal, progressData, message, state);
   }
 
   /**
@@ -367,45 +391,6 @@
    * Inject shipping bar into mini cart block
    */
   function injectBarIntoMiniCartBlock() {
-    const miniCartContent = document.querySelector(
-      ".wc-block-mini-cart__template-part"
-    );
-    if (!miniCartContent) return;
-
-    // Check for bar injected by PHP (render_mini_cart_placeholder)
-    const existingBar = miniCartContent.querySelector(
-      "#yayboost-mini-cart-shipping-bar"
-    );
-
-    if (existingBar) {
-      // Bar already exists, just update message and progress
-      updateMiniCartBarData(existingBar);
-      return;
-    }
-
-    // Bar doesn't exist, inject new one (fallback)
-    const barId = "yayboost-mini-cart-shipping-bar";
-
-    // Get data without AJAX
-    const data = getBarDataWithoutAjax();
-    if (!data) return;
-
-    const barHtml = buildBarHtml(data, barId);
-    if (!barHtml) return;
-
-    // Find position to inject (after title block)
-    const titleBlock = miniCartContent.querySelector(
-      ".wp-block-woocommerce-mini-cart-title-block"
-    );
-    if (titleBlock) {
-      titleBlock.insertAdjacentHTML("afterend", barHtml);
-    } else {
-      // Fallback: inject at beginning
-      miniCartContent.insertAdjacentHTML("afterbegin", barHtml);
-    }
-  }
-
-  function updateBarInMiniCartBlock() {
     const miniCartContent = document.querySelector(
       ".wc-block-mini-cart__template-part"
     );

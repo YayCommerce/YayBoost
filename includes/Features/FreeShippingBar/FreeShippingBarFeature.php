@@ -163,12 +163,6 @@ class FreeShippingBarFeature extends AbstractFeature {
     }
 
     /**
-     * Generate custom CSS based on settings
-     *
-     * @param array $settings
-     * @return string
-     */
-    /**
      * Generate custom CSS for dynamic colors based on settings
      *
      * @param array $settings
@@ -287,7 +281,6 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         $min_amounts        = [];
         $requires_coupon    = false;
-        $requires_both      = false;
         $has_no_requirement = false;
 
         foreach ($packages as $package) {
@@ -320,11 +313,6 @@ class FreeShippingBarFeature extends AbstractFeature {
                     $requires_coupon = true;
                 }
 
-                // Check if requires both min_amount AND coupon
-                if ($requires === 'both') {
-                    $requires_both = true;
-                }
-
                 // Collect min_amount from methods that require it
                 if (in_array( $requires, [ 'min_amount', 'either', 'both' ], true )) {
                     $min_amount = (float) ($method->min_amount ?? 0);
@@ -349,7 +337,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         return [
             'min_amount'               => $min_amount,
             'requires_coupon'          => $requires_coupon,
-            'requires_both'            => $requires_both,
             'has_free_shipping_coupon' => $has_coupon,
         ];
     }
@@ -357,9 +344,9 @@ class FreeShippingBarFeature extends AbstractFeature {
     /**
      * Calculate progress data for shipping bar
      *
-     * @param float $threshold Minimum amount threshold
-     * @param float $cart_total Current cart total
-     * @return array
+     * @param float $threshold Minimum amount threshold.
+     * @param float $cart_total Current cart total.
+     * @return array Progress data array
      */
     protected function calculate_progress(float $threshold, float $cart_total): array {
         $remaining = $threshold - $cart_total;
@@ -376,11 +363,11 @@ class FreeShippingBarFeature extends AbstractFeature {
     /**
      * Format message with placeholders
      *
-     * @param string $template Message template
-     * @param float  $remaining Remaining amount
-     * @param float  $threshold Threshold amount
-     * @param float  $current Current cart total
-     * @return string
+     * @param string $template Message template.
+     * @param float  $remaining Remaining amount.
+     * @param float  $threshold Threshold amount.
+     * @param float  $current Current cart total.
+     * @return string Formatted message
      */
     protected function format_message(string $template, float $remaining, float $threshold, float $current): string {
         return str_replace(
@@ -403,7 +390,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         $settings           = $this->get_settings();
         $free_shipping_info = $this->get_free_shipping_info();
 
-        // If no free shipping methods found, don't show bar
         if ($free_shipping_info === null) {
             return null;
         }
@@ -412,91 +398,102 @@ class FreeShippingBarFeature extends AbstractFeature {
         $requires_coupon = $free_shipping_info['requires_coupon'];
         $has_coupon      = $free_shipping_info['has_free_shipping_coupon'];
 
-        // Get cart total from cart
-        $cart_total = (float) WC()->cart->get_subtotal();
-
-        // Case 1: Only coupon required (no min_amount) - don't show bar
-        if ($requires_coupon && $min_amount === null) {
-            return null;
-        }
-
         // Must have min_amount to show bar
         if ($min_amount === null) {
             return null;
         }
 
-        $threshold     = $min_amount;
-        $progress_data = $this->calculate_progress( $threshold, $cart_total );
-        $remaining     = $progress_data['remaining'];
-        $achieved      = $progress_data['achieved'];
-        $progress      = $progress_data['progress'];
+        $cart_total    = (float) WC()->cart->get_subtotal();
+        $progress_data = $this->calculate_progress( $min_amount, $cart_total );
 
-        // Case 2: Only min_amount required
-        if ( ! $requires_coupon) {
-            $message = $achieved
-                ? ($settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' ))
-                : $this->format_message(
+        // Determine state
+        $state = $this->determine_bar_state(
+            $progress_data['achieved'],
+            $requires_coupon,
+            $has_coupon
+        );
+
+        // Build message based on state
+        $message = $this->build_message( $state, $settings, $progress_data, $min_amount, $cart_total );
+
+        // Build return data
+        return $this->build_bar_response(
+            $min_amount,
+            $cart_total,
+            $progress_data,
+            $message,
+            $state
+        );
+    }
+
+    /**
+     * Determine bar state based on progress and coupon requirements
+     *
+     * @param bool $achieved Whether threshold is achieved.
+     * @param bool $requires_coupon Whether coupon is required.
+     * @param bool $has_coupon Whether coupon is applied.
+     * @return string 'achieved'|'need_coupon'|'in_progress'
+     */
+    protected function determine_bar_state(bool $achieved, bool $requires_coupon, bool $has_coupon): string {
+        if ($has_coupon || ($achieved && ! $requires_coupon)) {
+            return 'achieved';
+        }
+
+        if ($achieved && $requires_coupon) {
+            return 'need_coupon';
+        }
+
+        return 'in_progress';
+    }
+
+    /**
+     * Build message based on state
+     *
+     * @param string $state Bar state.
+     * @param array  $settings Settings array.
+     * @param array  $progress_data Progress data.
+     * @param float  $threshold Threshold amount.
+     * @param float  $cart_total Cart total.
+     * @return string Formatted message
+     */
+    protected function build_message(string $state, array $settings, array $progress_data, float $threshold, float $cart_total): string {
+        switch ($state) {
+            case 'achieved':
+                return $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' );
+
+            case 'need_coupon':
+                return $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' );
+
+            case 'in_progress':
+            default:
+                return $this->format_message(
                     $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                    $remaining,
+                    $progress_data['remaining'],
                     $threshold,
                     $cart_total
                 );
-
-            return [
-                'threshold'           => $threshold,
-                'current'             => $cart_total,
-                'remaining'           => $remaining,
-                'progress'            => $progress,
-                'achieved'            => $achieved,
-                'message'             => $message,
-                'requires_coupon'     => false,
-                'has_coupon'          => false,
-                'show_coupon_message' => false,
-            ];
-        }//end if
-
-        // Case 3 & 4: Requires coupon (either or both)
-        // If coupon already applied, show success
-        if ($has_coupon) {
-            return [
-                'threshold'           => $threshold,
-                'current'             => $cart_total,
-                'remaining'           => 0,
-                'progress'            => 100,
-                'achieved'            => true,
-                'message'             => $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' ),
-                'requires_coupon'     => false,
-                'has_coupon'          => true,
-                'show_coupon_message' => false,
-            ];
         }
+    }
 
-        // Show progress bar or coupon message based on threshold
-        if ($achieved) {
-            // Threshold met, show coupon message
-            $message             = $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' );
-            $show_coupon_message = true;
-        } else {
-            // Show progress bar
-            $message             = $this->format_message(
-                $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                $remaining,
-                $threshold,
-                $cart_total
-            );
-            $show_coupon_message = false;
-        }
-
+    /**
+     * Build bar response data
+     *
+     * @param float  $threshold Threshold amount.
+     * @param float  $cart_total Cart total.
+     * @param array  $progress_data Progress data.
+     * @param string $message Message to display.
+     * @param string $state Bar state.
+     * @return array Bar data array
+     */
+    protected function build_bar_response(float $threshold, float $cart_total, array $progress_data, string $message, string $state): array {
         return [
             'threshold'           => $threshold,
             'current'             => $cart_total,
-            'remaining'           => $remaining,
-            'progress'            => $progress,
-            'achieved'            => $achieved,
+            'remaining'           => $state === 'achieved' ? 0 : $progress_data['remaining'],
+            'progress'            => $state === 'achieved' ? 100 : $progress_data['progress'],
+            'achieved'            => $state === 'achieved',
             'message'             => $message,
-            'requires_coupon'     => true,
-            'has_coupon'          => false,
-            'show_coupon_message' => $show_coupon_message,
+            'show_coupon_message' => $state === 'need_coupon',
         ];
     }
 
