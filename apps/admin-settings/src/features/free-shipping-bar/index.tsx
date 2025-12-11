@@ -28,19 +28,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
-  threshold: z.number().min(0),
+  threshold: z.number().min(0).optional(),
   threshold_auto_detected: z.boolean().optional(),
   threshold_detected_value: z.number().optional(),
   threshold_source: z.string().optional(),
@@ -73,18 +66,22 @@ function ShippingBarPreview({
   settings: SettingsFormData;
   cartValue?: number;
 }) {
-  const remaining = Math.max(0, settings.threshold - cartValue);
-  const progress =
-    settings.threshold > 0 ? Math.min(100, (cartValue / settings.threshold) * 100) : 100;
+  console.log(settings);
+  // Get currency symbol from admin data
+  const currencySymbol = window.yayboostData?.currency_symbol || '$';
+
+  // Use detected threshold or fallback to default
+  const threshold = settings.threshold_detected_value || settings.threshold || 100;
+  const remaining = Math.max(0, threshold - cartValue);
+  const progress = threshold > 0 ? Math.min(100, (cartValue / threshold) * 100) : 100;
   const achieved = remaining <= 0;
 
   const message = achieved
     ? settings.message_achieved
     : settings.message_progress
-        .replace('{amount}', `$${remaining.toFixed(2)}`)
-        .replace('{remaining}', `$${remaining.toFixed(2)}`)
-        .replace('{threshold}', `$${settings.threshold.toFixed(2)}`)
-        .replace('{current}', `$${cartValue.toFixed(2)}`);
+        .replace('{remaining}', `${currencySymbol}${remaining.toFixed(2)}`)
+        .replace('{threshold}', `${currencySymbol}${threshold.toFixed(2)}`)
+        .replace('{current}', `${currencySymbol}${cartValue.toFixed(2)}`);
 
   const displayStyle = settings.display_style || 'minimal_text';
   const showProgress =
@@ -120,11 +117,13 @@ function ShippingBarPreview({
 }
 
 export default function FreeShippingBarFeature({ featureId }: FeatureComponentProps) {
-  console.log('FreeShippingBarFeature', featureId);
   const { data: feature, isLoading } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
   const toggleMutation = useToggleFeature();
   const [previewValue, setPreviewValue] = useState(30);
+
+  // Get currency symbol from admin data
+  const currencySymbol = window.yayboostData?.currency_symbol || '$';
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -134,7 +133,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
       threshold_auto_detected: true,
       threshold_detected_value: 100,
       threshold_source: 'WooCommerce Shipping Zones',
-      message_progress: 'Add {amount} more for FREE shipping!',
+      message_progress: 'Add {remaining} more for FREE shipping!',
       message_achieved: "✓ You've unlocked FREE shipping!",
       bar_color: '#4CAF50',
       background_color: '#e8f5e9',
@@ -154,7 +153,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
   }, [feature, form]);
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log('onSubmit', data);
     updateSettings.mutate({ id: featureId, settings: data });
   };
 
@@ -242,7 +240,8 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                         <div className="mt-2 flex items-center gap-2">
                           <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />
                           <span className="text-sm">
-                            Detected: ${watchedValues.threshold_detected_value.toFixed(2)} (from{' '}
+                            Detected: {currencySymbol}
+                            {watchedValues.threshold_detected_value.toFixed(2)} (from{' '}
                             {watchedValues.threshold_source || 'WooCommerce Shipping Zones'})
                           </span>
                         </div>
@@ -347,34 +346,12 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
 
             <Card>
               <CardHeader>
-                <CardTitle>{__('Threshold & Messages', 'yayboost')}</CardTitle>
+                <CardTitle>{__('Messages', 'yayboost')}</CardTitle>
                 <CardDescription>
-                  {__('Set the free shipping threshold and customize messages', 'yayboost')}
+                  {__('Customize messages for the free shipping bar', 'yayboost')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="threshold"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Free Shipping Threshold ($)', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {__('Minimum cart value for free shipping', 'yayboost')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
                 <FormField
                   control={form.control}
                   name="message_progress"
@@ -385,7 +362,8 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                         <Input {...field} />
                       </FormControl>
                       <FormDescription>
-                        {__('Available:', 'yayboost')} {'{amount}'}, {'{threshold}'}, {'{current}'}
+                        {__('Available:', 'yayboost')} {'{remaining}'}, {'{threshold}'},{' '}
+                        {'{current}'}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -558,21 +536,33 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                 {/* Preview controls */}
                 <div>
                   <label className="text-sm font-medium">
-                    {__('Simulate Cart Value ($)', 'yayboost')}
+                    {__('Simulate Cart Value', 'yayboost')} ({currencySymbol})
                   </label>
                   <Input
                     type="range"
                     min="0"
-                    max={watchedValues.threshold * 1.5}
+                    max={
+                      (watchedValues.threshold_detected_value || watchedValues.threshold || 100) *
+                      1.5
+                    }
                     step="1"
                     value={previewValue}
                     onChange={(e) => setPreviewValue(parseInt(e.target.value))}
                     className="mt-2"
                   />
                   <div className="text-muted-foreground mt-1 flex justify-between text-xs">
-                    <span>$0</span>
-                    <span className="font-medium">${previewValue.toFixed(2)}</span>
-                    <span>${(watchedValues.threshold * 1.5).toFixed(2)}</span>
+                    <span>{currencySymbol}0</span>
+                    <span className="font-medium">
+                      {currencySymbol}
+                      {previewValue.toFixed(2)}
+                    </span>
+                    <span>
+                      {currencySymbol}
+                      {(
+                        (watchedValues.threshold_detected_value || watchedValues.threshold || 100) *
+                        1.5
+                      ).toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
@@ -589,7 +579,10 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     </p>
                     <ShippingBarPreview
                       settings={watchedValues}
-                      cartValue={watchedValues.threshold * 0.6}
+                      cartValue={
+                        (watchedValues.threshold_detected_value || watchedValues.threshold || 100) *
+                        0.6
+                      }
                     />
                   </div>
 
@@ -597,7 +590,10 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
                     <ShippingBarPreview
                       settings={watchedValues}
-                      cartValue={watchedValues.threshold + 10}
+                      cartValue={
+                        (watchedValues.threshold_detected_value || watchedValues.threshold || 100) +
+                        10
+                      }
                     />
                   </div>
                 </div>

@@ -56,9 +56,10 @@ class AdminMenu {
             ScriptName::ADMIN_SETTINGS,
             'yayboostData',
             [
-                'apiUrl'  => rest_url( 'yayboost/v1/' ),
-                'nonce'   => wp_create_nonce( 'wp_rest' ),
-                'version' => YAYBOOST_VERSION,
+                'apiUrl'          => rest_url( 'yayboost/v1/' ),
+                'nonce'           => wp_create_nonce( 'wp_rest' ),
+                'version'         => YAYBOOST_VERSION,
+                'currency_symbol' => get_woocommerce_currency_symbol(),
             ]
         );
     }
