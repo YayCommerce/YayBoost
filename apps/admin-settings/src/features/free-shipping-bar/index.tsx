@@ -4,7 +4,7 @@
  * Simple settings-only feature with live preview.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, Gift, Info, Truck } from '@phosphor-icons/react';
@@ -129,7 +129,6 @@ function FullDetailBar({
   progress,
   cartTotal,
   threshold,
-  remaining,
   settings,
 }: {
   message: string;
@@ -137,7 +136,6 @@ function FullDetailBar({
   progress: number;
   cartTotal: number;
   threshold: number;
-  remaining: number;
   settings: SettingsFormData;
 }) {
   const currencySymbol = window.yayboostData?.currency_symbol || '$';
@@ -221,8 +219,8 @@ function ShippingBarPreview({
   // Get currency symbol from admin data
   const currencySymbol = window.yayboostData?.currency_symbol || '$';
 
-  // Use threshold or fallback to default
-  const threshold = settings.threshold || 100;
+  // Use default threshold value
+  const threshold = 100;
   const remaining = Math.max(0, threshold - cartValue);
   const progress = threshold > 0 ? Math.min(100, (cartValue / threshold) * 100) : 100;
   const achieved = remaining <= 0;
@@ -256,7 +254,6 @@ function ShippingBarPreview({
         progress={progress}
         cartTotal={cartValue}
         threshold={threshold}
-        remaining={remaining}
         settings={settings}
       />
     );
@@ -275,21 +272,11 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
   // Get currency symbol from admin data
   const currencySymbol = window.yayboostData?.currency_symbol || '$';
 
+  const defaultValues = useMemo(() => feature?.settings as SettingsFormData, [feature]);
+
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      enabled: true,
-      threshold: 50,
-      message_progress: 'Add {remaining} more for FREE shipping!',
-      message_achieved: "✓ You've unlocked FREE shipping!",
-      bar_color: '#4CAF50',
-      background_color: '#e8f5e9',
-      text_color: '#2e7d32',
-      show_on: ['top_cart', 'top_checkout'],
-      show_progress_bar: true,
-      display_style: 'minimal_text',
-      behavior_when_unlocked: 'show_message',
-    },
+    defaultValues: defaultValues,
   });
 
   // Update form when feature data loads
@@ -320,7 +307,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
       <form onSubmit={form.handleSubmit(onSubmit)}>
         {/* Top Save Button */}
         <div className="flex justify-end pb-5">
-          <Button type="submit" disabled={updateSettings.isPending}>
+          <Button type="submit" disabled={updateSettings.isPending || !form.formState.isDirty}>
             {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
@@ -638,7 +625,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
 
             {/* Bottom Save Button */}
             <div className="flex justify-end">
-              <Button type="submit" disabled={updateSettings.isPending}>
+              <Button type="submit" disabled={updateSettings.isPending || !form.formState.isDirty}>
                 {updateSettings.isPending
                   ? __('Saving...', 'yayboost')
                   : __('Save Settings', 'yayboost')}
@@ -667,7 +654,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   <Input
                     type="range"
                     min="0"
-                    max={(watchedValues.threshold || 100) * 1.5}
+                    max={150}
                     step="1"
                     value={previewValue}
                     onChange={(e) => setPreviewValue(parseInt(e.target.value))}
@@ -681,7 +668,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     </span>
                     <span>
                       {currencySymbol}
-                      {((watchedValues.threshold || 100) * 1.5).toFixed(2)}
+                      {(150).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -697,18 +684,12 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     <p className="mb-2 text-sm font-medium">
                       {__('Progress State (example):', 'yayboost')}
                     </p>
-                    <ShippingBarPreview
-                      settings={watchedValues}
-                      cartValue={(watchedValues.threshold || 100) * 0.6}
-                    />
+                    <ShippingBarPreview settings={watchedValues} cartValue={60} />
                   </div>
 
                   <div>
                     <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
-                    <ShippingBarPreview
-                      settings={watchedValues}
-                      cartValue={(watchedValues.threshold || 100) + 10}
-                    />
+                    <ShippingBarPreview settings={watchedValues} cartValue={110} />
                   </div>
                 </div>
               </CardContent>
