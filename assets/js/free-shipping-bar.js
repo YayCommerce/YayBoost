@@ -379,16 +379,165 @@
   }
 
   /**
-   * Build progress bar HTML
+   * Build progress bar fill HTML (helper function)
    * @param {number} progress Progress percentage (0-100)
-   * @return {string} HTML string for progress bar
+   * @param {string} fillColor Color for the progress fill
+   * @param {string} bgColor Color for the progress background
+   * @return {string} HTML string for progress bar fill
    */
-  function buildProgressBarHtml(progress) {
-    return (
-      '<div class="yayboost-shipping-bar__progress">' +
-      '<div class="yayboost-shipping-bar__progress-fill" style="width: ' +
+  function buildProgressBarFillHtml(progress, fillColor, bgColor) {
+    const bgStyle = bgColor ? "background-color: " + bgColor + "20;" : "";
+    const fillStyle =
+      "width: " +
       progress +
-      '%"></div>' +
+      "%; background-color: " +
+      (fillColor || "#4CAF50") +
+      ";";
+    return (
+      '<div class="yayboost-shipping-bar__progress" style="' +
+      bgStyle +
+      '">' +
+      '<div class="yayboost-shipping-bar__progress-fill" style="' +
+      fillStyle +
+      '"></div>' +
+      "</div>"
+    );
+  }
+
+  /**
+   * Build minimal text HTML
+   * @param {object} data Bar data object
+   * @param {string} barId Optional bar ID
+   * @return {string} HTML string
+   */
+  function buildMinimalTextHtml(data, barId) {
+    const settings = yayboostShippingBar?.settings || {};
+    const achieved = data.achieved && !data.show_coupon_message;
+    const bgColor = achieved
+      ? settings.bar_color || "#4CAF50"
+      : settings.background_color || "#e8f5e9";
+    const textColor = achieved ? "#ffffff" : settings.text_color || "#2e7d32";
+    const achievedClass = achieved ? " yayboost-shipping-bar--achieved" : "";
+    const idAttr = barId ? ' id="' + barId + '"' : "";
+
+    return (
+      '<div class="yayboost-shipping-bar yayboost-shipping-bar--minimal-text' +
+      achievedClass +
+      '"' +
+      idAttr +
+      ' style="background-color: ' +
+      bgColor +
+      "; color: " +
+      textColor +
+      ';">' +
+      '<div class="yayboost-shipping-bar__icon" style="color: ' +
+      textColor +
+      ';">🚚</div>' +
+      '<div class="yayboost-shipping-bar__message">' +
+      data.message +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  /**
+   * Build progress bar HTML
+   * @param {object} data Bar data object
+   * @param {string} barId Optional bar ID
+   * @return {string} HTML string
+   */
+  function buildProgressBarHtml(data, barId) {
+    const settings = yayboostShippingBar?.settings || {};
+    const achieved = data.achieved && !data.show_coupon_message;
+    const progressColor = achieved
+      ? settings.bar_color || "#4CAF50"
+      : settings.background_color || "#e8f5e9";
+    const textColor = settings.text_color || "#2e7d32";
+    const idAttr = barId ? ' id="' + barId + '"' : "";
+
+    return (
+      '<div class="yayboost-shipping-bar yayboost-shipping-bar--progress-bar"' +
+      idAttr +
+      ">" +
+      buildProgressBarFillHtml(data.progress, progressColor, textColor) +
+      '<div class="yayboost-shipping-bar__message" style="color: ' +
+      textColor +
+      '; text-align: center;">' +
+      data.message +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  /**
+   * Build full detail HTML
+   * @param {object} data Bar data object
+   * @param {string} barId Optional bar ID
+   * @return {string} HTML string
+   */
+  function buildFullDetailHtml(data, barId) {
+    const settings = yayboostShippingBar?.settings || {};
+    const achieved = data.achieved && !data.show_coupon_message;
+    const barColor = settings.bar_color || "#4CAF50";
+    const bgColor = achieved
+      ? settings.bar_color || "#4CAF50"
+      : settings.background_color || "#e8f5e9";
+    const textColor = settings.text_color || "#2e7d32";
+    const currencySymbol = settings.currency_symbol || "$";
+    const threshold = data.threshold || 0;
+    const cartTotal = data.current || 0;
+    const idAttr = barId ? ' id="' + barId + '"' : "";
+
+    return (
+      '<div class="yayboost-shipping-bar yayboost-shipping-bar--full-detail"' +
+      idAttr +
+      ">" +
+      '<div class="yayboost-shipping-bar__header">' +
+      '<div class="yayboost-shipping-bar__header-left">' +
+      '<div class="yayboost-shipping-bar__icon-circle" style="background-color: ' +
+      barColor +
+      ';">' +
+      '<span style="color: #ffffff;">🚚</span>' +
+      "</div>" +
+      '<div class="yayboost-shipping-bar__info">' +
+      '<div class="yayboost-shipping-bar__title" style="color: ' +
+      textColor +
+      ';">Free Shipping</div>' +
+      '<div class="yayboost-shipping-bar__subtitle" style="color: ' +
+      textColor +
+      ';">On orders over ' +
+      currencySymbol +
+      threshold.toFixed(2) +
+      "</div>" +
+      "</div>" +
+      "</div>" +
+      '<div class="yayboost-shipping-bar__header-right">' +
+      '<div class="yayboost-shipping-bar__cart-total" style="color: ' +
+      textColor +
+      ';">' +
+      currencySymbol +
+      cartTotal.toFixed(2) +
+      "</div>" +
+      '<div class="yayboost-shipping-bar__cart-label" style="color: ' +
+      textColor +
+      ';">Cart total</div>' +
+      "</div>" +
+      "</div>" +
+      '<div class="yayboost-shipping-bar__progress-section">' +
+      buildProgressBarFillHtml(data.progress, barColor, textColor) +
+      '<div class="yayboost-shipping-bar__progress-icon" style="background-color: ' +
+      barColor +
+      ';">' +
+      '<span style="color: #ffffff;">🎁</span>' +
+      "</div>" +
+      "</div>" +
+      '<div class="yayboost-shipping-bar__cta" style="background-color: ' +
+      bgColor +
+      "; color: " +
+      textColor +
+      ';">' +
+      data.message +
+      "</div>" +
       "</div>"
     );
   }
@@ -404,31 +553,21 @@
       return null;
     }
 
-    // Build achieved class
-    const achievedClass =
-      data.achieved && !data.show_coupon_message
-        ? " yayboost-shipping-bar--achieved"
-        : "";
+    // Get display style from settings
+    const displayStyle =
+      yayboostShippingBar?.settings?.display_style || "minimal_text";
 
-    // Build progress bar HTML
-    const progressHtml = shouldShowProgress(data)
-      ? buildProgressBarHtml(data.progress)
-      : "";
+    // Route to appropriate function based on display style
+    if (displayStyle === "minimal_text") {
+      return buildMinimalTextHtml(data, barId);
+    } else if (displayStyle === "progress_bar") {
+      return buildProgressBarHtml(data, barId);
+    } else if (displayStyle === "full_detail") {
+      return buildFullDetailHtml(data, barId);
+    }
 
-    // Build complete bar HTML
-    const idAttr = barId ? ' id="' + barId + '"' : "";
-    return (
-      '<div class="yayboost-shipping-bar' +
-      achievedClass +
-      '"' +
-      idAttr +
-      ">" +
-      '<div class="yayboost-shipping-bar__message">' +
-      data.message +
-      "</div>" +
-      progressHtml +
-      "</div>"
-    );
+    // Fallback to minimal_text
+    return buildMinimalTextHtml(data, barId);
   }
 
   /**
@@ -545,9 +684,12 @@
         }
       } else {
         // Create progress bar if doesn't exist
+        const settings = yayboostShippingBar?.settings || {};
+        const barColor = settings.bar_color || "#4CAF50";
+        const textColor = settings.text_color || "#2e7d32";
         messageEl.insertAdjacentHTML(
           "afterend",
-          buildProgressBarHtml(data.progress)
+          buildProgressBarFillHtml(data.progress, barColor, textColor)
         );
       }
     } else {

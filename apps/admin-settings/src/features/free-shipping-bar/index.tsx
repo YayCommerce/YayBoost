@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCircle, Eye, Info } from '@phosphor-icons/react';
+import { Eye, Gift, Info, Truck } from '@phosphor-icons/react';
 import { __ } from '@wordpress/i18n';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -34,9 +34,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 const settingsSchema = z.object({
   enabled: z.boolean(),
   threshold: z.number().min(0).optional(),
-  threshold_auto_detected: z.boolean().optional(),
-  threshold_detected_value: z.number().optional(),
-  threshold_source: z.string().optional(),
   message_progress: z.string().min(1),
   message_achieved: z.string().min(1),
   bar_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
@@ -44,7 +41,7 @@ const settingsSchema = z.object({
   text_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   show_on: z.array(z.string()),
   show_progress_bar: z.boolean(),
-  display_style: z.enum(['minimal_text', 'progress_bar', 'compact_progress']),
+  display_style: z.enum(['minimal_text', 'progress_bar', 'full_detail']),
   behavior_when_unlocked: z.enum(['show_message', 'hide_bar']),
 });
 
@@ -58,6 +55,161 @@ const showOnOptions = [
   { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
 ];
 
+// Minimal Text Bar Component
+function MinimalTextBar({
+  message,
+  achieved,
+  settings,
+}: {
+  message: string;
+  achieved: boolean;
+  settings: SettingsFormData;
+}) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-lg px-4 py-3 transition-all"
+      style={{
+        backgroundColor: achieved ? settings.bar_color : settings.background_color,
+        color: achieved ? '#ffffff' : settings.text_color,
+      }}
+    >
+      <Truck
+        className="h-5 w-5 shrink-0"
+        style={{
+          color: achieved ? '#ffffff' : settings.text_color,
+        }}
+      />
+      <div className="text-sm font-medium">{message}</div>
+    </div>
+  );
+}
+
+// Progress Bar Component
+function ProgressBarBar({
+  message,
+  achieved,
+  progress,
+  settings,
+}: {
+  message: string;
+  achieved: boolean;
+  progress: number;
+  settings: SettingsFormData;
+}) {
+  return (
+    <div className="space-y-2">
+      <div
+        className="h-2 overflow-hidden rounded-full"
+        style={{ backgroundColor: `${settings.text_color}20` }}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-300"
+          style={{
+            width: `${progress}%`,
+            backgroundColor: achieved ? settings.bar_color : settings.background_color,
+          }}
+        />
+      </div>
+      <div
+        className="text-center text-sm"
+        style={{
+          color: settings.text_color,
+        }}
+      >
+        {message}
+      </div>
+    </div>
+  );
+}
+
+// Full Detail Bar Component
+function FullDetailBar({
+  message,
+  achieved,
+  progress,
+  cartTotal,
+  threshold,
+  remaining,
+  settings,
+}: {
+  message: string;
+  achieved: boolean;
+  progress: number;
+  cartTotal: number;
+  threshold: number;
+  remaining: number;
+  settings: SettingsFormData;
+}) {
+  const currencySymbol = window.yayboostData?.currency_symbol || '$';
+
+  return (
+    <div className="space-y-4">
+      {/* Header Section */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: settings.bar_color }}
+          >
+            <Truck className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="text-base font-semibold" style={{ color: settings.text_color }}>
+              {__('Free Shipping', 'yayboost')}
+            </div>
+            <div className="text-xs" style={{ color: settings.text_color }}>
+              {__('On orders over', 'yayboost')} {currencySymbol}
+              {threshold.toFixed(2)}
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-base font-semibold" style={{ color: settings.text_color }}>
+            {currencySymbol}
+            {cartTotal.toFixed(2)}
+          </div>
+          <div className="text-xs" style={{ color: settings.text_color }}>
+            {__('Cart total', 'yayboost')}
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Bar Section */}
+      <div className="relative">
+        <div
+          className="h-1.5 overflow-hidden rounded-full"
+          style={{ backgroundColor: `${settings.text_color}20` }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${progress}%`,
+              backgroundColor: achieved ? settings.bar_color : settings.background_color,
+            }}
+          />
+        </div>
+        <div
+          className="absolute top-1/2 right-0 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full"
+          style={{ backgroundColor: achieved ? settings.bar_color : settings.background_color }}
+        >
+          <Gift className="h-3.5 w-3.5 text-white" />
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div
+        className="rounded-lg px-4 py-3 text-center text-sm font-medium"
+        style={{
+          backgroundColor: achieved ? settings.bar_color : settings.background_color,
+          color: settings.text_color,
+        }}
+      >
+        {message}
+      </div>
+    </div>
+  );
+}
+
 // Preview component
 function ShippingBarPreview({
   settings,
@@ -66,12 +218,11 @@ function ShippingBarPreview({
   settings: SettingsFormData;
   cartValue?: number;
 }) {
-  console.log(settings);
   // Get currency symbol from admin data
   const currencySymbol = window.yayboostData?.currency_symbol || '$';
 
-  // Use detected threshold or fallback to default
-  const threshold = settings.threshold_detected_value || settings.threshold || 100;
+  // Use threshold or fallback to default
+  const threshold = settings.threshold || 100;
   const remaining = Math.max(0, threshold - cartValue);
   const progress = threshold > 0 ? Math.min(100, (cartValue / threshold) * 100) : 100;
   const achieved = remaining <= 0;
@@ -84,36 +235,35 @@ function ShippingBarPreview({
         .replace('{current}', `${currencySymbol}${cartValue.toFixed(2)}`);
 
   const displayStyle = settings.display_style || 'minimal_text';
-  const showProgress =
-    !achieved && (displayStyle === 'progress_bar' || displayStyle === 'compact_progress');
 
-  return (
-    <div
-      className="rounded-lg p-4 transition-all"
-      style={{
-        backgroundColor: achieved ? settings.bar_color : settings.background_color,
-        color: achieved ? '#ffffff' : settings.text_color,
-      }}
-    >
-      <div className="text-sm font-medium">{message}</div>
-      {showProgress && (
-        <div
-          className={`mt-2 overflow-hidden rounded-full ${
-            displayStyle === 'compact_progress' ? 'h-1.5' : 'h-2'
-          }`}
-          style={{ backgroundColor: `${settings.text_color}20` }}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${progress}%`,
-              backgroundColor: settings.bar_color,
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
+  // Route to appropriate component based on display style
+  if (displayStyle === 'minimal_text') {
+    return <MinimalTextBar message={message} achieved={achieved} settings={settings} />;
+  } else if (displayStyle === 'progress_bar') {
+    return (
+      <ProgressBarBar
+        message={message}
+        achieved={achieved}
+        progress={progress}
+        settings={settings}
+      />
+    );
+  } else if (displayStyle === 'full_detail') {
+    return (
+      <FullDetailBar
+        message={message}
+        achieved={achieved}
+        progress={progress}
+        cartTotal={cartValue}
+        threshold={threshold}
+        remaining={remaining}
+        settings={settings}
+      />
+    );
+  }
+
+  // Fallback to minimal_text
+  return <MinimalTextBar message={message} achieved={achieved} settings={settings} />;
 }
 
 export default function FreeShippingBarFeature({ featureId }: FeatureComponentProps) {
@@ -130,9 +280,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
     defaultValues: {
       enabled: true,
       threshold: 50,
-      threshold_auto_detected: true,
-      threshold_detected_value: 100,
-      threshold_source: 'WooCommerce Shipping Zones',
       message_progress: 'Add {remaining} more for FREE shipping!',
       message_achieved: "✓ You've unlocked FREE shipping!",
       bar_color: '#4CAF50',
@@ -229,27 +376,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="threshold_auto_detected"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Shipping threshold: Auto-detected', 'yayboost')}</FormLabel>
-                      {field.value && watchedValues.threshold_detected_value && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <CheckCircle className="h-5 w-5 text-green-600" weight="fill" />
-                          <span className="text-sm">
-                            Detected: {currencySymbol}
-                            {watchedValues.threshold_detected_value.toFixed(2)} (from{' '}
-                            {watchedValues.threshold_source || 'WooCommerce Shipping Zones'})
-                          </span>
-                        </div>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </CardContent>
             </Card>
 
@@ -330,9 +456,9 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                             </label>
                           </div>
                           <div className="flex items-center gap-2">
-                            <RadioGroupItem value="compact_progress" id="style-compact" />
+                            <RadioGroupItem value="full_detail" id="style-compact" />
                             <label htmlFor="style-compact" className="cursor-pointer">
-                              {__('Compact Progress', 'yayboost')}
+                              {__('Full Detail', 'yayboost')}
                             </label>
                           </div>
                         </RadioGroup>
@@ -541,10 +667,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   <Input
                     type="range"
                     min="0"
-                    max={
-                      (watchedValues.threshold_detected_value || watchedValues.threshold || 100) *
-                      1.5
-                    }
+                    max={(watchedValues.threshold || 100) * 1.5}
                     step="1"
                     value={previewValue}
                     onChange={(e) => setPreviewValue(parseInt(e.target.value))}
@@ -558,10 +681,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     </span>
                     <span>
                       {currencySymbol}
-                      {(
-                        (watchedValues.threshold_detected_value || watchedValues.threshold || 100) *
-                        1.5
-                      ).toFixed(2)}
+                      {((watchedValues.threshold || 100) * 1.5).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -579,10 +699,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     </p>
                     <ShippingBarPreview
                       settings={watchedValues}
-                      cartValue={
-                        (watchedValues.threshold_detected_value || watchedValues.threshold || 100) *
-                        0.6
-                      }
+                      cartValue={(watchedValues.threshold || 100) * 0.6}
                     />
                   </div>
 
@@ -590,10 +707,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
                     <ShippingBarPreview
                       settings={watchedValues}
-                      cartValue={
-                        (watchedValues.threshold_detected_value || watchedValues.threshold || 100) +
-                        10
-                      }
+                      cartValue={(watchedValues.threshold || 100) + 10}
                     />
                   </div>
                 </div>

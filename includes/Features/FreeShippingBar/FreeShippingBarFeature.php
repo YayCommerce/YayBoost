@@ -167,6 +167,10 @@ class FreeShippingBarFeature extends AbstractFeature {
                     'message_progress'   => $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
                     'message_achieved'   => $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' ),
                     'message_coupon'     => $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
+                    'bar_color'          => $settings['bar_color'] ?? '#4CAF50',
+                    'background_color'   => $settings['background_color'] ?? '#e8f5e9',
+                    'text_color'         => $settings['text_color'] ?? '#2e7d32',
+                    'display_style'      => $settings['display_style'] ?? 'minimal_text',
                     'currency_symbol'    => get_woocommerce_currency_symbol(),
                     'currency_position'  => get_option( 'woocommerce_currency_pos', 'left' ),
                     'decimals'           => wc_get_price_decimals(),
@@ -215,6 +219,142 @@ class FreeShippingBarFeature extends AbstractFeature {
     }
 
     /**
+     * Build minimal text HTML
+     *
+     * @param array $data Bar data array.
+     * @return string HTML string
+     */
+    protected function build_minimal_text_html(array $data): string {
+        $settings   = $this->get_settings();
+        $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
+        $bg_color   = $achieved ? $settings['bar_color'] : $settings['background_color'];
+        $text_color = $achieved ? '#ffffff' : $settings['text_color'];
+
+        ob_start();
+        ?>
+        <div
+            class="yayboost-shipping-bar yayboost-shipping-bar--minimal-text<?php echo $achieved ? ' yayboost-shipping-bar--achieved' : ''; ?>"
+            style="background-color: <?php echo esc_attr( $bg_color ); ?>; color: <?php echo esc_attr( $text_color ); ?>;"
+        >
+            <div class="yayboost-shipping-bar__icon" style="color: <?php echo esc_attr( $text_color ); ?>;">🚚</div>
+            <div class="yayboost-shipping-bar__message"><?php echo wp_kses_post( $data['message'] ); ?></div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Build progress bar HTML
+     *
+     * @param array $data Bar data array.
+     * @return string HTML string
+     */
+    protected function build_progress_bar_html(array $data): string {
+        $settings       = $this->get_settings();
+        $achieved       = $data['achieved'] && ! $data['show_coupon_message'];
+        $progress_color = $achieved ? $settings['bar_color'] : $settings['background_color'];
+        $text_color     = $settings['text_color'];
+
+        ob_start();
+        ?>
+        <div class="yayboost-shipping-bar yayboost-shipping-bar--progress-bar">
+            <div
+                class="yayboost-shipping-bar__progress"
+                style="background-color: <?php echo esc_attr( $text_color ); ?>20;"
+            >
+                <div
+                    class="yayboost-shipping-bar__progress-fill"
+                    style="width: <?php echo esc_attr( $data['progress'] ); ?>%; background-color: <?php echo esc_attr( $progress_color ); ?>;"
+                ></div>
+            </div>
+            <div
+                class="yayboost-shipping-bar__message"
+                style="color: <?php echo esc_attr( $text_color ); ?>; text-align: center;"
+            >
+                <?php echo wp_kses_post( $data['message'] ); ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Build full detail HTML
+     *
+     * @param array $data Bar data array.
+     * @return string HTML string
+     */
+    protected function build_full_detail_html(array $data): string {
+        $settings        = $this->get_settings();
+        $achieved        = $data['achieved'] && ! $data['show_coupon_message'];
+        $bar_color       = $settings['bar_color'];
+        $bg_color        = $achieved ? $settings['bar_color'] : $settings['background_color'];
+        $text_color      = $settings['text_color'];
+        $currency_symbol = get_woocommerce_currency_symbol();
+        $threshold       = $data['threshold'] ?? 0;
+        $cart_total      = $data['current'] ?? 0;
+
+        ob_start();
+        ?>
+        <div class="yayboost-shipping-bar yayboost-shipping-bar--full-detail">
+            <div class="yayboost-shipping-bar__header">
+                <div class="yayboost-shipping-bar__header-left">
+                    <div
+                        class="yayboost-shipping-bar__icon-circle"
+                        style="background-color: <?php echo esc_attr( $bar_color ); ?>;"
+                    >
+                        <span style="color: #ffffff;">🚚</span>
+                    </div>
+                    <div class="yayboost-shipping-bar__info">
+                        <div class="yayboost-shipping-bar__title" style="color: <?php echo esc_attr( $text_color ); ?>;">
+                            <?php echo esc_html__( 'Free Shipping', 'yayboost' ); ?>
+                        </div>
+                        <div class="yayboost-shipping-bar__subtitle" style="color: <?php echo esc_attr( $text_color ); ?>;">
+                            <?php
+                            echo esc_html__( 'On orders over', 'yayboost' );
+                            echo ' ' . esc_html( $currency_symbol ) . number_format( $threshold, 2 );
+                            ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="yayboost-shipping-bar__header-right">
+                    <div class="yayboost-shipping-bar__cart-total" style="color: <?php echo esc_attr( $text_color ); ?>;">
+                        <?php echo esc_html( $currency_symbol ) . number_format( $cart_total, 2 ); ?>
+                    </div>
+                    <div class="yayboost-shipping-bar__cart-label" style="color: <?php echo esc_attr( $text_color ); ?>;">
+                        <?php echo esc_html__( 'Cart total', 'yayboost' ); ?>
+                    </div>
+                </div>
+            </div>
+            <div class="yayboost-shipping-bar__progress-section">
+                <div
+                    class="yayboost-shipping-bar__progress"
+                    style="background-color: <?php echo esc_attr( $text_color ); ?>20;"
+                >
+                    <div
+                        class="yayboost-shipping-bar__progress-fill"
+                        style="width: <?php echo esc_attr( $data['progress'] ); ?>%; background-color: <?php echo esc_attr( $bar_color ); ?>;"
+                    ></div>
+                </div>
+                <div
+                    class="yayboost-shipping-bar__progress-icon"
+                    style="background-color: <?php echo esc_attr( $bar_color ); ?>;"
+                >
+                    <span style="color: #ffffff;">🎁</span>
+                </div>
+            </div>
+            <div
+                class="yayboost-shipping-bar__cta"
+                style="background-color: <?php echo esc_attr( $bg_color ); ?>; color: <?php echo esc_attr( $text_color ); ?>;"
+            >
+                <?php echo wp_kses_post( $data['message'] ); ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
      * Get bar HTML as string (for block injection)
      *
      * @return string
@@ -226,29 +366,20 @@ class FreeShippingBarFeature extends AbstractFeature {
             return '';
         }
 
-        // Determine if we should show achieved styling (only when fully achieved, not when coupon needed)
-        $achieved_class = $data['achieved'] && ! $data['show_coupon_message'] ? ' yayboost-shipping-bar--achieved' : '';
+        $settings      = $this->get_settings();
+        $display_style = $settings['display_style'] ?? 'minimal_text';
 
-        // Show progress bar only when threshold exists, not achieved, and not showing coupon message
-        $show_progress = isset( $data['threshold'] ) && $data['threshold'] > 0 && ! $data['achieved'] && ! $data['show_coupon_message'];
+        // Route to appropriate method based on display style
+        if ($display_style === 'minimal_text') {
+            return $this->build_minimal_text_html( $data );
+        } elseif ($display_style === 'progress_bar') {
+            return $this->build_progress_bar_html( $data );
+        } elseif ($display_style === 'full_detail') {
+            return $this->build_full_detail_html( $data );
+        }
 
-        ob_start();
-        ?>
-        <div class="yayboost-shipping-bar <?php echo esc_attr( $achieved_class ); ?>">
-            <div class="yayboost-shipping-bar__message">
-                <?php echo wp_kses_post( $data['message'] ); ?>
-            </div>
-            <?php if ($show_progress) : ?>
-                <div class="yayboost-shipping-bar__progress">
-                    <div
-                        class="yayboost-shipping-bar__progress-fill"
-                        style="width: <?php echo esc_attr( $data['progress'] ); ?>%"
-                    ></div>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php
-        return ob_get_clean();
+        // Fallback to minimal_text
+        return $this->build_minimal_text_html( $data );
     }
 
     /**
@@ -665,6 +796,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'text_color'        => '#2e7d32',
                 'show_on'           => [ 'top_cart', 'top_checkout' ],
                 'show_progress_bar' => true,
+                'display_style'     => 'minimal_text',
             ]
         );
     }
