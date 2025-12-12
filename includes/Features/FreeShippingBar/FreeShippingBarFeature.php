@@ -163,6 +163,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
                 'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
                 'thresholdInfo' => $this->get_threshold_info_for_js(),
+                'templates'     => $this->get_html_templates(),
                 'settings'      => [
                     'message_progress'   => $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
                     'message_achieved'   => $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' ),
@@ -191,7 +192,8 @@ class FreeShippingBarFeature extends AbstractFeature {
         $bar_color  = $settings['bar_color'] ?? '#4CAF50';
         $bg_color   = $settings['background_color'] ?? '#e0e0e0';
         $text_color = $settings['text_color'] ?? '#333333';
-
+        $data       = $this->get_bar_data();
+        $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
         return "
             .yayboost-shipping-bar {
                 background: {$bg_color};
@@ -219,6 +221,83 @@ class FreeShippingBarFeature extends AbstractFeature {
     }
 
     /**
+     * Get HTML templates with placeholders
+     *
+     * @return array Templates array with placeholders
+     */
+    protected function get_html_templates(): array {
+        return [
+            'minimal_text' => '
+                <div class="yayboost-shipping-bar yayboost-shipping-bar--minimal-text{{ACHIEVED_CLASS}}" 
+                     style="background-color: {{BG_COLOR}}; color: {{TEXT_COLOR}};"{{ID_ATTR}}>
+                    <div class="yayboost-shipping-bar__icon" style="color: {{TEXT_COLOR}};">🚚</div>
+                    <div class="yayboost-shipping-bar__message">{{MESSAGE}}</div>
+                </div>
+            ',
+            'progress_bar' => '
+                <div class="yayboost-shipping-bar yayboost-shipping-bar--progress-bar"{{ID_ATTR}} style="background:none">
+                    <div class="yayboost-shipping-bar__progress" style="background-color: {{TEXT_COLOR}}20;">
+                        <div class="yayboost-shipping-bar__progress-fill" 
+                             style="width: {{PROGRESS}}%; background-color: {{PROGRESS_COLOR}};"></div>
+                    </div>
+                    <div class="yayboost-shipping-bar__message" style="color: {{TEXT_COLOR}}; text-align: center;">{{MESSAGE}}</div>
+                </div>
+            ',
+            'full_detail'  => '
+                <div class="yayboost-shipping-bar yayboost-shipping-bar--full-detail"{{ID_ATTR}}>
+                    <div class="yayboost-shipping-bar__header">
+                        <div class="yayboost-shipping-bar__header-left">
+                            <div class="yayboost-shipping-bar__icon-circle" style="background-color: {{BAR_COLOR}};">
+                                <span style="color: #ffffff;">🚚</span>
+                            </div>
+                            <div class="yayboost-shipping-bar__info">
+                                <div class="yayboost-shipping-bar__title" style="color: {{TEXT_COLOR}};">Free Shipping</div>
+                                <div class="yayboost-shipping-bar__subtitle" style="color: {{TEXT_COLOR}};">On orders over {{CURRENCY_SYMBOL}}{{THRESHOLD}}</div>
+                            </div>
+                        </div>
+                        <div class="yayboost-shipping-bar__header-right">
+                            <div class="yayboost-shipping-bar__cart-total" style="color: {{TEXT_COLOR}};">{{CURRENCY_SYMBOL}}{{CART_TOTAL}}</div>
+                            <div class="yayboost-shipping-bar__cart-label" style="color: {{TEXT_COLOR}};">Cart total</div>
+                        </div>
+                    </div>
+                    <div class="yayboost-shipping-bar__progress-section">
+                        <div class="yayboost-shipping-bar__progress" style="background-color: {{TEXT_COLOR}}20;">
+                            <div class="yayboost-shipping-bar__progress-fill" 
+                                 style="width: {{PROGRESS}}%; background-color: {{BAR_COLOR}};"></div>
+                        </div>
+                        <div class="yayboost-shipping-bar__progress-icon" style="background-color: {{BAR_COLOR}};">
+                            <span style="color: #ffffff;">🎁</span>
+                        </div>
+                    </div>
+                    <div class="yayboost-shipping-bar__cta" style="background-color: {{BG_COLOR}}; color: {{TEXT_COLOR}};">{{MESSAGE}}</div>
+                </div>
+            ',
+        ];
+    }
+
+    /**
+     * Replace placeholders in template string
+     *
+     * @param string $template Template string with {{PLACEHOLDER}} placeholders.
+     * @param array  $replacements Array of placeholder => value pairs.
+     * @return string HTML string with replaced values
+     */
+    protected function replace_template_placeholders(string $template, array $replacements): string {
+        $html = $template;
+
+        // Replace all placeholders
+        foreach ($replacements as $key => $value) {
+            $placeholder = '{{' . $key . '}}';
+            $html        = str_replace( $placeholder, $value, $html );
+        }
+
+        // Remove any remaining placeholders (optional - for safety)
+        $html = preg_replace( '/\{\{[\w_]+\}\}/', '', $html );
+
+        return trim( $html );
+    }
+
+    /**
      * Build minimal text HTML
      *
      * @param array $data Bar data array.
@@ -226,21 +305,24 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     protected function build_minimal_text_html(array $data): string {
         $settings   = $this->get_settings();
+        $templates  = $this->get_html_templates();
         $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
         $bg_color   = $achieved ? $settings['bar_color'] : $settings['background_color'];
         $text_color = $achieved ? '#ffffff' : $settings['text_color'];
 
-        ob_start();
-        ?>
-        <div
-            class="yayboost-shipping-bar yayboost-shipping-bar--minimal-text<?php echo $achieved ? ' yayboost-shipping-bar--achieved' : ''; ?>"
-            style="background-color: <?php echo esc_attr( $bg_color ); ?>; color: <?php echo esc_attr( $text_color ); ?>;"
-        >
-            <div class="yayboost-shipping-bar__icon" style="color: <?php echo esc_attr( $text_color ); ?>;">🚚</div>
-            <div class="yayboost-shipping-bar__message"><?php echo wp_kses_post( $data['message'] ); ?></div>
-        </div>
-        <?php
-        return ob_get_clean();
+        $template = $templates['minimal_text'];
+
+        return $this->replace_template_placeholders(
+            $template,
+            [
+                'ACHIEVED_CLASS' => $achieved ? ' yayboost-shipping-bar--achieved' : '',
+                'BG_COLOR'       => esc_attr( $bg_color ),
+                'TEXT_COLOR'     => esc_attr( $text_color ),
+                // PHP doesn't need barId for server-side rendering
+                'ID_ATTR'        => '',
+                'MESSAGE'        => wp_kses_post( $data['message'] ),
+            ]
+        );
     }
 
     /**
@@ -251,31 +333,24 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     protected function build_progress_bar_html(array $data): string {
         $settings       = $this->get_settings();
+        $templates      = $this->get_html_templates();
         $achieved       = $data['achieved'] && ! $data['show_coupon_message'];
         $progress_color = $achieved ? $settings['bar_color'] : $settings['background_color'];
         $text_color     = $settings['text_color'];
 
-        ob_start();
-        ?>
-        <div class="yayboost-shipping-bar yayboost-shipping-bar--progress-bar">
-            <div
-                class="yayboost-shipping-bar__progress"
-                style="background-color: <?php echo esc_attr( $text_color ); ?>20;"
-            >
-                <div
-                    class="yayboost-shipping-bar__progress-fill"
-                    style="width: <?php echo esc_attr( $data['progress'] ); ?>%; background-color: <?php echo esc_attr( $progress_color ); ?>;"
-                ></div>
-            </div>
-            <div
-                class="yayboost-shipping-bar__message"
-                style="color: <?php echo esc_attr( $text_color ); ?>; text-align: center;"
-            >
-                <?php echo wp_kses_post( $data['message'] ); ?>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
+        $template = $templates['progress_bar'];
+
+        return $this->replace_template_placeholders(
+            $template,
+            [
+                'PROGRESS'       => esc_attr( $data['progress'] ),
+                'PROGRESS_COLOR' => esc_attr( $progress_color ),
+                'TEXT_COLOR'     => esc_attr( $text_color ),
+                // PHP doesn't need barId for server-side rendering
+                'ID_ATTR'        => '',
+                'MESSAGE'        => wp_kses_post( $data['message'] ),
+            ]
+        );
     }
 
     /**
@@ -286,6 +361,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     protected function build_full_detail_html(array $data): string {
         $settings        = $this->get_settings();
+        $templates       = $this->get_html_templates();
         $achieved        = $data['achieved'] && ! $data['show_coupon_message'];
         $bar_color       = $settings['bar_color'];
         $bg_color        = $achieved ? $settings['bar_color'] : $settings['background_color'];
@@ -294,64 +370,23 @@ class FreeShippingBarFeature extends AbstractFeature {
         $threshold       = $data['threshold'] ?? 0;
         $cart_total      = $data['current'] ?? 0;
 
-        ob_start();
-        ?>
-        <div class="yayboost-shipping-bar yayboost-shipping-bar--full-detail">
-            <div class="yayboost-shipping-bar__header">
-                <div class="yayboost-shipping-bar__header-left">
-                    <div
-                        class="yayboost-shipping-bar__icon-circle"
-                        style="background-color: <?php echo esc_attr( $bar_color ); ?>;"
-                    >
-                        <span style="color: #ffffff;">🚚</span>
-                    </div>
-                    <div class="yayboost-shipping-bar__info">
-                        <div class="yayboost-shipping-bar__title" style="color: <?php echo esc_attr( $text_color ); ?>;">
-                            <?php echo esc_html__( 'Free Shipping', 'yayboost' ); ?>
-                        </div>
-                        <div class="yayboost-shipping-bar__subtitle" style="color: <?php echo esc_attr( $text_color ); ?>;">
-                            <?php
-                            echo esc_html__( 'On orders over', 'yayboost' );
-                            echo ' ' . esc_html( $currency_symbol ) . number_format( $threshold, 2 );
-                            ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="yayboost-shipping-bar__header-right">
-                    <div class="yayboost-shipping-bar__cart-total" style="color: <?php echo esc_attr( $text_color ); ?>;">
-                        <?php echo esc_html( $currency_symbol ) . number_format( $cart_total, 2 ); ?>
-                    </div>
-                    <div class="yayboost-shipping-bar__cart-label" style="color: <?php echo esc_attr( $text_color ); ?>;">
-                        <?php echo esc_html__( 'Cart total', 'yayboost' ); ?>
-                    </div>
-                </div>
-            </div>
-            <div class="yayboost-shipping-bar__progress-section">
-                <div
-                    class="yayboost-shipping-bar__progress"
-                    style="background-color: <?php echo esc_attr( $text_color ); ?>20;"
-                >
-                    <div
-                        class="yayboost-shipping-bar__progress-fill"
-                        style="width: <?php echo esc_attr( $data['progress'] ); ?>%; background-color: <?php echo esc_attr( $bar_color ); ?>;"
-                    ></div>
-                </div>
-                <div
-                    class="yayboost-shipping-bar__progress-icon"
-                    style="background-color: <?php echo esc_attr( $bar_color ); ?>;"
-                >
-                    <span style="color: #ffffff;">🎁</span>
-                </div>
-            </div>
-            <div
-                class="yayboost-shipping-bar__cta"
-                style="background-color: <?php echo esc_attr( $bg_color ); ?>; color: <?php echo esc_attr( $text_color ); ?>;"
-            >
-                <?php echo wp_kses_post( $data['message'] ); ?>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
+        $template = $templates['full_detail'];
+
+        return $this->replace_template_placeholders(
+            $template,
+            [
+                'BAR_COLOR'       => esc_attr( $bar_color ),
+                'BG_COLOR'        => esc_attr( $bg_color ),
+                'TEXT_COLOR'      => esc_attr( $text_color ),
+                'PROGRESS'        => esc_attr( $data['progress'] ),
+                'CURRENCY_SYMBOL' => esc_html( $currency_symbol ),
+                'THRESHOLD'       => esc_html( number_format( $threshold, 2 ) ),
+                'CART_TOTAL'      => esc_html( number_format( $cart_total, 2 ) ),
+                // PHP doesn't need barId for server-side rendering
+                'ID_ATTR'         => '',
+                'MESSAGE'         => wp_kses_post( $data['message'] ),
+            ]
+        );
     }
 
     /**
