@@ -3,25 +3,24 @@
  */
 
 import { ArrowLeft } from '@phosphor-icons/react';
+import { useFormContext } from 'react-hook-form';
 import { Link, Outlet } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
-import { useFeature, useToggleFeature } from '@/hooks/use-features';
+import { useFeature } from '@/hooks/use-features';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 
 interface FeatureLayoutProps {
   featureId: string;
   children?: React.ReactNode;
+  isPending?: boolean;
+  onSave?: () => void;
 }
 
-export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
-  const { data: feature, isLoading } = useFeature(featureId, true);
-  const toggleMutation = useToggleFeature();
-
-  const handleToggle = (enabled: boolean) => {
-    toggleMutation.mutate({ id: featureId, enabled });
-  };
+export function FeatureLayout({ featureId, children, isPending, onSave }: FeatureLayoutProps) {
+  const { data: feature, isLoading } = useFeature(featureId);
+  const form = useFormContext();
 
   if (isLoading) {
     return (
@@ -64,19 +63,16 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-muted-foreground text-sm">
-            {feature.enabled ? 'Enabled' : 'Disabled'}
-          </span>
-          <Switch
-            checked={feature.enabled}
-            onCheckedChange={handleToggle}
-            disabled={toggleMutation.isPending}
-          />
+          {form && onSave && (
+            <Button type="button" onClick={onSave} disabled={isPending || !form.formState.isDirty}>
+              {isPending ? 'Saving...' : 'Save Settings'}
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Feature content */}
-      <div className={cn('bg-card rounded-lg border p-6')}>{children || <Outlet />}</div>
+      <div className={cn('bg-card rounded-lg p-6')}>{children || <Outlet />}</div>
     </div>
   );
 }

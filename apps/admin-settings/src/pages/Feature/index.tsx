@@ -55,15 +55,19 @@ export default function FeaturePage() {
   // Check if feature has a custom component
   const FeatureComponent = getFeatureComponent(featureId);
 
+  // For features with form, wrap FeatureLayout inside FeatureComponent's Provider
+  // For features without form, render normally
+  if (FeatureComponent) {
+    return (
+      <Suspense fallback={<FeatureLoading />}>
+        <FeatureComponent featureId={featureId} />
+      </Suspense>
+    );
+  }
+
   return (
     <FeatureLayout featureId={featureId}>
-      {FeatureComponent ? (
-        <Suspense fallback={<FeatureLoading />}>
-          <FeatureComponent featureId={featureId} />
-        </Suspense>
-      ) : (
-        <DefaultFeatureContent featureId={featureId} />
-      )}
+      <DefaultFeatureContent featureId={featureId} />
     </FeatureLayout>
   );
 }
