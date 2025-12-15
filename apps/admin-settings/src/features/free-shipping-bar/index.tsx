@@ -125,13 +125,13 @@ function ProgressBarBar({
     <div className="space-y-2">
       <div
         className="h-2 overflow-hidden rounded-full"
-        style={{ backgroundColor: `${settings.text_color}20` }}
+        style={{ backgroundColor: settings.background_color }}
       >
         <div
           className="h-full rounded-full transition-all duration-300"
           style={{
             width: `${progress}%`,
-            backgroundColor: achieved ? settings.bar_color : settings.background_color,
+            backgroundColor: settings.bar_color,
           }}
         />
       </div>
@@ -201,13 +201,13 @@ function FullDetailBar({
       <div className="relative">
         <div
           className="h-1.5 overflow-hidden rounded-full"
-          style={{ backgroundColor: `${settings.text_color}20` }}
+          style={{ backgroundColor: settings.background_color }}
         >
           <div
             className="h-full rounded-full transition-all duration-300"
             style={{
               width: `${progress}%`,
-              backgroundColor: achieved ? settings.bar_color : settings.background_color,
+              backgroundColor: settings.bar_color,
             }}
           />
         </div>

@@ -145,7 +145,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         );
 
         // Add inline styles for dynamic colors
-        wp_add_inline_style( 'yayboost-free-shipping-bar', $this->generate_custom_css( $this->get_settings() ) );
+        // wp_add_inline_style( 'yayboost-free-shipping-bar', $this->generate_custom_css( $this->get_settings() ) );
 
         wp_enqueue_script(
             'yayboost-free-shipping-bar',
@@ -178,6 +178,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                     'decimals'          => wc_get_price_decimals(),
                     'decimalSeparator'  => wc_get_price_decimal_separator(),
                     'thousandSeparator' => wc_get_price_thousand_separator(),
+                    'shopPageUrl'       => get_permalink( wc_get_page_id( 'shop' ) ),
                 ],
             ]
         );
@@ -196,10 +197,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         $data       = $this->get_bar_data();
         $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
         return "
-            .yayboost-shipping-bar {
-                background: {$bg_color};
-                color: {$text_color};
-            }
             .yayboost-shipping-bar__progress {
                 background: {$bg_color};
             }
@@ -218,7 +215,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return void
      */
     public function render_bar(): void {
-        echo wp_kses_post( $this->get_bar_html() );
+        echo $this->get_bar_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 
     /**
@@ -237,9 +234,9 @@ class FreeShippingBarFeature extends AbstractFeature {
             ',
             'progress_bar' => '
                 <div class="yayboost-shipping-bar yayboost-shipping-bar--progress-bar"{{ID_ATTR}} style="background:none">
-                    <div class="yayboost-shipping-bar__progress" style="background-color: {{TEXT_COLOR}}20;">
+                    <div class="yayboost-shipping-bar__progress" style="background-color: {{BACKGROUND_COLOR}};">
                         <div class="yayboost-shipping-bar__progress-fill" 
-                             style="width: {{PROGRESS}}%; background-color: {{PROGRESS_COLOR}};"></div>
+                             style="width: {{PROGRESS}}%; background-color: {{BAR_COLOR}};"></div>
                     </div>
                     <div class="yayboost-shipping-bar__message" style="color: {{TEXT_COLOR}}; text-align: center;">{{MESSAGE}}</div>
                 </div>
@@ -262,15 +259,15 @@ class FreeShippingBarFeature extends AbstractFeature {
                         </div>
                     </div>
                     <div class="yayboost-shipping-bar__progress-section">
-                        <div class="yayboost-shipping-bar__progress" style="background-color: {{TEXT_COLOR}}20;">
+                        <div class="yayboost-shipping-bar__progress" style="background-color: {{BACKGROUND_COLOR}};">
                             <div class="yayboost-shipping-bar__progress-fill" 
                                  style="width: {{PROGRESS}}%; background-color: {{BAR_COLOR}};"></div>
                         </div>
-                        <div class="yayboost-shipping-bar__progress-icon" style="background-color: {{BAR_COLOR}};">
+                        <div class="yayboost-shipping-bar__progress-icon" style="background-color: {{PROGRESS_ICON_BG}};">
                             <span style="color: #ffffff;">🎁</span>
                         </div>
                     </div>
-                    <div class="yayboost-shipping-bar__cta" style="background-color: {{BG_COLOR}}; color: {{CTA_TEXT_COLOR}};">{{MESSAGE}}</div>
+                    <a class="yayboost-shipping-bar__cta" style="text-decoration: none; background-color: {{BG_COLOR}}; color: {{CTA_TEXT_COLOR}};" href="{{CTA_URL}}">{{MESSAGE}}</a>
                 </div>
             ',
         ];
@@ -333,23 +330,24 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string HTML string
      */
     protected function build_progress_bar_html(array $data): string {
-        $settings       = $this->get_settings();
-        $templates      = $this->get_html_templates();
-        $achieved       = $data['achieved'] && ! $data['show_coupon_message'];
-        $progress_color = $achieved ? $settings['bar_color'] : $settings['background_color'];
-        $text_color     = $settings['text_color'];
+        $settings         = $this->get_settings();
+        $templates        = $this->get_html_templates();
+        $bar_color        = $settings['bar_color'];
+        $background_color = $settings['background_color'];
+        $text_color       = $settings['text_color'];
 
         $template = $templates['progress_bar'];
 
         return $this->replace_template_placeholders(
             $template,
             [
-                'PROGRESS'       => esc_attr( $data['progress'] ),
-                'PROGRESS_COLOR' => esc_attr( $progress_color ),
-                'TEXT_COLOR'     => esc_attr( $text_color ),
+                'PROGRESS'         => esc_attr( $data['progress'] ),
+                'BAR_COLOR'        => esc_attr( $bar_color ),
+                'BACKGROUND_COLOR' => esc_attr( $background_color ),
+                'TEXT_COLOR'       => esc_attr( $text_color ),
                 // PHP doesn't need barId for server-side rendering
-                'ID_ATTR'        => '',
-                'MESSAGE'        => wp_kses_post( $data['message'] ),
+                'ID_ATTR'          => '',
+                'MESSAGE'          => wp_kses_post( $data['message'] ),
             ]
         );
     }
@@ -361,32 +359,38 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string HTML string
      */
     protected function build_full_detail_html(array $data): string {
-        $settings        = $this->get_settings();
-        $templates       = $this->get_html_templates();
-        $achieved        = $data['achieved'] && ! $data['show_coupon_message'];
-        $bar_color       = $settings['bar_color'];
-        $bg_color        = $achieved ? $settings['bar_color'] : $settings['background_color'];
-        $text_color      = $settings['text_color'];
-        $currency_symbol = get_woocommerce_currency_symbol();
-        $threshold       = $data['threshold'] ?? 0;
-        $cart_total      = $data['current'] ?? 0;
+        $settings         = $this->get_settings();
+        $templates        = $this->get_html_templates();
+        $achieved         = $data['achieved'] && ! $data['show_coupon_message'];
+        $bar_color        = $settings['bar_color'];
+        $background_color = $settings['background_color'];
+        $bg_color         = $achieved ? $settings['bar_color'] : $settings['background_color'];
+        $progress_icon_bg = $achieved ? $settings['bar_color'] : $settings['background_color'];
+        $text_color       = $settings['text_color'];
+        $currency_symbol  = get_woocommerce_currency_symbol();
+        $threshold        = $data['threshold'] ?? 0;
+        $cart_total       = $data['current'] ?? 0;
 
-        $template = $templates['full_detail'];
+        $template      = $templates['full_detail'];
+        $shop_page_url = get_permalink( wc_get_page_id( 'shop' ) );
 
         return $this->replace_template_placeholders(
             $template,
             [
-                'BAR_COLOR'       => esc_attr( $bar_color ),
-                'BG_COLOR'        => esc_attr( $bg_color ),
-                'TEXT_COLOR'      => esc_attr( $text_color ),
-                'CTA_TEXT_COLOR'  => $achieved ? '#ffffff' : esc_attr( $text_color ),
-                'PROGRESS'        => esc_attr( $data['progress'] ),
-                'CURRENCY_SYMBOL' => esc_html( $currency_symbol ),
-                'THRESHOLD'       => esc_html( number_format( $threshold, 2 ) ),
-                'CART_TOTAL'      => esc_html( number_format( $cart_total, 2 ) ),
+                'BAR_COLOR'        => esc_attr( $bar_color ),
+                'BACKGROUND_COLOR' => esc_attr( $background_color ),
+                'BG_COLOR'         => esc_attr( $bg_color ),
+                'PROGRESS_ICON_BG' => esc_attr( $progress_icon_bg ),
+                'TEXT_COLOR'       => esc_attr( $text_color ),
+                'CTA_TEXT_COLOR'   => $achieved ? '#ffffff' : esc_attr( $text_color ),
+                'PROGRESS'         => esc_attr( $data['progress'] ),
+                'CURRENCY_SYMBOL'  => esc_html( $currency_symbol ),
+                'THRESHOLD'        => esc_html( number_format( $threshold, 2 ) ),
+                'CART_TOTAL'       => esc_html( number_format( $cart_total, 2 ) ),
+                'CTA_URL'          => ! $achieved ? esc_url( $shop_page_url ) : 'javascript:void(0)',
                 // PHP doesn't need barId for server-side rendering
-                'ID_ATTR'         => '',
-                'MESSAGE'         => wp_kses_post( $data['message'] ),
+                'ID_ATTR'          => '',
+                'MESSAGE'          => wp_kses_post( $data['message'] ),
             ]
         );
     }

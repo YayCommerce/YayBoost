@@ -445,10 +445,8 @@
   function buildProgressBarHtml(data, barId) {
     const settings = yayboostShippingBar?.settings || {};
     const templates = yayboostShippingBar?.templates || {};
-    const achieved = data.achieved && !data.show_coupon_message;
-    const progressColor = achieved
-      ? settings.barColor || "#4caf50"
-      : settings.backgroundColor || "#e8f5e9";
+    const barColor = settings.barColor || "#4caf50";
+    const backgroundColor = settings.backgroundColor || "#e8f5e9";
     const textColor = settings.textColor || "#2e7d32";
 
     const template = templates.progress_bar;
@@ -458,7 +456,8 @@
 
     return replaceTemplatePlaceholders(template, {
       PROGRESS: data.progress || 0,
-      PROGRESS_COLOR: progressColor,
+      BAR_COLOR: barColor,
+      BACKGROUND_COLOR: backgroundColor,
       TEXT_COLOR: textColor,
       ID_ATTR: barId ? ' id="' + barId + '"' : "",
       MESSAGE: data.message || "",
@@ -476,14 +475,18 @@
     const templates = yayboostShippingBar?.templates || {};
     const achieved = data.achieved && !data.show_coupon_message;
     const barColor = settings.barColor || "#4caf50";
+    const backgroundColor = settings.backgroundColor || "#e8f5e9";
     const bgColor = achieved
+      ? settings.barColor || "#4caf50"
+      : settings.backgroundColor || "#e8f5e9";
+    const progressIconBg = achieved
       ? settings.barColor || "#4caf50"
       : settings.backgroundColor || "#e8f5e9";
     const textColor = settings.textColor || "#2e7d32";
     const currencySymbol = settings.currencySymbol || "$";
     const threshold = data.threshold || 0;
     const cartTotal = data.current || 0;
-
+    const shopPageUrl = settings?.shopPageUrl || "";
     const template = templates.full_detail;
     if (!template) {
       return null;
@@ -491,7 +494,9 @@
 
     return replaceTemplatePlaceholders(template, {
       BAR_COLOR: barColor,
+      BACKGROUND_COLOR: backgroundColor,
       BG_COLOR: bgColor,
+      PROGRESS_ICON_BG: progressIconBg,
       TEXT_COLOR: textColor,
       CTA_TEXT_COLOR: achieved ? "#ffffff" : textColor,
       PROGRESS: data.progress || 0,
@@ -500,6 +505,7 @@
       CART_TOTAL: cartTotal.toFixed(2),
       ID_ATTR: barId ? ' id="' + barId + '"' : "",
       MESSAGE: data.message || "",
+      CTA_URL: !achieved ? shopPageUrl : "javascript:void(0)",
     });
   }
 
