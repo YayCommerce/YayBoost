@@ -121,7 +121,7 @@
    * @return {string}
    */
   function formatPrice(amount) {
-    if (!yayboostShippingBar || !yayboostShippingBar.settings) {
+    if (!window.yayboostShippingBar || !window.yayboostShippingBar.settings) {
       // Fallback formatting
       return new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -129,12 +129,12 @@
       }).format(amount);
     }
 
-    const settings = yayboostShippingBar.settings;
-    const symbol = settings.currency_symbol || "$";
-    const position = settings.currency_position || "left";
+    const settings = window.yayboostShippingBar.settings;
+    const symbol = settings.currencySymbol || "$";
+    const position = settings.currencyPosition || "left";
     const decimals = settings.decimals || 2;
-    const decimalSep = settings.decimal_separator || ".";
-    const thousandSep = settings.thousand_separator || ",";
+    const decimalSep = settings.decimalSeparator || ".";
+    const thousandSep = settings.thousandSeparator || ",";
 
     // Format number
     const formatted = parseFloat(amount)
@@ -259,15 +259,15 @@
   ) {
     switch (state) {
       case STATE_ACHIEVED:
-        return settings.message_achieved;
+        return settings.messageAchieved;
 
       case STATE_NEED_COUPON:
-        return settings.message_coupon;
+        return settings.messageCoupon;
 
       case STATE_IN_PROGRESS:
       default:
         return formatMessage(
-          settings.message_progress,
+          settings.messageProgress,
           progressData.remaining,
           threshold,
           cartTotal
@@ -418,9 +418,9 @@
     const templates = yayboostShippingBar?.templates || {};
     const achieved = data.achieved && !data.show_coupon_message;
     const bgColor = achieved
-      ? settings.bar_color || "#4CAF50"
-      : settings.background_color || "#e8f5e9";
-    const textColor = achieved ? "#ffffff" : settings.text_color || "#2e7d32";
+      ? settings.barColor || "#4caf50"
+      : settings.backgroundColor || "#e8f5e9";
+    const textColor = achieved ? "#ffffff" : settings.textColor || "#2e7d32";
 
     const template = templates.minimal_text;
     if (!template) {
@@ -447,9 +447,9 @@
     const templates = yayboostShippingBar?.templates || {};
     const achieved = data.achieved && !data.show_coupon_message;
     const progressColor = achieved
-      ? settings.bar_color || "#4CAF50"
-      : settings.background_color || "#e8f5e9";
-    const textColor = settings.text_color || "#2e7d32";
+      ? settings.barColor || "#4caf50"
+      : settings.backgroundColor || "#e8f5e9";
+    const textColor = settings.textColor || "#2e7d32";
 
     const template = templates.progress_bar;
     if (!template) {
@@ -475,12 +475,12 @@
     const settings = yayboostShippingBar?.settings || {};
     const templates = yayboostShippingBar?.templates || {};
     const achieved = data.achieved && !data.show_coupon_message;
-    const barColor = settings.bar_color || "#4CAF50";
+    const barColor = settings.barColor || "#4caf50";
     const bgColor = achieved
-      ? settings.bar_color || "#4CAF50"
-      : settings.background_color || "#e8f5e9";
-    const textColor = settings.text_color || "#2e7d32";
-    const currencySymbol = settings.currency_symbol || "$";
+      ? settings.barColor || "#4caf50"
+      : settings.backgroundColor || "#e8f5e9";
+    const textColor = settings.textColor || "#2e7d32";
+    const currencySymbol = settings.currencySymbol || "$";
     const threshold = data.threshold || 0;
     const cartTotal = data.current || 0;
 
@@ -515,7 +515,7 @@
 
     // Get display style from settings
     const displayStyle =
-      yayboostShippingBar?.settings?.display_style || "minimal_text";
+      yayboostShippingBar?.settings?.displayStyle || "minimal_text";
 
     // Route to appropriate function based on display style
     if (displayStyle === "minimal_text") {

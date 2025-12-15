@@ -16,7 +16,7 @@ interface FeatureLayoutProps {
 }
 
 export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
-  const { data: feature, isLoading } = useFeature(featureId);
+  const { data: feature, isLoading } = useFeature(featureId, true);
   const toggleMutation = useToggleFeature();
 
   const handleToggle = (enabled: boolean) => {

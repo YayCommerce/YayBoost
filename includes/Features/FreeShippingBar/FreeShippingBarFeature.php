@@ -109,6 +109,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         add_action( 'wp_ajax_nopriv_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
 
         // Enqueue assets only if feature is enabled and has locations
+        // Todo: Check enqueue in cart page and check out page, mini cart page
         if ( ! empty( $show_on ) ) {
             add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ], 100 );
         }
@@ -165,18 +166,18 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'thresholdInfo' => $this->get_threshold_info_for_js(),
                 'templates'     => $this->get_html_templates(),
                 'settings'      => [
-                    'message_progress'   => $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                    'message_achieved'   => $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' ),
-                    'message_coupon'     => $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
-                    'bar_color'          => $settings['bar_color'] ?? '#4CAF50',
-                    'background_color'   => $settings['background_color'] ?? '#e8f5e9',
-                    'text_color'         => $settings['text_color'] ?? '#2e7d32',
-                    'display_style'      => $settings['display_style'] ?? 'minimal_text',
-                    'currency_symbol'    => get_woocommerce_currency_symbol(),
-                    'currency_position'  => get_option( 'woocommerce_currency_pos', 'left' ),
-                    'decimals'           => wc_get_price_decimals(),
-                    'decimal_separator'  => wc_get_price_decimal_separator(),
-                    'thousand_separator' => wc_get_price_thousand_separator(),
+                    'messageProgress'   => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
+                    'messageAchieved'   => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
+                    'messageCoupon'     => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
+                    'barColor'          => $settings['bar_color'] ?? $this->get_default_settings()['bar_color'],
+                    'backgroundColor'   => $settings['background_color'] ?? $this->get_default_settings()['background_color'],
+                    'textColor'         => $settings['text_color'] ?? $this->get_default_settings()['text_color'],
+                    'displayStyle'      => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
+                    'currencySymbol'    => get_woocommerce_currency_symbol(),
+                    'currencyPosition'  => get_option( 'woocommerce_currency_pos', 'left' ),
+                    'decimals'          => wc_get_price_decimals(),
+                    'decimalSeparator'  => wc_get_price_decimal_separator(),
+                    'thousandSeparator' => wc_get_price_thousand_separator(),
                 ],
             ]
         );

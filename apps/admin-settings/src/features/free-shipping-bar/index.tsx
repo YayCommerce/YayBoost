@@ -138,7 +138,7 @@ function FullDetailBar({
   threshold: number;
   settings: SettingsFormData;
 }) {
-  const currencySymbol = window.yayboostData?.currency_symbol || '$';
+  const currencySymbol = window.yayboostData?.currencySymbol || '$';
 
   return (
     <div className="space-y-4">
@@ -217,7 +217,7 @@ function ShippingBarPreview({
   cartValue?: number;
 }) {
   // Get currency symbol from admin data
-  const currencySymbol = window.yayboostData?.currency_symbol || '$';
+  const currencySymbol = window.yayboostData?.currencySymbol || '$';
 
   // Use default threshold value
   const threshold = 100;
@@ -270,7 +270,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
   const [previewValue, setPreviewValue] = useState(30);
 
   // Get currency symbol from admin data
-  const currencySymbol = window.yayboostData?.currency_symbol || '$';
+  const currencySymbol = window.yayboostData?.currencySymbol || '$';
 
   const defaultValues = useMemo(() => feature?.settings as SettingsFormData, [feature]);
 

@@ -4,7 +4,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Feature, FeatureCategory, featureApi } from '@/lib/api';
+import { Feature, featureApi } from '@/lib/api';
 
 // Query keys
 export const featureKeys = {
@@ -38,12 +38,15 @@ export function useFeatureCategories() {
 
 /**
  * Fetch single feature by ID
+ * @param id Feature ID
+ * @param forceRefresh If true, always refetch on mount. If false, use cache if available.
  */
-export function useFeature(id: string) {
+export function useFeature(id: string, forceRefresh?: boolean) {
   return useQuery({
     queryKey: featureKeys.detail(id),
     queryFn: () => featureApi.get(id),
     enabled: !!id,
+    refetchOnMount: forceRefresh ? 'always' : false,
   });
 }
 
