@@ -270,7 +270,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                             <span style="color: #ffffff;">🎁</span>
                         </div>
                     </div>
-                    <div class="yayboost-shipping-bar__cta" style="background-color: {{BG_COLOR}}; color: {{TEXT_COLOR}};">{{MESSAGE}}</div>
+                    <div class="yayboost-shipping-bar__cta" style="background-color: {{BG_COLOR}}; color: {{CTA_TEXT_COLOR}};">{{MESSAGE}}</div>
                 </div>
             ',
         ];
@@ -309,7 +309,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         $templates  = $this->get_html_templates();
         $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
         $bg_color   = $achieved ? $settings['bar_color'] : $settings['background_color'];
-        $text_color = $achieved ? '#ffffff' : $settings['text_color'];
+        $text_color = $settings['text_color'];
 
         $template = $templates['minimal_text'];
 
@@ -379,6 +379,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'BAR_COLOR'       => esc_attr( $bar_color ),
                 'BG_COLOR'        => esc_attr( $bg_color ),
                 'TEXT_COLOR'      => esc_attr( $text_color ),
+                'CTA_TEXT_COLOR'  => $achieved ? '#ffffff' : esc_attr( $text_color ),
                 'PROGRESS'        => esc_attr( $data['progress'] ),
                 'CURRENCY_SYMBOL' => esc_html( $currency_symbol ),
                 'THRESHOLD'       => esc_html( number_format( $threshold, 2 ) ),

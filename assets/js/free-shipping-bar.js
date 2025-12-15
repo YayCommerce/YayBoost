@@ -493,6 +493,7 @@
       BAR_COLOR: barColor,
       BG_COLOR: bgColor,
       TEXT_COLOR: textColor,
+      CTA_TEXT_COLOR: achieved ? "#ffffff" : textColor,
       PROGRESS: data.progress || 0,
       CURRENCY_SYMBOL: currencySymbol,
       THRESHOLD: threshold.toFixed(2),

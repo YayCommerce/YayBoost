@@ -55,6 +55,31 @@ const showOnOptions = [
   { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
 ];
 
+// Color presets for quick color scheme selection
+const COLOR_PRESETS = [
+  {
+    id: 'blue',
+    name: __('Blue', 'yayboost'),
+    barColor: '#0061fe',
+    backgroundColor: '#e3f2fd',
+    textColor: '#003d99',
+  },
+  {
+    id: 'green',
+    name: __('Green', 'yayboost'),
+    barColor: '#1ec46a',
+    backgroundColor: '#e8f5e9',
+    textColor: '#0d7a3d',
+  },
+  {
+    id: 'black',
+    name: __('Black', 'yayboost'),
+    barColor: '#000000',
+    backgroundColor: '#f5f5f5',
+    textColor: '#333333',
+  },
+];
+
 // Minimal Text Bar Component
 function MinimalTextBar({
   message,
@@ -199,7 +224,7 @@ function FullDetailBar({
         className="rounded-lg px-4 py-3 text-center text-sm font-medium"
         style={{
           backgroundColor: achieved ? settings.bar_color : settings.background_color,
-          color: settings.text_color,
+          color: achieved ? '#ffffff' : settings.text_color,
         }}
       >
         {message}
@@ -288,6 +313,14 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
 
   const onSubmit = (data: SettingsFormData) => {
     updateSettings.mutate({ id: featureId, settings: data });
+  };
+
+  // Handle preset color selection
+  const handlePresetClick = (preset: (typeof COLOR_PRESETS)[number]) => {
+    form.setValue('bar_color', preset.barColor, { shouldDirty: true });
+    form.setValue('background_color', preset.backgroundColor, { shouldDirty: true });
+    form.setValue('text_color', preset.textColor, { shouldDirty: true });
+    form.trigger(['bar_color', 'background_color', 'text_color']);
   };
 
   const watchedValues = form.watch();
@@ -508,6 +541,29 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                 <CardDescription>{__('Customize colors and style', 'yayboost')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Color Presets */}
+                <div>
+                  <FormLabel className="mb-3 block">{__('Color Presets', 'yayboost')}</FormLabel>
+                  <div className="flex flex-wrap gap-5">
+                    {COLOR_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handlePresetClick(preset)}
+                        className={cn(
+                          'hover:border-primary rounded-full border-2 transition-all hover:shadow-sm',
+                          'border-border h-10 w-10 overflow-hidden',
+                        )}
+                        style={{
+                          background: `conic-gradient(from 0deg, ${preset.barColor} 0deg 120deg, ${preset.backgroundColor} 120deg 240deg, ${preset.textColor} 240deg 360deg)`,
+                        }}
+                        title={preset.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Color Inputs */}
                 <div className="grid gap-4 sm:grid-cols-3">
                   <FormField
                     control={form.control}
