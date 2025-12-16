@@ -109,10 +109,45 @@ class FreeShippingBarFeature extends AbstractFeature {
         add_action( 'wp_ajax_nopriv_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
 
         // Enqueue assets only if feature is enabled and has locations
-        // Todo: Check enqueue in cart page and check out page, mini cart page
+        // Smart enqueue: cart/checkout pages, and mini cart (with theme detection)
         if ( ! empty( $show_on ) ) {
+            // For cart/checkout pages, use standard wp_enqueue_scripts
+            // For mini cart, check if Brandy theme or WooCommerce blocks
             add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ], 100 );
+
+            // If mini cart block is active and not Brandy, also hook to block assets
+            if (in_array( 'mini_cart', $show_on, true )
+                && ! $this->is_brandy_theme()
+                && $this->has_mini_cart_block()) {
+                add_action( 'enqueue_block_assets', [ $this, 'enqueue_assets' ], 100 );
+            }
         }
+    }
+
+    /**
+     * Check if current theme is Brandy
+     *
+     * @return bool
+     */
+    private function is_brandy_theme(): bool {
+        $theme          = wp_get_theme();
+        $theme_name     = $theme->get( 'Name' );
+        $theme_template = $theme->get_template();
+
+        // Check by theme name or template slug
+        return stripos( $theme_name, 'Brandy' ) !== false
+            || stripos( $theme_template, 'brandy' ) !== false;
+    }
+
+    /**
+     * Check if WooCommerce mini cart block is active
+     *
+     * @return bool
+     */
+    private function has_mini_cart_block(): bool {
+        // Check if mini cart block is registered/available
+        return class_exists( '\Automattic\WooCommerce\Blocks\Package' )
+            && function_exists( 'has_block' );
     }
 
     /**
@@ -127,10 +162,23 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         $show_on = $this->get_settings()['show_on'] ?? [ 'top_cart', 'top_checkout' ];
 
-        // Check if we should enqueue on current page
-        $should_enqueue = in_array( 'mini_cart', $show_on, true )
-            || (is_cart() && array_intersect( [ 'top_cart', 'bottom_cart' ], $show_on ))
-            || (is_checkout() && array_intersect( [ 'top_checkout', 'bottom_checkout' ], $show_on ));
+        $should_enqueue = false;
+
+        if (is_cart() && array_intersect( [ 'top_cart', 'bottom_cart' ], $show_on )) {
+            $should_enqueue = true;
+        } elseif (is_checkout() && array_intersect( [ 'top_checkout', 'bottom_checkout' ], $show_on )) {
+            $should_enqueue = true;
+        }
+
+        if (in_array( 'mini_cart', $show_on, true )) {
+            if ($this->is_brandy_theme()) {
+                $should_enqueue = true;
+            } elseif ($this->has_mini_cart_block()) {
+                $should_enqueue = true;
+            } else {
+                $should_enqueue = true;
+            }
+        }
 
         if ( ! $should_enqueue) {
             return;
@@ -144,13 +192,21 @@ class FreeShippingBarFeature extends AbstractFeature {
             YAYBOOST_VERSION
         );
 
-        // Add inline styles for dynamic colors
-        // wp_add_inline_style( 'yayboost-free-shipping-bar', $this->generate_custom_css( $this->get_settings() ) );
+        // Determine script dependencies based on context
+        $script_deps = [ 'jquery' ];
+
+        // If mini cart block is active and not Brandy theme, add block dependency
+        if (in_array( 'mini_cart', $show_on, true )
+            && ! $this->is_brandy_theme()
+            && $this->has_mini_cart_block()) {
+            // WooCommerce Blocks script handle for mini cart
+            $script_deps[] = 'wc-blocks-checkout';
+        }
 
         wp_enqueue_script(
             'yayboost-free-shipping-bar',
             YAYBOOST_URL . 'assets/js/free-shipping-bar.js',
-            [ 'jquery' ],
+            $script_deps,
             YAYBOOST_VERSION,
             true
         );
@@ -185,30 +241,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         );
     }
 
-    /**
-     * Generate custom CSS for dynamic colors based on settings
-     *
-     * @param array $settings
-     * @return string
-     */
-    protected function generate_custom_css(array $settings): string {
-        $bar_color  = $settings['bar_color'] ?? '#4CAF50';
-        $bg_color   = $settings['background_color'] ?? '#e0e0e0';
-        $text_color = $settings['text_color'] ?? '#333333';
-        $data       = $this->get_bar_data();
-        $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
-        return "
-            .yayboost-shipping-bar__progress {
-                background: {$bg_color};
-            }
-            .yayboost-shipping-bar__progress-fill {
-                background: {$bar_color};
-            }
-            .yayboost-shipping-bar--achieved {
-                background: {$bar_color};
-            }
-        ";
-    }
 
     /**
      * Render the shipping bar
