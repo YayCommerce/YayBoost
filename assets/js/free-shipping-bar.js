@@ -9,11 +9,22 @@
   const STATE_IN_PROGRESS = "in_progress";
 
   /**
+   * Current cart total
+   */
+  let currentCartTotal = yayboostShippingBar.cartTotal || 0;
+
+  /**
+   * Current coupons applied to cart
+   */
+  let currentCoupons = [];
+
+  /**
    * Check if we're in mini cart block context
    */
   function isMiniCartBlock() {
     return (
-      $(".wc-block-mini-cart").length > 0 ||
+      ($(".wc-block-mini-cart").length > 0 &&
+        $(".wc-block-mini-cart").is(":visible")) ||
       $("#yayboost-mini-cart-shipping-bar").length > 0
     );
   }
@@ -24,48 +35,7 @@
    * @return {number|null} Cart total or null if not available
    */
   function calculateCartTotalForShipping(ignoreDiscounts) {
-    if (
-      typeof window.wp === "undefined" ||
-      !window.wp.data ||
-      !window.wp.data.select
-    ) {
-      return null;
-    }
-
-    try {
-      const cartData = window.wp.data.select("wc/store/cart").getCartData();
-      if (!cartData || !cartData.totals) {
-        return null;
-      }
-
-      // Use displayed subtotal (total_items) - same as WooCommerce get_displayed_subtotal()
-      let total = parseFloat(cartData.totals.total_items) || 0;
-
-      // If ignore_discounts is 'no' (default), subtract discount
-      if (ignoreDiscounts !== "yes") {
-        const discountTotal = parseFloat(cartData.totals.total_discount) || 0;
-        total = total - discountTotal;
-
-        // If prices include tax, also subtract discount tax
-        // Note: WooCommerce store might not expose discount_tax directly
-        // This is an approximation - for exact match, would need to check display_prices_including_tax
-        // But discount_tax is usually small, so this should be close enough
-      }
-
-      // Round to match WooCommerce behavior (usually 2 decimals)
-      const decimals =
-        yayboostShippingBar && yayboostShippingBar.settings
-          ? yayboostShippingBar.settings.decimals || 2
-          : 2;
-      total =
-        Math.round(total * Math.pow(10, decimals)) / Math.pow(10, decimals);
-
-      return total > 0 ? total : null;
-    } catch (e) {
-      console.log("Error calculating cart total:", e);
-    }
-
-    return null;
+    return currentCartTotal;
   }
 
   /**
@@ -89,29 +59,12 @@
    * @return {boolean}
    */
   function hasFreeShippingCoupon() {
-    if (
-      typeof window.wp === "undefined" ||
-      !window.wp.data ||
-      !window.wp.data.select
-    ) {
-      return false;
+    // Check if any coupon has discount_type === 'free_shipping'
+    if (currentCoupons && Array.isArray(currentCoupons)) {
+      return currentCoupons.some(function (coupon) {
+        return coupon.discount_type === "free_shipping";
+      });
     }
-
-    try {
-      const cartData = window.wp.data.select("wc/store/cart").getCartData();
-      if (cartData && cartData.coupons && Array.isArray(cartData.coupons)) {
-        // Check if any coupon has free_shipping property
-        return cartData.coupons.some(function (coupon) {
-          return (
-            coupon.discount_type === "free_shipping" ||
-            coupon.free_shipping === true
-          );
-        });
-      }
-    } catch (e) {
-      console.log("Error checking coupons from store:", e);
-    }
-
     return false;
   }
 
@@ -365,20 +318,6 @@
   }
 
   /**
-   * Check if progress bar should be shown
-   * @param {object} data Bar data
-   * @return {boolean}
-   */
-  function shouldShowProgress(data) {
-    return (
-      data.threshold &&
-      data.threshold > 0 &&
-      !data.achieved &&
-      !data.show_coupon_message
-    );
-  }
-
-  /**
    * Replace placeholders in template string
    * @param {string} template Template string with {{PLACEHOLDER}} placeholders
    * @param {object} replacements Object with placeholder values
@@ -538,17 +477,119 @@
   }
 
   /**
+   * Update all shipping bars based on currentCartTotal
+   */
+  function updateAllShippingBars() {
+    const data = calculateBarData(
+      yayboostShippingBar.thresholdInfo,
+      currentCartTotal,
+      yayboostShippingBar.settings
+    );
+
+    if (!data) return;
+
+    // Update Mini Cart Block Bar
+    const miniCartBar = document.querySelector(
+      "#yayboost-mini-cart-shipping-bar"
+    );
+    if (miniCartBar) {
+      const newHtml = buildBarHtml(data, "yayboost-mini-cart-shipping-bar");
+      if (newHtml) miniCartBar.outerHTML = newHtml;
+    }
+
+    // Update Classic/Block Cart Page Bars
+    $(".yayboost-shipping-bar").each(function () {
+      if (this.id !== "yayboost-mini-cart-shipping-bar") {
+        const newHtml = buildBarHtml(data);
+        if (newHtml) $(this).replaceWith(newHtml);
+      }
+    });
+  }
+
+  // ==========================================
+  // FETCH INTERCEPTOR (WooCommerce Blocks Support)
+  // ==========================================
+  const originalFetch = window.fetch;
+  window.fetch = function (resource, config) {
+    // Call original fetch
+    const response = originalFetch.apply(this, arguments);
+
+    // Check if it's a WooCommerce Blocks cart update request
+    // URL usually looks like: .../wc/store/v1/cart?... or /batch
+    const url = typeof resource === "string" ? resource : resource?.url;
+
+    if (
+      url &&
+      (url.includes("/wc/store/v1/cart") || url.includes("/wc/store/v1/batch"))
+    ) {
+      response.then((res) => {
+        if (res.ok) {
+          res
+            .clone()
+            .json()
+            .then((data) => {
+              // Parse data to get totals and coupons
+              let totals = null;
+              let coupons = null;
+
+              // Case 1: Endpoint /cart returns cart object directly
+              if (data.totals) {
+                totals = data.totals;
+                coupons = data.coupons || [];
+              }
+              // Case 2: Endpoint /batch returns array of responses
+              else if (data.responses && Array.isArray(data.responses)) {
+                // Find response containing cart data
+                const cartRes = data.responses.find(
+                  (r) => r.body && (r.body.totals || r.body.coupons)
+                );
+                if (cartRes && cartRes.body) {
+                  totals = cartRes.body.totals;
+                  coupons = cartRes.body.coupons || [];
+                }
+              }
+
+              // Update currentCoupons if coupons found
+              if (coupons !== null) {
+                currentCoupons = coupons;
+              }
+
+              // If totals found, calculate and update bar
+              if (totals) {
+                // Calculate new total: (total_items - total_discount)
+                // Note: API returns minor units (cents) if currency_minor_unit > 0
+                // We need to divide by 10^currency_minor_unit
+                const currencyMinorUnit = totals.currency_minor_unit || 0;
+                const divisor = Math.pow(10, currencyMinorUnit);
+
+                let totalItems = parseFloat(totals.total_items);
+                let totalDiscount = parseFloat(totals.total_discount);
+
+                // Safe parsing if API returns strings
+                if (isNaN(totalItems)) totalItems = 0;
+                if (isNaN(totalDiscount)) totalDiscount = 0;
+
+                const newTotal = (totalItems - totalDiscount) / divisor;
+
+                currentCartTotal = newTotal;
+
+                // Trigger UI update
+                updateAllShippingBars();
+              }
+            })
+            .catch((err) => console.error("Error parsing cart update:", err));
+        }
+      });
+    }
+
+    return response;
+  };
+
+  /**
    * Fetch bar data from API (fallback for classic cart)
    * @param {function} callback Success callback with (data) parameter
    */
   function fetchBarData(callback) {
-    // Try to get data without AJAX first
-    const data = getBarDataWithoutAjax();
-    if (data) {
-      callback(data);
-      return;
-    }
-
     // Fallback to AJAX for classic cart
     const ajaxData = {
       action: "yayboost_get_shipping_bar",
@@ -655,12 +696,10 @@
 
     if ($bars.length === 0) return;
 
-    // Try to get data without AJAX first (in case store is available)
-    const data = getBarDataWithoutAjax();
-
-    if (data) {
-      // Use calculated data
-      if (!data.message) {
+    // Fallback to AJAX for classic cart (when store not available)
+    fetchBarData(function (data) {
+      if (!data || !data.message) {
+        // No data or error, remove bars
         $bars.remove();
         return;
       }
@@ -672,24 +711,7 @@
       } else {
         $bars.remove();
       }
-    } else {
-      // Fallback to AJAX for classic cart (when store not available)
-      fetchBarData(function (data) {
-        if (!data || !data.message) {
-          // No data or error, remove bars
-          $bars.remove();
-          return;
-        }
-
-        const barHtml = buildBarHtml(data);
-        if (barHtml) {
-          // Replace existing bars
-          $bars.replaceWith(barHtml);
-        } else {
-          $bars.remove();
-        }
-      });
-    }
+    });
   }
 
   /**
@@ -708,61 +730,9 @@
     return !!(blockCart || blockMiniCart || isMiniCartBar);
   }
 
-  /**
-   * Subscribe to WooCommerce cart store changes
-   * Only updates block-based cart bars (not classic cart)
-   * @return {function|null} Unsubscribe function or null
-   */
-  function subscribeToCartStore() {
-    if (
-      typeof window.wp === "undefined" ||
-      !window.wp.data ||
-      !window.wp.data.subscribe
-    ) {
-      return null;
-    }
-
-    try {
-      const unsubscribe = window.wp.data.subscribe(function () {
-        // Cart state changed, only update block-based cart bars
-        // Classic cart bars are handled by jQuery events
-
-        // Update mini cart bar if exists (block-based)
-        const miniCartBar = document.querySelector(
-          "#yayboost-mini-cart-shipping-bar"
-        );
-        if (miniCartBar) {
-          updateMiniCartBarData(miniCartBar);
-        }
-
-        // Update block-based cart page bars
-        const blockCartBars = document.querySelectorAll(
-          ".wc-block-cart .yayboost-shipping-bar"
-        );
-        if (blockCartBars.length > 0) {
-          const data = getBarDataWithoutAjax();
-          if (data && data.message) {
-            const barHtml = buildBarHtml(data);
-            if (barHtml) {
-              blockCartBars.forEach(function (bar) {
-                $(bar).replaceWith(barHtml);
-              });
-            }
-          }
-        }
-      }, "wc/store/cart");
-
-      return unsubscribe;
-    } catch (e) {
-      console.log("Error subscribing to cart store:", e);
-      return null;
-    }
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
     let shippingBarTimeout;
     let quantityTimeout;
-    let cartStoreUnsubscribe = null;
 
     // ============================================================================
     // CLASSIC CART HANDLERS (Widget-based, Non-block)
@@ -810,19 +780,6 @@
       debouncedUpdateShippingBar
     );
 
-    // Quantity input changes (cart page - Classic)
-    // Triggered when: User changes quantity in classic cart form
-    $(document.body).on(
-      "change input",
-      ".woocommerce-cart-form input.qty",
-      function () {
-        clearTimeout(quantityTimeout);
-        quantityTimeout = setTimeout(function () {
-          debouncedUpdateShippingBar(500);
-        }, 500);
-      }
-    );
-
     // Form submit event (cart page - Classic)
     // Triggered when: User submits classic cart form (update cart button)
     $(document.body).on("submit", ".woocommerce-cart-form", function () {
@@ -832,12 +789,6 @@
     // ============================================================================
     // BLOCK-BASED CART HANDLERS (WooCommerce Blocks)
     // ============================================================================
-
-    // Subscribe to WooCommerce cart store (for block-based cart)
-    // This automatically updates block-based cart bars when cart changes
-    if (isMiniCartBlock() || $(".wc-block-cart").length > 0) {
-      cartStoreUnsubscribe = subscribeToCartStore();
-    }
 
     // Mini cart block specific events (backup handlers)
     // These are fallback handlers in case store subscription doesn't catch everything
@@ -851,6 +802,7 @@
         "mousedown touchstart",
         ".wc-block-components-quantity-selector__button",
         function () {
+          console.log(1234);
           setTimeout(injectBarIntoMiniCartBlock, 300);
         }
       );
@@ -865,16 +817,5 @@
         }
       );
     }
-
-    // ============================================================================
-    // CLEANUP
-    // ============================================================================
-
-    // Cleanup on page unload
-    $(window).on("beforeunload", function () {
-      if (cartStoreUnsubscribe) {
-        cartStoreUnsubscribe();
-      }
-    });
   });
 })(jQuery);

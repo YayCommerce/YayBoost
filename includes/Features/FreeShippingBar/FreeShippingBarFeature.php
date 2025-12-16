@@ -163,6 +163,7 @@ class FreeShippingBarFeature extends AbstractFeature {
             [
                 'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
                 'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
+                'cartTotal'     => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
                 'thresholdInfo' => $this->get_threshold_info_for_js(),
                 'templates'     => $this->get_html_templates(),
                 'settings'      => [
