@@ -30,28 +30,14 @@
   }
 
   /**
-   * Calculate cart total the same way WooCommerce Free Shipping method does
-   * @param {string} ignoreDiscounts 'yes' to ignore discounts, 'no' to apply after discount
-   * @return {number|null} Cart total or null if not available
-   */
-  function calculateCartTotalForShipping(ignoreDiscounts) {
-    return currentCartTotal;
-  }
-
-  /**
-   * Get cart total from WooCommerce cart store
+   * Get cart total from current state
+   * Note: currentCartTotal is updated via fetch interceptor (for blocks) or initial PHP value
    * @return {number|null} Cart total or null if not available
    */
   function getCartTotalFromStore() {
-    // Get ignore_discounts from thresholdInfo if available
-    const ignoreDiscounts =
-      yayboostShippingBar &&
-      yayboostShippingBar.thresholdInfo &&
-      yayboostShippingBar.thresholdInfo.ignore_discounts
-        ? yayboostShippingBar.thresholdInfo.ignore_discounts
-        : "no";
-
-    return calculateCartTotalForShipping(ignoreDiscounts);
+    return currentCartTotal !== undefined && currentCartTotal !== null
+      ? currentCartTotal
+      : null;
   }
 
   /**
@@ -424,7 +410,7 @@
     const textColor = settings.textColor || "#2e7d32";
     const currencySymbol = settings.currencySymbol || "$";
     const threshold = data.threshold || 0;
-    const cartTotal = data.current || 0;
+    const cartTotal = +data.current || 0;
     const shopPageUrl = settings?.shopPageUrl || "";
     const template = templates.full_detail;
     if (!template) {
@@ -806,7 +792,6 @@
         "mousedown touchstart",
         ".wc-block-components-quantity-selector__button",
         function () {
-          console.log(1234);
           setTimeout(injectBarIntoMiniCartBlock, 300);
         }
       );
