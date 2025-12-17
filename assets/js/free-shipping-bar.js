@@ -89,8 +89,6 @@
         }
       }
 
-      console.log(window.accounting.formatMoney(amount, currencyOptions));
-
       // Format with options (if any) or use default settings
       return window.accounting.formatMoney(amount, currencyOptions);
     }
@@ -581,34 +579,6 @@
   }
 
   /**
-   * Fetch bar data from API (fallback for classic cart)
-   * @param {function} callback Success callback with (data) parameter
-   */
-  function fetchBarData(callback) {
-    // Fallback to AJAX for classic cart
-    const ajaxData = {
-      action: "yayboost_get_shipping_bar",
-      nonce: yayboostShippingBar.nonce,
-    };
-
-    $.ajax({
-      url: yayboostShippingBar.ajaxUrl,
-      type: "POST",
-      data: ajaxData,
-      success: function (response) {
-        if (response.success && response.data) {
-          callback(response.data);
-        } else {
-          callback(null);
-        }
-      },
-      error: function () {
-        callback(null);
-      },
-    });
-  }
-
-  /**
    * Inject shipping bar into mini cart block
    */
   function injectBarIntoMiniCartBlock() {
@@ -678,113 +648,7 @@
     }
   }
 
-  /**
-   * Update shipping bar (for classic cart only, block-based handled by subscription)
-   */
-  function updateShippingBar() {
-    // Only update classic cart bars (not block-based)
-    // Block-based cart bars are handled by subscribeToCartStore()
-    const $bars = $(".yayboost-shipping-bar").filter(function () {
-      const bar = this;
-      return !isBlockBasedCartBar(bar);
-    });
-
-    if ($bars.length === 0) return;
-
-    // Fallback to AJAX for classic cart (when store not available)
-    fetchBarData(function (data) {
-      if (!data || !data.message) {
-        // No data or error, remove bars
-        $bars.remove();
-        return;
-      }
-
-      const barHtml = buildBarHtml(data);
-      if (barHtml) {
-        // Replace existing bars
-        $bars.replaceWith(barHtml);
-      } else {
-        $bars.remove();
-      }
-    });
-  }
-
-  /**
-   * Check if bar is in block-based cart context
-   * @param {HTMLElement} barElement
-   * @return {boolean}
-   */
-  function isBlockBasedCartBar(barElement) {
-    if (!barElement) return false;
-
-    // Check if bar is inside block-based cart
-    const blockCart = barElement.closest(".wc-block-cart");
-    const blockMiniCart = barElement.closest(".wc-block-mini-cart");
-    const isMiniCartBar = barElement.id === "yayboost-mini-cart-shipping-bar";
-
-    return !!(blockCart || blockMiniCart || isMiniCartBar);
-  }
-
   document.addEventListener("DOMContentLoaded", function () {
-    let shippingBarTimeout;
-    let quantityTimeout;
-
-    // ============================================================================
-    // CLASSIC CART HANDLERS (Widget-based, Non-block)
-    // ============================================================================
-
-    /**
-     * Debounced update function for classic cart
-     * Updates classic cart bars only (not block-based)
-     */
-    function debouncedUpdateShippingBar(delay) {
-      delay = delay || 300;
-      clearTimeout(shippingBarTimeout);
-      shippingBarTimeout = setTimeout(updateShippingBar, delay);
-    }
-
-    // Classic cart events - all trigger debounced update
-    // These events are fired by classic WooCommerce (non-block)
-    const classicCartEvents = [
-      // Main cart update events (Classic WooCommerce)
-      // Triggered when: Add/remove items, update cart via AJAX
-      "added_to_cart removed_from_cart wc_update_cart",
-
-      // Fragment refresh events (widget-based mini cart)
-      // Triggered when: Mini cart widget updates via fragments
-      "wc_fragments_refreshed wc_fragments_loaded",
-
-      // Updated WC div event (cart page)
-      // Triggered when: Cart page updates, product removed via custom event
-      "updated_wc_div product-remove",
-
-      // Coupon events
-      // Triggered when: Coupon applied or removed
-      "applied_coupon removed_coupon",
-    ];
-
-    classicCartEvents.forEach(function (events) {
-      $(document.body).on(events, debouncedUpdateShippingBar);
-    });
-
-    // Click event: Remove product button (direct child of .product-remove)
-    // Triggered when: User clicks remove button in classic cart
-    $(document.body).on(
-      "click",
-      ".product-remove > .remove",
-      debouncedUpdateShippingBar
-    );
-
-    // Form submit event (cart page - Classic)
-    // Triggered when: User submits classic cart form (update cart button)
-    $(document.body).on("submit", ".woocommerce-cart-form", function () {
-      debouncedUpdateShippingBar(300);
-    });
-
-    // ============================================================================
-    // BLOCK-BASED CART HANDLERS (WooCommerce Blocks)
-    // ============================================================================
-
     // Mini cart block specific events (backup handlers)
     // These are fallback handlers in case store subscription doesn't catch everything
     if (isMiniCartBlock()) {

@@ -108,6 +108,9 @@ class FreeShippingBarFeature extends AbstractFeature {
         add_action( 'wp_ajax_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
         add_action( 'wp_ajax_nopriv_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
 
+        // Add cart fragments filter for Classic Cart/Mini Cart updates
+        add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_shipping_bar_fragment' ] );
+
         // Enqueue assets only if feature is enabled and has locations
         // Smart enqueue: cart/checkout pages, and mini cart (with theme detection)
         if ( ! empty( $show_on ) ) {
@@ -193,7 +196,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         );
 
         // Determine script dependencies based on context
-        $script_deps = [ 'jquery', 'wc-accounting' ];
+        $script_deps = [ 'jquery', 'wc-accounting', 'wc-cart-fragments' ];
 
         // If mini cart block is active and not Brandy theme, add block dependency
         if (in_array( 'mini_cart', $show_on, true )
@@ -846,6 +849,40 @@ class FreeShippingBarFeature extends AbstractFeature {
         wp_send_json_success( $data );
     }
 
+
+    /**
+     * Add shipping bar fragment to cart fragments (for Classic Cart/Mini Cart)
+     *
+     * @param array $fragments Fragments array.
+     * @return array Updated fragments.
+     */
+    public function add_shipping_bar_fragment(array $fragments): array {
+        // Only add fragment if feature is enabled
+        if ( ! $this->is_enabled()) {
+            return $fragments;
+        }
+
+        // Check if cart is empty
+        if ( ! WC()->cart || WC()->cart->is_empty()) {
+            // Remove bar if cart empty
+            $fragments['.yayboost-shipping-bar'] = '';
+            return $fragments;
+        }
+
+        // Get updated bar HTML with latest cart data
+        $bar_html = $this->get_bar_html();
+
+        if (empty( $bar_html )) {
+            // No bar data, remove existing bar
+            $fragments['.yayboost-shipping-bar'] = '';
+            return $fragments;
+        }
+
+        // Add fragment - WooCommerce will automatically replace HTML
+        $fragments['.yayboost-shipping-bar'] = $bar_html;
+
+        return $fragments;
+    }
 
     /**
      * Get default settings
