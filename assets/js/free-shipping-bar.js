@@ -535,89 +535,6 @@
     });
   }
 
-  // ==========================================
-  // FETCH INTERCEPTOR (WooCommerce Blocks Support)
-  // ==========================================
-
-  if (isMiniCartBlock()) {
-    const originalFetch = window.fetch;
-    window.fetch = function (resource, config) {
-      // Call original fetch
-      const response = originalFetch.apply(this, arguments);
-
-      // Check if it's a WooCommerce Blocks cart update request
-      // URL usually looks like: .../wc/store/v1/cart?... or /batch
-      const url = typeof resource === "string" ? resource : resource?.url;
-
-      if (
-        url &&
-        (url.includes("/wc/store/v1/cart") ||
-          url.includes("/wc/store/v1/batch"))
-      ) {
-        response.then((res) => {
-          if (res.ok) {
-            res
-              .clone()
-              .json()
-              .then((data) => {
-                // Parse data to get totals and coupons
-                let totals = null;
-                let coupons = null;
-
-                // Case 1: Endpoint /cart returns cart object directly
-                if (data.totals) {
-                  totals = data.totals;
-                  coupons = data.coupons || [];
-                }
-                // Case 2: Endpoint /batch returns array of responses
-                else if (data.responses && Array.isArray(data.responses)) {
-                  // Find response containing cart data
-                  const cartRes = data.responses.find(
-                    (r) => r.body && (r.body.totals || r.body.coupons)
-                  );
-                  if (cartRes && cartRes.body) {
-                    totals = cartRes.body.totals;
-                    coupons = cartRes.body.coupons || [];
-                  }
-                }
-
-                // Update currentCoupons if coupons found
-                if (coupons !== null) {
-                  currentCoupons = coupons;
-                }
-
-                // If totals found, calculate and update bar
-                if (totals) {
-                  // Calculate new total: (total_items - total_discount)
-                  // Note: API returns minor units (cents) if currency_minor_unit > 0
-                  // We need to divide by 10^currency_minor_unit
-                  const currencyMinorUnit = totals.currency_minor_unit || 0;
-                  const divisor = Math.pow(10, currencyMinorUnit);
-
-                  let totalItems = parseFloat(totals.total_items);
-                  let totalDiscount = parseFloat(totals.total_discount);
-
-                  // Safe parsing if API returns strings
-                  if (isNaN(totalItems)) totalItems = 0;
-                  if (isNaN(totalDiscount)) totalDiscount = 0;
-
-                  const newTotal = (totalItems - totalDiscount) / divisor;
-
-                  currentCartTotal = newTotal;
-
-                  // Trigger UI update
-                  updateAllShippingBars();
-                }
-              })
-              .catch((err) => console.error("Error parsing cart update:", err));
-          }
-        });
-      }
-
-      return response;
-    };
-  }
-
   /**
    * Inject shipping bar into mini cart block
    */
@@ -717,6 +634,89 @@
           setTimeout(injectBarIntoMiniCartBlock, 200);
         }
       );
+
+      // ==========================================
+      // FETCH INTERCEPTOR (WooCommerce Blocks Support)
+      // ==========================================
+
+      const originalFetch = window.fetch;
+      window.fetch = function (resource, config) {
+        // Call original fetch
+        const response = originalFetch.apply(this, arguments);
+
+        // Check if it's a WooCommerce Blocks cart update request
+        // URL usually looks like: .../wc/store/v1/cart?... or /batch
+        const url = typeof resource === "string" ? resource : resource?.url;
+
+        if (
+          url &&
+          (url.includes("/wc/store/v1/cart") ||
+            url.includes("/wc/store/v1/batch"))
+        ) {
+          response.then((res) => {
+            if (res.ok) {
+              res
+                .clone()
+                .json()
+                .then((data) => {
+                  // Parse data to get totals and coupons
+                  let totals = null;
+                  let coupons = null;
+
+                  // Case 1: Endpoint /cart returns cart object directly
+                  if (data.totals) {
+                    totals = data.totals;
+                    coupons = data.coupons || [];
+                  }
+                  // Case 2: Endpoint /batch returns array of responses
+                  else if (data.responses && Array.isArray(data.responses)) {
+                    // Find response containing cart data
+                    const cartRes = data.responses.find(
+                      (r) => r.body && (r.body.totals || r.body.coupons)
+                    );
+                    if (cartRes && cartRes.body) {
+                      totals = cartRes.body.totals;
+                      coupons = cartRes.body.coupons || [];
+                    }
+                  }
+
+                  // Update currentCoupons if coupons found
+                  if (coupons !== null) {
+                    currentCoupons = coupons;
+                  }
+
+                  // If totals found, calculate and update bar
+                  if (totals) {
+                    // Calculate new total: (total_items - total_discount)
+                    // Note: API returns minor units (cents) if currency_minor_unit > 0
+                    // We need to divide by 10^currency_minor_unit
+                    const currencyMinorUnit = totals.currency_minor_unit || 0;
+                    const divisor = Math.pow(10, currencyMinorUnit);
+
+                    let totalItems = parseFloat(totals.total_items);
+                    let totalDiscount = parseFloat(totals.total_discount);
+
+                    // Safe parsing if API returns strings
+                    if (isNaN(totalItems)) totalItems = 0;
+                    if (isNaN(totalDiscount)) totalDiscount = 0;
+
+                    const newTotal = (totalItems - totalDiscount) / divisor;
+
+                    currentCartTotal = newTotal;
+
+                    // Trigger UI update
+                    updateAllShippingBars();
+                  }
+                })
+                .catch((err) =>
+                  console.error("Error parsing cart update:", err)
+                );
+            }
+          });
+        }
+
+        return response;
+      };
     }
   });
 })(jQuery);

@@ -101,12 +101,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         if (in_array( 'mini_cart', $show_on, true )) {
             // Method 1: Hook for widget-based mini cart
             add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
-            add_action( 'woocommerce_widget_shopping_cart_before_buttons', [ $this, 'render_bar' ] );
         }
-
-        // Always register AJAX endpoints (can be called from anywhere)
-        add_action( 'wp_ajax_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
-        add_action( 'wp_ajax_nopriv_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
 
         // Add cart fragments filter for Classic Cart/Mini Cart updates
         add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_shipping_bar_fragment' ] );
@@ -834,24 +829,6 @@ class FreeShippingBarFeature extends AbstractFeature {
             'ignore_discounts' => $free_shipping_info['ignore_discounts'] ?? 'no',
         ];
     }
-
-    /**
-     * AJAX handler to get bar data
-     *
-     * @return void
-     */
-    public function ajax_get_bar_data(): void {
-        // Verify nonce for security
-        $nonce = isset( $_POST['nonce'] ) ? wp_unslash( $_POST['nonce'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        if ( ! wp_verify_nonce( $nonce, 'yayboost_shipping_bar' )) {
-            wp_send_json_error( [ 'message' => __( 'Security check failed', 'yayboost' ) ] );
-            return;
-        }
-
-        $data = $this->get_bar_data();
-        wp_send_json_success( $data );
-    }
-
 
     /**
      * Add shipping bar fragment to cart fragments (for Classic Cart/Mini Cart)
