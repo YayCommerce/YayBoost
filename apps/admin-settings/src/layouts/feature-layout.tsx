@@ -2,13 +2,15 @@
  * Feature Layout - Layout for individual feature pages
  */
 
+import { useState } from 'react';
 import { ArrowLeft } from '@phosphor-icons/react';
 import { Link, Outlet } from 'react-router-dom';
 
-import { useFeature, useToggleFeature } from '@/hooks/use-features';
 import { cn } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
+import { useFeature } from '@/hooks/use-features';
 import { Skeleton } from '@/components/ui/skeleton';
+
+import { PageContext, PageContextType } from './useContext';
 
 interface FeatureLayoutProps {
   featureId: string;
@@ -16,12 +18,23 @@ interface FeatureLayoutProps {
 }
 
 export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
+  const [pageTitle, setPageTitle] = useState<string | null>(null);
+  const [pageDescription, setDescriptionPage] = useState<string | null>(null);
+  const [actionElement, setActionElement] = useState<React.ReactNode | null>(null);
   const { data: feature, isLoading } = useFeature(featureId);
-  const toggleMutation = useToggleFeature();
+  // const toggleMutation = useToggleFeature();
 
-  const handleToggle = (enabled: boolean) => {
-    toggleMutation.mutate({ id: featureId, enabled });
+  const pageContext: PageContextType = {
+    setPageHeader: (pageTitle: string | null, pageDescription: string | null = null) => {
+      setPageTitle(pageTitle);
+      setDescriptionPage(pageDescription);
+    },
+    setActionElement
   };
+
+  // const handleToggle = (enabled: boolean) => {
+  //   toggleMutation.mutate({ id: featureId, enabled });
+  // };
 
   if (isLoading) {
     return (
@@ -47,6 +60,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
   }
 
   return (
+    <PageContext.Provider value={pageContext}>
     <div className="space-y-6">
       {/* Feature header */}
       <div className="flex items-center justify-between">
@@ -58,29 +72,24 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-2xl font-semibold">{feature.name}</h1>
-            <p className="text-sm text-muted-foreground">{feature.description}</p>
+            <h1 className="text-2xl font-semibold">{pageTitle ?? feature.name}</h1>
+            <p className="text-sm text-muted-foreground">{pageDescription ?? feature.description}</p>
           </div>
         </div>
 
+        {/* Action Element */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
-            {feature.enabled ? 'Enabled' : 'Disabled'}
-          </span>
-          <Switch
-            checked={feature.enabled}
-            onCheckedChange={handleToggle}
-            disabled={toggleMutation.isPending}
-          />
+          {actionElement ?? <></>}
         </div>
       </div>
 
       {/* Feature content */}
       <div
-        className={cn('rounded-lg border bg-card p-6', !feature.enabled && 'opacity-60')}
+        className={cn('bg-card', !feature.enabled && 'opacity-60')}
       >
         {children || <Outlet />}
       </div>
     </div>
+    </PageContext.Provider>
   );
 }
