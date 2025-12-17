@@ -695,7 +695,6 @@
     // Mini cart block specific events (backup handlers)
     // These are fallback handlers in case store subscription doesn't catch everything
     if (isMiniCartBlock()) {
-      console.log(123);
       // Triggered when: User clicks to open mini cart drawer (block-based)
       setTimeout(injectBarIntoMiniCartBlock, 300);
 
