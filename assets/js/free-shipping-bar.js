@@ -55,44 +55,48 @@
   }
 
   /**
-   * Format price using WooCommerce settings
+   * Format price using accounting.js with WooCommerce currency settings
    * @param {number} amount
    * @return {string}
    */
   function formatPrice(amount) {
-    if (!window.yayboostShippingBar || !window.yayboostShippingBar.settings) {
-      // Fallback formatting
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
+    // Use accounting.formatMoney if available
+    if (
+      window.accounting &&
+      typeof window.accounting.formatMoney === "function"
+    ) {
+      // Get currency settings from wcSettings if available
+      let currencyOptions = {};
+
+      if (window.wcSettings && window.wcSettings.currency) {
+        const currency = window.wcSettings.currency;
+        // Get currency symbol from WooCommerce
+        currencyOptions.symbol = currency.symbol || "$";
+        currencyOptions.precision = currency.minorUnit || 2;
+        currencyOptions.decimal = currency.decimalSeparator || ".";
+        currencyOptions.thousand = currency.thousandSeparator || ",";
+        // Format: %s = symbol, %v = value
+        // Position: left = '%s%v', right = '%v%s', left_space = '%s %v', right_space = '%v %s'
+        const position = currency.position || "left";
+        if (position === "right") {
+          currencyOptions.format = "%v%s";
+        } else if (position === "left_space") {
+          currencyOptions.format = "%s %v";
+        } else if (position === "right_space") {
+          currencyOptions.format = "%v %s";
+        } else {
+          currencyOptions.format = "%s%v"; // default left
+        }
+      }
+
+      console.log(window.accounting.formatMoney(amount, currencyOptions));
+
+      // Format with options (if any) or use default settings
+      return window.accounting.formatMoney(amount, currencyOptions);
     }
 
-    const settings = window.yayboostShippingBar.settings;
-    const symbol = settings.currencySymbol || "$";
-    const position = settings.currencyPosition || "left";
-    const decimals = settings.decimals || 2;
-    const decimalSep = settings.decimalSeparator || ".";
-    const thousandSep = settings.thousandSeparator || ",";
-
-    // Format number
-    const formatted = parseFloat(amount)
-      .toFixed(decimals)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, thousandSep)
-      .replace(".", decimalSep);
-
-    // Add currency symbol
-    if (position === "left") {
-      return symbol + formatted;
-    } else if (position === "right") {
-      return formatted + symbol;
-    } else if (position === "left_space") {
-      return symbol + " " + formatted;
-    } else if (position === "right_space") {
-      return formatted + " " + symbol;
-    }
-
-    return symbol + formatted;
+    // Fallback if accounting is not available
+    return String(amount);
   }
 
   /**
@@ -408,7 +412,6 @@
       ? settings.barColor || "#4caf50"
       : settings.backgroundColor || "#e8f5e9";
     const textColor = settings.textColor || "#2e7d32";
-    const currencySymbol = settings.currencySymbol || "$";
     const threshold = data.threshold || 0;
     const cartTotal = +data.current || 0;
     const shopPageUrl = settings?.shopPageUrl || "";
@@ -417,6 +420,8 @@
       return null;
     }
 
+    // Since formatPrice returns fully formatted price (including symbol),
+    // we set CURRENCY_SYMBOL to empty string to avoid duplication
     return replaceTemplatePlaceholders(template, {
       BAR_COLOR: barColor,
       BACKGROUND_COLOR: backgroundColor,
@@ -425,9 +430,9 @@
       TEXT_COLOR: textColor,
       CTA_TEXT_COLOR: achieved ? "#ffffff" : textColor,
       PROGRESS: data.progress || 0,
-      CURRENCY_SYMBOL: currencySymbol,
-      THRESHOLD: threshold.toFixed(2),
-      CART_TOTAL: cartTotal.toFixed(2),
+      CURRENCY_SYMBOL: "",
+      THRESHOLD: formatPrice(threshold),
+      CART_TOTAL: formatPrice(cartTotal),
       ID_ATTR: barId ? ' id="' + barId + '"' : "",
       MESSAGE: data.message || "",
       CTA_URL: !achieved ? shopPageUrl : "javascript:void(0)",

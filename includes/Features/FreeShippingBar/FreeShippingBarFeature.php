@@ -193,7 +193,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         );
 
         // Determine script dependencies based on context
-        $script_deps = [ 'jquery' ];
+        $script_deps = [ 'jquery', 'wc-accounting' ];
 
         // If mini cart block is active and not Brandy theme, add block dependency
         if (in_array( 'mini_cart', $show_on, true )
@@ -223,19 +223,14 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'thresholdInfo' => $this->get_threshold_info_for_js(),
                 'templates'     => $this->get_html_templates(),
                 'settings'      => [
-                    'messageProgress'   => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
-                    'messageAchieved'   => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
-                    'messageCoupon'     => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
-                    'barColor'          => $settings['bar_color'] ?? $this->get_default_settings()['bar_color'],
-                    'backgroundColor'   => $settings['background_color'] ?? $this->get_default_settings()['background_color'],
-                    'textColor'         => $settings['text_color'] ?? $this->get_default_settings()['text_color'],
-                    'displayStyle'      => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
-                    'currencySymbol'    => get_woocommerce_currency_symbol(),
-                    'currencyPosition'  => get_option( 'woocommerce_currency_pos', 'left' ),
-                    'decimals'          => wc_get_price_decimals(),
-                    'decimalSeparator'  => wc_get_price_decimal_separator(),
-                    'thousandSeparator' => wc_get_price_thousand_separator(),
-                    'shopPageUrl'       => get_permalink( wc_get_page_id( 'shop' ) ),
+                    'messageProgress' => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
+                    'messageAchieved' => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
+                    'messageCoupon'   => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
+                    'barColor'        => $settings['bar_color'] ?? $this->get_default_settings()['bar_color'],
+                    'backgroundColor' => $settings['background_color'] ?? $this->get_default_settings()['background_color'],
+                    'textColor'       => $settings['text_color'] ?? $this->get_default_settings()['text_color'],
+                    'displayStyle'    => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
+                    'shopPageUrl'     => get_permalink( wc_get_page_id( 'shop' ) ),
                 ],
             ]
         );
