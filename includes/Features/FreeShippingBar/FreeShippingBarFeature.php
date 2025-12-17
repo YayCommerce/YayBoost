@@ -225,13 +225,12 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'cartTotal'     => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
                 'thresholdInfo' => $this->get_threshold_info_for_js(),
                 'templates'     => $this->get_html_templates(),
+                'settingsHash'  => $this->get_settings_hash(),
                 'settings'      => [
                     'messageProgress' => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
                     'messageAchieved' => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
                     'messageCoupon'   => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
-                    'barColor'        => $settings['bar_color'] ?? $this->get_default_settings()['bar_color'],
-                    'backgroundColor' => $settings['background_color'] ?? $this->get_default_settings()['background_color'],
-                    'textColor'       => $settings['text_color'] ?? $this->get_default_settings()['text_color'],
+                    'primaryColor'    => $settings['primary_color'] ?? $this->get_default_settings()['primary_color'],
                     'displayStyle'    => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
                     'shopPageUrl'     => get_permalink( wc_get_page_id( 'shop' ) ),
                 ],
@@ -333,11 +332,12 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string HTML string
      */
     protected function build_minimal_text_html(array $data): string {
-        $settings   = $this->get_settings();
-        $templates  = $this->get_html_templates();
-        $achieved   = $data['achieved'] && ! $data['show_coupon_message'];
-        $bg_color   = $achieved ? $settings['bar_color'] : $settings['background_color'];
-        $text_color = $settings['text_color'];
+        $settings      = $this->get_settings();
+        $templates     = $this->get_html_templates();
+        $achieved      = $data['achieved'] && ! $data['show_coupon_message'];
+        $primary_color = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
+        $bg_color      = $achieved ? $primary_color : $this->apply_opacity( $primary_color, 0.2 );
+        $text_color    = $achieved ? '#ffffff' : $primary_color;
 
         $template = $templates['minimal_text'];
 
@@ -363,9 +363,10 @@ class FreeShippingBarFeature extends AbstractFeature {
     protected function build_progress_bar_html(array $data): string {
         $settings         = $this->get_settings();
         $templates        = $this->get_html_templates();
-        $bar_color        = $settings['bar_color'];
-        $background_color = $settings['background_color'];
-        $text_color       = $settings['text_color'];
+        $primary_color    = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
+        $bar_color        = $primary_color;
+        $background_color = $this->apply_opacity( $primary_color, 0.2 );
+        $text_color       = $primary_color;
 
         $template = $templates['progress_bar'];
 
@@ -393,11 +394,12 @@ class FreeShippingBarFeature extends AbstractFeature {
         $settings         = $this->get_settings();
         $templates        = $this->get_html_templates();
         $achieved         = $data['achieved'] && ! $data['show_coupon_message'];
-        $bar_color        = $settings['bar_color'];
-        $background_color = $settings['background_color'];
-        $bg_color         = $achieved ? $settings['bar_color'] : $settings['background_color'];
-        $progress_icon_bg = $achieved ? $settings['bar_color'] : $settings['background_color'];
-        $text_color       = $settings['text_color'];
+        $primary_color    = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
+        $bar_color        = $primary_color;
+        $background_color = $this->apply_opacity( $primary_color, 0.2 );
+        $bg_color         = $achieved ? $primary_color : $background_color;
+        $progress_icon_bg = $achieved ? $primary_color : $background_color;
+        $text_color       = $primary_color;
         $currency_symbol  = get_woocommerce_currency_symbol();
         $threshold        = $data['threshold'] ?? 0;
         $cart_total       = $data['current'] ?? 0;
@@ -840,7 +842,8 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     public function ajax_get_bar_data(): void {
         // Verify nonce for security
-        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'yayboost_shipping_bar' )) {
+        $nonce = isset( $_POST['nonce'] ) ? wp_unslash( $_POST['nonce'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        if ( ! wp_verify_nonce( $nonce, 'yayboost_shipping_bar' )) {
             wp_send_json_error( [ 'message' => __( 'Security check failed', 'yayboost' ) ] );
             return;
         }
@@ -885,6 +888,44 @@ class FreeShippingBarFeature extends AbstractFeature {
     }
 
     /**
+     * Convert hex color to rgba with opacity
+     *
+     * @param string $hex Hex color code (e.g., '#4CAF50').
+     * @param float  $opacity Opacity value (0.0 to 1.0).
+     * @return string RGBA color string
+     */
+    protected function apply_opacity(string $hex, float $opacity): string {
+        // Remove # if present
+        $hex = ltrim( $hex, '#' );
+
+        // Convert hex to RGB
+        $r = hexdec( substr( $hex, 0, 2 ) );
+        $g = hexdec( substr( $hex, 2, 2 ) );
+        $b = hexdec( substr( $hex, 4, 2 ) );
+
+        return sprintf( 'rgba(%d, %d, %d, %.2f)', $r, $g, $b, $opacity );
+    }
+
+    /**
+     * Get hash of current settings for cache invalidation
+     * Used to detect when settings have changed and clear browser cache
+     *
+     * @return string MD5 hash of settings that affect display
+     */
+    protected function get_settings_hash(): string {
+        $settings = $this->get_settings();
+        // Only hash settings that affect display
+        $relevant_settings = [
+            'message_progress' => $settings['message_progress'] ?? '',
+            'message_achieved' => $settings['message_achieved'] ?? '',
+            'message_coupon'   => $settings['message_coupon'] ?? '',
+            'primary_color'    => $settings['primary_color'] ?? '',
+            'display_style'    => $settings['display_style'] ?? '',
+        ];
+        return md5( wp_json_encode( $relevant_settings ) );
+    }
+
+    /**
      * Get default settings
      *
      * @return array
@@ -896,9 +937,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
                 'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
                 'message_coupon'    => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
-                'bar_color'         => '#4CAF50',
-                'background_color'  => '#e8f5e9',
-                'text_color'        => '#2e7d32',
+                'primary_color'     => '#4CAF50',
                 'show_on'           => [ 'top_cart', 'top_checkout' ],
                 'show_progress_bar' => true,
                 'display_style'     => 'minimal_text',

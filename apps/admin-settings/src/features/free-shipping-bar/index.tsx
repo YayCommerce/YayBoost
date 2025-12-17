@@ -37,9 +37,7 @@ const settingsSchema = z.object({
   threshold: z.number().min(0).optional(),
   message_progress: z.string().min(1),
   message_achieved: z.string().min(1),
-  bar_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  background_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  text_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   show_on: z.array(z.string()),
   show_progress_bar: z.boolean(),
   display_style: z.enum(['minimal_text', 'progress_bar', 'full_detail']),
@@ -54,9 +52,7 @@ const DEFAULT_FORM_VALUES: SettingsFormData = {
   threshold: undefined,
   message_progress: __('Add {remaining} more for free shipping!', 'yayboost'),
   message_achieved: __('🎉 Congratulations! You have free shipping!', 'yayboost'),
-  bar_color: '#4CAF50',
-  background_color: '#e8f5e9',
-  text_color: '#2e7d32',
+  primary_color: '#4CAF50',
   show_on: ['top_cart', 'top_checkout'],
   show_progress_bar: true,
   display_style: 'minimal_text',
@@ -71,28 +67,30 @@ const showOnOptions = [
   { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
 ];
 
+// Helper function to convert hex color to rgba with opacity
+function applyOpacity(hex: string, opacity: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
 // Color presets for quick color scheme selection
 const COLOR_PRESETS = [
   {
     id: 'blue',
     name: __('Blue', 'yayboost'),
-    barColor: '#0061fe',
-    backgroundColor: '#e3f2fd',
-    textColor: '#003d99',
+    primaryColor: '#0061fe',
   },
   {
     id: 'green',
     name: __('Green', 'yayboost'),
-    barColor: '#1ec46a',
-    backgroundColor: '#e8f5e9',
-    textColor: '#0d7a3d',
+    primaryColor: '#4CAF50',
   },
   {
     id: 'black',
     name: __('Black', 'yayboost'),
-    barColor: '#000000',
-    backgroundColor: '#f5f5f5',
-    textColor: '#333333',
+    primaryColor: '#000000',
   },
 ];
 
@@ -106,18 +104,22 @@ function MinimalTextBar({
   achieved: boolean;
   settings: SettingsFormData;
 }) {
+  const primaryColor = settings.primary_color;
+  const backgroundColor = achieved ? primaryColor : applyOpacity(primaryColor, 0.2);
+  const textColor = achieved ? '#ffffff' : primaryColor;
+
   return (
     <div
       className="flex items-center gap-2 rounded-lg px-4 py-3 transition-all"
       style={{
-        backgroundColor: achieved ? settings.bar_color : settings.background_color,
-        color: achieved ? '#ffffff' : settings.text_color,
+        backgroundColor: backgroundColor,
+        color: textColor,
       }}
     >
       <Truck
         className="h-5 w-5 shrink-0"
         style={{
-          color: achieved ? '#ffffff' : settings.text_color,
+          color: textColor,
         }}
       />
       <div className="text-sm font-medium">{message}</div>
@@ -137,24 +139,27 @@ function ProgressBarBar({
   progress: number;
   settings: SettingsFormData;
 }) {
+  const primaryColor = settings.primary_color;
+  const backgroundColor = applyOpacity(primaryColor, 0.2);
+
   return (
     <div className="space-y-2">
       <div
         className="h-2 overflow-hidden rounded-full"
-        style={{ backgroundColor: settings.background_color }}
+        style={{ backgroundColor: backgroundColor }}
       >
         <div
           className="h-full rounded-full transition-all duration-300"
           style={{
             width: `${progress}%`,
-            backgroundColor: settings.bar_color,
+            backgroundColor: primaryColor,
           }}
         />
       </div>
       <div
         className="text-center text-sm"
         style={{
-          color: settings.text_color,
+          color: primaryColor,
         }}
       >
         {message}
@@ -180,6 +185,8 @@ function FullDetailBar({
   settings: SettingsFormData;
 }) {
   const currencySymbol = window.yayboostData?.currencySymbol || '$';
+  const primaryColor = settings.primary_color;
+  const backgroundColor = applyOpacity(primaryColor, 0.2);
 
   return (
     <div className="space-y-4">
@@ -188,26 +195,26 @@ function FullDetailBar({
         <div className="flex items-start gap-3">
           <div
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: settings.bar_color }}
+            style={{ backgroundColor: primaryColor }}
           >
             <Truck className="h-5 w-5 text-white" />
           </div>
           <div>
-            <div className="text-base font-semibold" style={{ color: settings.text_color }}>
+            <div className="text-base font-semibold" style={{ color: primaryColor }}>
               {__('Free Shipping', 'yayboost')}
             </div>
-            <div className="text-xs" style={{ color: settings.text_color }}>
+            <div className="text-xs" style={{ color: primaryColor }}>
               {__('On orders over', 'yayboost')} {currencySymbol}
               {threshold.toFixed(2)}
             </div>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-base font-semibold" style={{ color: settings.text_color }}>
+          <div className="text-base font-semibold" style={{ color: primaryColor }}>
             {currencySymbol}
             {cartTotal.toFixed(2)}
           </div>
-          <div className="text-xs" style={{ color: settings.text_color }}>
+          <div className="text-xs" style={{ color: primaryColor }}>
             {__('Cart total', 'yayboost')}
           </div>
         </div>
@@ -217,19 +224,19 @@ function FullDetailBar({
       <div className="relative">
         <div
           className="h-1.5 overflow-hidden rounded-full"
-          style={{ backgroundColor: settings.background_color }}
+          style={{ backgroundColor: backgroundColor }}
         >
           <div
             className="h-full rounded-full transition-all duration-300"
             style={{
               width: `${progress}%`,
-              backgroundColor: settings.bar_color,
+              backgroundColor: primaryColor,
             }}
           />
         </div>
         <div
           className="absolute top-1/2 right-0 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full"
-          style={{ backgroundColor: achieved ? settings.bar_color : settings.background_color }}
+          style={{ backgroundColor: achieved ? primaryColor : backgroundColor }}
         >
           <Gift className="h-3.5 w-3.5 text-white" />
         </div>
@@ -239,8 +246,8 @@ function FullDetailBar({
       <div
         className="rounded-lg px-4 py-3 text-center text-sm font-medium"
         style={{
-          backgroundColor: achieved ? settings.bar_color : settings.background_color,
-          color: achieved ? '#ffffff' : settings.text_color,
+          backgroundColor: achieved ? primaryColor : backgroundColor,
+          color: achieved ? '#ffffff' : primaryColor,
         }}
       >
         {message}
@@ -347,10 +354,8 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
 
   // Handle preset color selection
   const handlePresetClick = (preset: (typeof COLOR_PRESETS)[number]) => {
-    form.setValue('bar_color', preset.barColor, { shouldDirty: true });
-    form.setValue('background_color', preset.backgroundColor, { shouldDirty: true });
-    form.setValue('text_color', preset.textColor, { shouldDirty: true });
-    form.trigger(['bar_color', 'background_color', 'text_color']);
+    form.setValue('primary_color', preset.primaryColor, { shouldDirty: true });
+    form.trigger(['primary_color']);
   };
 
   const watchedValues = form.watch();
@@ -579,7 +584,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                             'border-border h-10 w-10 overflow-hidden',
                           )}
                           style={{
-                            background: `conic-gradient(from 0deg, ${preset.barColor} 0deg 120deg, ${preset.backgroundColor} 120deg 240deg, ${preset.textColor} 240deg 360deg)`,
+                            backgroundColor: preset.primaryColor,
                           }}
                           title={preset.name}
                         />
@@ -587,59 +592,26 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     </div>
                   </div>
 
-                  {/* Custom Color Inputs */}
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="bar_color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{__('Bar Color', 'yayboost')}</FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2">
-                              <Input type="color" {...field} className="h-10 w-14 p-1" />
-                              <Input {...field} className="flex-1" />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="background_color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{__('Background', 'yayboost')}</FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2">
-                              <Input type="color" {...field} className="h-10 w-14 p-1" />
-                              <Input {...field} className="flex-1" />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="text_color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{__('Text Color', 'yayboost')}</FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2">
-                              <Input type="color" {...field} className="h-10 w-14 p-1" />
-                              <Input {...field} className="flex-1" />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Primary Color Input */}
+                  <FormField
+                    control={form.control}
+                    name="primary_color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{__('Primary Color', 'yayboost')}</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <Input type="color" {...field} className="h-10 w-14 p-1" />
+                            <Input {...field} className="flex-1" />
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          {__('Background will use 20% opacity of this color', 'yayboost')}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </CardContent>
               </Card>
 

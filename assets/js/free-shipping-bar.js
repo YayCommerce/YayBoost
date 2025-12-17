@@ -19,6 +19,34 @@
   let currentCoupons = [];
 
   /**
+   * Check and clear cart fragments cache if settings have changed
+   * This prevents showing stale HTML when admin changes settings
+   */
+  function checkAndClearFragmentsCache() {
+    const currentHash = yayboostShippingBar?.settingsHash;
+    if (!currentHash) return;
+
+    const storageKey = "yayboost_settings_hash";
+    const storedHash = sessionStorage.getItem(storageKey);
+
+    if (storedHash && storedHash !== currentHash) {
+      // Settings have changed, clear WooCommerce fragments cache
+      sessionStorage.removeItem("wc_fragments");
+      sessionStorage.removeItem("wc_cart_hash");
+
+      // Also clear any keys that start with wc_fragments
+      Object.keys(sessionStorage).forEach(function (key) {
+        if (key.indexOf("wc_fragments") === 0 || key.indexOf("wc_cart") === 0) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+
+    // Store current hash
+    sessionStorage.setItem(storageKey, currentHash);
+  }
+
+  /**
    * Check if we're in mini cart block context
    */
   function isMiniCartBlock() {
@@ -52,6 +80,22 @@
       });
     }
     return false;
+  }
+
+  /**
+   * Convert hex color to rgba with opacity
+   * @param {string} hex Hex color code (e.g., '#4CAF50')
+   * @param {number} opacity Opacity value (0.0 to 1.0)
+   * @return {string} RGBA color string
+   */
+  function applyOpacity(hex, opacity) {
+    // Remove # if present
+    hex = hex.replace("#", "");
+    // Convert hex to RGB
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return "rgba(" + r + ", " + g + ", " + b + ", " + opacity + ")";
   }
 
   /**
@@ -344,10 +388,9 @@
     const settings = yayboostShippingBar?.settings || {};
     const templates = yayboostShippingBar?.templates || {};
     const achieved = data.achieved && !data.show_coupon_message;
-    const bgColor = achieved
-      ? settings.barColor || "#4caf50"
-      : settings.backgroundColor || "#e8f5e9";
-    const textColor = achieved ? "#ffffff" : settings.textColor || "#2e7d32";
+    const primaryColor = settings.primaryColor || "#4caf50";
+    const bgColor = achieved ? primaryColor : applyOpacity(primaryColor, 0.2);
+    const textColor = achieved ? "#ffffff" : primaryColor;
 
     const template = templates.minimal_text;
     if (!template) {
@@ -372,9 +415,10 @@
   function buildProgressBarHtml(data, barId) {
     const settings = yayboostShippingBar?.settings || {};
     const templates = yayboostShippingBar?.templates || {};
-    const barColor = settings.barColor || "#4caf50";
-    const backgroundColor = settings.backgroundColor || "#e8f5e9";
-    const textColor = settings.textColor || "#2e7d32";
+    const primaryColor = settings.primaryColor || "#4caf50";
+    const barColor = primaryColor;
+    const backgroundColor = applyOpacity(primaryColor, 0.2);
+    const textColor = primaryColor;
 
     const template = templates.progress_bar;
     if (!template) {
@@ -401,15 +445,12 @@
     const settings = yayboostShippingBar?.settings || {};
     const templates = yayboostShippingBar?.templates || {};
     const achieved = data.achieved && !data.show_coupon_message;
-    const barColor = settings.barColor || "#4caf50";
-    const backgroundColor = settings.backgroundColor || "#e8f5e9";
-    const bgColor = achieved
-      ? settings.barColor || "#4caf50"
-      : settings.backgroundColor || "#e8f5e9";
-    const progressIconBg = achieved
-      ? settings.barColor || "#4caf50"
-      : settings.backgroundColor || "#e8f5e9";
-    const textColor = settings.textColor || "#2e7d32";
+    const primaryColor = settings.primaryColor || "#4caf50";
+    const barColor = primaryColor;
+    const backgroundColor = applyOpacity(primaryColor, 0.2);
+    const bgColor = achieved ? primaryColor : backgroundColor;
+    const progressIconBg = achieved ? primaryColor : backgroundColor;
+    const textColor = primaryColor;
     const threshold = data.threshold || 0;
     const cartTotal = +data.current || 0;
     const shopPageUrl = settings?.shopPageUrl || "";
@@ -649,6 +690,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    // Check and clear cache immediately when script loads
+    checkAndClearFragmentsCache();
+
     // Mini cart block specific events (backup handlers)
     // These are fallback handlers in case store subscription doesn't catch everything
     if (isMiniCartBlock()) {
