@@ -120,6 +120,9 @@ class FreeShippingBarFeature extends AbstractFeature {
                 add_action( 'enqueue_block_assets', [ $this, 'enqueue_assets' ], 100 );
             }
         }
+
+            // Initialize block with feature instance
+            Block::init( $this );
     }
 
     /**
@@ -620,6 +623,10 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return float Cart total
      */
     protected function calculate_cart_total_for_shipping(?string $ignore_discounts = 'no'): float {
+        if ( ! WC()->cart) {
+            return 0.0;
+        }
+
         // Use displayed subtotal (same as WooCommerce)
         $total = (float) WC()->cart->get_displayed_subtotal();
 
