@@ -120,6 +120,9 @@ class FreeShippingBarFeature extends AbstractFeature {
                 add_action( 'enqueue_block_assets', [ $this, 'enqueue_assets' ], 100 );
             }
         }
+
+        // Initialize block with feature instance
+        Block::init( $this );
     }
 
     /**
@@ -619,9 +622,13 @@ class FreeShippingBarFeature extends AbstractFeature {
      * Calculate cart total the same way WooCommerce Free Shipping method does
      *
      * @param string|null $ignore_discounts 'yes' to ignore discounts, 'no' to apply after discount.
-     * @return float Cart total
+     * @return float|null Cart total or null if cart is not available
      */
-    protected function calculate_cart_total_for_shipping(?string $ignore_discounts = 'no'): float {
+    protected function calculate_cart_total_for_shipping(?string $ignore_discounts = 'no'): ?float {
+        if ( ! WC()->cart) {
+            return null;
+        }
+
         // Use displayed subtotal (same as WooCommerce)
         $total = (float) WC()->cart->get_displayed_subtotal();
 
