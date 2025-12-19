@@ -7,7 +7,8 @@ const SmartRecommendationsFeature = ({ featureId }: FeatureComponentProps) => {
   return (
     <Routes>
         <Route index element={<RecommendationsList featureId={featureId} />}/>
-        <Route path="edit/:recommendationId" element={<RecommendationsEditor />}/>
+        <Route path="new" element={<RecommendationsEditor featureId={featureId} />}/>
+        <Route path=":recommendationId" element={<RecommendationsEditor featureId={featureId} />}/>
     </Routes>
   );
 };

@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useCreateEntity, useUpdateEntity } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft } from '@phosphor-icons/react';
 import { useForm } from 'react-hook-form';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { cn } from '@/lib/utils';
@@ -24,23 +26,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { usePageContext } from '@/layouts/useContext';
+
+import { FeatureComponentProps } from '..';
 
 // ==================== Schema & Types ====================
 const recommendationRuleSchema = z.object({
-  ruleName: z.string().min(1, 'Rule name is required'),
-  whenCustomerViewsType: z.enum(['category', 'product', 'tag']),
-  whenCustomerViewsValue: z.string().min(1, 'Value is required'),
-  recommendProductsFromType: z.enum(['category', 'product', 'tag']),
-  recommendProductsFromValue: z.array(z.string()).min(1, 'At least one value is required'),
-  maxProductsToShow: z.string(),
-  sortBy: z.enum(['best_selling', 'price_low', 'price_high', 'newest', 'relevance']),
-  showOnProductPage: z.boolean(),
-  showOnCartPage: z.boolean(),
-  showOnMiniCart: z.boolean(),
+  name: z.string().min(1, 'Rule name is required'),
+  when_customer_views_type: z.enum(['category', 'product', 'tag']),
+  when_customer_views_value: z.string().min(1, 'Value is required'),
+  recommend_products_from_type: z.enum(['category', 'product', 'tag']),
+  recommend_products_from_value: z.array(z.string()).min(1, 'At least one value is required'),
+  max_products_to_show: z.string(),
+  sort_by: z.enum(['best_selling', 'price_low', 'price_high', 'newest', 'relevance']),
+  show_on_product_page: z.boolean(),
+  show_on_cart_page: z.boolean(),
+  show_on_mini_cart: z.boolean(),
   layout: z.enum(['grid', 'list', 'slider']),
-  sectionTitle: z.string().min(1, 'Section title is required'),
-  behaviorIfInCart: z.enum(['hide', 'show']),
+  section_title: z.string().min(1, 'Section title is required'),
+  behavior_if_in_cart: z.enum(['hide', 'show']),
   status: z.enum(['active', 'inactive']),
 });
 
@@ -276,11 +279,11 @@ function RuleNameSection({ control }: FormSectionProps) {
       <SectionTitle>Rule Name</SectionTitle>
       <FormField
         control={control}
-        name="ruleName"
+        name="name"
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <Input {...field} placeholder="Enter rule name" />
+              <Input {...field} placeholder="Phone Accessories" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -306,7 +309,7 @@ function WhenCustomerViewsSection({
       <div className="grid grid-cols-2 gap-4">
         <SelectField
           control={control}
-          name="whenCustomerViewsType"
+          name="when_customer_views_type"
           label="Type"
           placeholder="Select type"
           options={typeOptions}
@@ -351,14 +354,14 @@ function RecommendProductsFromSection({
         <div className="grid grid-cols-2 gap-4">
           <SelectField
             control={control}
-            name="recommendProductsFromType"
+            name="recommend_products_from_type"
             label="Type"
             placeholder="Select type"
             options={typeOptions}
           />
           <FormField
             control={control}
-            name="recommendProductsFromValue"
+            name="recommend_products_from_value"
             render={({ field }) => (
               <FormItem>
                 <FormLabelText>Value</FormLabelText>
@@ -378,14 +381,14 @@ function RecommendProductsFromSection({
         <div className="grid grid-cols-2 gap-4">
           <SelectField
             control={control}
-            name="maxProductsToShow"
+            name="max_products_to_show"
             label="Max products to show"
             placeholder="Select max products"
             options={maxProductsOptionsFormatted}
           />
           <SelectField
             control={control}
-            name="sortBy"
+            name="sort_by"
             label="Sort by"
             placeholder="Select sort option"
             options={sortByOptions}
@@ -422,7 +425,7 @@ function DisplaySettingsSection({ control }: FormSectionProps) {
               <FormItem>
                 <FormLabelText>Section title</FormLabelText>
                 <FormControl>
-                  <Input {...field} placeholder="Enter section title" className="w-full" />
+                  <Input {...field} placeholder="Complete Your Purchase" className="w-full" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -447,7 +450,7 @@ function BehaviorSection({ control }: FormSectionProps) {
         <Label className={FORM_LABEL_CLASS}>If recommended product is already in cart:</Label>
         <RadioField
           control={control}
-          name="behaviorIfInCart"
+          name="behavior_if_in_cart"
           options={behaviorOptions}
           direction="col"
           gap="gap-[8px]"
@@ -471,44 +474,36 @@ function StatusSection({ control }: FormSectionProps) {
   );
 }
 
-function ActionButtons() {
-  return (
-    <div className="flex justify-end gap-3">
-      <Button type="button" variant="outline">
-        Cancel
-      </Button>
-      <Button className="bg-[#171717] text-white">Save Rule</Button>
-    </div>
-  );
-}
-
 // ==================== Main Component ====================
-const RecommendationsEditor = () => {
-  const { setPageHeader } = usePageContext();
-
-  useEffect(() => {
-    setPageHeader('Edit Rule', 'Configure your product recommendation rule');
-  }, [setPageHeader]);
+const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
+  const navigate = useNavigate();
+  const { recommendationId } = useParams<{ recommendationId: string }>();
+  const isEditing = !!recommendationId;
 
   const form = useForm<RecommendationRuleFormData>({
     resolver: zodResolver(recommendationRuleSchema),
     defaultValues: {
-      ruleName: 'Phone Accessories',
-      whenCustomerViewsType: 'category',
-      whenCustomerViewsValue: 'phones',
-      recommendProductsFromType: 'category',
-      recommendProductsFromValue: ['phone-cases', 'screen-protectors'],
-      maxProductsToShow: '3',
-      sortBy: 'best_selling',
-      showOnProductPage: true,
-      showOnCartPage: true,
-      showOnMiniCart: false,
+      name: '',
+      when_customer_views_type: 'category',
+      when_customer_views_value: 'phones',
+      recommend_products_from_type: 'category',
+      recommend_products_from_value: ['phone-cases', 'screen-protectors'],
+      max_products_to_show: '3',
+      sort_by: 'best_selling',
+      show_on_product_page: true,
+      show_on_cart_page: true,
+      show_on_mini_cart: false,
       layout: 'grid',
-      sectionTitle: 'Complete Your Purchase',
-      behaviorIfInCart: 'hide',
+      section_title: '',
+      behavior_if_in_cart: 'hide',
       status: 'active',
     },
   });
+
+  const createEntity = useCreateEntity(featureId);
+  const updateEntity = useUpdateEntity(featureId);
+
+  const isPending = createEntity.isPending || updateEntity.isPending;
 
   const onSubmit = (data: RecommendationRuleFormData) => {
     console.log('Form data:', data);
@@ -535,6 +530,22 @@ const RecommendationsEditor = () => {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            to={`/features/${featureId}`}
+            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">{'Edit Rule'}</h1>
+            <p className="text-muted-foreground text-sm">
+              {'Configure your product recommendation rule'}
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="rounded-lg border p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-[14px]">
@@ -552,7 +563,15 @@ const RecommendationsEditor = () => {
           </form>
         </Form>
       </div>
-      <ActionButtons />
+      {/* Submit button */}
+      <div className="flex justify-end gap-3">
+        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+          Cancel
+        </Button>
+        <Button type="submit" className="bg-[#171717] text-white" disabled={isPending}>
+          {isPending ? 'Saving...' : isEditing ? 'Update Rule' : 'Create Rule'}
+        </Button>
+      </div>
     </div>
   );
 };

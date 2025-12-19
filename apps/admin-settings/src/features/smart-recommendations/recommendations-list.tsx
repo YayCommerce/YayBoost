@@ -1,5 +1,6 @@
-import { PencilSimple, Plus } from '@phosphor-icons/react';
-import { useNavigate } from 'react-router-dom';
+import { useFeature } from '@/hooks';
+import { ArrowLeft, PencilSimple, Plus } from '@phosphor-icons/react';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -13,8 +14,6 @@ import {
 } from '@/components/ui/table';
 
 import { FeatureComponentProps } from '..';
-import { usePageContext } from '@/layouts/useContext';
-import { useEffect } from 'react';
 
 const invoices = [
   {
@@ -50,34 +49,34 @@ const invoices = [
 ];
 
 const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
-  const { setActionElement } = usePageContext();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    setActionElement(
-      <Button size="sm" onClick={handleAddNewRule} className='text-[16px] bg-[#171717] text-white'>
-        <Plus className="mr-2 h-4 w-4" />
-        Add New Rule
-      </Button>
-    );
-
-    return () => {
-      setActionElement(null);
-    };
-  }, []);
-
-  const handleAddNewRule = async () => {
-    try {
-      // navigate(`edit/${newEntity.id}`);
-      navigate(`edit/123`);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const { data: feature } = useFeature(featureId);
 
   return (
     <div className="space-y-6">
       {/* Recommendations Table */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            to={`/features`}
+            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-semibold">{feature?.name}</h1>
+            <p className="text-muted-foreground text-sm">{feature?.description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link to={'new'}>
+            <Button size="sm" className="bg-[#171717] text-[16px] text-white">
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Rule
+            </Button>
+          </Link>
+        </div>
+      </div>
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <Table className="text-[16px]">
           <TableHeader>
@@ -104,7 +103,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <PencilSimple size={16} onClick={handleAddNewRule} />
+                  <PencilSimple size={16} onClick={() => navigate(`${invoice.rule}`)} />
                 </TableCell>
               </TableRow>
             ))}
