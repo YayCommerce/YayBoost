@@ -70,12 +70,8 @@ if ( ! $bar_data ) {
     return '';
 }
 
-// Get settings
-$settings      = $feature->get_settings();
-$primary_color = $settings['primary_color'] ?? '#4CAF50';
-
 // Get the bar HTML from feature (reuse existing templates)
-$bar_html = $feature->get_bar_html();
+$bar_html = $feature->get_bar_html( $bar_data );
 
 if ( empty( $bar_html ) ) {
     return '';
@@ -89,7 +85,7 @@ $context = [
     'progress'     => $bar_data['progress'],
     'achieved'     => $bar_data['achieved'],
     'message'      => $bar_data['message'],
-    'primaryColor' => $primary_color,
+    'primaryColor' => $bar_data['primary_color'] ?? '#4CAF50',
 ];
 
 ?>

@@ -14,24 +14,12 @@ const { actions } = store("yayboost/shipping-bar", {
      * Update bar data from cart and rebuild HTML content
      * Called when WooCommerce cart updates
      */
-    updateFromCart(ctx) {
-      // IMPORTANT: do not call getContext() here (this function is triggered outside directive scope)
-      const context = ctx;
-      if (!context) return;
-
+    updateFromCart() {
       // Calculate bar data (gets everything from window)
       const barData = calculateBarData();
       if (!barData) {
         return;
       }
-
-      // Update context with bar data
-      context.threshold = barData.threshold;
-      context.current = barData.current;
-      context.remaining = barData.remaining;
-      context.progress = barData.progress;
-      context.achieved = barData.achieved;
-      context.message = barData.message;
 
       // Build HTML content
       const htmlContent = buildBarHtml(barData);
@@ -52,20 +40,11 @@ const { actions } = store("yayboost/shipping-bar", {
      * Initialize and subscribe to WooCommerce cart store changes
      */
     init() {
-      // IMPORTANT: capture context here (valid scope)
-      const context = getContext();
-      if (!context) {
-        console.warn("[YayBoost] Context not available");
-        return;
-      }
-
-      // Check if wp.data and WooCommerce store are available
-      if (!window.wp?.data) {
-        console.warn("[YayBoost] wp.data not available");
-        return;
-      }
-
       const { subscribe } = window.wp.data;
+
+      if (!subscribe) {
+        return;
+      }
 
       // Subscribe to changes in wp.data store
       // This will run whenever any state in wp.data changes
@@ -79,7 +58,7 @@ const { actions } = store("yayboost/shipping-bar", {
         // Only update if cart total actually changed
         if (currentCartTotal !== previousCartTotal) {
           previousCartTotal = currentCartTotal;
-          actions.updateFromCart(context);
+          actions.updateFromCart();
         }
       });
     },
