@@ -11,6 +11,7 @@ use YayBoost\Container\Container;
 use YayBoost\Interfaces\ServiceProviderInterface;
 use YayBoost\Features\SampleBoost\SampleBoostFeature;
 use YayBoost\Features\FreeShippingBar\FreeShippingBarFeature;
+use YayBoost\Features\FreeShippingBar\FreeShippingBarBlock;
 use YayBoost\Features\OrderBump\OrderBumpFeature;
 use YayBoost\Utils\FeatureRegistry;
 
@@ -56,6 +57,9 @@ class ServiceProvider implements ServiceProviderInterface {
                 $feature->init();
             }
         }
+
+        // Initialize Gutenberg blocks for features
+        $this->init_blocks( $container );
     }
 
     /**
@@ -107,6 +111,28 @@ class ServiceProvider implements ServiceProviderInterface {
                 return $registry;
             }
         );
+    }
+
+    /**
+     * Initialize Gutenberg blocks for features
+     *
+     * @param Container $container
+     * @return void
+     */
+    protected function init_blocks(Container $container): void {
+        $registry = $container->resolve( 'feature.registry' );
+
+        foreach ($registry->get_all() as $feature) {
+            if ( ! $feature->is_enabled()) {
+                continue;
+            }
+
+            // Initialize Free Shipping Bar Block
+            if ($feature->get_id() === 'free_shipping_bar') {
+                $block = FreeShippingBarBlock::get_instance();
+                $block->set_feature( $feature );
+            }
+        }
     }
 
     /**

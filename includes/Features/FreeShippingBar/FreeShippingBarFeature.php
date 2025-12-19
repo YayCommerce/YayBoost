@@ -120,9 +120,6 @@ class FreeShippingBarFeature extends AbstractFeature {
                 add_action( 'enqueue_block_assets', [ $this, 'enqueue_assets' ], 100 );
             }
         }
-
-        // Initialize block with feature instance
-        Block::init( $this );
     }
 
     /**
@@ -431,7 +428,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      *
      * @return string
      */
-    protected function get_bar_html(): string {
+    public function get_bar_html(): string {
         $data = $this->get_bar_data();
 
         if ( ! $data) {

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yayboost/free-shipping-bar",
+  "version": "1.0.0",
+  "title": "Free Shipping Bar",
+  "category": "widgets",
+  "icon": "cart",
+  "description": "Display free shipping progress bar with real-time updates",
+  "keywords": ["yayboost", "shipping", "free shipping", "cart"],
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "interactivity": true,
+    "anchor": true,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "textdomain": "yayboost",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "viewScriptModule": "file:./view.js",
+  "render": "file:./render.php"
+}
+

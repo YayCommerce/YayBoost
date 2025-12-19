@@ -1,0 +1,14 @@
+{
+  "name": "@yayboost/blocks",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wp-scripts start --experimental-modules --webpack-src-dir=src/ --output-path=../../assets/dist/blocks",
+    "build": "wp-scripts build --experimental-modules --webpack-src-dir=src/ --output-path=../../assets/dist/blocks"
+  },
+  "devDependencies": {
+    "@babel/plugin-bugfix-firefox-class-in-computed-class-key": "^7.28.5",
+    "@wordpress/icons": "^10.3.0",
+    "@wordpress/scripts": "^27.2.0"
+  }
+}
