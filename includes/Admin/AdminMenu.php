@@ -4,6 +4,7 @@ namespace YayBoost\Admin;
 
 use YayBoost\Register\RegisterFacade;
 use YayBoost\Register\ScriptName;
+use YayBoost\Utils\Localize;
 
 class AdminMenu {
 
@@ -59,6 +60,7 @@ class AdminMenu {
                 'apiUrl'  => rest_url( 'yayboost/v1/' ),
                 'nonce'   => wp_create_nonce( 'wp_rest' ),
                 'version' => YAYBOOST_VERSION,
+                'localize' => Localize::get_data(),
             ]
         );
     }

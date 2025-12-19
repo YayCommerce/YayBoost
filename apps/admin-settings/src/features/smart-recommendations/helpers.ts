@@ -1,0 +1,27 @@
+export function getOptionsFromLocalize(type: 'category' | 'product' | 'tag') {
+    const localizeData = (window as any)?.yayboostData?.localize;
+    
+    if (!localizeData) {
+      return [];
+    }
+  
+    switch (type) {
+      case 'category':
+        return (localizeData.categories || []).map((item: any) => ({
+          label: item.label,
+          value: item.value, // slug
+        }));
+      case 'product':
+        return (localizeData.products || []).map((item: any) => ({
+          label: item.label,
+          value: item.value, // ID as string
+        }));
+      case 'tag':
+        return (localizeData.tags || []).map((item: any) => ({
+          label: item.label,
+          value: item.value, // slug
+        }));
+      default:
+        return [];
+    }
+  }
