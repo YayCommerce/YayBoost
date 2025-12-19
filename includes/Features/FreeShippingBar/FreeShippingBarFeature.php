@@ -204,8 +204,6 @@ class FreeShippingBarFeature extends AbstractFeature {
             true
         );
 
-        $settings = $this->get_settings();
-
         wp_localize_script(
             'yayboost-free-shipping-bar',
             'yayboostShippingBar',
