@@ -426,12 +426,16 @@ class FreeShippingBarFeature extends AbstractFeature {
     /**
      * Get bar HTML as string (for block injection)
      *
+     * @param array|null $data Optional data array. If not provided, will fetch from cart.
      * @return string
      */
-    public function get_bar_html(): string {
-        $data = $this->get_bar_data();
+    public function get_bar_html( ?array $data = null ): string {
+        // If data is not provided, fetch from cart (default behavior)
+        if ( $data === null ) {
+            $data = $this->get_bar_data();
+        }
 
-        if ( ! $data) {
+        if ( ! $data ) {
             return '';
         }
 
@@ -875,7 +879,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @param float  $opacity Opacity value (0.0 to 1.0).
      * @return string RGBA color string
      */
-    protected function apply_opacity(string $hex, float $opacity): string {
+    public function apply_opacity(string $hex, float $opacity): string {
         // Remove # if present
         $hex = ltrim( $hex, '#' );
 

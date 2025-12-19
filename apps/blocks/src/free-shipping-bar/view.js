@@ -1,99 +1,87 @@
-/**
- * Free Shipping Bar - Frontend Interactivity
- *
- * Uses WordPress Interactivity API for real-time cart updates
- * @see https://developer.wordpress.org/block-editor/reference-guides/interactivity-api/
- */
-
-import { store, getContext } from '@wordpress/interactivity';
+import { store, getContext } from "@wordpress/interactivity";
+import {
+  calculateBarData,
+  buildBarHtml,
+  getCartTotalFromStore,
+} from "./helpers";
 
 /**
  * Store definition for Free Shipping Bar
  */
-store('yayboost/shipping-bar', {
+const { actions } = store("yayboost/shipping-bar", {
+  actions: {
     /**
-     * Actions - Functions that modify state
+     * Update bar data from cart and rebuild HTML content
+     * Called when WooCommerce cart updates
      */
-    actions: {
-        /**
-         * Update bar data from cart
-         * Called when WooCommerce cart updates
-         */
-        updateFromCart() {
-            const context = getContext();
-            
-            // Get cart data from localized script
-            const cartData = window.yayboostShippingBar || {};
-            
-            if (!cartData.thresholdInfo) {
-                return;
-            }
-            
-            const threshold = cartData.thresholdInfo.min_amount || 0;
-            const current = cartData.cartTotal || 0;
-            const remaining = Math.max(0, threshold - current);
-            const progress = threshold > 0 ? Math.min(100, (current / threshold) * 100) : 100;
-            const achieved = current >= threshold;
-            
-            // Update context
-            context.threshold = threshold;
-            context.current = current;
-            context.remaining = remaining;
-            context.progress = Math.round(progress * 100) / 100;
-            context.achieved = achieved;
-            
-            // Update message based on state
-            if (achieved) {
-                context.message = cartData.settings?.messageAchieved || '🎉 Congratulations! You have free shipping!';
-            } else {
-                // Format remaining amount
-                const remainingFormatted = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD'
-                }).format(remaining);
-                
-                context.message = (cartData.settings?.messageProgress || 'Add {remaining} more for free shipping!')
-                    .replace('{remaining}', remainingFormatted);
-            }
-        }
-    },
-    
-    /**
-     * Callbacks - Reactive side effects
-     */
-    callbacks: {
-        /**
-         * Initialize and listen for cart updates
-         */
-        init() {
-            const { actions } = store('yayboost/shipping-bar');
-            
-            // Listen to WooCommerce cart update events
-            if (typeof jQuery !== 'undefined') {
-                jQuery(document.body).on('updated_cart_totals updated_checkout wc_fragments_refreshed', () => {
-                    // Small delay to ensure cart data is updated
-                    setTimeout(() => {
-                        actions.updateFromCart();
-                    }, 100);
-                });
-            }
-        },
-        
-        /**
-         * Log progress changes (for debugging)
-         */
-        logProgress() {
-            const context = getContext();
-            
-            if (window.location.search.includes('debug=1')) {
-                console.log('[YayBoost Shipping Bar] Progress:', {
-                    progress: context.progress,
-                    current: context.current,
-                    threshold: context.threshold,
-                    achieved: context.achieved
-                });
-            }
-        }
-    }
-});
+    updateFromCart(ctx) {
+      // IMPORTANT: do not call getContext() here (this function is triggered outside directive scope)
+      const context = ctx;
+      if (!context) return;
 
+      // Calculate bar data (gets everything from window)
+      const barData = calculateBarData();
+      if (!barData) {
+        return;
+      }
+
+      // Update context with bar data
+      context.threshold = barData.threshold;
+      context.current = barData.current;
+      context.remaining = barData.remaining;
+      context.progress = barData.progress;
+      context.achieved = barData.achieved;
+      context.message = barData.message;
+
+      // Build HTML content
+      const htmlContent = buildBarHtml(barData);
+      if (htmlContent) {
+        // Update DOM directly
+        const blockElement = document.querySelector(
+          '[data-wp-interactive="yayboost/shipping-bar"]'
+        );
+        if (blockElement) {
+          blockElement.innerHTML = htmlContent;
+        }
+      }
+    },
+  },
+
+  callbacks: {
+    /**
+     * Initialize and subscribe to WooCommerce cart store changes
+     */
+    init() {
+      // IMPORTANT: capture context here (valid scope)
+      const context = getContext();
+      if (!context) {
+        console.warn("[YayBoost] Context not available");
+        return;
+      }
+
+      // Check if wp.data and WooCommerce store are available
+      if (!window.wp?.data) {
+        console.warn("[YayBoost] wp.data not available");
+        return;
+      }
+
+      const { subscribe } = window.wp.data;
+
+      // Subscribe to changes in wp.data store
+      // This will run whenever any state in wp.data changes
+      let previousCartTotal = getCartTotalFromStore();
+
+      subscribe(() => {
+        const currentCartTotal = getCartTotalFromStore();
+
+        if (!currentCartTotal) return;
+
+        // Only update if cart total actually changed
+        if (currentCartTotal !== previousCartTotal) {
+          previousCartTotal = currentCartTotal;
+          actions.updateFromCart(context);
+        }
+      });
+    },
+  },
+});
