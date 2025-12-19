@@ -36,7 +36,6 @@ class FreeShippingBarBlock {
      */
     protected function __construct() {
         add_action( 'init', [ $this, 'register_block' ] );
-        add_action( 'wp_footer', [ $this, 'enqueue_block_assets' ] );
 
         // Enqueue feature assets for localized data (needed for Interactivity API)
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_feature_data' ], 100 );
@@ -93,23 +92,5 @@ class FreeShippingBarBlock {
         if ( ! is_admin() ) {
             $this->feature->enqueue_assets();
         }
-    }
-
-    /**
-     * Enqueue block assets when block is rendered
-     *
-     * @return void
-     */
-    public function enqueue_block_assets() {
-        // Skip in admin context (block editor)
-        if ( is_admin() ) {
-            return;
-        }
-
-        if ( ! $this->rendered ) {
-            return;
-        }
-
-        // Assets already enqueued via enqueue_feature_data
     }
 }

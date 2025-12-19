@@ -91,7 +91,7 @@ $context = [
 ?>
 <div
     <?php echo get_block_wrapper_attributes( [ 'class' => 'yayboost-shipping-bar-block-wrapper' ] ); ?>
-    data-wp-interactive="yayboost/shipping-bar"
+    data-wp-interactive="yayboost/free-shipping-bar"
     data-wp-init="callbacks.init"
     <?php echo wp_interactivity_data_wp_context( $context ); ?>
 >

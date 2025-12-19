@@ -8,7 +8,7 @@ import {
 /**
  * Store definition for Free Shipping Bar
  */
-const { actions } = store("yayboost/shipping-bar", {
+const { actions } = store("yayboost/free-shipping-bar", {
   actions: {
     /**
      * Update bar data from cart and rebuild HTML content
@@ -26,7 +26,7 @@ const { actions } = store("yayboost/shipping-bar", {
       if (htmlContent) {
         // Update DOM directly
         const blockElement = document.querySelector(
-          '[data-wp-interactive="yayboost/shipping-bar"]'
+          '[data-wp-interactive="yayboost/free-shipping-bar"]'
         );
         if (blockElement) {
           blockElement.innerHTML = htmlContent;
