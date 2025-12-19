@@ -150,6 +150,7 @@ class FreeShippingBarFeature extends AbstractFeature {
 
     /**
      * Enqueue frontend assets
+     * Only enqueue for classic feature (hook-based), not for block usage
      *
      * @return void
      */
@@ -169,13 +170,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
 
         if (in_array( 'mini_cart', $show_on, true )) {
-            if ($this->is_brandy_theme()) {
-                $should_enqueue = true;
-            } elseif ($this->has_mini_cart_block()) {
-                $should_enqueue = true;
-            } else {
-                $should_enqueue = true;
-            }
+            $should_enqueue = true;
         }
 
         if ( ! $should_enqueue) {
@@ -214,25 +209,36 @@ class FreeShippingBarFeature extends AbstractFeature {
         wp_localize_script(
             'yayboost-free-shipping-bar',
             'yayboostShippingBar',
-            [
-                'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-                'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
-                'cartTotal'     => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
-                'thresholdInfo' => $this->get_threshold_info_for_js(),
-                'templates'     => $this->get_html_templates(),
-                'settingsHash'  => $this->get_settings_hash(),
-                'settings'      => [
-                    'messageProgress' => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
-                    'messageAchieved' => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
-                    'messageCoupon'   => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
-                    'primaryColor'    => $settings['primary_color'] ?? $this->get_default_settings()['primary_color'],
-                    'displayStyle'    => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
-                    'shopPageUrl'     => get_permalink( wc_get_page_id( 'shop' ) ),
-                ],
-            ]
+            $this->get_localization_data()
         );
     }
 
+    /**
+     * Get localization data for JavaScript
+     * Shared method used by both classic feature and block
+     *
+     * @return array Localization data array
+     */
+    public function get_localization_data(): array {
+        $settings = $this->get_settings();
+
+        return [
+            'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+            'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
+            'cartTotal'     => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
+            'thresholdInfo' => $this->get_threshold_info_for_js(),
+            'templates'     => $this->get_html_templates(),
+            'settingsHash'  => $this->get_settings_hash(),
+            'settings'      => [
+                'messageProgress' => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
+                'messageAchieved' => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
+                'messageCoupon'   => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
+                'primaryColor'    => $settings['primary_color'] ?? $this->get_default_settings()['primary_color'],
+                'displayStyle'    => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
+                'shopPageUrl'     => function_exists( 'wc_get_page_id' ) ? get_permalink( wc_get_page_id( 'shop' ) ) : '', // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+            ],
+        ];
+    }
 
     /**
      * Render the shipping bar

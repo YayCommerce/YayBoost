@@ -77,9 +77,9 @@ class FreeShippingBarBlock {
         register_block_type( $block_json_path );
     }
 
-
     /**
      * Enqueue feature data for Interactivity API
+     * Only enqueue when block is actually present in content
      *
      * @return void
      */
@@ -88,9 +88,47 @@ class FreeShippingBarBlock {
             return;
         }
 
-        // Only enqueue on pages where cart might be present (not admin)
-        if ( ! is_admin() ) {
-            $this->feature->enqueue_assets();
+        if ( is_admin() ) {
+            return;
         }
+
+        if ( ! $this->has_block_in_content() ) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'yayboost-free-shipping-bar',
+            YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
+            [],
+            YAYBOOST_VERSION
+        );
+
+        wp_localize_script(
+            'yayboost-free-shipping-bar',
+            'yayboostShippingBar',
+            $this->feature->get_localization_data()
+        );
+    }
+
+    /**
+     * Check if free shipping bar block is present in current content
+     *
+     * @return bool
+     */
+    private function has_block_in_content(): bool {
+        if ( function_exists( 'wp_get_sidebars_widgets' ) ) {
+            $sidebars = wp_get_sidebars_widgets();
+            foreach ( $sidebars as $sidebar => $widgets ) {
+                if ( is_array( $widgets ) ) {
+                    foreach ( $widgets as $widget ) {
+                        if ( strpos( $widget, 'yayboost-free-shipping-bar' ) !== false ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
