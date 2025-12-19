@@ -52,7 +52,7 @@ const recommendationRuleSchema = z.object({
   show_on_product_page: z.boolean(),
   show_on_cart_page: z.boolean(),
   show_on_mini_cart: z.boolean(),
-  layout: z.enum(['grid', 'list', 'slider']),
+  layout: z.enum(['grid', 'list']),
   section_title: z.string().min(1, 'Section title is required'),
   behavior_if_in_cart: z.enum(['hide', 'show']),
   status: z.enum(['active', 'inactive']),
@@ -416,7 +416,6 @@ function DisplaySettingsSection({ control }: FormSectionProps) {
   const layoutOptions = [
     { label: 'Grid', value: 'grid' },
     { label: 'List', value: 'list' },
-    { label: 'Slider', value: 'slider' },
   ];
 
   return (

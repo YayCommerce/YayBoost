@@ -1,0 +1,431 @@
+/**
+ * YayBoost Smart Recommendations Styles
+ *
+ * Responsive styles for product recommendation displays
+ */
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
+
+.yayboost-recommendations {
+    margin: 0 !important;
+    background: #fff;
+    max-width: 100%;
+}
+
+.yayboost-recommendations__header {
+    margin-bottom: 1.5rem;
+}
+
+.yayboost-recommendations__title {
+    font-size: 14px;
+    font-weight: 400;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Loading State */
+.yayboost-recommendations__loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.yayboost-recommendations__spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #333;
+    border-radius: 50%;
+    animation: yayboost-spin 1s linear infinite;
+    margin-bottom: 0.5rem;
+}
+
+@keyframes yayboost-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.yayboost-recommendations.loading {
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   Grid Layout
+   ========================================================================== */
+
+.yayboost-recommendations--grid .yayboost-recommendations__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 150px);
+    gap: 1.5rem;
+    align-items: stretch;
+    justify-items: center;
+}
+
+.yayboost-recommendations__item {
+    background: #fff;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 150px;
+}
+
+.yayboost-recommendations__item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.yayboost-recommendations__item-image {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 1;
+    background: #f8f8f8;
+}
+
+.yayboost-recommendations__item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.yayboost-recommendations__item:hover .yayboost-recommendations__item-image img {
+    transform: scale(1.05);
+}
+
+.yayboost-recommendations__no-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+    font-size: 0.875rem;
+}
+
+.yayboost-recommendations__item-content {
+    padding: 1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.yayboost-recommendations__item-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.yayboost-recommendations__item-title a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.yayboost-recommendations__item-title a:hover {
+    color: #0073aa;
+}
+
+.yayboost-recommendations__item-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.yayboost-recommendations__item-price del {
+    color: #999;
+    font-weight: normal;
+}
+
+.yayboost-recommendations__item-rating {
+    margin-bottom: 1rem;
+}
+
+.yayboost-recommendations__item-rating .star-rating {
+    font-size: 0.875rem;
+}
+
+.yayboost-recommendations__item-actions {
+    margin-top: auto;
+}
+
+.yayboost-recommendations__add-to-cart {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.yayboost-recommendations__add-to-cart:hover {
+    background: #555;
+    color: #fff;
+}
+
+.yayboost-recommendations__add-to-cart.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.yayboost-recommendations__add-to-cart.added {
+    background: #4CAF50;
+}
+
+/* ==========================================================================
+   List Layout
+   ========================================================================== */
+
+.yayboost-recommendations--list .yayboost-recommendations__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.yayboost-recommendations__list-item {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    padding: 1rem;
+}
+
+.yayboost-recommendations__list-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.yayboost-recommendations__list-image {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    margin-right: 1rem;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #f8f8f8;
+}
+
+.yayboost-recommendations__list-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.yayboost-recommendations__list-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.yayboost-recommendations__list-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.4;
+}
+
+.yayboost-recommendations__list-title a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.yayboost-recommendations__list-title a:hover {
+    color: #0073aa;
+}
+
+.yayboost-recommendations__list-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.yayboost-recommendations__list-rating {
+    margin-bottom: 0.5rem;
+}
+
+.yayboost-recommendations__list-description {
+    font-size: 0.875rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+.yayboost-recommendations__list-actions {
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.yayboost-recommendations__list-actions .yayboost-recommendations__add-to-cart {
+    width: auto;
+    min-width: 120px;
+}
+
+/* ==========================================================================
+   Error Messages
+   ========================================================================== */
+
+.yayboost-error {
+    display: block;
+    color: #d63638;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #ffeaea;
+    border: 1px solid #f0a0a0;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .yayboost-recommendations {
+        margin: 1rem 0;
+        padding: 1rem;
+    }
+    
+    .yayboost-recommendations__title {
+        font-size: 1.25rem;
+    }
+    
+    /* Grid adjustments */
+    .yayboost-recommendations--grid .yayboost-recommendations__grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    /* List adjustments */
+    .yayboost-recommendations__list-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem 0.75rem;
+    }
+    
+    .yayboost-recommendations__list-image {
+        width: 100px;
+        height: 100px;
+        margin: 0 0 1rem 0;
+    }
+    
+    .yayboost-recommendations__list-content {
+        margin-bottom: 1rem;
+    }
+    
+    .yayboost-recommendations__list-actions {
+        margin: 0;
+    }
+    
+    .yayboost-recommendations__list-actions .yayboost-recommendations__add-to-cart {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .yayboost-recommendations--grid .yayboost-recommendations__grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .yayboost-recommendations__item-content {
+        padding: 0.75rem;
+    }
+}
+
+/* ==========================================================================
+   WooCommerce Integration
+   ========================================================================== */
+
+/* Ensure compatibility with WooCommerce themes */
+.woocommerce .yayboost-recommendations__add-to-cart,
+.woocommerce-page .yayboost-recommendations__add-to-cart {
+    font-family: inherit;
+}
+
+/* Star ratings */
+.yayboost-recommendations .star-rating {
+    color: #ffb900;
+}
+
+.yayboost-recommendations .star-rating::before {
+    color: #e0e0e0;
+}
+
+/* Price styling */
+.yayboost-recommendations .price {
+    color: inherit;
+}
+
+.yayboost-recommendations .price .amount {
+    font-weight: inherit;
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+.yayboost-recommendations__add-to-cart:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+.yayboost-recommendations__item-title a:focus,
+.yayboost-recommendations__list-title a:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .yayboost-recommendations {
+        border-color: #000;
+    }
+    
+    .yayboost-recommendations__item,
+    .yayboost-recommendations__list-item {
+        border-color: #000;
+    }
+    
+    .yayboost-recommendations__add-to-cart {
+        background: #000;
+        border: 2px solid #000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .yayboost-recommendations__item,
+    .yayboost-recommendations__list-item,
+    .yayboost-recommendations__add-to-cart,
+    .yayboost-recommendations__item-image img {
+        transition: none;
+    }
+    
+    .yayboost-recommendations__spinner {
+        animation: none;
+    }
+    
+    .yayboost-recommendations__item:hover {
+        transform: none;
+    }
+    
+    .yayboost-recommendations__item:hover .yayboost-recommendations__item-image img {
+        transform: none;
+    }
+}
