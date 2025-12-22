@@ -39,6 +39,9 @@ class FreeShippingBarBlock {
 
         // Enqueue feature assets for localized data (needed for Interactivity API)
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_feature_data' ], 100 );
+
+        // Enqueue editor assets with localized data for preview
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
     }
 
     /**
@@ -105,6 +108,24 @@ class FreeShippingBarBlock {
 
         wp_localize_script(
             'yayboost-free-shipping-bar',
+            'yayboostShippingBar',
+            $this->feature->get_localization_data()
+        );
+    }
+
+    /**
+     * Enqueue editor assets with localized data for preview
+     *
+     * @return void
+     */
+    public function enqueue_editor_data() {
+        if ( ! $this->feature || ! $this->feature->is_enabled() ) {
+            return;
+        }
+
+        // Localize data for editor preview
+        wp_localize_script(
+            'yayboost-free-shipping-bar-editor-script',
             'yayboostShippingBar',
             $this->feature->get_localization_data()
         );

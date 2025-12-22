@@ -40,6 +40,10 @@ const { actions } = store("yayboost/free-shipping-bar", {
      * Initialize and subscribe to WooCommerce cart store changes
      */
     init() {
+      if (!window.wp?.data?.subscribe) {
+        return;
+      }
+
       const { subscribe } = window.wp.data;
 
       if (!subscribe) {
