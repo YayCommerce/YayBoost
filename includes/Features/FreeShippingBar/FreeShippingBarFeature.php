@@ -188,14 +188,6 @@ class FreeShippingBarFeature extends AbstractFeature {
         // Determine script dependencies based on context
         $script_deps = [ 'jquery', 'wc-accounting', 'wc-cart-fragments' ];
 
-        // If mini cart block is active and not Brandy theme, add block dependency
-        if (in_array( 'mini_cart', $show_on, true )
-            && ! $this->is_brandy_theme()
-            && $this->has_mini_cart_block()) {
-            // WooCommerce Blocks script handle for mini cart
-            $script_deps[] = 'wc-blocks-checkout';
-        }
-
         wp_enqueue_script(
             'yayboost-free-shipping-bar',
             YAYBOOST_URL . 'assets/js/free-shipping-bar.js',

@@ -92,9 +92,9 @@ class FreeShippingBarBlock {
             return;
         }
 
-        if ( ! $this->has_block_in_content() ) {
-            return;
-        }
+        // Enqueue WooCommerce store data for cart data access in block's view script
+        // This allows access to window.wp.data.select('wc/store/cart').getCartData()
+        wp_enqueue_script( 'wc-blocks-checkout' );
 
         wp_enqueue_style(
             'yayboost-free-shipping-bar',
@@ -108,27 +108,5 @@ class FreeShippingBarBlock {
             'yayboostShippingBar',
             $this->feature->get_localization_data()
         );
-    }
-
-    /**
-     * Check if free shipping bar block is present in current content
-     *
-     * @return bool
-     */
-    private function has_block_in_content(): bool {
-        if ( function_exists( 'wp_get_sidebars_widgets' ) ) {
-            $sidebars = wp_get_sidebars_widgets();
-            foreach ( $sidebars as $sidebar => $widgets ) {
-                if ( is_array( $widgets ) ) {
-                    foreach ( $widgets as $widget ) {
-                        if ( strpos( $widget, 'yayboost-free-shipping-bar' ) !== false ) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 }
