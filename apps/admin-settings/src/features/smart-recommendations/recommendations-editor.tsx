@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useCreateEntity, useEntity, useUpdateEntity } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Check } from '@phosphor-icons/react';
@@ -190,14 +190,14 @@ function MultiSelectWithSelect({
   placeholder = 'Select options',
   className,
 }: MultiSelectWithSelectProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
 
-  const selectedOptions = React.useMemo(
+  const selectedOptions = useMemo(
     () => options.filter((o) => value.includes(o.value)),
     [options, value],
   );
 
-  const selectedLabels = React.useMemo(
+  const selectedLabels = useMemo(
     () => selectedOptions.map((opt) => opt.label),
     [selectedOptions],
   );
@@ -307,7 +307,7 @@ function WhenCustomerViewsSection({form}: { form: UseFormReturn<RecommendationRu
     name: 'when_customer_views_type',
   }) as 'category' | 'product' | 'tag';
 
-  const valueOptions = React.useMemo(() => {
+  const valueOptions = useMemo(() => {
     return getOptionsFromLocalize(watchType);
   }, [watchType]);
 
@@ -341,7 +341,7 @@ function RecommendProductsFromSection({form}: { form: UseFormReturn<Recommendati
     name: 'recommend_products_from_type',
   }) as 'category' | 'product' | 'tag';
 
-  const valueOptions = React.useMemo(() => {
+  const valueOptions = useMemo(() => {
     return getOptionsFromLocalize(watchType);
   }, [watchType]);
 
