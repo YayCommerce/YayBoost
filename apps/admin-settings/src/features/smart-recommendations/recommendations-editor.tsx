@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useCreateEntity, useEntity, useUpdateEntity } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Check } from '@phosphor-icons/react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, UseFormReturn, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
@@ -280,16 +280,13 @@ function MultiSelectWithSelect({
 }
 
 // ==================== Form Section Components ====================
-interface FormSectionProps {
-  control: any;
-}
 
-function RuleNameSection({ control }: FormSectionProps) {
+function RuleNameSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) {
   return (
     <SectionContainer>
       <SectionTitle>Rule Name</SectionTitle>
       <FormField
-        control={control}
+        control={form.control}
         name="name"
         render={({ field }) => (
           <FormItem>
@@ -304,12 +301,9 @@ function RuleNameSection({ control }: FormSectionProps) {
   );
 }
 
-function WhenCustomerViewsSection({
-  control,
-  recommendation,
-}: FormSectionProps & { recommendation: any }) {
+function WhenCustomerViewsSection({form}: { form: UseFormReturn<RecommendationRuleFormData> } ) {
   const watchType = useWatch({
-    control,
+    control: form.control,
     name: 'when_customer_views_type',
   }) as 'category' | 'product' | 'tag';
 
@@ -322,7 +316,7 @@ function WhenCustomerViewsSection({
       <SectionTitle>When Customer Views</SectionTitle>
       <div className="grid grid-cols-2 gap-4">
         <SelectField
-          control={control}
+          control={form.control}
           name="when_customer_views_type"
           label="Type"
           placeholder="Select type"
@@ -330,7 +324,7 @@ function WhenCustomerViewsSection({
         />
         <SelectField
           key={`${watchType}`}
-          control={control}
+          control={form.control}
           name="when_customer_views_value"
           label="Value"
           placeholder="Select value"
@@ -341,12 +335,9 @@ function WhenCustomerViewsSection({
   );
 }
 
-function RecommendProductsFromSection({
-  control,
-  recommendation,
-}: FormSectionProps & { recommendation: any }) {
+function RecommendProductsFromSection({form}: { form: UseFormReturn<RecommendationRuleFormData> } ) {
   const watchType = useWatch({
-    control,
+    control: form.control,
     name: 'recommend_products_from_type',
   }) as 'category' | 'product' | 'tag';
 
@@ -365,14 +356,14 @@ function RecommendProductsFromSection({
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            control={control}
+            control={form.control}
             name="recommend_products_from_type"
             label="Type"
             placeholder="Select type"
             options={TYPE_OPTIONS}
           />
           <FormField
-            control={control}
+            control={form.control}
             name="recommend_products_from_value"
             render={({ field }) => (
               <FormItem>
@@ -392,14 +383,14 @@ function RecommendProductsFromSection({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <SelectField
-            control={control}
+            control={form.control}
             name="max_products_to_show"
             label="Max products to show"
             placeholder="Select max products"
             options={maxProductsOptionsFormatted}
           />
           <SelectField
-            control={control}
+            control={form.control}
             name="sort_by"
             label="Sort by"
             placeholder="Select sort option"
@@ -411,7 +402,7 @@ function RecommendProductsFromSection({
   );
 }
 
-function DisplaySettingsSection({ control }: FormSectionProps) {
+function DisplaySettingsSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> } ) {
   const layoutOptions = [
     { label: 'Grid', value: 'grid' },
     { label: 'List', value: 'list' },
@@ -423,14 +414,14 @@ function DisplaySettingsSection({ control }: FormSectionProps) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <SelectField
-            control={control}
+            control={form.control}
             name="layout"
             label="Layout"
             placeholder="Select layout"
             options={layoutOptions}
           />
           <FormField
-            control={control}
+            control={form.control}
             name="section_title"
             render={({ field }) => (
               <FormItem>
@@ -448,7 +439,7 @@ function DisplaySettingsSection({ control }: FormSectionProps) {
   );
 }
 
-function BehaviorSection({ control }: FormSectionProps) {
+function BehaviorSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> } ) {
   const behaviorOptions = [
     { value: 'hide', label: 'Hide it', id: 'hide' },
     { value: 'show', label: 'Still show it', id: 'show' },
@@ -460,7 +451,7 @@ function BehaviorSection({ control }: FormSectionProps) {
       <div className="space-y-3">
         <Label className={FORM_LABEL_CLASS}>If recommended product is already in cart:</Label>
         <RadioField
-          control={control}
+          control={form.control}
           name="behavior_if_in_cart"
           options={behaviorOptions}
           direction="col"
@@ -471,7 +462,7 @@ function BehaviorSection({ control }: FormSectionProps) {
   );
 }
 
-function StatusSection({ control }: FormSectionProps) {
+function StatusSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> } ) {
   const statusOptions = [
     { value: 'active', label: 'Active', id: 'active' },
     { value: 'inactive', label: 'Inactive', id: 'inactive' },
@@ -480,7 +471,7 @@ function StatusSection({ control }: FormSectionProps) {
   return (
     <SectionContainer className="border-none">
       <SectionTitle>Status</SectionTitle>
-      <RadioField control={control} name="status" options={statusOptions} />
+      <RadioField control={form.control} name="status" options={statusOptions} />
     </SectionContainer>
   );
 }
@@ -606,12 +597,12 @@ const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
       <div className="rounded-lg border p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-[14px]">
-            <RuleNameSection control={form.control} />
-            <WhenCustomerViewsSection control={form.control} recommendation={recommendation} />
-            <RecommendProductsFromSection control={form.control} recommendation={recommendation} />
-            <DisplaySettingsSection control={form.control} />
-            <BehaviorSection control={form.control} />
-            <StatusSection control={form.control} />
+            <RuleNameSection form={form} />
+            <WhenCustomerViewsSection form={form} />
+            <RecommendProductsFromSection form={form}/>
+            <DisplaySettingsSection form={form} />
+            <BehaviorSection form={form} />
+            <StatusSection form={form} />
 
             {/* Submit button */}
             <div className="flex justify-end gap-3">
