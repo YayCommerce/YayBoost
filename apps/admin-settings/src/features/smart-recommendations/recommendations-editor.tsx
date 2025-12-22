@@ -99,9 +99,10 @@ interface SelectFieldProps {
   label: string;
   placeholder: string;
   options: { label: string; value: string }[];
+  onChange?: (value: string) => void;
 }
 
-function SelectField({ control, name, label, placeholder, options }: SelectFieldProps) {
+function SelectField({ control, name, label, placeholder, options, onChange }: SelectFieldProps) {
   return (
     <FormField
       control={control}
@@ -109,7 +110,7 @@ function SelectField({ control, name, label, placeholder, options }: SelectField
       render={({ field }) => (
         <FormItem>
           <FormLabelText>{label}</FormLabelText>
-          <Select onValueChange={field.onChange} value={field.value}>
+          <Select onValueChange={(value) => { field.onChange(value); onChange?.(value); }} value={field.value} >
             <FormControl>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={placeholder} />
@@ -321,6 +322,9 @@ function WhenCustomerViewsSection({form}: { form: UseFormReturn<RecommendationRu
           label="Type"
           placeholder="Select type"
           options={TYPE_OPTIONS}
+          onChange={(value) => {
+            form.setValue('when_customer_views_value', '');
+          }}
         />
         <SelectField
           key={`${watchType}`}
@@ -361,6 +365,9 @@ function RecommendProductsFromSection({form}: { form: UseFormReturn<Recommendati
             label="Type"
             placeholder="Select type"
             options={TYPE_OPTIONS}
+            onChange={(value) => {
+              form.setValue('recommend_products_from_value', []);
+            }}
           />
           <FormField
             control={form.control}
