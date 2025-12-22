@@ -303,13 +303,13 @@ class SmartRecommendationsFeature extends AbstractFeature {
                 $query_args['order'] = 'DESC';
                 break;
 
-            case 'price_low_high':
+            case 'price_low':
                 $query_args['meta_key'] = '_price';
                 $query_args['orderby'] = 'meta_value_num';
                 $query_args['order'] = 'ASC';
                 break;
 
-            case 'price_high_low':
+            case 'price_high':
                 $query_args['meta_key'] = '_price';
                 $query_args['orderby'] = 'meta_value_num';
                 $query_args['order'] = 'DESC';
