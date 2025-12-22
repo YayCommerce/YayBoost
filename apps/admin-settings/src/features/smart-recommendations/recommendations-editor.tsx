@@ -311,7 +311,6 @@ function WhenCustomerViewsSection({
   const watchType = useWatch({
     control,
     name: 'when_customer_views_type',
-    defaultValue: recommendation?.settings?.when_customer_views_type || 'category',
   }) as 'category' | 'product' | 'tag';
 
   const valueOptions = React.useMemo(() => {
@@ -330,6 +329,7 @@ function WhenCustomerViewsSection({
           options={TYPE_OPTIONS}
         />
         <SelectField
+          key={`${watchType}`}
           control={control}
           name="when_customer_views_value"
           label="Value"
@@ -348,7 +348,6 @@ function RecommendProductsFromSection({
   const watchType = useWatch({
     control,
     name: 'recommend_products_from_type',
-    defaultValue: recommendation?.settings?.recommend_products_from_type || 'category',
   }) as 'category' | 'product' | 'tag';
 
   const valueOptions = React.useMemo(() => {
