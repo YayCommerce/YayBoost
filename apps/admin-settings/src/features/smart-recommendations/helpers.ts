@@ -25,3 +25,9 @@ export function getOptionsFromLocalize(type: 'category' | 'product' | 'tag') {
         return [];
     }
   }
+
+export function formatRecommendLabels (labels: string[]) {
+    if (!labels || labels.length === 0) return '-';
+    if (labels.length === 1) return labels[0];
+    return `${labels[0]} +${labels.length - 1}`;
+  };

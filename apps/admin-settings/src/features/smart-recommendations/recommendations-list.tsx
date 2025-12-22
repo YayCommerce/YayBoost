@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table';
 
 import { FeatureComponentProps } from '..';
+import { formatRecommendLabels } from './helpers';
 
 function EmptyState() {
   return (
@@ -161,9 +162,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
                 <TableCell className="font-light">{recommendation.name}</TableCell>
                 <TableCell className="font-light">{recommendation.triggerLabel}</TableCell>
                 <TableCell className="font-light">
-                  {recommendation.recommendLabels && recommendation.recommendLabels.length > 0
-                    ? recommendation.recommendLabels.join(', ')
-                    : '-'}
+                  {formatRecommendLabels(recommendation.recommendLabels)}
                 </TableCell>
                 <TableCell>
                   <Switch
