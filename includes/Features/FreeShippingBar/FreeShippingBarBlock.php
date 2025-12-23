@@ -97,7 +97,7 @@ class FreeShippingBarBlock {
 
         // Enqueue WooCommerce store data for cart data access in block's view script
         // This allows access to window.wp.data.select('wc/store/cart').getCartData()
-        wp_enqueue_script( 'wc-blocks-checkout' );
+        // wp_enqueue_script( 'wc-blocks-checkout' );
 
         wp_enqueue_style(
             'yayboost-free-shipping-bar',

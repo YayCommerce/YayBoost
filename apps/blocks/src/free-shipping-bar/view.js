@@ -1,14 +1,36 @@
 import { store, getContext } from "@wordpress/interactivity";
 import {
   calculateBarData,
-  buildBarHtml,
   getCartTotalFromStore,
+  updateShippingBarDOM,
 } from "./helpers";
 
+// Try to get WooCommerce cart store (only works in Mini Cart context)
+let wcState = null;
+try {
+  const wcStore = store(
+    "woocommerce",
+    {},
+    {
+      lock: "I acknowledge that using a private store means my plugin will inevitably break on the next store release.",
+    }
+  );
+  wcState = wcStore?.state;
+} catch (e) {
+  console.log(e);
+}
 /**
  * Store definition for Free Shipping Bar
  */
-const { actions } = store("yayboost/free-shipping-bar", {
+const { actions, state } = store("yayboost/free-shipping-bar", {
+  state: {
+    get updateShippingBar() {
+      // Try Mini Cart's Interactivity API store first
+      const cartTotal = wcState?.cart?.totals?.total_price;
+      const barData = calculateBarData(cartTotal);
+      updateShippingBarDOM(barData);
+    },
+  },
   actions: {
     /**
      * Update bar data from cart and rebuild HTML content
@@ -17,21 +39,7 @@ const { actions } = store("yayboost/free-shipping-bar", {
     updateFromCart() {
       // Calculate bar data (gets everything from window)
       const barData = calculateBarData();
-      if (!barData) {
-        return;
-      }
-
-      // Build HTML content
-      const htmlContent = buildBarHtml(barData);
-      if (htmlContent) {
-        // Update DOM directly
-        const blockElement = document.querySelector(
-          '[data-wp-interactive="yayboost/free-shipping-bar"]'
-        );
-        if (blockElement) {
-          blockElement.innerHTML = htmlContent;
-        }
-      }
+      updateShippingBarDOM(barData);
     },
   },
 

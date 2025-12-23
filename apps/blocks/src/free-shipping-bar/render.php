@@ -52,6 +52,7 @@ $context = [
     <?php echo get_block_wrapper_attributes( [ 'class' => 'yayboost-shipping-bar-block-wrapper' ] ); ?>
     data-wp-interactive="yayboost/free-shipping-bar"
     data-wp-init="callbacks.init"
+    data-wp-bind--hidden="state.updateShippingBar"
     <?php echo wp_interactivity_data_wp_context( $context ); ?>
 >
     <div class="yayboost-shipping-bar-content">

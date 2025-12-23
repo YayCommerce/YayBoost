@@ -1,3 +1,5 @@
+import { store } from "@wordpress/interactivity";
+
 /**
  * Bar state constants
  */
@@ -236,21 +238,23 @@ export function buildBarResponse(
  * @return {number|null}
  */
 export function getCartTotalFromStore() {
+  // For redux store
   const cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
-  if (!cartData?.totals?.total_price) {
-    return null;
+  if (cartData?.totals?.total_price) {
+    return cartData.totals.total_price;
   }
-
-  // WooCommerce Blocks returns price in minor units (cents)
-  // Convert to major units (dollars) by dividing by 100
-  return cartData.totals.total_price;
+  return null;
 }
 
 /**
  * Calculate bar data from current cart state (no params needed - gets from window)
  * @return {object|null}
  */
-export function calculateBarData() {
+export function calculateBarData(cartTotal = null) {
+  if (cartTotal === null) {
+    cartTotal = getCartTotalFromStore();
+  }
+
   const data = window.yayboostShippingBar || {};
   const thresholdInfo = data.thresholdInfo;
 
@@ -258,7 +262,6 @@ export function calculateBarData() {
     return null;
   }
 
-  const cartTotal = getCartTotalFromStore();
   if (cartTotal === null) {
     return null;
   }
@@ -438,4 +441,29 @@ export function buildBarHtml(data) {
 
   // Fallback to minimal_text
   return buildMinimalTextHtml(data);
+}
+
+/**
+ * Update shipping bar DOM with new bar data
+ * @param {object} barData Bar data object
+ * @return {void}
+ */
+export function updateShippingBarDOM(barData) {
+  if (!barData) {
+    return;
+  }
+
+  // Build HTML content
+  const htmlContent = buildBarHtml(barData);
+  if (!htmlContent) {
+    return;
+  }
+
+  // Update DOM directly
+  const blockElement = document.querySelector(
+    '[data-wp-interactive="yayboost/free-shipping-bar"]'
+  );
+  if (blockElement) {
+    blockElement.innerHTML = htmlContent;
+  }
 }
