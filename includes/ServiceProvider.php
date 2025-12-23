@@ -12,6 +12,7 @@ use YayBoost\Interfaces\ServiceProviderInterface;
 use YayBoost\Features\SampleBoost\SampleBoostFeature;
 use YayBoost\Features\FreeShippingBar\FreeShippingBarFeature;
 use YayBoost\Features\FreeShippingBar\FreeShippingBarBlock;
+use YayBoost\Features\FreeShippingBar\FreeShippingBarSlotFill;
 use YayBoost\Features\OrderBump\OrderBumpFeature;
 use YayBoost\Utils\FeatureRegistry;
 
@@ -127,10 +128,13 @@ class ServiceProvider implements ServiceProviderInterface {
                 continue;
             }
 
-            // Initialize Free Shipping Bar Block
+            // Initialize Free Shipping Bar Block and Slot/Fill
             if ($feature->get_id() === 'free_shipping_bar') {
                 $block = FreeShippingBarBlock::get_instance();
                 $block->set_feature( $feature );
+
+                $slot_fill = FreeShippingBarSlotFill::get_instance();
+                $slot_fill->set_feature( $feature );
             }
         }
     }

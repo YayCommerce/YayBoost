@@ -8,7 +8,8 @@
   },
   "devDependencies": {
     "@babel/plugin-bugfix-firefox-class-in-computed-class-key": "^7.28.5",
+    "@woocommerce/dependency-extraction-webpack-plugin": "^3.0.1",
     "@wordpress/icons": "^10.3.0",
-    "@wordpress/scripts": "^27.2.0"
+    "@wordpress/scripts": "^30.7.0"
   }
 }
