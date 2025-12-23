@@ -28,12 +28,20 @@ const FreeShippingBarSlot = ({ cart, ...rest }) => {
     return null;
   }
 
-  const barData = calculateBarData(cartTotal);
+  const yayboostData = window.yayboostShippingBar;
+
+  const config = {
+    settings: yayboostData.settings,
+    thresholdInfo: yayboostData.thresholdInfo,
+    templates: yayboostData.templates,
+  };
+
+  const barData = calculateBarData(cartTotal, config);
 
   if (!barData) {
     return null;
   }
-  const barHtml = buildBarHtml(barData);
+  const barHtml = buildBarHtml(barData, config);
 
   if (!barHtml) {
     return null;

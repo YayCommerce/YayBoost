@@ -66,13 +66,13 @@ class FreeShippingBarSlotFill {
             return;
         }
 
-        $asset = include $asset_file;
-
+        $asset       = include $asset_file;
+        $script_deps = array_merge( $asset['dependencies'], [ 'wc-accounting' ] );
         // Enqueue script
         wp_enqueue_script(
             'yayboost-free-shipping-bar-slot',
             YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar-slot/index.js',
-            $asset['dependencies'],
+            $script_deps,
             $asset['version'],
             true
         );
@@ -88,7 +88,7 @@ class FreeShippingBarSlotFill {
         if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
             wp_enqueue_style(
                 'yayboost-free-shipping-bar',
-                YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
+                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
                 [],
                 YAYBOOST_VERSION
             );

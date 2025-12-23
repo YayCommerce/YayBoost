@@ -39,12 +39,12 @@ export function formatPrice(amount) {
       const currency = window.wcSettings.currency;
       // Get currency symbol from WooCommerce
       currencyOptions.symbol = currency.symbol || "$";
-      currencyOptions.precision = currency.minorUnit || 2;
+      currencyOptions.precision = currency.precision;
       currencyOptions.decimal = currency.decimalSeparator || ".";
       currencyOptions.thousand = currency.thousandSeparator || ",";
       // Format: %s = symbol, %v = value
       // Position: left = '%s%v', right = '%v%s', left_space = '%s %v', right_space = '%v %s'
-      const position = currency.position || "left";
+      const position = currency.symbolPosition || "left";
       if (position === "right") {
         currencyOptions.format = "%v%s";
       } else if (position === "left_space") {
@@ -55,6 +55,9 @@ export function formatPrice(amount) {
         currencyOptions.format = "%s%v"; // default left
       }
     }
+
+    const a = window.accounting.formatMoney(amount, currencyOptions);
+    console.log(a);
 
     // Format with options (if any) or use default settings
     return window.accounting.formatMoney(amount, currencyOptions);
@@ -256,7 +259,6 @@ export function calculateBarData(cartTotal = null, config = {}) {
   if (cartTotal === null) {
     cartTotal = getCartTotalFromStore();
   }
-
   const thresholdInfo = config.thresholdInfo;
 
   if (!thresholdInfo || !thresholdInfo.min_amount) {
