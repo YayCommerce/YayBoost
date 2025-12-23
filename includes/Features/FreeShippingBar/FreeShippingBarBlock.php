@@ -2,20 +2,19 @@
 /**
  * Free Shipping Bar Gutenberg Block
  *
- * Registers and renders the Free Shipping Bar block using WordPress Interactivity API
+ * Registers the Free Shipping Bar block using WordPress Interactivity API.
+ * - Editor: Data localized via enqueue_block_editor_assets
+ * - Frontend: Data passed via wp_interactivity_state() in render.php
  *
  * @package YayBoost
  */
 
 namespace YayBoost\Features\FreeShippingBar;
 
-use YayBoost\Traits\Singleton;
-
 /**
  * Free Shipping Bar Block class
  */
 class FreeShippingBarBlock {
-    use Singleton;
 
     /**
      * Feature instance
@@ -25,34 +24,16 @@ class FreeShippingBarBlock {
     private $feature;
 
     /**
-     * Flag to track if block has been rendered
-     *
-     * @var bool
-     */
-    private $rendered = false;
-
-    /**
      * Constructor
-     */
-    protected function __construct() {
-        add_action( 'init', [ $this, 'register_block' ] );
-
-        // Enqueue feature assets for localized data (needed for Interactivity API)
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_feature_data' ], 100 );
-
-        // Enqueue editor assets with localized data for preview
-        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
-    }
-
-    /**
-     * Set feature instance
      *
      * @param FreeShippingBarFeature $feature Feature instance.
-     * @return void
      */
-    public function set_feature( FreeShippingBarFeature $feature ) {
+    public function __construct( $feature ) {
         $this->feature = $feature;
-    }
+
+		add_action( 'init', [ $this, 'register_block' ] );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
+	}
 
     /**
      * Get feature instance
@@ -75,51 +56,25 @@ class FreeShippingBarBlock {
             return;
         }
 
-        // Don't set render_callback - let WordPress auto-load render.php from block.json
-        // This matches the pattern used by Interactive Demo Block
-        register_block_type( $block_json_path );
-    }
-
-    /**
-     * Enqueue feature data for Interactivity API
-     * Only enqueue when block is actually present in content
-     *
-     * @return void
-     */
-    public function enqueue_feature_data() {
-        if ( ! $this->feature || ! $this->feature->is_enabled() ) {
-            return;
-        }
-
-        if ( is_admin() ) {
-            return;
-        }
-
-        wp_enqueue_style(
-            'yayboost-free-shipping-bar',
-            YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
-            [],
-            YAYBOOST_VERSION
-        );
-
-        wp_localize_script(
-            'yayboost-free-shipping-bar',
-            'yayboostShippingBar',
-            $this->feature->get_localization_data()
+		// Register block with feature context for render.php
+		// Frontend data localization handled via wp_interactivity_state() in render.php
+		register_block_type(
+			$block_json_path,
+			[
+				'provides_context' => [
+					'feature' => $this->feature,
+				],
+			]
         );
     }
 
     /**
-     * Enqueue editor assets with localized data for preview
+     * Enqueue data for block editor
+     * Localizes feature config to editor script for live preview
      *
      * @return void
      */
     public function enqueue_editor_data() {
-        if ( ! $this->feature || ! $this->feature->is_enabled() ) {
-            return;
-        }
-
-        // Localize data for editor preview
         wp_localize_script(
             'yayboost-free-shipping-bar-editor-script',
             'yayboostShippingBar',

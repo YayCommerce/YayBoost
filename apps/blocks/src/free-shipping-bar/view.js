@@ -17,19 +17,18 @@ try {
   );
   wcState = wcStore?.state;
 } catch (e) {
-  console.log(e);
+  // WooCommerce store not available
 }
 /**
  * Store definition for Free Shipping Bar
+ * State is hydrated from PHP via wp_interactivity_state() in render.php
  */
-const { actions } = store("yayboost/free-shipping-bar", {
+const { state, actions } = store("yayboost/free-shipping-bar", {
   state: {
-    get updateShippingBar() {
-      // Try Mini Cart's Interactivity API store first
-      const cartTotal = wcState?.cart?.totals?.total_price;
-      const barData = calculateBarData(cartTotal);
-      updateShippingBarDOM(barData);
-    },
+    // These will be hydrated from PHP via wp_interactivity_state()
+    settings: {},
+    thresholdInfo: {},
+    templates: {},
   },
   actions: {
     /**
@@ -37,9 +36,16 @@ const { actions } = store("yayboost/free-shipping-bar", {
      * Called when WooCommerce cart updates
      */
     updateFromCart() {
-      // Calculate bar data (gets everything from window)
-      const barData = calculateBarData();
-      updateShippingBarDOM(barData);
+      // Build config from store state
+      const config = {
+        settings: state.settings,
+        thresholdInfo: state.thresholdInfo,
+        templates: state.templates,
+      };
+
+      // Calculate bar data with config
+      const barData = calculateBarData(null, config);
+      updateShippingBarDOM(barData, config);
     },
   },
 
@@ -59,7 +65,6 @@ const { actions } = store("yayboost/free-shipping-bar", {
       }
 
       // Subscribe to changes in wp.data store
-      // This will run whenever any state in wp.data changes
       let previousCartTotal = getCartTotalFromStore();
 
       subscribe(() => {
@@ -73,6 +78,26 @@ const { actions } = store("yayboost/free-shipping-bar", {
           actions.updateFromCart();
         }
       });
+    },
+
+    /**
+     * Watch for Mini Cart updates via WooCommerce Interactivity store
+     */
+    watchCartUpdates() {
+      // For Mini Cart: watch WooCommerce store cart total
+      const cartTotal = wcState?.cart?.totals?.total_price;
+
+      if (cartTotal !== undefined) {
+        // Build config from store state
+        const config = {
+          settings: state.settings,
+          thresholdInfo: state.thresholdInfo,
+          templates: state.templates,
+        };
+
+        const barData = calculateBarData(cartTotal, config);
+        updateShippingBarDOM(barData, config);
+      }
     },
   },
 });

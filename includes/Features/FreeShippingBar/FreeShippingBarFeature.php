@@ -85,8 +85,8 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         // Map show_on values to WooCommerce hooks
         $hook_map = [
-            'top_cart'        => 'woocommerce_before_cart',
-            'bottom_cart'     => 'woocommerce_before_cart_collaterals',
+            'top_cart'        => 'woocommerce_before_cart_table',
+            'bottom_cart'     => 'woocommerce_after_cart_table',
             'top_checkout'    => 'woocommerce_before_checkout_form',
             'bottom_checkout' => 'woocommerce_after_checkout_form',
         ];
@@ -106,101 +106,9 @@ class FreeShippingBarFeature extends AbstractFeature {
         // Add cart fragments filter for Classic Cart/Mini Cart updates
         add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_shipping_bar_fragment' ] );
 
-        // Enqueue assets only if feature is enabled and has locations
-        // Smart enqueue: cart/checkout pages, and mini cart (with theme detection)
-        if ( ! empty( $show_on ) ) {
-            // For cart/checkout pages, use standard wp_enqueue_scripts
-            // For mini cart, check if Brandy theme or WooCommerce blocks
-            add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ], 100 );
-
-            // If mini cart block is active and not Brandy, also hook to block assets
-            if (in_array( 'mini_cart', $show_on, true )
-                && ! $this->is_brandy_theme()
-                && $this->has_mini_cart_block()) {
-                add_action( 'enqueue_block_assets', [ $this, 'enqueue_assets' ], 100 );
-            }
+        if ( $this->is_enabled() ) {
+            new FreeShippingBarBlock( $this );
         }
-    }
-
-    /**
-     * Check if current theme is Brandy
-     *
-     * @return bool
-     */
-    private function is_brandy_theme(): bool {
-        $theme          = wp_get_theme();
-        $theme_name     = $theme->get( 'Name' );
-        $theme_template = $theme->get_template();
-
-        // Check by theme name or template slug
-        return stripos( $theme_name, 'Brandy' ) !== false
-            || stripos( $theme_template, 'brandy' ) !== false;
-    }
-
-    /**
-     * Check if WooCommerce mini cart block is active
-     *
-     * @return bool
-     */
-    private function has_mini_cart_block(): bool {
-        // Check if mini cart block is registered/available
-        return class_exists( '\Automattic\WooCommerce\Blocks\Package' )
-            && function_exists( 'has_block' );
-    }
-
-    /**
-     * Enqueue frontend assets
-     * Only enqueue for classic feature (hook-based), not for block usage
-     *
-     * @return void
-     */
-    public function enqueue_assets(): void {
-        if ( ! $this->is_enabled()) {
-            return;
-        }
-
-        $show_on = $this->get_settings()['show_on'] ?? [ 'top_cart', 'top_checkout' ];
-
-        $should_enqueue = false;
-
-        if (is_cart() && array_intersect( [ 'top_cart', 'bottom_cart' ], $show_on )) {
-            $should_enqueue = true;
-        } elseif (is_checkout() && array_intersect( [ 'top_checkout', 'bottom_checkout' ], $show_on )) {
-            $should_enqueue = true;
-        }
-
-        if (in_array( 'mini_cart', $show_on, true )) {
-            $should_enqueue = true;
-        }
-
-        if ( ! $should_enqueue) {
-            return;
-        }
-
-        // Enqueue CSS file
-        wp_enqueue_style(
-            'yayboost-free-shipping-bar',
-            YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
-            [],
-            YAYBOOST_VERSION
-        );
-
-        // Determine script dependencies based on context
-        $script_deps = [ 'jquery', 'wc-accounting', 'wc-cart-fragments' ];
-
-        wp_enqueue_script(
-            'yayboost-free-shipping-bar',
-            YAYBOOST_URL . 'assets/js/free-shipping-bar.js',
-            $script_deps,
-            YAYBOOST_VERSION,
-            true
-        );
-
-        wp_localize_script(
-            'yayboost-free-shipping-bar',
-            'yayboostShippingBar',
-            $this->get_localization_data()
-        );
     }
 
     /**
@@ -236,6 +144,21 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return void
      */
     public function render_bar(): void {
+
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
+        // Enqueue CSS file, make sure style from block not enqueued
+        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
+            wp_enqueue_style(
+                'yayboost-free-shipping-bar',
+                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
+                [],
+                YAYBOOST_VERSION
+            );
+        }
+
         echo $this->get_bar_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }
 

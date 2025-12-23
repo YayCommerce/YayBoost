@@ -12,9 +12,8 @@
 
 // Get feature instance
 $feature = null;
-if ( class_exists( '\YayBoost\Features\FreeShippingBar\FreeShippingBarBlock' ) ) {
-    $block_instance = \YayBoost\Features\FreeShippingBar\FreeShippingBarBlock::get_instance();
-    $feature        = $block_instance->get_feature();
+if ( isset( $block->block_type->provides_context['feature'] ) ) {
+	$feature = $block->block_type->provides_context['feature'];
 }
 
 // If no feature or disabled, return empty
@@ -36,7 +35,22 @@ if ( empty( $bar_html ) ) {
     return '';
 }
 
-// Prepare context for Interactivity API
+// Get localization data for Interactivity API state
+$localization_data = $feature->get_localization_data();
+
+// Set global state for the store (hydrates view.js state)
+wp_interactivity_state(
+	'yayboost/free-shipping-bar',
+	[
+		'settings'      => $localization_data['settings'] ?? [],
+		'thresholdInfo' => $localization_data['thresholdInfo'] ?? [],
+		'templates'     => $localization_data['templates'] ?? [],
+	]
+);
+
+wp_enqueue_script( 'wc-accounting' );
+
+// Prepare context for Interactivity API (per-block instance data)
 $context = [
     'threshold'    => $bar_data['threshold'],
     'current'      => $bar_data['current'],
@@ -52,7 +66,7 @@ $context = [
     <?php echo get_block_wrapper_attributes( [ 'class' => 'yayboost-shipping-bar-block-wrapper' ] ); ?>
     data-wp-interactive="yayboost/free-shipping-bar"
     data-wp-init="callbacks.init"
-    data-wp-bind--hidden="state.updateShippingBar"
+	data-wp-watch="callbacks.watchCartUpdates"
     <?php echo wp_interactivity_data_wp_context( $context ); ?>
 >
     <div class="yayboost-shipping-bar-content">

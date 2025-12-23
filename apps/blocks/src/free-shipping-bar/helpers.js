@@ -170,15 +170,17 @@ export function determineBarState(achieved, requiresType, hasCoupon) {
  * @param {object} progressData Progress data
  * @param {number} threshold Threshold amount
  * @param {number} cartTotal Cart total
+ * @param {object} config Configuration object with settings
  * @return {string} Formatted message
  */
 export function buildMessageForState(
   state,
   progressData,
   threshold,
-  cartTotal
+  cartTotal,
+  config = {}
 ) {
-  const settings = window.yayboostShippingBar?.settings || {};
+  const settings = config.settings || {};
 
   switch (state) {
     case STATE_ACHIEVED:
@@ -245,16 +247,17 @@ export function getCartTotalFromStore() {
 }
 
 /**
- * Calculate bar data from current cart state (no params needed - gets from window)
+ * Calculate bar data from current cart state
+ * @param {number|null} cartTotal Cart total (fetched from store if null)
+ * @param {object} config Configuration object with thresholdInfo and settings
  * @return {object|null}
  */
-export function calculateBarData(cartTotal = null) {
+export function calculateBarData(cartTotal = null, config = {}) {
   if (cartTotal === null) {
     cartTotal = getCartTotalFromStore();
   }
 
-  const data = window.yayboostShippingBar || {};
-  const thresholdInfo = data.thresholdInfo;
+  const thresholdInfo = config.thresholdInfo;
 
   if (!thresholdInfo || !thresholdInfo.min_amount) {
     return null;
@@ -281,7 +284,8 @@ export function calculateBarData(cartTotal = null) {
     state,
     progressData,
     threshold,
-    cartTotal
+    cartTotal,
+    config
   );
 
   // Build response
@@ -320,11 +324,12 @@ export function replaceTemplatePlaceholders(template, replacements) {
 /**
  * Build minimal text HTML
  * @param {object} data Bar data object
+ * @param {object} config Configuration object with settings and templates
  * @return {string|null} HTML string
  */
-export function buildMinimalTextHtml(data) {
-  const settings = window.yayboostShippingBar?.settings || {};
-  const templates = window.yayboostShippingBar?.templates || {};
+export function buildMinimalTextHtml(data, config = {}) {
+  const settings = config.settings || {};
+  const templates = config.templates || {};
   const achieved = data.achieved && !data.show_coupon_message;
   const primaryColor = settings.primaryColor || "#4caf50";
   const bgColor = achieved ? primaryColor : applyOpacity(primaryColor, 0.2);
@@ -347,11 +352,12 @@ export function buildMinimalTextHtml(data) {
 /**
  * Build progress bar HTML
  * @param {object} data Bar data object
+ * @param {object} config Configuration object with settings and templates
  * @return {string|null} HTML string
  */
-export function buildProgressBarHtml(data) {
-  const settings = window.yayboostShippingBar?.settings || {};
-  const templates = window.yayboostShippingBar?.templates || {};
+export function buildProgressBarHtml(data, config = {}) {
+  const settings = config.settings || {};
+  const templates = config.templates || {};
   const primaryColor = settings.primaryColor || "#4caf50";
   const barColor = primaryColor;
   const backgroundColor = applyOpacity(primaryColor, 0.2);
@@ -375,11 +381,12 @@ export function buildProgressBarHtml(data) {
 /**
  * Build full detail HTML
  * @param {object} data Bar data object
+ * @param {object} config Configuration object with settings and templates
  * @return {string|null} HTML string
  */
-export function buildFullDetailHtml(data) {
-  const settings = window.yayboostShippingBar?.settings || {};
-  const templates = window.yayboostShippingBar?.templates || {};
+export function buildFullDetailHtml(data, config = {}) {
+  const settings = config.settings || {};
+  const templates = config.templates || {};
   const achieved = data.achieved && !data.show_coupon_message;
   const primaryColor = settings.primaryColor || "#4caf50";
   const barColor = primaryColor;
@@ -417,51 +424,52 @@ export function buildFullDetailHtml(data) {
 /**
  * Build bar HTML from data
  * @param {object} data Bar data from API
+ * @param {object} config Configuration object with settings and templates
  * @return {string|null} HTML string or null if no data
  */
-export function buildBarHtml(data) {
+export function buildBarHtml(data, config = {}) {
   if (!data || !data.message) {
     return null;
   }
 
   // Get display style from settings
-  const displayStyle =
-    window.yayboostShippingBar?.settings?.displayStyle || "minimal_text";
+  const displayStyle = config.settings?.displayStyle || "minimal_text";
 
   // Route to appropriate function based on display style
   if (displayStyle === "minimal_text") {
-    return buildMinimalTextHtml(data);
+    return buildMinimalTextHtml(data, config);
   } else if (displayStyle === "progress_bar") {
-    return buildProgressBarHtml(data);
+    return buildProgressBarHtml(data, config);
   } else if (displayStyle === "full_detail") {
-    return buildFullDetailHtml(data);
+    return buildFullDetailHtml(data, config);
   }
 
   // Fallback to minimal_text
-  return buildMinimalTextHtml(data);
+  return buildMinimalTextHtml(data, config);
 }
 
 /**
  * Update shipping bar DOM with new bar data
  * @param {object} barData Bar data object
+ * @param {object} config Configuration object with settings and templates
  * @return {void}
  */
-export function updateShippingBarDOM(barData) {
+export function updateShippingBarDOM(barData, config = {}) {
   if (!barData) {
     return;
   }
 
   // Build HTML content
-  const htmlContent = buildBarHtml(barData);
+  const htmlContent = buildBarHtml(barData, config);
   if (!htmlContent) {
     return;
   }
 
-  // Update DOM directly
-  const blockElement = document.querySelector(
-    '[data-wp-interactive="yayboost/free-shipping-bar"]'
+  // Update DOM directly - target the content wrapper inside the block
+  const contentElement = document.querySelector(
+    '[data-wp-interactive="yayboost/free-shipping-bar"] .yayboost-shipping-bar-content'
   );
-  if (blockElement) {
-    blockElement.innerHTML = htmlContent;
+  if (contentElement) {
+    contentElement.innerHTML = htmlContent;
   }
 }
