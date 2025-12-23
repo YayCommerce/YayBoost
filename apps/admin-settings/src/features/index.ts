@@ -27,6 +27,8 @@ export const featureComponents: Record<string, React.LazyExoticComponent<Compone
 
   // Order Bump (complex, with entity CRUD)
   order_bump: lazy(() => import('./order-bump')),
+
+  smart_recommendations: lazy(() => import('./smart-recommendations')),
 };
 
 /**
