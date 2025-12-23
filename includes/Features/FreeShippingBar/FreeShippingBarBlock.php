@@ -28,7 +28,7 @@ class FreeShippingBarBlock {
      *
      * @param FreeShippingBarFeature $feature Feature instance.
      */
-    public function __construct( $feature ) {
+    public function __construct( FreeShippingBarFeature $feature ) {
         $this->feature = $feature;
 
 		add_action( 'init', [ $this, 'register_block' ] );

@@ -9,13 +9,10 @@
 
 namespace YayBoost\Features\FreeShippingBar;
 
-use YayBoost\Traits\Singleton;
-
 /**
  * Free Shipping Bar Slot/Fill class
  */
 class FreeShippingBarSlotFill {
-    use Singleton;
 
     /**
      * Feature instance
@@ -27,19 +24,11 @@ class FreeShippingBarSlotFill {
     /**
      * Constructor
      */
-    protected function __construct() {
+    public function __construct( FreeShippingBarFeature $feature ) {
+        $this->feature = $feature;
+
         // Enqueue scripts only on frontend when Cart/Checkout blocks are present
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 100 );
-    }
-
-    /**
-     * Set feature instance
-     *
-     * @param FreeShippingBarFeature $feature Feature instance.
-     * @return void
-     */
-    public function set_feature( FreeShippingBarFeature $feature ) {
-        $this->feature = $feature;
     }
 
     /**
@@ -96,11 +85,13 @@ class FreeShippingBarSlotFill {
         );
 
         // Enqueue CSS (reuse existing styles)
-        wp_enqueue_style(
-            'yayboost-free-shipping-bar',
-            YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
-            [],
-            YAYBOOST_VERSION
-        );
+        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
+            wp_enqueue_style(
+                'yayboost-free-shipping-bar',
+                YAYBOOST_URL . 'assets/css/free-shipping-bar.css',
+                [],
+                YAYBOOST_VERSION
+            );
+        }
     }
 }

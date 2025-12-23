@@ -108,6 +108,7 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         if ( $this->is_enabled() ) {
             new FreeShippingBarBlock( $this );
+            new FreeShippingBarSlotFill( $this );
         }
     }
 
