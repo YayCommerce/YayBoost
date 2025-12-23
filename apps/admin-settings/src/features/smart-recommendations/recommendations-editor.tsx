@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCreateEntity, useUpdateEntity } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft } from '@phosphor-icons/react';
+import { ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';

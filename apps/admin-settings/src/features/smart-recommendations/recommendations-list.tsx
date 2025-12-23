@@ -1,5 +1,5 @@
 import { useFeature } from '@/hooks';
-import { ArrowLeft, PencilSimple, Plus } from '@phosphor-icons/react';
+import { Edit, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
 
 import { FeatureComponentProps } from '..';
 
@@ -55,28 +56,19 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
   return (
     <div className="space-y-6">
       {/* Recommendations Table */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            to={`/features`}
-            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-semibold">{feature?.name}</h1>
-            <p className="text-muted-foreground text-sm">{feature?.description}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
+      <FeatureLayoutHeader
+        title={feature?.name ?? ''}
+        description={feature?.description ?? ''}
+        goBackRoute={'/features'}
+        actions={[
           <Link to={'new'}>
             <Button size="sm" className="bg-[#171717] text-[16px] text-white">
               <Plus className="mr-2 h-4 w-4" />
               Add New Rule
             </Button>
-          </Link>
-        </div>
-      </div>
+          </Link>,
+        ]}
+      />
       <div className="overflow-hidden rounded-lg border border-gray-200">
         <Table className="text-[16px]">
           <TableHeader>
@@ -103,7 +95,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <PencilSimple size={16} onClick={() => navigate(`${invoice.rule}`)} />
+                  <Edit size={16} onClick={() => navigate(`${invoice.rule}`)} />
                 </TableCell>
               </TableRow>
             ))}
