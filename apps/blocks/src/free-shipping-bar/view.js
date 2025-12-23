@@ -1,4 +1,4 @@
-import { store, getContext } from "@wordpress/interactivity";
+import { store } from "@wordpress/interactivity";
 import {
   calculateBarData,
   getCartTotalFromStore,
@@ -22,7 +22,7 @@ try {
 /**
  * Store definition for Free Shipping Bar
  */
-const { actions, state } = store("yayboost/free-shipping-bar", {
+const { actions } = store("yayboost/free-shipping-bar", {
   state: {
     get updateShippingBar() {
       // Try Mini Cart's Interactivity API store first

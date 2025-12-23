@@ -1,5 +1,3 @@
-import { store } from "@wordpress/interactivity";
-
 /**
  * Bar state constants
  */
