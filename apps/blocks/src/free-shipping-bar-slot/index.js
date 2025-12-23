@@ -23,38 +23,18 @@ import { calculateBarData, buildBarHtml } from "../free-shipping-bar/helpers";
 const FreeShippingBarSlot = ({ cart, ...rest }) => {
   // Get cart totals from WooCommerce store
   const cartTotals = cart?.cartTotals || {};
-
-  // Get cart total - WooCommerce uses minor units (cents)
-  // Priority: total_price (if available) > total_items
-  let cartTotal = null;
-  if (cartTotals?.total_price) {
-    // total_price is already in major units
-    cartTotal = parseFloat(cartTotals.total_price);
-  } else if (cartTotals?.total_items) {
-    // total_items is in minor units, convert to major units
-    const cartTotalMinor = parseInt(cartTotals.total_items, 10);
-    const minorUnit = cartTotals?.currency_minor_unit || 2;
-    cartTotal = cartTotalMinor / Math.pow(10, minorUnit);
-  }
-
-  // If no cart total, don't render
+  const cartTotal = cartTotals?.total_price || null;
   if (cartTotal === null) {
     return null;
   }
 
-  // Calculate bar data using helper function
-  // Pass cartTotal explicitly since we're in React context
   const barData = calculateBarData(cartTotal);
 
-  // If no bar data, don't render anything
   if (!barData) {
     return null;
   }
-
-  // Build HTML using helper function
   const barHtml = buildBarHtml(barData);
 
-  // If no HTML, don't render
   if (!barHtml) {
     return null;
   }
