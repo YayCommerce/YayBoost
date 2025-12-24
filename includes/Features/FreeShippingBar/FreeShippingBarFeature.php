@@ -333,8 +333,8 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'CTA_TEXT_COLOR'   => $achieved ? '#ffffff' : esc_attr( $text_color ),
                 'PROGRESS'         => esc_attr( $data['progress'] ),
                 'CURRENCY_SYMBOL'  => esc_html( $currency_symbol ),
-                'THRESHOLD'        => esc_html( number_format( $threshold, 2 ) ),
-                'CART_TOTAL'       => esc_html( number_format( $cart_total, 2 ) ),
+                'THRESHOLD'        => wc_price( $threshold ),
+                'CART_TOTAL'       => wc_price( $cart_total ),
                 'CTA_URL'          => ! $achieved ? esc_url( $shop_page_url ) : 'javascript:void(0)',
                 // PHP doesn't need barId for server-side rendering
                 'ID_ATTR'          => '',

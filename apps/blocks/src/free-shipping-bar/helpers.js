@@ -55,10 +55,6 @@ export function formatPrice(amount) {
         currencyOptions.format = "%s%v"; // default left
       }
     }
-
-    const a = window.accounting.formatMoney(amount, currencyOptions);
-    console.log(a);
-
     // Format with options (if any) or use default settings
     return window.accounting.formatMoney(amount, currencyOptions);
   }

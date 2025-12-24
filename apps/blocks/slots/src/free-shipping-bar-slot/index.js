@@ -7,9 +7,12 @@
  * @package YayBoost
  */
 
-import { registerPlugin } from "@wordpress/plugins";
-import { ExperimentalOrderMeta } from "@woocommerce/blocks-checkout";
-import { calculateBarData, buildBarHtml } from "@blocks/free-shipping-bar/helpers";
+const { registerPlugin } = window.wp.plugins;
+const { ExperimentalOrderMeta } = window.wc.blocksCheckout;
+import {
+  calculateBarData,
+  buildBarHtml,
+} from "@blocks/free-shipping-bar/helpers";
 
 /**
  * Free Shipping Bar Component
