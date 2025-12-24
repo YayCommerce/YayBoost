@@ -106,9 +106,6 @@ class Bootstrap {
         // Plugin loaded hook
         do_action( 'yayboost_loaded', $this->container );
 
-        // Make container available globally via filter
-        add_filter( 'yayboost_container', [ $this, 'get_container' ] );
-
         $this->container->resolve( 'admin.menu' )->register();
     }
 
