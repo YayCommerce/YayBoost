@@ -576,6 +576,7 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       exclude_products: [],
     },
   });
+  
   return (
     <div className="space-y-6">
       {/* Recommendations Table */}
@@ -590,8 +591,8 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
             <div className="flex flex-col gap-4">
               <GeneralSection form={form} />
               <DisplaySection form={form} />
-              <AlertTextSection form={form} />
-              <ProgressBarSection form={form} />
+              {form.watch('show_alert_text') && <AlertTextSection form={form} />}
+              {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
               <DisplayLocationSection form={form} />
               <ProductTargetingSection form={form} />
               <PreviewSection form={form} />
