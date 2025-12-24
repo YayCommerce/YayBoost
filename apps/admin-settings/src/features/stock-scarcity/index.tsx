@@ -34,7 +34,12 @@ const settingsSchema = z.object({
   urgent_threshold: z.number().min(0),
   urgent_message: z.string().min(1),
   progress_source: z.enum(['auto', 'fixed']),
-  fixed_stock_number: z.number().min(0),
+  fixed_stock_number: z
+    .object({
+      is_enabled: z.boolean(),
+      number: z.number().min(0),
+    })
+    .optional(),
   fill_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   background_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   position_on_product_page: z.enum(['below_title', 'below_price', 'below_add_to_cart']),
@@ -209,7 +214,6 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
 };
 
 const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
-  const progressSource = form.watch('progress_source');
   const fixedNumber = form.watch('fixed_stock_number');
 
   return (
@@ -219,74 +223,6 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
         <CardDescription>Configure the visual stock indicator</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <Label className="font-medium">Calculate percentage from</Label>
-          <FormField
-            control={form.control}
-            name="progress_source"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    className="flex flex-col gap-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="auto" id="progress-auto" />
-                      <Label htmlFor="progress-auto" className="cursor-pointer font-normal">
-                        Auto-detect from WooCommerce stock
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <RadioGroupItem value="fixed" id="progress-fixed" />
-                      <Label htmlFor="progress-fixed" className="cursor-pointer font-normal">
-                        Fixed number:
-                      </Label>
-                      <FormField
-                        control={form.control}
-                        name="fixed_stock_number"
-                        render={({ field: fixedField }) => (
-                          <FormItem className="m-0">
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="1"
-                                min="1"
-                                className="w-28"
-                                {...fixedField}
-                                disabled={progressSource !== 'fixed'}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <span className="text-[#6A7282]">items</span>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {progressSource === 'fixed' && (
-            <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-[#EFF6FF] p-3">
-              <div className="flex items-center gap-2">
-                <WarningCircle size={24} color="#155DFC" />
-              </div>
-              <div className="flex flex-col">
-                <p className="text-sm text-[#1C398E]">How fixed number works</p>
-                <p className="text-sm text-[#193CB8]">
-                  If you set {fixedNumber} items and current stock is 8, the progress bar will show{' '}
-                  {(100 - (8 / Math.max(fixedNumber, 1)) * 100).toFixed(0)}% sold ({fixedNumber - 8}{' '}
-                  of {fixedNumber}).
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
         <div className="flex flex-col gap-4">
           <Label className="font-medium">Bar colors</Label>
           <div className="flex flex-col gap-4">
@@ -323,6 +259,65 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
               )}
             />
           </div>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <FormField
+            control={form.control}
+            name="fixed_stock_number.is_enabled"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-2">
+                <FormControl>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                        }}
+                      />
+                      <Label className="cursor-pointer font-normal">
+                        Calculate percentage from Fixed Number
+                      </Label>
+                    </div>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {fixedNumber?.is_enabled && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <FormField
+                  control={form.control}
+                  name="fixed_stock_number.number"
+                  render={({ field }) => (
+                    <FormItem className="m-0">
+                      <FormControl>
+                        <Input type="number" step="1" min="1" className="w-28" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <span className="text-[#6A7282]">items</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-[#EFF6FF] p-3">
+                <div className="flex items-center gap-2">
+                  <WarningCircle size={24} color="#155DFC" />
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-sm text-[#1C398E]">How fixed number works</p>
+                  <p className="text-sm text-[#193CB8]">
+                    If you set {fixedNumber?.number} items and current stock is 8, the progress bar
+                    will show {(100 - (8 / Math.max(fixedNumber?.number || 0, 1)) * 100).toFixed(0)}
+                    % sold ({fixedNumber?.number - 8} of {fixedNumber?.number}).
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -501,7 +496,8 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
     ? watchedValues.urgent_message.replace('{stock}', sampleStockLeft.toString())
     : watchedValues.default_message.replace('{stock}', sampleStockLeft.toString());
 
-  const maxStock = watchedValues.progress_source === 'fixed' ? watchedValues.fixed_stock_number : 50;
+  const maxStock =
+    watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number ? watchedValues.fixed_stock_number.number : 50;
   const progress = Math.min(100, (sampleStockLeft / maxStock) * 100);
 
   return (
@@ -567,7 +563,10 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       urgent_threshold: 5,
       urgent_message: '',
       progress_source: 'auto',
-      fixed_stock_number: 100,
+      fixed_stock_number: {
+        is_enabled: false,
+        number: 50,
+      },
       fill_color: '#E53935',
       background_color: '#EEEEEE',
       position_on_product_page: 'below_title',
@@ -576,7 +575,7 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       exclude_products: [],
     },
   });
-  
+
   return (
     <div className="space-y-6">
       {/* Recommendations Table */}
