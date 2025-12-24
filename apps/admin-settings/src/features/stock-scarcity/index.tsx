@@ -49,7 +49,7 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>General</CardTitle>
+        <CardTitle className="text-lg">General</CardTitle>
         <CardDescription>Configure basic stock scarcity settings</CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,7 +59,7 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
             name="enabled"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='text-sm'>Enable Stock Scarcity</FormLabel>
+                <FormLabel className="text-sm">Enable Stock Scarcity</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={field.onChange}
@@ -88,12 +88,12 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
             name="low_stock_threshold"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className='text-sm'>Show when stock is at or below</FormLabel>
+                <FormLabel className="text-sm">Show when stock is at or below</FormLabel>
                 <div className="flex w-fit items-center gap-2">
                   <FormControl>
                     <Input type="number" step="1" {...field} />
                   </FormControl>
-                  <span className='text-[#6A7282]'>items</span>
+                  <span className="text-[#6A7282]">items</span>
                 </div>
               </FormItem>
             )}
@@ -108,7 +108,7 @@ const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>Display Options</CardTitle>
+        <CardTitle className="text-lg">Display Options</CardTitle>
         <CardDescription>Choose which elements to show to customers</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
@@ -145,7 +145,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>Alert Text</CardTitle>
+        <CardTitle className="text-lg">Alert Text</CardTitle>
         <CardDescription>Customize the alert messages shown to customers</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -154,11 +154,13 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
           name="default_message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='text-sm'>Default message</FormLabel>
+              <FormLabel className="text-sm">Default message</FormLabel>
               <FormControl>
                 <Input placeholder="🔥 Only {stock} left in stock!" {...field} />
               </FormControl>
-              <FormDescription className='text-sm'>Use {'{stock}'} to display the current stock count</FormDescription>
+              <FormDescription className="text-sm">
+                Use {'{stock}'} to display the current stock count
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -169,7 +171,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
           name="urgent_threshold"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='text-sm'>Urgent threshold</FormLabel>
+              <FormLabel className="text-sm">Urgent threshold</FormLabel>
               <div className="flex items-center gap-2">
                 <FormControl>
                   <Input
@@ -181,7 +183,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                   />
                 </FormControl>
-                <span className='text-sm text-[#6A7282]'>items or below</span>
+                <span className="text-sm text-[#6A7282]">items or below</span>
               </div>
               <FormMessage />
             </FormItem>
@@ -193,7 +195,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
           name="urgent_message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className='text-sm'>Urgent message</FormLabel>
+              <FormLabel className="text-sm">Urgent message</FormLabel>
               <FormControl>
                 <Input placeholder="⚠️ Hurry! Only {stock} left!" {...field} />
               </FormControl>
@@ -213,7 +215,7 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>Progress Bar</CardTitle>
+        <CardTitle className="text-lg">Progress Bar</CardTitle>
         <CardDescription>Configure the visual stock indicator</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -259,7 +261,7 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
                           </FormItem>
                         )}
                       />
-                      <span className='text-[#6A7282]'>items</span>
+                      <span className="text-[#6A7282]">items</span>
                     </div>
                   </RadioGroup>
                 </FormControl>
@@ -274,8 +276,8 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
                 <WarningCircle size={24} color="#155DFC" />
               </div>
               <div className="flex flex-col">
-                <p className='text-sm text-[#1C398E]'>How fixed number works</p>
-                <p className='text-sm text-[#193CB8]'>
+                <p className="text-sm text-[#1C398E]">How fixed number works</p>
+                <p className="text-sm text-[#193CB8]">
                   If you set {fixedNumber} items and current stock is 8, the progress bar will show{' '}
                   {(100 - (8 / Math.max(fixedNumber, 1)) * 100).toFixed(0)}% sold ({fixedNumber - 8}{' '}
                   of {fixedNumber}).
@@ -293,12 +295,12 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
               name="fill_color"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-sm font-normal'>Fill color</FormLabel>
+                  <FormLabel className="text-sm font-normal">Fill color</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Input type="color" {...field} className="h-10 w-28 p-1" />
                     </FormControl>
-                    <Label>{field.value ?? '#000000'}</Label>
+                    <Label>{field.value ?? '#E53935'}</Label>
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -309,12 +311,12 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
               name="background_color"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className='text-sm font-normal'>Background</FormLabel>
+                  <FormLabel className="text-sm font-normal">Background</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Input type="color" {...field} className="h-10 w-28 p-1" />
                     </FormControl>
-                    <Label>{field.value ?? '#000000'}</Label>
+                    <Label>{field.value ?? '#EEEEEE'}</Label>
                   </div>
                   <FormMessage />
                 </FormItem>
@@ -331,7 +333,7 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>Display Location</CardTitle>
+        <CardTitle className="text-lg">Display Location</CardTitle>
         <CardDescription>Control where stock scarcity appears</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -427,7 +429,7 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>Product Targeting</CardTitle>
+        <CardTitle className="text-lg">Product Targeting</CardTitle>
         <CardDescription>Select which products show stock scarcity</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -491,15 +493,57 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
 };
 
 const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
+  const sampleStockLeft = 8;
+  const watchedValues = form.watch();
+
+  const isUrgent = sampleStockLeft <= watchedValues.urgent_threshold;
+  const message = isUrgent
+    ? watchedValues.urgent_message.replace('{stock}', sampleStockLeft.toString())
+    : watchedValues.default_message.replace('{stock}', sampleStockLeft.toString());
+
+  const maxStock = watchedValues.progress_source === 'fixed' ? watchedValues.fixed_stock_number : 50;
+  const progress = Math.min(100, (sampleStockLeft / maxStock) * 100);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='text-lg'>Preview</CardTitle>
+        <CardTitle className="text-lg">Preview</CardTitle>
         <CardDescription>See how your stock scarcity will look</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Single preview - no slider, no multiple states */}
-        Preview
+        <div className="w-fit min-w-xs rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex flex-col gap-3">
+            {/* Alert Text */}
+            {watchedValues.show_alert_text && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium whitespace-nowrap text-gray-900">
+                  {message ? message : '🔥 Only {stock} left in stock!'}
+                </span>
+              </div>
+            )}
+
+            {/* Progress Bar */}
+            {watchedValues.show_progress_bar && (
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-2 min-w-[200px] overflow-hidden rounded-full"
+                  style={{ backgroundColor: watchedValues.background_color }}
+                >
+                  <div
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${progress}%`,
+                      backgroundColor: watchedValues.fill_color,
+                    }}
+                  />
+                </div>
+                <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
+                  {sampleStockLeft} left
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -524,8 +568,8 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       urgent_message: '',
       progress_source: 'auto',
       fixed_stock_number: 100,
-      fill_color: '#000000',
-      background_color: '#000000',
+      fill_color: '#E53935',
+      background_color: '#EEEEEE',
       position_on_product_page: 'below_title',
       show_on: ['product_page', 'shop_category_pages'],
       apply_to: 'all_products',
