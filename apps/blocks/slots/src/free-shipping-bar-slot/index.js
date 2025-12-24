@@ -9,7 +9,7 @@
 
 import { registerPlugin } from "@wordpress/plugins";
 import { ExperimentalOrderMeta } from "@woocommerce/blocks-checkout";
-import { calculateBarData, buildBarHtml } from "../free-shipping-bar/helpers";
+import { calculateBarData, buildBarHtml } from "@blocks/free-shipping-bar/helpers";
 
 /**
  * Free Shipping Bar Component
