@@ -150,17 +150,6 @@ class FreeShippingBarFeature extends AbstractFeature {
             return;
         }
 
-        // Determine script dependencies based on context
-        $script_deps = [ 'jquery', 'wc-accounting', 'wc-cart-fragments' ];
-
-        wp_enqueue_script(
-            'yayboost-free-shipping-bar',
-            YAYBOOST_URL . 'assets/js/free-shipping-bar.js',
-            $script_deps,
-            YAYBOOST_VERSION,
-            true
-        );
-
         // Enqueue CSS file, make sure style from block not enqueued
         if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
             wp_enqueue_style(
