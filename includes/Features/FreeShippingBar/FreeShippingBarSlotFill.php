@@ -23,12 +23,14 @@ class FreeShippingBarSlotFill {
 
     /**
      * Constructor
+     *
+     * @param FreeShippingBarFeature $feature Feature instance.
      */
     public function __construct( FreeShippingBarFeature $feature ) {
         $this->feature = $feature;
 
-        // Enqueue scripts only on frontend when Cart/Checkout blocks are present
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ], 100 );
+        // Register and enqueue only when Cart/Checkout block is rendered
+        add_filter( 'render_block', [ $this, 'maybe_enqueue_on_block_render' ], 10, 2 );
     }
 
     /**
@@ -41,34 +43,74 @@ class FreeShippingBarSlotFill {
     }
 
     /**
-     * Enqueue scripts for Slot/Fill extension
-     * Only loads when Cart Block or Checkout Block is present
+     * Register and enqueue scripts when Cart/Checkout block is rendered
+     * Only registers/enqueues if show_on settings match the current block type
+     *
+     * @param string $block_content The block content about to be rendered.
+     * @param array  $block         The full block, including name and attributes.
+     * @return string The block content (unchanged).
+     */
+    public function maybe_enqueue_on_block_render( $block_content, $block ) {
+        if ( ! $this->should_process_block( $block ) ) {
+            return $block_content;
+        }
+
+        $this->enqueue_assets();
+
+        return $block_content;
+    }
+
+    /**
+     * Check if block should be processed
+     *
+     * @param array $block The block data.
+     * @return bool
+     */
+    private function should_process_block( $block ) {
+        // Check block name
+        if ( ! isset( $block['blockName'] ) ||
+            ! in_array( $block['blockName'], [ 'woocommerce/cart', 'woocommerce/checkout' ], true ) ) {
+            return false;
+        }
+
+        // Check feature enabled
+        if ( ! $this->feature || ! $this->feature->is_enabled() || is_admin() ) {
+            return false;
+        }
+
+        // Check show_on settings match block type
+        $show_on            = $this->feature->get_settings()['show_on'] ?? [];
+        $cart_locations     = [ 'top_cart', 'bottom_cart' ];
+        $checkout_locations = [ 'top_checkout', 'bottom_checkout' ];
+
+        $is_cart_block     = $block['blockName'] === 'woocommerce/cart' &&
+            ! empty( array_intersect( $show_on, $cart_locations ) );
+        $is_checkout_block = $block['blockName'] === 'woocommerce/checkout' &&
+            ! empty( array_intersect( $show_on, $checkout_locations ) );
+
+        return $is_cart_block || $is_checkout_block;
+    }
+
+    /**
+     * Register and enqueue scripts and styles (only once)
      *
      * @return void
      */
-    public function enqueue_scripts() {
-        if ( ! $this->feature || ! $this->feature->is_enabled() ) {
-            return;
-        }
-
-        if ( is_admin() ) {
-            return;
-        }
-
-        // Only load on pages with Cart Block or Checkout Block
-        if ( ! has_block( 'woocommerce/cart' ) && ! has_block( 'woocommerce/checkout' ) ) {
+    private function enqueue_assets() {
+        // Check if already enqueued to avoid duplicate
+        if ( wp_script_is( 'yayboost-free-shipping-bar-slot', 'enqueued' ) ) {
             return;
         }
 
         $asset_file = YAYBOOST_PATH . 'assets/dist/blocks/free-shipping-bar-slot/index.asset.php';
-
         if ( ! file_exists( $asset_file ) ) {
             return;
         }
 
         $asset       = include $asset_file;
         $script_deps = array_merge( $asset['dependencies'], [ 'wc-accounting' ] );
-        // Enqueue script
+
+        // wp_enqueue_script() will auto-register if not already registered
         wp_enqueue_script(
             'yayboost-free-shipping-bar-slot',
             YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar-slot/index.js',
@@ -84,14 +126,12 @@ class FreeShippingBarSlotFill {
             $this->feature->get_localization_data()
         );
 
-        // Enqueue CSS (reuse existing styles)
-        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
-            wp_enqueue_style(
-                'yayboost-free-shipping-bar',
-                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
-                [],
-                YAYBOOST_VERSION
-            );
-        }
+        // wp_enqueue_style() will auto-register if not already registered
+        wp_enqueue_style(
+            'yayboost-free-shipping-bar',
+            YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
+            [],
+            YAYBOOST_VERSION
+        );
     }
 }
