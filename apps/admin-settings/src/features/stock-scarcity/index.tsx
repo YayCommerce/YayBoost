@@ -1,6 +1,6 @@
 import { useFeature } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Flame } from '@phosphor-icons/react';
+import { WarningCircle } from '@phosphor-icons/react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -30,17 +30,17 @@ const settingsSchema = z.object({
   low_stock_threshold: z.number().min(0),
   show_alert_text: z.boolean(),
   show_progress_bar: z.boolean(),
-  position_on_product_page: z.enum(['below_title', 'below_price', 'below_add_to_cart']),
-  show_on: z.array(z.string()),
-  apply_to: z.enum(['all_products', 'specific_categories', 'specific_products']),
-  exclude_products: z.array(z.string()),
+  default_message: z.string().min(1),
+  urgent_threshold: z.number().min(0),
+  urgent_message: z.string().min(1),
   progress_source: z.enum(['auto', 'fixed']),
   fixed_stock_number: z.number().min(0),
   fill_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   background_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  default_message: z.string().min(1),
-  urgent_threshold: z.number().min(0),
-  urgent_message: z.string().min(1),
+  position_on_product_page: z.enum(['below_title', 'below_price', 'below_add_to_cart']),
+  show_on: z.array(z.string()),
+  apply_to: z.enum(['all_products', 'specific_categories', 'specific_products']),
+  exclude_products: z.array(z.string()),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -49,7 +49,7 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>General</CardTitle>
+        <CardTitle className='text-lg'>General</CardTitle>
         <CardDescription>Configure basic stock scarcity settings</CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,17 +59,21 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
             name="enabled"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Enable Stock Scarcity</FormLabel>
+                <FormLabel className='text-sm'>Enable Stock Scarcity</FormLabel>
                 <FormControl>
-                  <RadioGroup className="flex flex-col gap-2">
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value.toString()}
+                    className="flex flex-col gap-2"
+                  >
                     <div className="flex items-center gap-2">
-                      <RadioGroupItem value="true" id="off-stock-scarcity" />
+                      <RadioGroupItem value="false" id="off-stock-scarcity" />
                       <Label htmlFor="off-stock-scarcity" className="cursor-pointer font-normal">
                         Off
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <RadioGroupItem value="false" id="on-stock-scarcity" />
+                      <RadioGroupItem value="true" id="on-stock-scarcity" />
                       <Label htmlFor="on-stock-scarcity" className="cursor-pointer font-normal">
                         On
                       </Label>
@@ -84,12 +88,12 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
             name="low_stock_threshold"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Show when stock is at or below</FormLabel>
+                <FormLabel className='text-sm'>Show when stock is at or below</FormLabel>
                 <div className="flex w-fit items-center gap-2">
                   <FormControl>
                     <Input type="number" step="1" {...field} />
                   </FormControl>
-                  <span>items</span>
+                  <span className='text-[#6A7282]'>items</span>
                 </div>
               </FormItem>
             )}
@@ -104,7 +108,7 @@ const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Display Options</CardTitle>
+        <CardTitle className='text-lg'>Display Options</CardTitle>
         <CardDescription>Choose which elements to show to customers</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
@@ -116,7 +120,7 @@ const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
               <FormControl>
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
-              <Label>Show alert text</Label>
+              <span>Show alert text</span>
             </FormItem>
           )}
         />
@@ -128,7 +132,7 @@ const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
               <FormControl>
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
-              <Label>Show progress bar</Label>
+              <span>Show progress bar</span>
             </FormItem>
           )}
         />
@@ -141,7 +145,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Alert Text</CardTitle>
+        <CardTitle className='text-lg'>Alert Text</CardTitle>
         <CardDescription>Customize the alert messages shown to customers</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -150,11 +154,11 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
           name="default_message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Default message</FormLabel>
+              <FormLabel className='text-sm'>Default message</FormLabel>
               <FormControl>
                 <Input placeholder="🔥 Only {stock} left in stock!" {...field} />
               </FormControl>
-              <FormDescription>Use {'{stock}'} to display the current stock count</FormDescription>
+              <FormDescription className='text-sm'>Use {'{stock}'} to display the current stock count</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -165,7 +169,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
           name="urgent_threshold"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Urgent threshold</FormLabel>
+              <FormLabel className='text-sm'>Urgent threshold</FormLabel>
               <div className="flex items-center gap-2">
                 <FormControl>
                   <Input
@@ -177,7 +181,7 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
                     onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                   />
                 </FormControl>
-                <span className="text-sm text-gray-600">items or below</span>
+                <span className='text-sm text-[#6A7282]'>items or below</span>
               </div>
               <FormMessage />
             </FormItem>
@@ -189,9 +193,9 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
           name="urgent_message"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Urgent message</FormLabel>
+              <FormLabel className='text-sm'>Urgent message</FormLabel>
               <FormControl>
-                <Input placeholder="▲ Hurry! Only {stock} left!" {...field} />
+                <Input placeholder="⚠️ Hurry! Only {stock} left!" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -202,16 +206,137 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
   );
 };
 
+const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
+  const progressSource = form.watch('progress_source');
+  const fixedNumber = form.watch('fixed_stock_number');
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className='text-lg'>Progress Bar</CardTitle>
+        <CardDescription>Configure the visual stock indicator</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <Label className="font-medium">Calculate percentage from</Label>
+          <FormField
+            control={form.control}
+            name="progress_source"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    className="flex flex-col gap-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="auto" id="progress-auto" />
+                      <Label htmlFor="progress-auto" className="cursor-pointer font-normal">
+                        Auto-detect from WooCommerce stock
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <RadioGroupItem value="fixed" id="progress-fixed" />
+                      <Label htmlFor="progress-fixed" className="cursor-pointer font-normal">
+                        Fixed number:
+                      </Label>
+                      <FormField
+                        control={form.control}
+                        name="fixed_stock_number"
+                        render={({ field: fixedField }) => (
+                          <FormItem className="m-0">
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="1"
+                                min="1"
+                                className="w-28"
+                                {...fixedField}
+                                disabled={progressSource !== 'fixed'}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <span className='text-[#6A7282]'>items</span>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {progressSource === 'fixed' && (
+            <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-[#EFF6FF] p-3">
+              <div className="flex items-center gap-2">
+                <WarningCircle size={24} color="#155DFC" />
+              </div>
+              <div className="flex flex-col">
+                <p className='text-sm text-[#1C398E]'>How fixed number works</p>
+                <p className='text-sm text-[#193CB8]'>
+                  If you set {fixedNumber} items and current stock is 8, the progress bar will show{' '}
+                  {(100 - (8 / Math.max(fixedNumber, 1)) * 100).toFixed(0)}% sold ({fixedNumber - 8}{' '}
+                  of {fixedNumber}).
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <Label className="font-medium">Bar colors</Label>
+          <div className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="fill_color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className='text-sm font-normal'>Fill color</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input type="color" {...field} className="h-10 w-28 p-1" />
+                    </FormControl>
+                    <Label>{field.value ?? '#000000'}</Label>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="background_color"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className='text-sm font-normal'>Background</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormControl>
+                      <Input type="color" {...field} className="h-10 w-28 p-1" />
+                    </FormControl>
+                    <Label>{field.value ?? '#000000'}</Label>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Display Location</CardTitle>
+        <CardTitle className='text-lg'>Display Location</CardTitle>
         <CardDescription>Control where stock scarcity appears</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
-          <Label className="text-sm font-medium">Position on product page</Label>
+          <Label className="font-medium">Position on product page</Label>
           <FormField
             control={form.control}
             name="position_on_product_page"
@@ -250,7 +375,7 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
         </div>
 
         <div className="flex flex-col gap-4">
-          <Label className="text-sm font-medium">Show on</Label>
+          <Label className="font-medium">Show on</Label>
           <FormField
             control={form.control}
             name="show_on"
@@ -302,12 +427,12 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Product Targeting</CardTitle>
+        <CardTitle className='text-lg'>Product Targeting</CardTitle>
         <CardDescription>Select which products show stock scarcity</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <div className="flex flex-col gap-4">
-          <Label className="text-sm font-medium">Apply to</Label>
+          <Label className="font-medium">Apply to</Label>
           <FormField
             control={form.control}
             name="apply_to"
@@ -346,7 +471,7 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
         </div>
 
         <div className="flex flex-col gap-4">
-          <Label className="text-sm font-medium">Exclude products</Label>
+          <Label className="font-medium">Exclude products</Label>
           <FormField
             control={form.control}
             name="exclude_products"
@@ -365,128 +490,11 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
   );
 };
 
-const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
-  const progressSource = form.watch('progress_source');
-  const fixedNumber = form.watch('fixed_stock_number');
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Progress Bar</CardTitle>
-        <CardDescription>Configure the visual stock indicator</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <Label className="text-sm font-medium">Calculate percentage from</Label>
-          <FormField
-            control={form.control}
-            name="progress_source"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    className="flex flex-col gap-3"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="auto" id="progress-auto" />
-                      <Label htmlFor="progress-auto" className="cursor-pointer font-normal">
-                        Auto-detect from WooCommerce stock
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <RadioGroupItem value="fixed" id="progress-fixed" />
-                      <Label htmlFor="progress-fixed" className="cursor-pointer font-normal">
-                        Fixed number:
-                      </Label>
-                      <FormField
-                        control={form.control}
-                        name="fixed_stock_number"
-                        render={({ field: fixedField }) => (
-                          <FormItem className="m-0">
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="1"
-                                min="1"
-                                className="w-28"
-                                {...fixedField}
-                                disabled={progressSource !== 'fixed'}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <span>items</span>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {progressSource === 'fixed' && (
-            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-              <span style={{ color: '#1C398E' }}>How fixed number works</span>
-              <br />
-              <span style={{ color: '#193CB8' }}>
-                If you set {fixedNumber} items and current stock is 8, the progress bar will show{' '}
-                {(100 - (8 / Math.max(fixedNumber, 1)) * 100).toFixed(0)}% sold ({fixedNumber - 8}{' '}
-                of {fixedNumber}).
-              </span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <Label className="text-sm font-medium">Bar colors</Label>
-          <div className="flex flex-col gap-4">
-            <FormField
-              control={form.control}
-              name="fill_color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fill color</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input type="color" {...field} className="h-10 w-28 p-1" />
-                    </FormControl>
-                    <Label>{field.value ?? '#000000'}</Label>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="background_color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Background</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input type="color" {...field} className="h-10 w-28 p-1" />
-                    </FormControl>
-                    <Label>{field.value ?? '#000000'}</Label>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Preview</CardTitle>
+        <CardTitle className='text-lg'>Preview</CardTitle>
         <CardDescription>See how your stock scarcity will look</CardDescription>
       </CardHeader>
       <CardContent>
@@ -511,17 +519,17 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       low_stock_threshold: 10,
       show_alert_text: true,
       show_progress_bar: true,
-      position_on_product_page: 'below_title',
-      show_on: ['product_page', 'shop_category_pages'],
-      apply_to: 'all_products',
-      exclude_products: [],
+      default_message: '',
+      urgent_threshold: 5,
+      urgent_message: '',
       progress_source: 'auto',
       fixed_stock_number: 100,
       fill_color: '#000000',
       background_color: '#000000',
-      default_message: '🔥 Only {stock} left in stock!',
-      urgent_threshold: 5,
-      urgent_message: '▲ Hurry! Only {stock} left!',
+      position_on_product_page: 'below_title',
+      show_on: ['product_page', 'shop_category_pages'],
+      apply_to: 'all_products',
+      exclude_products: [],
     },
   });
   return (
