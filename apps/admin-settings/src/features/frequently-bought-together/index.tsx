@@ -44,7 +44,7 @@ const settingsSchema = z.object({
   show_on: z.array(z.string()), // ['product_page', 'cart_page', 'mini_cart']
   layout: z.enum(['grid', 'list', 'slider']),
   section_title: z.string().min(1),
-  hide_if_in_cart: z.boolean(), // true = hide it, false = still show it
+  hide_if_in_cart: z.enum(['hide', 'show']), // 'hide' = hide it, 'show' = still show it
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -58,7 +58,6 @@ const showOnOptions = [
 const layoutOptions = [
   { value: 'grid', label: __('Grid', 'yayboost') },
   { value: 'list', label: __('List', 'yayboost') },
-  { value: 'slider', label: 'Slider' },
   { value: 'slider', label: __('Slider', 'yayboost') },
 ];
 
@@ -75,9 +74,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
       show_on: ['product_page', 'cart_page'],
       layout: 'grid',
       section_title: 'Complete Your Purchase',
-      hide_if_in_cart: true, // Default: hide it
+      hide_if_in_cart: 'hide', // Default: hide it
     },
   });
+
+  const { isDirty } = form.formState;
 
   // Update form when feature data loads
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Save Button - Top Right */}
         <div className="flex justify-end">
-          <Button type="submit" disabled={updateSettings.isPending}>
+          <Button type="submit" disabled={updateSettings.isPending || !isDirty}>
             {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
@@ -320,8 +321,8 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                   </FormLabel>
                   <FormControl>
                     <RadioGroup
-                      value={field.value ? 'hide' : 'show'}
-                      onValueChange={(value) => field.onChange(value === 'hide')}
+                      value={field.value}
+                      onValueChange={field.onChange}
                       className="flex gap-6"
                     >
                       <div className="flex items-center gap-2">
@@ -347,7 +348,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
 
         {/* Save Button - Bottom Right */}
         <div className="flex justify-end">
-          <Button type="submit" disabled={updateSettings.isPending}>
+          <Button type="submit" disabled={updateSettings.isPending || !isDirty}>
             {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>

@@ -77,18 +77,13 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'              => false,
-                'show_on_product_page' => true,
-                'position'             => 'after_summary',
-                'display_limit'        => 5,
-                'columns'              => 4,
-                'title'                => __( 'Frequently Bought Together', 'yayboost' ),
-                'button_text'          => __( 'Add to Cart', 'yayboost' ),
-                'data_source'          => 'order_history',
-                'manual_products'      => [],
-                'title_color'          => '#333333',
-                'button_color'         => '#0073aa',
-                'button_hover_color'   => '#005a87',
+                'enabled'             => false,
+                'max_products'        => 4,
+                'min_order_threshold' => 5,
+                'show_on'             => [ 'product_page', 'cart_page' ],
+                'layout'              => 'grid',
+                'section_title'       => __( 'Complete Your Purchase', 'yayboost' ),
+                'hide_if_in_cart'     => 'hide',
             ]
         );
     }
