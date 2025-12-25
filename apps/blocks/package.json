@@ -1,0 +1,16 @@
+{
+  "name": "@yayboost/blocks",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wp-scripts start --experimental-modules --webpack-src-dir=src/ --output-path=../../assets/dist/blocks",
+    "build": "wp-scripts build --experimental-modules --webpack-src-dir=src/ --output-path=../../assets/dist/blocks",
+    "dev:all": "concurrently \"npm run dev\" \"cd slots && npm run dev\"",
+    "build:all": "npm run build && cd slots && npm run build"
+  },
+  "devDependencies": {
+    "@wordpress/icons": "^10.3.0",
+    "@wordpress/scripts": "^30.7.0",
+    "concurrently": "^8.2.2"
+  }
+}
