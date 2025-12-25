@@ -57,7 +57,6 @@ class ServiceProvider implements ServiceProviderInterface {
                 $feature->init();
             }
         }
-
     }
 
     /**
