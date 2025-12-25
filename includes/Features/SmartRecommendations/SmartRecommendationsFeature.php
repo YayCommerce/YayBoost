@@ -133,14 +133,17 @@ class SmartRecommendationsFeature extends AbstractFeature {
      *
      * @return void
      */
-    public function render_recommendations(): void {
-        global $product;
-
-        if ( ! $product || ! $product->get_id()) {
+    public function render_recommendations( $current_product = null ): void {
+        if ( ! $current_product instanceof \WC_Product ) {
+            global $product;
+            $current_product = $product;
+        }
+    
+        if ( ! $current_product || ! $current_product->get_id()) {
             return;
         }
-
-        $matching_rules = $this->get_matching_rules( $product );
+    
+        $matching_rules = $this->get_matching_rules( $current_product );
 
         if (empty( $matching_rules )) {
             return;
@@ -159,7 +162,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
                 continue;
             }
 
-            $recommended_products = $this->get_recommended_products( $rule, $product );
+            $recommended_products = $this->get_recommended_products( $rule, $current_product );
 
             if ( ! empty( $recommended_products )) {
                 $this->render_recommendation_section( $rule, $recommended_products );
@@ -394,33 +397,24 @@ class SmartRecommendationsFeature extends AbstractFeature {
      * @return void
      */
     public function ajax_get_recommendations(): void {
-        global $product;
-
         check_ajax_referer( 'yayboost_recommendations', 'nonce' );
-
+    
         $product_id = (int) ( $_POST['product_id'] ?? 0 );
-
+    
         if ( ! $product_id ) {
             wp_send_json_error( 'Invalid product ID' );
         }
-
+    
         $product = wc_get_product( $product_id );
-
+    
         if ( ! $product ) {
             wp_send_json_error( 'Product not found' );
         }
-
-        $original_product = $product;
-
-        $product = wc_get_product( $product_id );
-
+    
         ob_start();
-        $this->render_recommendations();
+        $this->render_recommendations( $product );
         $html = ob_get_clean();
-
-        // Restore original product
-        $product = $original_product;
-
+    
         wp_send_json_success( [ 'html' => $html ] );
     }
 
