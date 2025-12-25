@@ -86,8 +86,6 @@ class SmartRecommendationsFeature extends AbstractFeature {
         // AJAX endpoints for dynamic updates
         add_action( 'wp_ajax_yayboost_get_recommendations', [ $this, 'ajax_get_recommendations' ] );
         add_action( 'wp_ajax_nopriv_yayboost_get_recommendations', [ $this, 'ajax_get_recommendations' ] );
-        add_action( 'wp_ajax_yayboost_add_to_cart_recommendation', [ $this, 'ajax_add_to_cart_recommendation' ] );
-        add_action( 'wp_ajax_nopriv_yayboost_add_to_cart_recommendation', [ $this, 'ajax_add_to_cart_recommendation' ] );
     }
 
     /**
@@ -166,7 +164,6 @@ class SmartRecommendationsFeature extends AbstractFeature {
 
             if ( ! empty( $recommended_products )) {
                 $this->render_recommendation_section( $rule, $recommended_products );
-                break; // Only show first matching rule
             }
         }
     }
@@ -416,34 +413,6 @@ class SmartRecommendationsFeature extends AbstractFeature {
         $html = ob_get_clean();
     
         wp_send_json_success( [ 'html' => $html ] );
-    }
-
-    /**
-     * AJAX handler to add recommended product to cart
-     *
-     * @return void
-     */
-    public function ajax_add_to_cart_recommendation(): void {
-        check_ajax_referer( 'yayboost_recommendations', 'nonce' );
-
-        $product_id = (int) ( $_POST['product_id'] ?? 0 );
-        $quantity = (int) ( $_POST['quantity'] ?? 1 );
-        $variation_id = (int) ( $_POST['variation_id'] ?? 0 );
-
-        if ( ! $product_id ) {
-            wp_send_json_error( 'Invalid product ID' );
-        }
-
-        $result = WC()->cart->add_to_cart( $product_id, $quantity, $variation_id );
-
-        if ( $result ) {
-            wp_send_json_success([
-                'message' => __( 'Product added to cart', 'yayboost' ),
-                'cart_count' => WC()->cart->get_cart_contents_count(),
-            ]);
-        } else {
-            wp_send_json_error( 'Failed to add product to cart' );
-        }
     }
 
     /**

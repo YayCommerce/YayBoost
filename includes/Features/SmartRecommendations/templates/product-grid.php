@@ -62,12 +62,15 @@ if ( empty( $products ) ) {
 
                 <div class="yayboost-recommendations__item-actions">
                     <?php if ( $is_purchasable ) : ?>
-                        <button type="button" 
-                                class="yayboost-recommendations__add-to-cart button alt"
-                                data-product-id="<?php echo esc_attr( $product_id ); ?>"
-                                data-product-type="<?php echo esc_attr( $product->get_type() ); ?>">
-                            <?php echo esc_html( $add_to_cart_text ); ?>
-                        </button>
+                        <a href="<?php echo esc_url($add_to_cart_url); ?>"
+                            data-quantity="1"
+                            class="button product_type_<?php echo esc_attr($product->get_type()); ?> add_to_cart_button ajax_add_to_cart yayboost-recommendations__add-to-cart"
+                            data-product_id="<?php echo esc_attr($product_id); ?>"
+                            data-product_sku="<?php echo esc_attr($product->get_sku()); ?>"
+                            aria-label="<?php echo esc_attr($product->add_to_cart_description()); ?>"
+                            rel="nofollow">
+                            <?php echo esc_html($add_to_cart_text); ?>
+                        </a>
                     <?php else : ?>
                         <a href="<?php echo esc_url( $product_url ); ?>" class="button">
                             <?php esc_html_e( 'View Product', 'yayboost' ); ?>

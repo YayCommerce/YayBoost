@@ -17,7 +17,7 @@ $container_class = 'yayboost-recommendations';
 $layout_class = 'yayboost-recommendations--' . esc_attr( $layout );
 ?>
 
-<div class="<?php echo esc_attr( $container_class . ' ' . $layout_class ); ?>" data-rule-id="<?php echo esc_attr( $rule['id'] ?? '' ); ?>">
+<div class="<?php echo esc_attr( $container_class . ' ' . $layout_class ); ?>" data-rule-id="<?php echo esc_attr( $rule['id'] ?? '' ); ?>" data-behavior-if-in-cart="<?php echo esc_attr( $settings['behavior_if_in_cart'] ?? 'hide' ); ?>">
     <div class="yayboost-recommendations__header">
         <h3 class="yayboost-recommendations__title"><?php echo esc_html( $section_title ); ?></h3>
     </div>
