@@ -21,6 +21,11 @@ class FreeShippingBarSlotFill {
      */
     private $feature;
 
+    private $supported_blocks = [
+        'woocommerce/cart',
+        'woocommerce/checkout',
+    ];
+
     /**
      * Constructor
      *
@@ -29,8 +34,10 @@ class FreeShippingBarSlotFill {
     public function __construct( FreeShippingBarFeature $feature ) {
         $this->feature = $feature;
 
-        // Register and enqueue only when Cart/Checkout block is rendered
-        add_filter( 'render_block', [ $this, 'maybe_enqueue_on_block_render' ], 10, 2 );
+        // Register and enqueue only when supported blocks are rendered
+        foreach ( $this->supported_blocks as $block ) {
+            add_action( 'render_block_' . $block, [ $this, 'maybe_enqueue_on_block_render' ], 10, 2 );
+        }
     }
 
     /**
@@ -67,11 +74,6 @@ class FreeShippingBarSlotFill {
      * @return bool
      */
     private function should_process_block( $block ) {
-        // Check block name
-        if ( ! isset( $block['blockName'] ) ||
-            ! in_array( $block['blockName'], [ 'woocommerce/cart', 'woocommerce/checkout' ], true ) ) {
-            return false;
-        }
 
         // Check feature enabled
         if ( ! $this->feature || ! $this->feature->is_enabled() || is_admin() ) {
@@ -127,11 +129,13 @@ class FreeShippingBarSlotFill {
         );
 
         // wp_enqueue_style() will auto-register if not already registered
-        wp_enqueue_style(
-            'yayboost-free-shipping-bar',
-            YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
-            [],
-            YAYBOOST_VERSION
-        );
+        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
+            wp_enqueue_style(
+                'yayboost-free-shipping-bar',
+                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
+                [],
+                YAYBOOST_VERSION
+            );
+        }
     }
 }
