@@ -11,6 +11,7 @@ declare global {
       apiUrl: string;
       nonce: string;
       version: string;
+      currencySymbol?: string;
     };
   }
 }

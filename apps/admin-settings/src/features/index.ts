@@ -29,6 +29,8 @@ export const featureComponents: Record<string, React.LazyExoticComponent<Compone
   order_bump: lazy(() => import('./order-bump')),
 
   smart_recommendations: lazy(() => import('./smart-recommendations')),
+
+  stock_scarcity: lazy(() => import('./stock-scarcity')),
 };
 
 /**

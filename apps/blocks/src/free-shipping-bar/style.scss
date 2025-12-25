@@ -1,0 +1,148 @@
+/**
+ * Free Shipping Bar Styles
+ *
+ * Base styles for the free shipping bar component.
+ * Dynamic colors (bar_color, background_color, text_color) are added via inline styles.
+ */
+  
+.yayboost-shipping-bar__message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.yayboost-shipping-bar__progress {
+  border-radius: 10px;
+  height: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.yayboost-shipping-bar__progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+/* Minimal Text Style */
+.yayboost-shipping-bar--minimal-text {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+.yayboost-shipping-bar__icon {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Progress Bar Style */
+.yayboost-shipping-bar--progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yayboost-shipping-bar--progress-bar .yayboost-shipping-bar__progress {
+  margin-top: 0;
+  height: 8px;
+}
+
+/* Full Detail Style */
+.yayboost-shipping-bar--full-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.yayboost-shipping-bar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.yayboost-shipping-bar__header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.yayboost-shipping-bar__icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.yayboost-shipping-bar__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yayboost-shipping-bar__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.yayboost-shipping-bar__subtitle {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.yayboost-shipping-bar__header-right {
+  text-align: right;
+}
+
+.yayboost-shipping-bar__cart-total {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.yayboost-shipping-bar__cart-label {
+  font-size: 12px;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+.yayboost-shipping-bar__progress-section {
+  position: relative;
+}
+
+.yayboost-shipping-bar--full-detail .yayboost-shipping-bar__progress {
+  margin-top: 0;
+  height: 6px;
+}
+
+.yayboost-shipping-bar__progress-icon {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.yayboost-shipping-bar__cta {
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+  

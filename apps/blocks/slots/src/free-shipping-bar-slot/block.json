@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yayboost/free-shipping-bar-slot",
+  "version": "1.0.0",
+  "title": "Free Shipping Bar Slot",
+  "category": "widgets",
+  "textdomain": "yayboost",
+  "editorScript": "file:./index.js"
+}
