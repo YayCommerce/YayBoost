@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
 
 // Settings schema
 const settingsSchema = z.object({
@@ -42,6 +43,7 @@ const settingsSchema = z.object({
   show_on: z.array(z.string()), // ['product_page', 'cart_page', 'mini_cart']
   layout: z.enum(['grid', 'list', 'slider']),
   section_title: z.string().min(1),
+  hide_if_in_cart: z.boolean(), // true = hide it, false = still show it
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -71,6 +73,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
       show_on: ['product_page', 'cart_page'],
       layout: 'grid',
       section_title: 'Complete Your Purchase',
+      hide_if_in_cart: true, // Default: hide it
     },
   });
 
@@ -96,6 +99,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
 
   return (
     <Form {...form}>
+      <FeatureLayoutHeader title={feature?.name ?? ''} description={feature?.description ?? ''} />
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Save Button - Top Right */}
         <div className="flex justify-end">
@@ -152,12 +156,12 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
             <CardTitle>Recommend products</CardTitle>
             <CardDescription>Configure product recommendation settings</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <FormField
               control={form.control}
               name="max_products"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-60">
                   <FormLabel>Maximum products to show</FormLabel>
                   <FormControl>
                     <Input
@@ -177,7 +181,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               control={form.control}
               name="min_order_threshold"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-60">
                   <FormLabel>Minimum Order Threshold</FormLabel>
                   <FormControl>
                     <Input
@@ -203,10 +207,10 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
           <CardHeader>
             <CardTitle>Display Settings</CardTitle>
             <CardDescription>
-              Choose where to show frequently bought together products
+              Configure where and how to display frequently bought together products
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             <FormField
               control={form.control}
               name="show_on"
@@ -234,9 +238,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                                 }}
                               />
                             </FormControl>
-                            <FormLabel className="cursor-pointer font-normal">
-                              {option.label}
-                            </FormLabel>
+                            <FormLabel className="text-sm font-normal">{option.label}</FormLabel>
                           </FormItem>
                         )}
                       />
@@ -246,16 +248,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
 
-        {/* Layout Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Layout</CardTitle>
-            <CardDescription>Choose the display layout for products</CardDescription>
-          </CardHeader>
-          <CardContent>
             <FormField
               control={form.control}
               name="layout"
@@ -280,24 +273,57 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                 </FormItem>
               )}
             />
-          </CardContent>
-        </Card>
 
-        {/* Section Title Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Section title</CardTitle>
-            <CardDescription>Customize the section title displayed to customers</CardDescription>
-          </CardHeader>
-          <CardContent>
             <FormField
               control={form.control}
               name="section_title"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="w-60">
                   <FormLabel>Section title</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Complete Your Purchase" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Behavior Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Behavior</CardTitle>
+            <CardDescription>
+              Configure how to handle suggested products that are already in cart
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="hide_if_in_cart"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>If suggested product is already in cart:</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value ? 'hide' : 'show'}
+                      onValueChange={(value) => field.onChange(value === 'hide')}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="hide" id="hide-if-in-cart" />
+                        <label htmlFor="hide-if-in-cart" className="cursor-pointer">
+                          Hide it
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="show" id="show-if-in-cart" />
+                        <label htmlFor="show-if-in-cart" className="cursor-pointer">
+                          Still show it
+                        </label>
+                      </div>
+                    </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
