@@ -7,6 +7,7 @@
 import { useEffect } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { __ } from '@wordpress/i18n';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -49,15 +50,16 @@ const settingsSchema = z.object({
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
 const showOnOptions = [
-  { id: 'product_page', label: 'Product Page' },
-  { id: 'cart_page', label: 'Cart Page' },
-  { id: 'mini_cart', label: 'Mini Cart' },
+  { id: 'product_page', label: __('Product Page', 'yayboost') },
+  { id: 'cart_page', label: __('Cart Page', 'yayboost') },
+  { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
 ];
 
 const layoutOptions = [
-  { value: 'grid', label: 'Grid' },
-  { value: 'list', label: 'List' },
+  { value: 'grid', label: __('Grid', 'yayboost') },
+  { value: 'list', label: __('List', 'yayboost') },
   { value: 'slider', label: 'Slider' },
+  { value: 'slider', label: __('Slider', 'yayboost') },
 ];
 
 export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureComponentProps) {
@@ -111,9 +113,9 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
         {/* General Section */}
         <Card>
           <CardHeader>
-            <CardTitle>General </CardTitle>
+            <CardTitle>{__('General', 'yayboost')}</CardTitle>
             <CardDescription>
-              Enable or disable the Frequently Bought Together feature
+              {__('Enable or disable the Frequently Bought Together feature', 'yayboost')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -122,7 +124,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="enabled"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Enable Frequently Bought Together</FormLabel>
+                  <FormLabel>{__('Enable Frequently Bought Together', 'yayboost')}</FormLabel>
                   <FormControl>
                     <RadioGroup
                       value={field.value ? 'on' : 'off'}
@@ -132,13 +134,13 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="on" id="enabled-on" />
                         <label htmlFor="enabled-on" className="cursor-pointer">
-                          On
+                          {__('On', 'yayboost')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="off" id="enabled-off" />
                         <label htmlFor="enabled-off" className="cursor-pointer">
-                          Off
+                          {__('Off', 'yayboost')}
                         </label>
                       </div>
                     </RadioGroup>
@@ -153,8 +155,10 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
         {/* Recommend Products Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Recommend products</CardTitle>
-            <CardDescription>Configure product recommendation settings</CardDescription>
+            <CardTitle>{__('Recommend products', 'yayboost')}</CardTitle>
+            <CardDescription>
+              {__('Configure product recommendation settings', 'yayboost')}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <FormField
@@ -162,7 +166,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="max_products"
               render={({ field }) => (
                 <FormItem className="w-60">
-                  <FormLabel>Maximum products to show</FormLabel>
+                  <FormLabel>{__('Maximum products to show', 'yayboost')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -182,7 +186,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="min_order_threshold"
               render={({ field }) => (
                 <FormItem className="w-60">
-                  <FormLabel>Minimum Order Threshold</FormLabel>
+                  <FormLabel>{__('Minimum Order Threshold', 'yayboost')}</FormLabel>
                   <FormControl>
                     <Input
                       type="number"
@@ -193,7 +197,8 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     />
                   </FormControl>
                   <FormDescription>
-                    Recommend products appear in at least <strong>{field.value}%</strong> of orders
+                    {__('Recommend products appear in at least', 'yayboost')}{' '}
+                    <strong>{field.value}%</strong> {__('of orders', 'yayboost')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -205,9 +210,12 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
         {/* Display Settings Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Display Settings</CardTitle>
+            <CardTitle>{__('Display Settings', 'yayboost')}</CardTitle>
             <CardDescription>
-              Configure where and how to display frequently bought together products
+              {__(
+                'Configure where and how to display frequently bought together products',
+                'yayboost',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -216,7 +224,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="show_on"
               render={() => (
                 <FormItem>
-                  <FormLabel>Show on</FormLabel>
+                  <FormLabel>{__('Show on', 'yayboost')}</FormLabel>
                   <div className="space-y-2">
                     {showOnOptions.map((option) => (
                       <FormField
@@ -254,11 +262,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="layout"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Layout</FormLabel>
+                  <FormLabel>{__('Layout', 'yayboost')}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select layout" />
+                        <SelectValue placeholder={__('Select layout', 'yayboost')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -279,9 +287,9 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="section_title"
               render={({ field }) => (
                 <FormItem className="w-60">
-                  <FormLabel>Section title</FormLabel>
+                  <FormLabel>{__('Section title', 'yayboost')}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Complete Your Purchase" />
+                    <Input {...field} placeholder={__('Complete Your Purchase', 'yayboost')} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -293,9 +301,12 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
         {/* Behavior Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Behavior</CardTitle>
+            <CardTitle>{__('Behavior', 'yayboost')}</CardTitle>
             <CardDescription>
-              Configure how to handle suggested products that are already in cart
+              {__(
+                'Configure how to handle suggested products that are already in cart',
+                'yayboost',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -304,7 +315,9 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="hide_if_in_cart"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>If suggested product is already in cart:</FormLabel>
+                  <FormLabel>
+                    {__('If suggested product is already in cart:', 'yayboost')}
+                  </FormLabel>
                   <FormControl>
                     <RadioGroup
                       value={field.value ? 'hide' : 'show'}
@@ -314,13 +327,13 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="hide" id="hide-if-in-cart" />
                         <label htmlFor="hide-if-in-cart" className="cursor-pointer">
-                          Hide it
+                          {__('Hide it', 'yayboost')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="show" id="show-if-in-cart" />
                         <label htmlFor="show-if-in-cart" className="cursor-pointer">
-                          Still show it
+                          {__('Still show it', 'yayboost')}
                         </label>
                       </div>
                     </RadioGroup>
