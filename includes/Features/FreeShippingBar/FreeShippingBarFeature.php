@@ -251,7 +251,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         $templates     = $this->get_html_templates();
         $achieved      = $data['achieved'] && ! $data['show_coupon_message'];
         $primary_color = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
-        $bg_color      = $achieved ? $primary_color : $this->apply_opacity( $primary_color, 0.2 );
+        $bg_color      = $achieved ? $primary_color : $this->apply_opacity( $primary_color );
         $text_color    = $achieved ? '#ffffff' : $primary_color;
 
         $template = $templates['minimal_text'];
@@ -280,7 +280,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         $templates        = $this->get_html_templates();
         $primary_color    = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
         $bar_color        = $primary_color;
-        $background_color = $this->apply_opacity( $primary_color, 0.2 );
+        $background_color = $this->apply_opacity( $primary_color );
         $text_color       = $primary_color;
 
         $template = $templates['progress_bar'];
@@ -311,7 +311,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         $achieved         = $data['achieved'] && ! $data['show_coupon_message'];
         $primary_color    = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
         $bar_color        = $primary_color;
-        $background_color = $this->apply_opacity( $primary_color, 0.2 );
+        $background_color = $this->apply_opacity( $primary_color );
         $bg_color         = $achieved ? $primary_color : $background_color;
         $progress_icon_bg = $achieved ? $primary_color : $background_color;
         $text_color       = $primary_color;
@@ -799,7 +799,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @param float  $opacity Opacity value (0.0 to 1.0).
      * @return string RGBA color string
      */
-    public function apply_opacity(string $hex, float $opacity): string {
+    public function apply_opacity(string $hex, float $opacity = 0.2): string {
         // Remove # if present
         $hex = ltrim( $hex, '#' );
 
