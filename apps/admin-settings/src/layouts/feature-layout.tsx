@@ -2,25 +2,35 @@
  * Feature Layout - Layout for individual feature pages
  */
 
-import { ArrowLeft } from '@phosphor-icons/react';
-import { useFormContext } from 'react-hook-form';
-import { Link, Outlet } from 'react-router-dom';
+import { SpinnerIcon } from '@phosphor-icons/react';
+import { ArrowUpRightIcon, FolderLockIcon } from 'lucide-react';
+import { Link, Outlet, useNavigate } from 'react-router-dom';
 
-import { cn } from '@/lib/utils';
-import { useFeature } from '@/hooks/use-features';
+import { useFeature, useToggleFeature } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface FeatureLayoutProps {
   featureId: string;
   children?: React.ReactNode;
-  isPending?: boolean;
-  onSave?: () => void;
 }
 
-export function FeatureLayout({ featureId, children, isPending, onSave }: FeatureLayoutProps) {
+export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
   const { data: feature, isLoading } = useFeature(featureId);
-  const form = useFormContext();
+  const { isPending, mutate: toggleFeature } = useToggleFeature();
+  const navigate = useNavigate();
+
+  const handleEnableFeature = (featureId: string) => {
+    toggleFeature({ id: featureId, enabled: true });
+  };
 
   if (isLoading) {
     return (
@@ -47,32 +57,37 @@ export function FeatureLayout({ featureId, children, isPending, onSave }: Featur
 
   return (
     <div className="space-y-6">
-      {/* Feature header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            to="/features"
-            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-semibold">{feature.name}</h1>
-            <p className="text-muted-foreground text-sm">{feature.description}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {form && onSave && (
-            <Button type="button" onClick={onSave} disabled={isPending || !form.formState.isDirty}>
-              {isPending ? 'Saving...' : 'Save Settings'}
-            </Button>
-          )}
-        </div>
-      </div>
-
       {/* Feature content */}
-      <div className={cn('bg-card rounded-lg p-6')}>{children || <Outlet />}</div>
+      {feature.enabled ? (
+        children || <Outlet />
+      ) : (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FolderLockIcon />
+            </EmptyMedia>
+            <EmptyTitle>{feature.name} is not enabled</EmptyTitle>
+            <EmptyDescription>
+              Please enable this feature to use it or contact support.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex gap-2">
+              <Button disabled={isPending} onClick={() => handleEnableFeature(feature.id)}>
+                Enable Feature {isPending && <SpinnerIcon className="size-4 animate-spin" />}
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/features')}>
+                Back to features
+              </Button>
+            </div>
+          </EmptyContent>
+          <Button variant="link" asChild className="text-muted-foreground" size="sm">
+            <a href="#">
+              Learn More <ArrowUpRightIcon />
+            </a>
+          </Button>
+        </Empty>
+      )}
     </div>
   );
 }
