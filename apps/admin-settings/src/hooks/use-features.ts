@@ -46,7 +46,7 @@ export function useFeature(id: string, forceRefresh?: boolean) {
     queryKey: featureKeys.detail(id),
     queryFn: () => featureApi.get(id),
     enabled: !!id,
-    refetchOnMount: forceRefresh ? 'always' : false,
+    refetchOnMount: !!forceRefresh,
   });
 }
 
