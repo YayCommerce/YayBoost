@@ -543,7 +543,14 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Search products..." value="" onChange={(e) => {}} />
+                  <MultiSelect
+                    options={productOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder={`Search products...`}
+                    showSearch={true}
+                    emptyText={`No products found`}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
