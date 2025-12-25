@@ -95,259 +95,224 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
   }
 
   return (
-    <div className="space-y-6">
-      {/* General Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>General</CardTitle>
-          <CardDescription>
-            Enable or disable the Frequently Bought Together feature
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="enabled"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Enable Frequently Bought Together</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        value={field.value ? 'on' : 'off'}
-                        onValueChange={(value) => field.onChange(value === 'on')}
-                        className="flex gap-6"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="on" id="enabled-on" />
-                          <label htmlFor="enabled-on" className="cursor-pointer">
-                            On
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="off" id="enabled-off" />
-                          <label htmlFor="enabled-off" className="cursor-pointer">
-                            Off
-                          </label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Save Button - Top Right */}
+        <div className="flex justify-end">
+          <Button type="submit" disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
+        </div>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={updateSettings.isPending}>
-                  {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+        {/* General Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>General </CardTitle>
+            <CardDescription>
+              Enable or disable the Frequently Bought Together feature
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="enabled"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Enable Frequently Bought Together</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value ? 'on' : 'off'}
+                      onValueChange={(value) => field.onChange(value === 'on')}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="on" id="enabled-on" />
+                        <label htmlFor="enabled-on" className="cursor-pointer">
+                          On
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="off" id="enabled-off" />
+                        <label htmlFor="enabled-off" className="cursor-pointer">
+                          Off
+                        </label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Recommend Products Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recommend products</CardTitle>
-          <CardDescription>Configure product recommendation settings</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="max_products"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Maximum products to show</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        max="20"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+        {/* Recommend Products Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recommend products</CardTitle>
+            <CardDescription>Configure product recommendation settings</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="max_products"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maximum products to show</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="min_order_threshold"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Minimum Order Threshold</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Recommend products appear in at least <strong>{field.value}%</strong> of orders
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Display Settings Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Display Settings</CardTitle>
+            <CardDescription>
+              Choose where to show frequently bought together products
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="show_on"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Show on</FormLabel>
+                  <div className="space-y-2">
+                    {showOnOptions.map((option) => (
+                      <FormField
+                        key={option.id}
+                        control={form.control}
+                        name="show_on"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-y-0 space-x-3">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(option.id)}
+                                onCheckedChange={(checked) => {
+                                  const current = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...current, option.id]);
+                                  } else {
+                                    field.onChange(current.filter((v) => v !== option.id));
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="cursor-pointer font-normal">
+                              {option.label}
+                            </FormLabel>
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-              <FormField
-                control={form.control}
-                name="min_order_threshold"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Order Threshold</FormLabel>
+        {/* Layout Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Layout</CardTitle>
+            <CardDescription>Choose the display layout for products</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="layout"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Layout</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select layout" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormDescription>
-                      Recommend products appear in at least <strong>{field.value}%</strong> of
-                      orders
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end">
-                <Button type="submit" disabled={updateSettings.isPending}>
-                  {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Display Settings Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Display Settings</CardTitle>
-          <CardDescription>
-            Choose where to show frequently bought together products
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="show_on"
-                render={() => (
-                  <FormItem>
-                    <FormLabel>Show on</FormLabel>
-                    <div className="space-y-2">
-                      {showOnOptions.map((option) => (
-                        <FormField
-                          key={option.id}
-                          control={form.control}
-                          name="show_on"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-y-0 space-x-3">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(option.id)}
-                                  onCheckedChange={(checked) => {
-                                    const current = field.value || [];
-                                    if (checked) {
-                                      field.onChange([...current, option.id]);
-                                    } else {
-                                      field.onChange(current.filter((v) => v !== option.id));
-                                    }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel className="cursor-pointer font-normal">
-                                {option.label}
-                              </FormLabel>
-                            </FormItem>
-                          )}
-                        />
+                    <SelectContent>
+                      {layoutOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
                       ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-              <div className="flex justify-end">
-                <Button type="submit" disabled={updateSettings.isPending}>
-                  {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+        {/* Section Title Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Section title</CardTitle>
+            <CardDescription>Customize the section title displayed to customers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="section_title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Section title</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Complete Your Purchase" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Layout Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Layout</CardTitle>
-          <CardDescription>Choose the display layout for products</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="layout"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Layout</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select layout" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {layoutOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end">
-                <Button type="submit" disabled={updateSettings.isPending}>
-                  {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Section Title Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Section title</CardTitle>
-          <CardDescription>Customize the section title displayed to customers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="section_title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Section title</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Complete Your Purchase" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end">
-                <Button type="submit" disabled={updateSettings.isPending}>
-                  {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Save Button - Bottom Right */}
+        <div className="flex justify-end">
+          <Button type="submit" disabled={updateSettings.isPending}>
+            {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }
