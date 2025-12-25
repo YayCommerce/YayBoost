@@ -13,6 +13,7 @@ use YayBoost\Features\SampleBoost\SampleBoostFeature;
 use YayBoost\Features\FreeShippingBar\FreeShippingBarFeature;
 use YayBoost\Features\OrderBump\OrderBumpFeature;
 use YayBoost\Features\FrequentlyBoughtTogether\FrequentlyBoughtTogetherFeature;
+use YayBoost\Features\SmartRecommendations\SmartRecommendationsFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -101,6 +102,15 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.frequently_bought_together';
+
+        // Register Smart Recommendations Feature
+        $container->register(
+            'feature.smart_recommendations',
+            function ($c) {
+                return new SmartRecommendationsFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.smart_recommendations';
 
         // Register feature registry
         $container->register(
