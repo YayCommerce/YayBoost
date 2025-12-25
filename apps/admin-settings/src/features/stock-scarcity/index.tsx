@@ -19,10 +19,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
 
 import { FeatureComponentProps } from '..';
+
+const categoryOptions = [
+  { label: 'Phones', value: 'phones' },
+  { label: 'Phone Cases', value: 'phone-cases' },
+  { label: 'Screen Protectors', value: 'screen-protectors' },
+  { label: 'Accessories', value: 'accessories' },
+];
+
+const productOptions = [
+  { label: 'iPhone 15 Pro', value: 'iphone-15-pro' },
+  { label: 'Samsung Galaxy S24', value: 'samsung-galaxy-s24' },
+  { label: 'AirPods Pro', value: 'airpods-pro' },
+];
 
 // Settings schema
 const settingsSchema = z.object({
@@ -45,6 +59,8 @@ const settingsSchema = z.object({
   position_on_product_page: z.enum(['below_title', 'below_price', 'below_add_to_cart']),
   show_on: z.array(z.string()),
   apply_to: z.enum(['all_products', 'specific_categories', 'specific_products']),
+  specific_categories: z.array(z.string()),
+  specific_products: z.array(z.string()),
   exclude_products: z.array(z.string()),
 });
 
@@ -421,6 +437,11 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
 };
 
 const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
+  const applyTo = form.watch('apply_to');
+  const isCategories = applyTo === 'specific_categories';
+  const isProducts = applyTo === 'specific_products';
+  const options = isCategories ? categoryOptions : isProducts ? productOptions : [];
+
   return (
     <Card>
       <CardHeader>
@@ -465,6 +486,53 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
               </FormItem>
             )}
           />
+
+          {/* MultiSelect cho categories/products */}
+          {isCategories && (
+            <FormField
+              control={form.control}
+              name={'specific_categories'}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select categories</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={options}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={`Search categories...`}
+                      showSearch={true}
+                      emptyText={`No categories found`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          {isProducts && (
+            <FormField
+              control={form.control}
+              name={'specific_products'}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select products</FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={options}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={`Search products...`}
+                      showSearch={true}
+                      emptyText={`No products found`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -497,7 +565,9 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
     : watchedValues.default_message.replace('{stock}', sampleStockLeft.toString());
 
   const maxStock =
-    watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number ? watchedValues.fixed_stock_number.number : 50;
+    watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number
+      ? watchedValues.fixed_stock_number.number
+      : 50;
   const progress = Math.min(100, (sampleStockLeft / maxStock) * 100);
 
   return (
@@ -572,6 +642,8 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       position_on_product_page: 'below_title',
       show_on: ['product_page', 'shop_category_pages'],
       apply_to: 'all_products',
+      specific_categories: [],
+      specific_products: [],
       exclude_products: [],
     },
   });
