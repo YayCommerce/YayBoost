@@ -1,10 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningCircle } from '@phosphor-icons/react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
+import {
+  useProductCategories,
+  useProducts,
+} from '@/hooks/use-product-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,19 +30,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
 
 import { FeatureComponentProps } from '..';
-
-const categoryOptions = [
-  { label: 'Phones', value: 'phones' },
-  { label: 'Phone Cases', value: 'phone-cases' },
-  { label: 'Screen Protectors', value: 'screen-protectors' },
-  { label: 'Accessories', value: 'accessories' },
-];
-
-const productOptions = [
-  { label: 'iPhone 15 Pro', value: 'iphone-15-pro' },
-  { label: 'Samsung Galaxy S24', value: 'samsung-galaxy-s24' },
-  { label: 'AirPods Pro', value: 'airpods-pro' },
-];
 
 // Settings schema
 const settingsSchema = z.object({
@@ -450,10 +441,24 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
 };
 
 const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
+  const [selectProductsSearch, setSelectProductsSearch] = useState('');
+  const [excludeProductsSearch, setExcludeProductsSearch] = useState('');
+
+  const { data: categories } = useProductCategories();
+  const { data: selectProducts } = useProducts(selectProductsSearch);
+  const { data: excludeProducts } = useProducts(excludeProductsSearch);
+
+  const onSelectProductsSearch = (search: string) => {
+    setSelectProductsSearch(search);
+  };
+
+  const onExcludeProductsSearch = (search: string) => {
+    setExcludeProductsSearch(search);
+  };
+
   const applyTo = form.watch('apply_to');
   const isCategories = applyTo === 'specific_categories';
   const isProducts = applyTo === 'specific_products';
-  const options = isCategories ? categoryOptions : isProducts ? productOptions : [];
 
   return (
     <Card>
@@ -510,7 +515,7 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
                   <FormLabel>Select categories</FormLabel>
                   <FormControl>
                     <MultiSelect
-                      options={options}
+                      options={categories ?? []}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={`Search categories...`}
@@ -533,11 +538,12 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
                   <FormLabel>Select products</FormLabel>
                   <FormControl>
                     <MultiSelect
-                      options={options}
+                      options={selectProducts ?? []}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={`Search products...`}
                       showSearch={true}
+                      onSearchChange={onSelectProductsSearch}
                       emptyText={`No products found`}
                     />
                   </FormControl>
@@ -557,10 +563,12 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
               <FormItem>
                 <FormControl>
                   <MultiSelect
-                    options={productOptions}
+                    key={'exclude_products'}
+                    options={excludeProducts ?? []}
                     value={field.value}
                     onChange={field.onChange}
                     placeholder={`Search products...`}
+                    onSearchChange={onExcludeProductsSearch}
                     showSearch={true}
                     emptyText={`No products found`}
                   />
