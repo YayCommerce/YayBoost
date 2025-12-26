@@ -10,75 +10,109 @@ use YayBoost\Register\ScriptName;
  */
 class AdminMenu {
 
-    public function register() {
-        $this->init_hooks();
-    }
+	public function register() {
+		$this->init_hooks();
+	}
 
-    public function init_hooks() {
-        YayCommerceMenu\RegisterMenu::get_instance();
-        RegisterFacade::get_instance();
-        \add_action( 'admin_menu', [ $this, 'add_menu_page' ] );
-        \add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
-        add_filter( 'admin_body_class', [ $this, 'admin_body_class' ] );
-    }
+	public function init_hooks() {
+		YayCommerceMenu\RegisterMenu::get_instance();
+		RegisterFacade::get_instance();
+		\add_action( 'admin_menu', array( $this, 'add_menu_page' ) );
+		\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
+	}
 
-    public function admin_body_class( $classes ) {
-        if ( strpos( $classes, 'yayboost-ui' ) === false ) {
-            $classes .= ' yayboost-ui';
-        }
-        return $classes;
-    }
+	public function admin_body_class( $classes ) {
+		if ( strpos( $classes, 'yayboost-ui' ) === false ) {
+			$classes .= ' yayboost-ui';
+		}
+		return $classes;
+	}
 
-    public function add_menu_page() {
-        $menu_args = [
-            'parent_slug' => 'yaycommerce',
-            'page_title'  => __( 'YayBoost Settings', 'yayboost' ),
-            'menu_title'  => __( 'YayBoost', 'yayboost' ),
-            'capability'  => 'manage_woocommerce',
-            'menu_slug'   => 'yayboost',
-            'function'    => [ $this, 'render_page' ],
-            'position'    => 55,
-        ];
-        add_submenu_page( $menu_args['parent_slug'], $menu_args['page_title'], $menu_args['menu_title'], $menu_args['capability'], $menu_args['menu_slug'], $menu_args['function'], $menu_args['position'] );
-    }
+	public function add_menu_page() {
+		$menu_args = array(
+			'parent_slug' => 'yaycommerce',
+			'page_title'  => __( 'YayBoost Settings', 'yayboost' ),
+			'menu_title'  => __( 'YayBoost', 'yayboost' ),
+			'capability'  => 'manage_woocommerce',
+			'menu_slug'   => 'yayboost',
+			'function'    => array( $this, 'render_page' ),
+			'position'    => 55,
+		);
+		add_submenu_page( $menu_args['parent_slug'], $menu_args['page_title'], $menu_args['menu_title'], $menu_args['capability'], $menu_args['menu_slug'], $menu_args['function'], $menu_args['position'] );
+	}
 
-    public function enqueue_scripts() {
-        $screen    = get_current_screen();
-        $screen_id = $screen ? $screen->id : '';
-        if ( $screen_id !== 'yaycommerce_page_yayboost' ) {
-            return;
-        }
-        // Enqueue CSS
-        wp_enqueue_style( ScriptName::STYLE_SETTINGS );
+	public function enqueue_scripts() {
+		$screen    = get_current_screen();
+		$screen_id = $screen ? $screen->id : '';
+		if ( $screen_id !== 'yaycommerce_page_yayboost' ) {
+			return;
+		}
 
-        // Enqueue JS
-        wp_enqueue_script( ScriptName::ADMIN_SETTINGS );
+		$categories = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => false,
+			)
+		);
+		$categories = array_map(
+			function ( $category ) {
+				return array(
+					'id'   => $category->term_id,
+					'name' => $category->name,
+				);
+			},
+			$categories
+		);
+		$products   = get_posts(
+			array(
+				'post_type'      => 'product',
+				'posts_per_page' => -1,
+			)
+		);
+		$products   = array_map(
+			function ( $product ) {
+				return array(
+					'id'   => $product->ID,
+					'name' => $product->post_title,
+				);
+			},
+			$products
+		);
 
-        // Localize script with API data
-        wp_localize_script(
-            ScriptName::ADMIN_SETTINGS,
-            'yayboostData',
-            [
-                'apiUrl'         => rest_url( 'yayboost/v1/' ),
-                'nonce'          => wp_create_nonce( 'wp_rest' ),
-                'version'        => YAYBOOST_VERSION,
-                'currencySymbol' => get_woocommerce_currency_symbol(),
-            ]
-        );
-    }
+		// Enqueue CSS
+		wp_enqueue_style( ScriptName::STYLE_SETTINGS );
 
-    public function render_page() {
-        ob_start();
-        ?>
-            <style>
-                #wpcontent .notice,
-                .error, .updated {
-                    display: none;
-                }
-            </style>
-            <div id="yayboost"></div>
-        <?php
-        $content = ob_get_clean();
-        echo $content;
-    }
+		// Enqueue JS
+		wp_enqueue_script( ScriptName::ADMIN_SETTINGS );
+
+		// Localize script with API data
+		wp_localize_script(
+			ScriptName::ADMIN_SETTINGS,
+			'yayboostData',
+			array(
+				'apiUrl'             => rest_url( 'yayboost/v1/' ),
+				'nonce'              => wp_create_nonce( 'wp_rest' ),
+				'version'            => YAYBOOST_VERSION,
+				'currencySymbol'     => get_woocommerce_currency_symbol(),
+				'product_categories' => $categories,
+				'products'           => $products,
+			)
+		);
+	}
+
+	public function render_page() {
+		ob_start();
+		?>
+			<style>
+				#wpcontent .notice,
+				.error, .updated {
+					display: none;
+				}
+			</style>
+			<div id="yayboost"></div>
+		<?php
+		$content = ob_get_clean();
+		echo $content;
+	}
 }
