@@ -14,6 +14,7 @@ use YayBoost\Features\FreeShippingBar\FreeShippingBarFeature;
 use YayBoost\Features\OrderBump\OrderBumpFeature;
 use YayBoost\Features\FrequentlyBoughtTogether\FrequentlyBoughtTogetherFeature;
 use YayBoost\Features\SmartRecommendations\SmartRecommendationsFeature;
+use YayBoost\Features\StockScarcity\StockScarcityFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -111,6 +112,15 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.smart_recommendations';
+
+        // Register Stock Scarcity Feature
+        $container->register(
+            'feature.stock_scarcity',
+            function ($c) {
+                return new StockScarcityFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.stock_scarcity';
 
         // Register feature registry
         $container->register(

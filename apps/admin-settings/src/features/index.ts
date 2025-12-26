@@ -34,6 +34,8 @@ export const featureComponents: Record<
   // Frequently Bought Together
   frequently_bought_together: lazy(() => import('./frequently-bought-together')),
   smart_recommendations: lazy(() => import('./smart-recommendations')),
+
+  stock_scarcity: lazy(() => import('./stock-scarcity')),
 };
 
 /**
