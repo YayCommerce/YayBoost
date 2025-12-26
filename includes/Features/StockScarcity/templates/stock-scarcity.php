@@ -43,9 +43,9 @@ if ($use_fixed_number) {
 
 ?>
 
-<div class="yayboost-stock-scarcity" style="background-color: #f9fafb; border-radius: 8px; padding: 16px;">
+<div class="yayboost-stock-scarcity" style="background-color: #f9fafb; border-radius: 8px; margin: 10px 0;">
     <?php if ($show_alert_text) : ?>
-        <div class="yayboost-stock-scarcity__message" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <div class="yayboost-stock-scarcity__message" style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 14px; font-weight: 500; color: #111827;">
                 <?php echo esc_html($message); ?>
             </span>
