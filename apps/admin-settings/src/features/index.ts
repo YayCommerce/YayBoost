@@ -18,7 +18,10 @@ export interface FeatureComponentProps {
 }
 
 // Registry of feature components (lazy loaded)
-export const featureComponents: Record<string, React.LazyExoticComponent<ComponentType<FeatureComponentProps>>> = {
+export const featureComponents: Record<
+  string,
+  React.LazyExoticComponent<ComponentType<FeatureComponentProps>>
+> = {
   // Sample boost feature (Recently Viewed Products)
   sample_boost: lazy(() => import('./sample-boost')),
 
@@ -28,6 +31,8 @@ export const featureComponents: Record<string, React.LazyExoticComponent<Compone
   // Order Bump (complex, with entity CRUD)
   order_bump: lazy(() => import('./order-bump')),
 
+  // Frequently Bought Together
+  frequently_bought_together: lazy(() => import('./frequently-bought-together')),
   smart_recommendations: lazy(() => import('./smart-recommendations')),
 
   stock_scarcity: lazy(() => import('./stock-scarcity')),
