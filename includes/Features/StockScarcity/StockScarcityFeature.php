@@ -68,16 +68,16 @@ class StockScarcityFeature extends AbstractFeature {
 
     
     public function render_stock_scarcity($current_product = null): void {
-        if (empty($current_product)) {
-            global $product;
+        global $product;
 
-            if (empty($product)) {
-                return;
-            }
-
+        if (empty($current_product) && !empty($product)) {
             $current_product = $product;
         }
-       
+
+        if (empty($current_product)) {
+            return;
+        }
+
         $settings = $this->get_settings();
 
         $path = YAYBOOST_PATH . 'includes/Features/StockScarcity/templates/stock-scarcity.php';
