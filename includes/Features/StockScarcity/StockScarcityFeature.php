@@ -63,5 +63,27 @@ class StockScarcityFeature extends AbstractFeature {
      * @return void
      */
     public function init(): void {
+        add_action('woocommerce_after_add_to_cart_button', [ $this, 'render_stock_scarcity' ]);
+    }
+
+    
+    public function render_stock_scarcity($current_product = null): void {
+        if (empty($current_product)) {
+            global $product;
+
+            if (empty($product)) {
+                return;
+            }
+
+            $current_product = $product;
+        }
+       
+        $settings = $this->get_settings();
+
+        $path = YAYBOOST_PATH . 'includes/Features/StockScarcity/templates/stock-scarcity.php';
+
+        if (file_exists($path)) {
+            include $path;
+        }
     }
 }
