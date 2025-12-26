@@ -1,4 +1,5 @@
-import { useFeature } from '@/hooks';
+import { useEffect } from 'react';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningCircle } from '@phosphor-icons/react';
 import { UseFormReturn } from 'react-hook-form';
@@ -21,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
 
 import { FeatureComponentProps } from '..';
@@ -47,7 +49,6 @@ const settingsSchema = z.object({
   default_message: z.string().min(1),
   urgent_threshold: z.number().min(0),
   urgent_message: z.string().min(1),
-  progress_source: z.enum(['auto', 'fixed']),
   fixed_stock_number: z
     .object({
       is_enabled: z.boolean(),
@@ -83,7 +84,7 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
                 <FormLabel className="text-sm">Enable Stock Scarcity</FormLabel>
                 <FormControl>
                   <RadioGroup
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => field.onChange(value === 'true')}
                     value={field.value.toString()}
                     className="flex flex-col gap-2"
                   >
@@ -112,7 +113,12 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
                 <FormLabel className="text-sm">Show when stock is at or below</FormLabel>
                 <div className="flex w-fit items-center gap-2">
                   <FormControl>
-                    <Input type="number" step="1" {...field} />
+                    <Input
+                      type="number"
+                      step="1"
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      value={field.value || 1}
+                    />
                   </FormControl>
                   <span className="text-[#6A7282]">items</span>
                 </div>
@@ -312,7 +318,14 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
                   render={({ field }) => (
                     <FormItem className="m-0">
                       <FormControl>
-                        <Input type="number" step="1" min="1" className="w-28" {...field} />
+                        <Input
+                          type="number"
+                          step="1"
+                          min="1"
+                          className="w-28"
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          value={field.value || 1}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -623,23 +636,23 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
 };
 
 const StockScarcity = ({ featureId }: FeatureComponentProps) => {
-  const { data: feature } = useFeature(featureId);
+  const { data: feature, isLoading } = useFeature(featureId);
+  const updateSettings = useUpdateFeatureSettings();
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log(data);
+    updateSettings.mutate({ id: featureId, settings: data });
   };
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      enabled: false,
+      enabled: true,
       low_stock_threshold: 10,
       show_alert_text: true,
       show_progress_bar: true,
       default_message: '',
       urgent_threshold: 5,
       urgent_message: '',
-      progress_source: 'auto',
       fixed_stock_number: {
         is_enabled: false,
         number: 50,
@@ -654,6 +667,21 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
       exclude_products: [],
     },
   });
+
+  useEffect(() => {
+    if (feature?.settings) {
+      form.reset(feature.settings as SettingsFormData);
+    }
+  }, [feature, form]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -678,8 +706,12 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
 
             {/* Submit button */}
             <div className="flex justify-end gap-3">
-              <Button type="submit" className="bg-[#171717] text-white">
-                Save Changes
+              <Button
+                type="submit"
+                className="bg-[#171717] text-white"
+                disabled={updateSettings.isPending}
+              >
+                {updateSettings.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>
