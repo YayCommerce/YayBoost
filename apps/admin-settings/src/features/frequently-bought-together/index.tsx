@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import UnavailableFeature from '@/components/unavailable-feature';
 
 // Settings schema
 const settingsSchema = z.object({
@@ -62,42 +63,31 @@ const layoutOptions = [
 ];
 
 export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureComponentProps) {
-  const { data: feature, isLoading } = useFeature(featureId);
+  const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      enabled: false,
-      max_products: 4,
-      min_order_threshold: 5,
-      show_on: ['product_page', 'cart_page'],
-      layout: 'grid',
-      section_title: 'Complete Your Purchase',
-      hide_if_in_cart: 'hide', // Default: hide it
-    },
+    defaultValues: feature?.settings as SettingsFormData,
   });
 
   const { isDirty } = form.formState;
-
-  // Update form when feature data loads
-  useEffect(() => {
-    if (feature?.settings) {
-      form.reset(feature.settings as SettingsFormData);
-    }
-  }, [feature, form]);
 
   const onSubmit = (data: SettingsFormData) => {
     updateSettings.mutate({ id: featureId, settings: data });
   };
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full" />
       </div>
     );
+  }
+
+  if (!feature?.settings) {
+    return <UnavailableFeature />;
   }
 
   return (
