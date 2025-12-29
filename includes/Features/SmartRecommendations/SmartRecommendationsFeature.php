@@ -11,7 +11,6 @@
 namespace YayBoost\Features\SmartRecommendations;
 
 use YayBoost\Features\AbstractFeature;
-use YayBoost\Repository\EntityRepository;
 
 /**
  * Smart Recommendations feature implementation
@@ -72,6 +71,8 @@ class SmartRecommendationsFeature extends AbstractFeature {
      * @return void
      */
     public function init(): void {
+        $settings = $this->get_settings();
+
         // Include the repository class
         require_once plugin_dir_path( __FILE__ ) . 'RecommendationRepository.php';
         
@@ -86,6 +87,10 @@ class SmartRecommendationsFeature extends AbstractFeature {
         // AJAX endpoints for dynamic updates
         add_action( 'wp_ajax_yayboost_get_recommendations', [ $this, 'ajax_get_recommendations' ] );
         add_action( 'wp_ajax_nopriv_yayboost_get_recommendations', [ $this, 'ajax_get_recommendations' ] );
+    
+        if ( $settings['enabled'] ) {
+            new SmartRecommendationsBlock( $this );
+        }
     }
 
     /**
@@ -150,11 +155,6 @@ class SmartRecommendationsFeature extends AbstractFeature {
         foreach ( $matching_rules as $rule ) {
             $settings = $rule['settings'] ?? [];
             
-            // Check if should show on product page
-            if ( ! ( $settings['show_on_product_page'] ?? true )) {
-                continue;
-            }
-
             // Check if rule is active
             if ( ($rule['status'] ?? 'active' ) !== 'active' ) {
                 continue;
@@ -174,7 +174,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
      * @param WC_Product $product Current product
      * @return array Matching rules
      */
-    protected function get_matching_rules( $product ): array {
+    public function get_matching_rules( $product ): array {
         $product_id = $product->get_id();
         $category_ids = $product->get_category_ids();
         $tag_ids = wp_get_post_terms( $product_id, 'product_tag', [ 'fields' => 'ids' ] );
@@ -237,7 +237,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
      * @param WC_Product $current_product Current product being viewed
      * @return array Recommended products
      */
-    protected function get_recommended_products( $rule, $current_product ): array {
+    public function get_recommended_products( $rule, $current_product ): array {
         $settings = $rule['settings'] ?? [];
         $recommend_type = $settings['recommend_products_from_type'] ?? 'category';
         $recommend_values = $settings['recommend_products_from_value'] ?? [];
@@ -376,7 +376,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
      * @param array $products Recommended products
      * @return void
      */
-    protected function render_recommendation_section( $rule, $products ): void {
+    public function render_recommendation_section( $rule, $products ): void {
         $settings = $rule['settings'] ?? [];
         $section_title = $settings['section_title'] ?? __( 'Pairs perfectly with', 'yayboost' );
         $layout = $settings['layout'] ?? 'grid';
@@ -424,11 +424,14 @@ class SmartRecommendationsFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'show_on_product_page' => true,
-                'show_on_cart_page'    => false,
-                'show_on_mini_cart'    => false,
-                'layout'               => 'grid',
-                'section_title'        => __( 'Pairs perfectly with', 'yayboost' ),
+                'when_customer_views_type'               => '',
+                'when_customer_views_value'               => '',
+                'recommend_products_from_type'            => '',
+                'recommend_products_from_value'           => [],
+                'max_products_to_show'                    => 3,
+                'sort_by'                                   => 'best_selling',
+                'layout'                                    => 'grid',
+                'section_title'                             => __( 'Pairs perfectly with', 'yayboost' ),
                 'behavior_if_in_cart'  => 'hide',
             ]
         );
