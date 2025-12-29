@@ -40,6 +40,9 @@ class Bootstrap {
      * @return void
      */
     public function init() {
+        // Run database migrations first (if needed)
+        \YayBoost\Database\Migrator::run();
+
         // Register core services
         $this->register_core_services();
 

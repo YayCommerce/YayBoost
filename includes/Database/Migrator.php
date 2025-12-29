@@ -19,7 +19,7 @@ class Migrator {
     /**
      * Current DB version
      */
-    const CURRENT_VERSION = '1.0.0';
+    const CURRENT_VERSION = '1.1.1';
 
     /**
      * Run migrations only if needed
@@ -62,11 +62,6 @@ class Migrator {
         if (version_compare( $from_version, '1.0.0', '<' )) {
             self::migrate_to_1_0_0();
         }
-
-        // Future migrations go here:
-        // if (version_compare($from_version, '1.1.0', '<')) {
-        // self::migrate_to_1_1_0();
-        // }
     }
 
     /**
@@ -77,6 +72,9 @@ class Migrator {
     protected static function migrate_to_1_0_0(): void {
         // Create entities table
         EntityTable::create();
+
+        // Create FBT relationships table
+        FBTRelationshipTable::create();
     }
 
     /**
@@ -118,6 +116,7 @@ class Migrator {
      */
     public static function reset(): void {
         EntityTable::drop();
+        FBTRelationshipTable::drop();
         delete_option( self::DB_VERSION_OPTION );
         delete_transient( 'yayboost_migration_check' );
     }
