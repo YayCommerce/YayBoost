@@ -73,6 +73,13 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
     protected $collector;
 
     /**
+     * Flag to track if currently rendering FBT section
+     *
+     * @var bool
+     */
+    protected static $is_rendering_fbt = false;
+
+    /**
      * Initialize the feature
      *
      * @return void
@@ -313,15 +320,9 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
      * @return void
      */
     public function render_fbt_checkbox(): void {
-        global $product, $post;
+        global $product;
 
-        if ( ! $product || ! $post ) {
-            return;
-        }
-
-        // Check if this product is in FBT section by checking post classes
-        $post_classes = get_post_class( '', $post->ID );
-        if ( ! in_array( 'yayboost-fbt-product-item', $post_classes, true ) ) {
+        if ( ! $product || ! self::$is_rendering_fbt ) {
             return;
         }
 
@@ -351,6 +352,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
     protected function render_template( int $current_product_id, array $fbt_products, array $settings, bool $is_mini_cart = false ): void {
         $section_title = $settings['section_title'] ?? __( 'Complete Your Purchase', 'yayboost' );
         $layout        = $settings['layout'] ?? 'grid';
+        $max_products  = $settings['max_products'] ?? 4;
 
         $template_path = YAYBOOST_PATH . 'includes/views/features/frequently-bought-together/template.php';
 
@@ -358,7 +360,13 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             return;
         }
 
+        // Set flag to indicate we're rendering FBT section
+        self::$is_rendering_fbt = true;
+
         include $template_path;
+
+        // Reset flag after rendering
+        self::$is_rendering_fbt = false;
     }
 
     /**

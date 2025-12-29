@@ -15,10 +15,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Prepare FBT products only (no current product)
 $all_products = [];
 
-// Add FBT products
+// Add FBT products, excluding current product and limit by max_products
 foreach ( $fbt_products as $fbt_product ) {
-    if ( $fbt_product && $fbt_product->is_purchasable() ) {
-        $all_products[] = $fbt_product;
+    if ( ! $fbt_product || ! $fbt_product->is_purchasable() ) {
+        continue;
+    }
+
+    $all_products[] = $fbt_product;
+
+    // Limit by max_products setting
+    if ( count( $all_products ) >= $max_products ) {
+        break;
     }
 }
 
@@ -38,16 +45,12 @@ if ( function_exists( 'wp_increase_content_media_count' ) ) {
         wp_increase_content_media_count( wp_omit_loading_attr_threshold() - $content_media_count );
     }
 }
-
-// Add FBT class filter once before loop
-$fbt_class_filter = function ( $classes ) {
-    $classes[] = 'yayboost-fbt-product-item';
-    return $classes;
-};
-add_filter( 'post_class', $fbt_class_filter, 10, 1 );
 ?>
 
-<section class="yayboost-fbt-container products related">
+<section class="yayboost-fbt-container products"
+    data-current-product="<?php echo esc_attr( $current_product_id ); ?>"
+    data-layout="<?php echo esc_attr( $layout ); ?>"
+    data-max-products="<?php echo esc_attr( $max_products ); ?>">
     <h2 class="yayboost-fbt-title"><?php echo esc_html( $section_title ); ?></h2>
 
     <div class="yayboost-fbt-products yayboost-fbt-layout-<?php echo esc_attr( $layout ); ?>">
@@ -79,8 +82,6 @@ add_filter( 'post_class', $fbt_class_filter, 10, 1 );
         endforeach;
 
         woocommerce_product_loop_end();
-
-        remove_filter( 'post_class', $fbt_class_filter, 10 );
         ?>
     </div>
 
