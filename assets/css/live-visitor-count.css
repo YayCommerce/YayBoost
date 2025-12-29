@@ -1,0 +1,60 @@
+/* Live Visitor Count Styles */
+
+.yayboost-live-visitor-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Style 2: Rounded box */
+.yayboost-live-visitor-count-style-2 {
+  width: max-content;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+/* Style 3: Bubble and icon wrapper */
+.yayboost-live-visitor-count-style-3-wrapper {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Style 3: Bubble - simple rounded rectangle, no tail - hidden by default */
+.yayboost-live-visitor-count-style-3 {
+  padding: 10px 14px;
+  border-radius: 8px;
+  width: max-content;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Show bubble when hovering over wrapper (icon or bubble area) */
+.yayboost-live-visitor-count-style-3-wrapper:hover .yayboost-live-visitor-count-style-3 {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Icon container - positioned at bottom */
+.yayboost-live-visitor-count-style-3-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}

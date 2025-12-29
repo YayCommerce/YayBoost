@@ -131,6 +131,8 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
         },
         apply_on: {
           apply: settings.apply_on?.apply ?? 'all',
+          categories: settings.apply_on?.categories ?? [],
+          products: settings.apply_on?.products ?? [],
         },
       });
     }
@@ -162,7 +164,8 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     );
   }
@@ -632,11 +635,15 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                           options={
                             window.yayboostData?.product_categories.map((category) => ({
                               label: category.name,
-                              value: category.id,
+                              value: category.id.toString(),
                             })) ?? []
                           }
-                          value={field.value as unknown as string[]}
-                          onChange={field.onChange}
+                          value={
+                            field.value
+                              ? field.value.map((v) => (typeof v === 'number' ? v.toString() : v))
+                              : []
+                          }
+                          onChange={(value) => field.onChange(value.map((v) => parseInt(v, 10)))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -656,11 +663,15 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                           options={
                             window.yayboostData?.products.map((product) => ({
                               label: product.name,
-                              value: product.id,
+                              value: product.id.toString(),
                             })) ?? []
                           }
-                          value={field.value as unknown as string[]}
-                          onChange={field.onChange}
+                          value={
+                            field.value
+                              ? field.value.map((v) => (typeof v === 'number' ? v.toString() : v))
+                              : []
+                          }
+                          onChange={(value) => field.onChange(value.map((v) => parseInt(v, 10)))}
                         />
                       </FormControl>
                       <FormMessage />
