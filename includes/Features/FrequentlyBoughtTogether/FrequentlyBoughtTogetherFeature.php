@@ -129,6 +129,11 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             wp_schedule_event( time(), 'weekly', 'yayboost_fbt_weekly_cleanup' );
         }
         add_action( 'yayboost_fbt_weekly_cleanup', [ $this, 'run_cleanup' ] );
+
+        // Register Gutenberg block
+        if ( $this->is_enabled() ) {
+            new FrequentlyBoughtTogetherBlock( $this );
+        }
     }
 
     /**
@@ -471,5 +476,33 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             error_log( sprintf( 'YayBoost FBT Cleanup: %d low count deleted, %d orphaned deleted, %d old deleted', $stats['low_count_deleted'], $stats['orphaned_deleted'], $stats['old_deleted'] ) );
         }
+    }
+
+    /**
+     * Get localization data for JavaScript
+     * Shared method used by both classic feature and block
+     *
+     * @return array Localization data array
+     */
+    public function get_localization_data(): array {
+        $settings = $this->get_settings();
+
+        return [
+            'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'yayboost_fbt_batch' ),
+            'settings' => [
+                'maxProducts'       => $settings['max_products'] ?? $this->get_default_settings()['max_products'],
+                'sectionTitle'      => $settings['section_title'] ?? $this->get_default_settings()['section_title'],
+                'layout'            => $settings['layout'] ?? $this->get_default_settings()['layout'],
+                'minOrderThreshold' => $settings['min_order_threshold'] ?? $this->get_default_settings()['min_order_threshold'],
+                'hideIfInCart'      => $settings['hide_if_in_cart'] ?? $this->get_default_settings()['hide_if_in_cart'],
+            ],
+            'i18n'     => [
+                'adding'          => __( 'Adding to cart...', 'yayboost' ),
+                'added'           => __( 'Added to cart', 'yayboost' ),
+                'error'           => __( 'Error adding to cart', 'yayboost' ),
+                'select_products' => __( 'Please select at least one product', 'yayboost' ),
+            ],
+        ];
     }
 }

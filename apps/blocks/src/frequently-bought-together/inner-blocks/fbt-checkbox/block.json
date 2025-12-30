@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yayboost/fbt-checkbox",
+  "version": "1.0.0",
+  "title": "FBT Checkbox",
+  "category": "yayboost",
+  "icon": "yes-alt",
+  "description": "Checkbox to select product for frequently bought together batch add",
+  "ancestor": ["yayboost/frequently-bought-together"],
+  "parent": ["woocommerce/product-template"],
+  "attributes": {
+    "checked": {
+      "type": "boolean",
+      "default": true
+    },
+    "labelText": {
+      "type": "string",
+      "default": ""
+    },
+    "showLabel": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "usesContext": ["postId", "postType"],
+  "supports": {
+    "html": false,
+    "className": true,
+    "color": {
+      "background": true,
+      "text": true
+    },
+    "typography": {
+      "fontSize": true,
+      "lineHeight": true
+    },
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "__experimentalBorder": {
+      "color": true,
+      "radius": true,
+      "style": true,
+      "width": true
+    }
+  },
+  "textdomain": "yayboost",
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css"
+}
+
