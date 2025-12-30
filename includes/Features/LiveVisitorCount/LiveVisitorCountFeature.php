@@ -400,7 +400,12 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			)
 		);
 
-		wp_send_json_success( array( 'count' => (int) $count ) );
+		$count = (int) $count;
+
+		// Update cache with new count (cache for 30 seconds)
+		$this->set_cached_visitor_count( $page_id, $count, 30 );
+
+		wp_send_json_success( array( 'count' => $count ) );
 	}
 
 	/**
@@ -420,6 +425,13 @@ class LiveVisitorCountFeature extends AbstractFeature {
 
 		if ( $page_id <= 0 ) {
 			wp_send_json_error( array( 'message' => 'Invalid page ID' ), 400 );
+		}
+
+		// Get cached count first
+		$count = $this->get_cached_visitor_count( $page_id );
+		if ( false !== $count ) {
+			wp_send_json_success( array( 'count' => (int) $count ) );
+			return;
 		}
 
 		// Get settings to use active_window setting
@@ -444,7 +456,12 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			)
 		);
 
-		wp_send_json_success( array( 'count' => (int) $count ) );
+		$count = (int) $count;
+
+		// Cache the count for 30 seconds
+		$this->set_cached_visitor_count( $page_id, $count, 30 );
+
+		wp_send_json_success( array( 'count' => $count ) );
 	}
 
 	public function get_visitor_count(): int {
@@ -465,6 +482,13 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		if ( ! $page_id ) {
 			return 0;
 		}
+
+		// Try to get cached count first
+		$count = $this->get_cached_visitor_count( $page_id );
+		if ( false !== $count ) {
+			return (int) $count;
+		}
+
 		$settings      = $this->get_settings();
 		$active_window = isset( $settings['real_tracking']['active_window'] ) ? intval( $settings['real_tracking']['active_window'] ) : 10;
 		$expired_time  = time() - $active_window * 60;
@@ -474,11 +498,18 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$table = $wpdb->prefix . 'yayboost_live_visitor';
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $table WHERE page_id = %d ",
-				$page_id
+				"SELECT COUNT(*) FROM $table WHERE page_id = %d AND last_active >= %d",
+				$page_id,
+				$expired_time
 			)
 		);
-		return (int) $count;
+
+		$count = (int) $count;
+
+		// Cache the count for 30 seconds
+		$this->set_cached_visitor_count( $page_id, $count, 30 );
+
+		return $count;
 	}
 
 	public function clean_up_expired_visitors( $expired_time ): void {
@@ -490,5 +521,40 @@ class LiveVisitorCountFeature extends AbstractFeature {
 				$expired_time
 			)
 		);
+	}
+
+	/**
+	 * Get cached visitor count for a page
+	 *
+	 * @param int $page_id Page ID
+	 * @return int|false Visitor count or false if cache expired/not found
+	 */
+	protected function get_cached_visitor_count( int $page_id ) {
+		$cache_key = 'yayboost_lvc_count_' . $page_id;
+		return get_transient( $cache_key );
+	}
+
+	/**
+	 * Set cached visitor count for a page
+	 *
+	 * @param int $page_id Page ID
+	 * @param int $count Visitor count
+	 * @param int $expiration Cache expiration in seconds (default: 30)
+	 * @return bool True if cache was set, false otherwise
+	 */
+	protected function set_cached_visitor_count( int $page_id, int $count, int $expiration = 30 ): bool {
+		$cache_key = 'yayboost_lvc_count_' . $page_id;
+		return set_transient( $cache_key, $count, $expiration );
+	}
+
+	/**
+	 * Delete cached visitor count for a page
+	 *
+	 * @param int $page_id Page ID
+	 * @return bool True if cache was deleted, false otherwise
+	 */
+	protected function delete_cached_visitor_count( int $page_id ): bool {
+		$cache_key = 'yayboost_lvc_count_' . $page_id;
+		return delete_transient( $cache_key );
 	}
 }
