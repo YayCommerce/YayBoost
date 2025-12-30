@@ -43,7 +43,8 @@
 }
 
 /* Show bubble when hovering over wrapper (icon or bubble area) */
-.yayboost-live-visitor-count-style-3-wrapper:hover .yayboost-live-visitor-count-style-3 {
+.yayboost-live-visitor-count-style-3-wrapper:hover
+  .yayboost-live-visitor-count-style-3 {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;

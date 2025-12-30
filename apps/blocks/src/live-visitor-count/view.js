@@ -88,24 +88,24 @@
   }
 
   function updateCount(count) {
-    const countEl = document.getElementById("yayboost-live-visitor-count");
-    const wrapperEl = countEl.parentElement;
-    if (
-      yayboostLiveVisitorCount.minimumCountDisplay > 0 &&
-      d.data.count < yayboostLiveVisitorCount.minimumCountDisplay
-    ) {
-      if (wrapperEl) {
-        wrapperEl.style.display = "none";
-      }
-    } else {
+    const minimumCountDisplay = parseInt(
+      yayboostLiveVisitorCount.minimumCountDisplay
+    );
+    if (minimumCountDisplay > 0 && count < minimumCountDisplay) {
+      return;
+    }
+
+    const countEl = document.querySelectorAll("#yayboost-live-visitor-count");
+    for (const el of countEl) {
+      const wrapperEl = el.parentElement;
       if (wrapperEl) {
         if (wrapperEl.style.display === "none") {
           wrapperEl.style.display = "block";
+        } else {
+          wrapperEl.style.display = "none";
         }
       }
-    }
-    if (countEl) {
-      countEl.innerHTML = count;
+      el.innerHTML = count;
     }
   }
 

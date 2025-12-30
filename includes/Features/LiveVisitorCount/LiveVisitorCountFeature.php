@@ -100,6 +100,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 */
 	public function init(): void {
 		$settings = $this->get_settings();
+
 		if ( ! $settings['enabled'] ) {
 			return;
 		}
@@ -107,9 +108,14 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		// Hook to wp or template_redirect to check if we're on a product page
 		// WooCommerce conditionals like is_product() only work after these hooks
 		add_action( 'wp', array( $this, 'setup_product_page_hooks' ) );
+
 		add_action( 'template_redirect', array( $this, 'setup_product_page_hooks' ) );
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
+		if ( $this->is_enabled() ) {
+			new LiveVisitorCountBlock( $this );
+		}
 	}
 
 	/**
@@ -151,7 +157,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 * @param array $settings Feature settings
 	 * @return bool
 	 */
-	protected function should_apply_to_current_product( array $settings ): bool {
+	public function should_apply_to_current_product( array $settings ): bool {
 		$apply_on = $settings['apply_on'] ?? array();
 		$apply    = $apply_on['apply'] ?? 'all';
 
@@ -239,9 +245,24 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		if ( ! $this->should_apply_to_current_product( $settings ) ) {
 			return;
 		}
-		wp_enqueue_style( 'yayboost-live-visitor-count', YAYBOOST_URL . 'assets/css/live-visitor-count.css', array(), YAYBOOST_VERSION );
+
+		if ( ! wp_style_is( 'yayboost-live-visitor-count', 'enqueued' ) ) {
+			wp_enqueue_style(
+				'yayboost-live-visitor-count',
+				YAYBOOST_URL . 'assets/dist/blocks/live-visitor-count/style-index.css',
+				array(),
+				YAYBOOST_VERSION
+			);
+		}
+
 		if ( 'real-tracking' === $settings['tracking_mode'] ) {
-			wp_enqueue_script( 'yayboost-live-visitor-count', YAYBOOST_URL . 'assets/js/live-visitor-count.js', array( 'jquery' ), YAYBOOST_VERSION, true );
+			wp_enqueue_script(
+				'yayboost-live-visitor-count',
+				YAYBOOST_URL . 'assets/dist/blocks/live-visitor-count/view.js',
+				array( 'jquery' ),
+				YAYBOOST_VERSION,
+				true
+			);
 
 			$page_id = get_the_ID();
 			if ( ! $page_id ) {
@@ -303,7 +324,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		} elseif ( 'style_2' === $style ) {
 			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2" style="color: ' . $text_color . '; background-color: ' . $background_color . ';">' . $icon_html . $text . '</div>';
 		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . $text . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . $icon_html . $count . '</div></div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . $text . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . $icon_html . '<span id="yayboost-live-visitor-count">' . $count . '</span></div></div>';
 		}
 		return $content;
 	}
