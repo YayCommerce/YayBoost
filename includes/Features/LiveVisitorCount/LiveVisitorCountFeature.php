@@ -178,7 +178,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		return array_merge(
 			parent::get_default_settings(),
 			array(
-				'tracking_mode' => 'simulated',
+				'tracking_mode' => 'real-tracking',
 				'real_tracking' => array(
 					'active_window'         => 5,
 					'minimum_count_display' => 1,
