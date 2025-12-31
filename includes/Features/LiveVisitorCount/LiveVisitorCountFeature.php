@@ -65,32 +65,11 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	public function __construct( $container ) {
 		parent::__construct( $container );
 
-		$this->create_table();
-
-		// Register AJAX handlers always, regardless of feature enabled status
-		// This ensures AJAX requests work even if feature is temporarily disabled
+		// Register AJAX count and update visitor count
 		add_action( 'wp_ajax_yayboost_live_visitor_count_ping', array( $this, 'ajax_ping' ) );
 		add_action( 'wp_ajax_nopriv_yayboost_live_visitor_count_ping', array( $this, 'ajax_ping' ) );
 		add_action( 'wp_ajax_yayboost_live_visitor_count_count', array( $this, 'ajax_count' ) );
 		add_action( 'wp_ajax_nopriv_yayboost_live_visitor_count_count', array( $this, 'ajax_count' ) );
-	}
-
-	public function create_table(): void {
-		global $wpdb;
-		$table   = $wpdb->prefix . 'yayboost_live_visitor';
-		$charset = $wpdb->get_charset_collate();
-
-		$sql = "CREATE TABLE IF NOT EXISTS $table (
-			session_id VARCHAR(64) NOT NULL,
-			page_id BIGINT NOT NULL,
-			last_active INT NOT NULL,
-			PRIMARY KEY (session_id, page_id),
-			KEY page_id (page_id),
-			KEY session_id (session_id)
-		) $charset;";
-
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql );
 	}
 
 	/**
@@ -99,55 +78,46 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 * @return void
 	 */
 	public function init(): void {
-		$settings = $this->get_settings();
-
-		if ( ! $settings['enabled'] ) {
-			return;
-		}
-
-		// Hook to wp or template_redirect to check if we're on a product page
-		// WooCommerce conditionals like is_product() only work after these hooks
-		add_action( 'wp', array( $this, 'setup_product_page_hooks' ) );
-
-		add_action( 'template_redirect', array( $this, 'setup_product_page_hooks' ) );
-
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-
 		if ( $this->is_enabled() ) {
+			// Register hooks - they will only fire on product pages anyway
+			// Use 'wp' hook to check product page after query is parsed
+			add_action( 'wp', array( $this, 'register_product_hooks' ) );
+
+			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+
 			new LiveVisitorCountBlock( $this );
 		}
 	}
 
 	/**
-	 * Setup hooks for product pages
+	 * Register product-specific hooks after query is parsed
 	 *
 	 * @return void
 	 */
-	public function setup_product_page_hooks(): void {
-		// Check if we're on a single product page
+	public function register_product_hooks(): void {
+		// Check if we're on a product page (query is now parsed)
 		if ( ! function_exists( 'is_product' ) || ! is_product() ) {
 			return;
 		}
 
 		$settings = $this->get_settings();
-		if ( ! $settings['enabled'] ) {
-			return;
-		}
-
-		// Check if we should apply to this specific product/category
-		if ( ! $this->should_apply_to_current_product( $settings ) ) {
-			return;
-		}
-
 		$position = $settings['display']['position'] ?? 'below_product_title';
-		if ( 'below_product_title' === $position ) {
-			add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 6 );
-		} elseif ( 'above_add_to_cart_button' === $position ) {
-			add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_content' ), 10 );
-		} elseif ( 'below_add_to_cart_button' === $position ) {
-			add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'render_content' ), 10 );
-		} elseif ( 'below_price' === $position ) {
-			add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 11 );
+		switch ( $position ) {
+			case 'below_product_title':
+				add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 6 );
+				break;
+			case 'above_add_to_cart_button':
+				add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_content' ), 10 );
+				break;
+			case 'below_add_to_cart_button':
+				add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'render_content' ), 10 );
+				break;
+			case 'below_price':
+				add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 11 );
+				break;
+			default:
+				add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 6 );
+				break;
 		}
 	}
 
@@ -157,7 +127,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 * @param array $settings Feature settings
 	 * @return bool
 	 */
-	public function should_apply_to_current_product( array $settings ): bool {
+	public function should_apply_to_current_product(): bool {
+		$settings = $this->get_settings();
 		$apply_on = $settings['apply_on'] ?? array();
 		$apply    = $apply_on['apply'] ?? 'all';
 
@@ -241,8 +212,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return;
 		}
 
-		$settings = $this->get_settings();
-		if ( ! $this->should_apply_to_current_product( $settings ) ) {
+		if ( ! $this->should_apply_to_current_product() ) {
 			return;
 		}
 
@@ -254,6 +224,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 				YAYBOOST_VERSION
 			);
 		}
+
+		$settings = $this->get_settings();
 
 		if ( 'real-tracking' === $settings['tracking_mode'] ) {
 			wp_enqueue_script(
@@ -295,6 +267,11 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	}
 
 	public function render_content(): void {
+		// Check if feature should apply to current product
+		if ( ! $this->should_apply_to_current_product() ) {
+			return;
+		}
+
 		$content = $this->get_content();
 		echo wp_kses_post( $content );
 	}
@@ -320,11 +297,11 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$text    = str_replace( '{count}', '<span id="yayboost-live-visitor-count">' . $count . '</span>', $text );
 		$content = '';
 		if ( 'style_1' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-1" style="color: ' . $text_color . ';">' . $icon_html . $text . '</div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-1" style="color: ' . esc_attr( $text_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_2' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2" style="color: ' . $text_color . '; background-color: ' . $background_color . ';">' . $icon_html . $text . '</div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . $text . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . $icon_html . '<span id="yayboost-live-visitor-count">' . $count . '</span></div></div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-live-visitor-count">' . esc_html( $count ) . '</span></div></div>';
 		}
 		return $content;
 	}

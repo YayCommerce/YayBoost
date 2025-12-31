@@ -25,8 +25,7 @@ if ( ! function_exists( 'is_product' ) || ! is_product() ) {
 	return '';
 }
 
-$settings = $feature->get_settings();
-if ( ! $feature->should_apply_to_current_product( $settings ) ) {
+if ( ! $feature->should_apply_to_current_product() ) {
 	return '';
 }
 
