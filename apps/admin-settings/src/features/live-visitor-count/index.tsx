@@ -86,7 +86,6 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
     updateSettings.mutate({ id: featureId, settings: data });
   };
 
-  const enabled = feature?.enabled ?? true;
   const trackingMode = form.watch('tracking_mode');
   const style = form.watch('style.style');
   const applyOn = form.watch('apply_on.apply');
