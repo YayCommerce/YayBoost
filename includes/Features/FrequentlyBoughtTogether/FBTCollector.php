@@ -84,18 +84,23 @@ class FBTCollector {
             return;
         }
 
+        // Check if already processed (pass order object to reuse)
+        if ( $this->is_order_processed( $order ) ) {
+            return;
+        }
+
         // Extract product IDs from order
         $product_ids = $this->extract_product_ids( $order );
         if ( empty( $product_ids ) || count( $product_ids ) < 2 ) {
             // Need at least 2 products to form pairs
-            $this->mark_order_processed( $order_id );
+            $this->mark_order_processed( $order );
             return;
         }
 
         // Generate normalized pairs
         $pairs = $this->generate_pairs( $product_ids );
         if ( empty( $pairs ) ) {
-            $this->mark_order_processed( $order_id );
+            $this->mark_order_processed( $order );
             return;
         }
 
@@ -105,28 +110,45 @@ class FBTCollector {
         // Invalidate cache for related products
         $this->invalidate_cache_for_products( $product_ids );
 
-        // Mark order as processed
-        $this->mark_order_processed( $order_id );
+        // Mark order as processed (pass order object to reuse)
+        $this->mark_order_processed( $order );
     }
 
     /**
      * Check if order has been processed
      *
-     * @param int $order_id Order ID
+     * @param int|\WC_Order $order Order ID or WC_Order object
      * @return bool
      */
-    public function is_order_processed( int $order_id ): bool {
-        return (bool) get_post_meta( $order_id, self::PROCESSED_META_KEY, true );
+    public function is_order_processed( $order ): bool {
+        if ( is_int( $order ) ) {
+            $order = wc_get_order( $order );
+        }
+
+        if ( ! $order ) {
+            return false;
+        }
+
+        return (bool) $order->get_meta( self::PROCESSED_META_KEY, true );
     }
 
     /**
      * Mark order as processed
      *
-     * @param int $order_id Order ID
+     * @param int|\WC_Order $order Order ID or WC_Order object
      * @return void
      */
-    public function mark_order_processed( int $order_id ): void {
-        update_post_meta( $order_id, self::PROCESSED_META_KEY, true );
+    public function mark_order_processed( $order ): void {
+        if ( is_int( $order ) ) {
+            $order = wc_get_order( $order );
+        }
+
+        if ( ! $order ) {
+            return;
+        }
+
+        $order->update_meta_data( self::PROCESSED_META_KEY, true );
+        $order->save();
     }
 
     /**
@@ -181,8 +203,8 @@ class FBTCollector {
 
                 // Normalize: always store smaller ID as product_a
                 $pairs[] = [
-                    min( $id1, $id2 ), // product_a
-                    max( $id1, $id2 ), // product_b
+                    min( $id1, $id2 ),
+                    max( $id1, $id2 ),
                 ];
             }
         }
@@ -252,4 +274,3 @@ class FBTCollector {
         }
     }
 }
-

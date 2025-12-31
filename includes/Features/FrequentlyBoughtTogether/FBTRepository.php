@@ -53,7 +53,8 @@ class FBTRepository {
         }
 
         // Query database
-        $results = $this->query_recommendations( $product_id, $limit * 2 ); // Get more to account for filtering
+        $results = $this->query_recommendations( $product_id, $limit * 2 );
+        // Get more to account for filtering
 
         if ( empty( $results ) ) {
             // Cache empty result
@@ -86,7 +87,7 @@ class FBTRepository {
 
         // Cache product IDs
         $cached_ids = array_map(
-            function( $product ) {
+            function ( $product ) {
                 return $product->get_id();
             },
             $products
@@ -155,7 +156,7 @@ class FBTRepository {
         // Filter results
         return array_filter(
             $results,
-            function( $result ) use ( $min_count ) {
+            function ( $result ) use ( $min_count ) {
                 return isset( $result['count'] ) && (int) $result['count'] >= $min_count;
             }
         );
@@ -206,7 +207,7 @@ class FBTRepository {
     public function filter_out_of_stock( array $products ): array {
         return array_filter(
             $products,
-            function( $product ) {
+            function ( $product ) {
                 return $product && $product->is_in_stock() && $product->is_purchasable();
             }
         );
@@ -235,7 +236,7 @@ class FBTRepository {
 
         return array_filter(
             $products,
-            function( $product ) use ( $cart_ids ) {
+            function ( $product ) use ( $cart_ids ) {
                 return ! in_array( $product->get_id(), $cart_ids, true );
             }
         );
@@ -254,15 +255,20 @@ class FBTRepository {
             return (int) $cached;
         }
 
-        // Query total orders
-        $count = wc_get_orders(
-            [
-                'status' => 'wc-completed',
-                'limit'  => -1,
-                'return' => 'ids',
-            ]
+        // Use COUNT(*) query directly for better performance
+        global $wpdb;
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) 
+                FROM {$wpdb->posts} 
+                WHERE post_type = %s 
+                AND post_status = %s",
+                'shop_order',
+                'wc-completed'
+            )
         );
-        $count = is_array( $count ) ? count( $count ) : 0;
+
+        $count = (int) $count;
 
         // Cache for 6 hours
         set_transient( $cache_key, $count, 6 * HOUR_IN_SECONDS );
@@ -292,4 +298,3 @@ class FBTRepository {
         return "yayboost_fbt_{$product_id}_{$limit}_{$settings_hash}";
     }
 }
-
