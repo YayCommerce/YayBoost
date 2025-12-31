@@ -208,11 +208,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 
 	public function enqueue_assets(): void {
 		// Only enqueue on single product pages
-		if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-			return;
-		}
-
-		if ( ! $this->should_apply_to_current_product() ) {
+		if ( ! function_exists( 'is_product' ) || ! is_product() || ! $this->should_apply_to_current_product() ) {
 			return;
 		}
 

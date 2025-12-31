@@ -4,10 +4,9 @@ import { __ } from '@wordpress/i18n';
 import { ChevronDownIcon } from 'lucide-react';
 import z from 'zod';
 
-import { useFeature, useFeatures, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -30,6 +29,8 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
+import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
 
@@ -70,79 +71,20 @@ const settingsSchema = z.object({
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
 export default function LiveVisitorCountFeature({ featureId }: FeatureComponentProps) {
-  const { data: feature, isLoading } = useFeature(featureId);
+  const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
+  const toggleMutation = useToggleFeature();
   const [realTrackingExpanded, setRealTrackingExpanded] = useState(true);
   const [simulatedExpanded, setSimulatedExpanded] = useState(true);
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      enabled: true,
-      tracking_mode: 'simulated',
-      real_tracking: {
-        active_window: 5,
-        minimum_count_display: 1,
-      },
-      simulated: {
-        min: 10,
-        max: 50,
-      },
-      display: {
-        text: '{count} people are viewing this right now',
-        icon: 'eye',
-        position: 'below_product_title',
-      },
-      style: {
-        style: 'style_1',
-        text_color: '#a74c3c',
-        background_color: '#fff3f3',
-      },
-      apply_on: {
-        apply: 'all',
-      },
-    },
+    defaultValues: feature?.settings as SettingsFormData,
   });
-
-  // Update form when feature data loads
-  useEffect(() => {
-    if (feature?.settings) {
-      const settings = feature.settings as Partial<SettingsFormData>;
-      form.reset({
-        enabled: settings.enabled ?? true,
-        tracking_mode: settings.tracking_mode ?? 'simulated',
-        real_tracking: {
-          active_window: settings.real_tracking?.active_window ?? 5,
-          minimum_count_display: settings.real_tracking?.minimum_count_display ?? 1,
-        },
-        simulated: {
-          min: settings.simulated?.min ?? 10,
-          max: settings.simulated?.max ?? 50,
-        },
-        display: {
-          text: settings.display?.text ?? '{count} people are viewing this right now',
-          icon: settings.display?.icon ?? 'eye',
-          position: settings.display?.position ?? 'below_product_title',
-        },
-        style: {
-          style: settings.style?.style ?? 'style_1',
-          text_color: settings.style?.text_color ?? '#a74c3c',
-          background_color: settings.style?.background_color ?? '#fff3f3',
-        },
-        apply_on: {
-          apply: settings.apply_on?.apply ?? 'all',
-          categories: settings.apply_on?.categories ?? [],
-          products: settings.apply_on?.products ?? [],
-        },
-      });
-    }
-  }, [feature, form]);
 
   const onSubmit = (data: SettingsFormData) => {
     updateSettings.mutate({ id: featureId, settings: data });
   };
-
-  //get current feature data
 
   const enabled = feature?.enabled ?? true;
   const trackingMode = form.watch('tracking_mode');
@@ -160,7 +102,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
     }
   }, [trackingMode]);
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -170,8 +112,13 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
     );
   }
 
+  if (!feature?.settings) {
+    return <UnavailableFeature />;
+  }
+
   return (
     <Form {...form}>
+      <FeatureLayoutHeader title={feature.name} description={feature.description} />
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="space-y-6">
           <Card>
@@ -182,17 +129,50 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="mb-0 flex items-center gap-2">
-                <Checkbox
-                  checked={enabled}
-                  onCheckedChange={(checked) => {
-                    updateSettings.mutate({ id: featureId, settings: { enabled: checked } });
-                  }}
-                />
-                <label className="!mt-0 cursor-pointer">
-                  {__('Enable Live Visitor Count', 'yayboost')}
-                </label>
-              </div>
+              <FormField
+                control={form.control}
+                name="enabled"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{__('Enable Live Visitor Count', 'yayboost')}</FormLabel>
+                    <FormControl>
+                      <FormControl>
+                        <RadioGroup
+                          value={field.value ? 'on' : 'off'}
+                          onValueChange={(value) => {
+                            const newEnabled = value === 'on';
+                            field.onChange(newEnabled);
+                          }}
+                          disabled={toggleMutation.isPending}
+                          className="flex items-center gap-6"
+                        >
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="on"
+                              id="enabled-on"
+                              disabled={toggleMutation.isPending}
+                            />
+                            <label htmlFor="enabled-on" className="cursor-pointer">
+                              {__('On', 'yayboost')}
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value="off"
+                              id="enabled-off"
+                              disabled={toggleMutation.isPending}
+                            />
+                            <label htmlFor="enabled-off" className="cursor-pointer">
+                              {__('Off', 'yayboost')}
+                            </label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Separator className="my-4" />
               {/* Tracking Mode */}
               <div className="space-y-4">
