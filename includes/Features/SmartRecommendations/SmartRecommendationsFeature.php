@@ -108,7 +108,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
             'yayboost-recommendations',
             plugin_dir_url( __FILE__ ) . 'assets/recommendations.css',
             [],
-            '1.0.0'
+            YAYBOOST_VERSION
         );
 
         // Enqueue JavaScript
@@ -116,7 +116,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
             'yayboost-recommendations',
             plugin_dir_url( __FILE__ ) . 'assets/recommendations.js',
             [ 'jquery' ],
-            '1.0.0',
+            YAYBOOST_VERSION,
             true
         );
 
@@ -178,6 +178,26 @@ class SmartRecommendationsFeature extends AbstractFeature {
         $product_id = $product->get_id();
         $category_ids = $product->get_category_ids();
         $tag_ids = wp_get_post_terms( $product_id, 'product_tag', [ 'fields' => 'ids' ] );
+    
+        $category_slugs = [];
+        if ( ! empty( $category_ids ) ) {
+            $categories = get_terms([
+                'taxonomy' => 'product_cat',
+                'include' => $category_ids,
+                'fields' => 'id=>slug',
+            ]);
+            $category_slugs = $categories ? array_values( $categories ) : [];
+        }
+    
+        $tag_slugs = [];
+        if ( ! empty( $tag_ids ) ) {
+            $tags = get_terms([
+                'taxonomy' => 'product_tag',
+                'include' => $tag_ids,
+                'fields' => 'id=>slug',
+            ]);
+            $tag_slugs = $tags ? array_values( $tags ) : [];
+        }
 
         $all_rules = $this->repository->get_active_rules();
         $matching_rules = [];
@@ -193,23 +213,13 @@ class SmartRecommendationsFeature extends AbstractFeature {
                 case 'product':
                     $matches = ( (string) $product_id === (string) $trigger_value );
                     break;
-
                 case 'category':
-                    if ( ! empty( $category_ids )) {
-                        $category_slugs = array_map( function( $cat_id ) {
-                            $term = get_term( $cat_id );
-                            return $term ? $term->slug : '';
-                        }, $category_ids );
+                    if ( ! empty( $category_slugs ) ) {
                         $matches = in_array( $trigger_value, $category_slugs, true );
                     }
                     break;
-
                 case 'tag':
-                    if ( ! empty( $tag_ids )) {
-                        $tag_slugs = array_map( function( $tag_id ) {
-                            $term = get_term( $tag_id );
-                            return $term ? $term->slug : '';
-                        }, $tag_ids );
+                    if ( ! empty( $tag_slugs ) ) {
                         $matches = in_array( $trigger_value, $tag_slugs, true );
                     }
                     break;

@@ -319,9 +319,7 @@ function WhenCustomerViewsSection({form}: { form: UseFormReturn<RecommendationRu
           label="Type"
           placeholder="Select type"
           options={TYPE_OPTIONS}
-          onChange={(value) => {
-            form.setValue('when_customer_views_value', '');
-          }}
+          onChange={() => form.resetField('when_customer_views_value')}
         />
         <SelectField
           key={`${watchType}`}
@@ -362,9 +360,7 @@ function RecommendProductsFromSection({form}: { form: UseFormReturn<Recommendati
             label="Type"
             placeholder="Select type"
             options={TYPE_OPTIONS}
-            onChange={(value) => {
-              form.setValue('recommend_products_from_value', []);
-            }}
+            onChange={() => form.resetField('recommend_products_from_value')}
           />
           <FormField
             control={form.control}
@@ -497,7 +493,7 @@ const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
     defaultValues: {
       name: '',
       when_customer_views_type: 'category',
-      when_customer_views_value: 'phones',
+      when_customer_views_value: '',
       recommend_products_from_type: 'category',
       recommend_products_from_value: [],
       max_products_to_show: '3',
