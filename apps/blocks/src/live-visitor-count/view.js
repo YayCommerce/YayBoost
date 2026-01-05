@@ -1,4 +1,10 @@
 (function ($) {
+  // Prevent duplicate initialization when both hook and block are on the same page
+  // Check this FIRST before any other operations
+  if (window.yayboostLiveVisitorCountInitialized) {
+    return;
+  }
+
   // Only run on single product pages - check if localized data exists and pageId is valid
   if (
     typeof yayboostLiveVisitorCount === "undefined" ||
@@ -6,6 +12,19 @@
     yayboostLiveVisitorCount.pageId <= 0
   ) {
     return;
+  }
+
+  // Mark as initialized immediately to prevent race conditions
+  window.yayboostLiveVisitorCountInitialized = true;
+
+  // Clear any existing intervals if they exist (safety measure)
+  if (window.yayboostLiveVisitorCountIntervals) {
+    if (window.yayboostLiveVisitorCountIntervals.countInterval) {
+      clearInterval(window.yayboostLiveVisitorCountIntervals.countInterval);
+    }
+    if (window.yayboostLiveVisitorCountIntervals.pingInterval) {
+      clearInterval(window.yayboostLiveVisitorCountIntervals.pingInterval);
+    }
   }
 
   // Generate a unique visitor ID per tab/window (persists in sessionStorage)
@@ -91,18 +110,18 @@
     const minimumCountDisplay = parseInt(
       yayboostLiveVisitorCount.minimumCountDisplay
     );
-    if (minimumCountDisplay > 0 && count < minimumCountDisplay) {
-      return;
-    }
 
     const countEl = document.querySelectorAll("#yayboost-live-visitor-count");
     for (const el of countEl) {
-      const wrapperEl = el.parentElement;
-      if (wrapperEl) {
-        if (wrapperEl.style.display === "none") {
-          wrapperEl.style.display = "block";
+      const wrapperEl = el.closest(".yayboost-live-visitor-count");
+      if (
+        wrapperEl &&
+        wrapperEl.classList.contains("yayboost-live-visitor-count")
+      ) {
+        if (minimumCountDisplay > 0 && count < minimumCountDisplay) {
+          wrapperEl.classList.add("hidden");
         } else {
-          wrapperEl.style.display = "none";
+          wrapperEl.classList.remove("hidden");
         }
       }
       el.innerHTML = count;
@@ -112,7 +131,10 @@
   // Get activeWindow in minutes, convert to milliseconds for setInterval
   const activeWindowMs =
     (yayboostLiveVisitorCount.activeWindow || 2) * 60 * 1000;
-  // Set up intervals
-  setInterval(countVisitors, 60000); // Every minute
-  setInterval(updateVisitor, activeWindowMs); // Every activeWindow minutes
+
+  // Set up intervals and store their IDs globally to prevent duplicates
+  window.yayboostLiveVisitorCountIntervals = {
+    countInterval: setInterval(countVisitors, 60000), // Every minute
+    pingInterval: setInterval(updateVisitor, activeWindowMs), // Every activeWindow minutes
+  };
 })(jQuery);

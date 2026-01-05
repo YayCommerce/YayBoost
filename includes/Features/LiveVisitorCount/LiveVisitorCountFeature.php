@@ -224,13 +224,16 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$settings = $this->get_settings();
 
 		if ( 'real-tracking' === $settings['tracking_mode'] ) {
-			wp_enqueue_script(
-				'yayboost-live-visitor-count',
-				YAYBOOST_URL . 'assets/dist/blocks/live-visitor-count/view.js',
-				array( 'jquery' ),
-				YAYBOOST_VERSION,
-				true
-			);
+			// Prevent duplicate enqueuing - WordPress handles this, but check anyway for safety
+			if ( ! wp_script_is( 'yayboost-live-visitor-count', 'enqueued' ) ) {
+				wp_enqueue_script(
+					'yayboost-live-visitor-count',
+					YAYBOOST_URL . 'assets/dist/blocks/live-visitor-count/view.js',
+					array( 'jquery' ),
+					YAYBOOST_VERSION,
+					true
+				);
+			}
 
 			$page_id = get_the_ID();
 			if ( ! $page_id ) {
@@ -284,20 +287,17 @@ class LiveVisitorCountFeature extends AbstractFeature {
 
 		$icon_html = $this->get_icon_html( $icon );
 		$count     = $this->get_visitor_count();
-		if (
-			'real-tracking' === $tracking_mode && $count < $minimum_count_display
-		) {
-			return '';
-		}
-		$count   = 'real-tracking' === $tracking_mode ? $count : rand( $settings['simulated']['min'], $settings['simulated']['max'] );
-		$text    = str_replace( '{count}', '<span id="yayboost-live-visitor-count">' . $count . '</span>', $text );
-		$content = '';
+
+		$is_hidden = 'real-tracking' === $tracking_mode && $count < $minimum_count_display;
+		$count     = 'real-tracking' === $tracking_mode ? $count : rand( $settings['simulated']['min'], $settings['simulated']['max'] );
+		$text      = str_replace( '{count}', '<span id="yayboost-live-visitor-count">' . $count . '</span>', $text );
+		$content   = '';
 		if ( 'style_1' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-1" style="color: ' . esc_attr( $text_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_2' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-live-visitor-count">' . esc_html( $count ) . '</span></div></div>';
+			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper ' . ( $is_hidden ? 'hidden' : '' ) . '"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-live-visitor-count">' . esc_html( $count ) . '</span></div></div>';
 		}
 		return $content;
 	}
