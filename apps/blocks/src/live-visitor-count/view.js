@@ -114,10 +114,7 @@
     const countEl = document.querySelectorAll("#yayboost-live-visitor-count");
     for (const el of countEl) {
       const wrapperEl = el.closest(".yayboost-live-visitor-count");
-      if (
-        wrapperEl &&
-        wrapperEl.classList.contains("yayboost-live-visitor-count")
-      ) {
+      if (wrapperEl) {
         if (minimumCountDisplay > 0 && count < minimumCountDisplay) {
           wrapperEl.classList.add("hidden");
         } else {
