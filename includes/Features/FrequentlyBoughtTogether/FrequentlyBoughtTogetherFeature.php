@@ -98,20 +98,9 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         add_action( 'woocommerce_order_status_completed', [ $this->collector, 'handle_order_completed' ], 20 );
         add_action( 'yayboost_process_fbt_order', [ $this->collector, 'handle_background_job' ] );
 
-        // Register display hooks based on show_on settings
-        $settings = $this->get_settings();
-        $show_on  = $settings['show_on'] ?? [ 'product_page', 'cart_page' ];
-
-        if ( in_array( 'product_page', $show_on, true ) ) {
+        // Register display hooks - only check enabled
+        if ( $this->is_enabled() ) {
             add_action( 'woocommerce_after_single_product_summary', [ $this, 'render_fbt_section' ], 25 );
-        }
-
-        if ( in_array( 'cart_page', $show_on, true ) ) {
-            add_action( 'woocommerce_after_cart_table', [ $this, 'render_cart_fbt_section' ] );
-        }
-
-        if ( in_array( 'mini_cart', $show_on, true ) ) {
-            add_action( 'woocommerce_before_mini_cart', [ $this, 'render_mini_cart_fbt_section' ] );
         }
 
         // Enqueue frontend assets
@@ -148,7 +137,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                 'enabled'             => false,
                 'max_products'        => 4,
                 'min_order_threshold' => 5,
-                'show_on'             => [ 'product_page', 'cart_page' ],
                 'layout'              => 'grid',
                 'section_title'       => __( 'Complete Your Purchase', 'yayboost' ),
                 'hide_if_in_cart'     => 'hide',
@@ -162,11 +150,8 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
      * @return void
      */
     public function enqueue_assets(): void {
-        $settings = $this->get_settings();
-        $show_on  = $settings['show_on'] ?? [];
-
-        // Only enqueue on relevant pages
-        if ( ! is_product() && ! is_cart() && ! in_array( 'mini_cart', $show_on, true ) ) {
+        // Only enqueue on product pages
+        if ( ! is_product() ) {
             return;
         }
 
@@ -218,50 +203,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
 
         $product_id = $product->get_id();
         $this->render_fbt_section_for_product( $product_id );
-    }
-
-    /**
-     * Render FBT section on cart page
-     *
-     * @return void
-     */
-    public function render_cart_fbt_section(): void {
-        if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
-            return;
-        }
-
-        // Get first product from cart
-        $cart_items = WC()->cart->get_cart();
-        $first_item = reset( $cart_items );
-
-        if ( ! $first_item ) {
-            return;
-        }
-
-        $product_id = $first_item['product_id'];
-        $this->render_fbt_section_for_product( $product_id );
-    }
-
-    /**
-     * Render FBT section in mini cart
-     *
-     * @return void
-     */
-    public function render_mini_cart_fbt_section(): void {
-        if ( ! function_exists( 'WC' ) || ! WC()->cart || WC()->cart->is_empty() ) {
-            return;
-        }
-
-        // Get first product from cart
-        $cart_items = WC()->cart->get_cart();
-        $first_item = reset( $cart_items );
-
-        if ( ! $first_item ) {
-            return;
-        }
-
-        $product_id = $first_item['product_id'];
-        $this->render_fbt_section_for_product( $product_id, true );
     }
 
     /**

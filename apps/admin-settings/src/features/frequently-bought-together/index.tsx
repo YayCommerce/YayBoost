@@ -14,7 +14,6 @@ import { z } from 'zod';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -25,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { InputNumber } from '@/components/ui/input-number';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
@@ -42,19 +42,12 @@ const settingsSchema = z.object({
   enabled: z.boolean(),
   max_products: z.number().min(1).max(20),
   min_order_threshold: z.number().min(0).max(100), // percentage
-  show_on: z.array(z.string()), // ['product_page', 'cart_page', 'mini_cart']
   layout: z.enum(['grid', 'list', 'slider']),
   section_title: z.string().min(1),
   hide_if_in_cart: z.enum(['hide', 'show']), // 'hide' = hide it, 'show' = still show it
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
-
-const showOnOptions = [
-  { id: 'product_page', label: __('Product Page', 'yayboost') },
-  { id: 'cart_page', label: __('Cart Page', 'yayboost') },
-  { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
-];
 
 const layoutOptions = [
   { value: 'grid', label: __('Grid', 'yayboost') },
@@ -74,7 +67,14 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
   const { isDirty } = form.formState;
 
   const onSubmit = (data: SettingsFormData) => {
-    updateSettings.mutate({ id: featureId, settings: data });
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: () => {
+          form.reset(data);
+        },
+      },
+    );
   };
 
   if (isLoading || isFetching) {
@@ -94,13 +94,6 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
     <Form {...form}>
       <FeatureLayoutHeader title={feature?.name ?? ''} description={feature?.description ?? ''} />
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Save Button - Top Right */}
-        <div className="flex justify-end">
-          <Button type="submit" disabled={updateSettings.isPending || !isDirty}>
-            {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-          </Button>
-        </div>
-
         {/* General Section */}
         <Card>
           <CardHeader>
@@ -159,12 +152,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                 <FormItem className="w-60">
                   <FormLabel>{__('Maximum products to show', 'yayboost')}</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      max="20"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                    <InputNumber
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      min={1}
+                      max={20}
                     />
                   </FormControl>
                   <FormMessage />
@@ -179,12 +171,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                 <FormItem className="w-60">
                   <FormLabel>{__('Minimum Order Threshold', 'yayboost')}</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    <InputNumber
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      min={0}
+                      max={100}
                     />
                   </FormControl>
                   <FormDescription>
@@ -210,44 +201,6 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="show_on"
-              render={() => (
-                <FormItem>
-                  <FormLabel>{__('Show on', 'yayboost')}</FormLabel>
-                  <div className="space-y-2">
-                    {showOnOptions.map((option) => (
-                      <FormField
-                        key={option.id}
-                        control={form.control}
-                        name="show_on"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-y-0 space-x-3">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(option.id)}
-                                onCheckedChange={(checked) => {
-                                  const current = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...current, option.id]);
-                                  } else {
-                                    field.onChange(current.filter((v) => v !== option.id));
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="text-sm font-normal">{option.label}</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="layout"

@@ -7,6 +7,7 @@
  */
 
 import { store, getContext, getElement } from "@wordpress/interactivity";
+import { formatPrice } from "../utils";
 
 /**
  * Frequently Bought Together block store.
@@ -31,7 +32,9 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
       const ctx = getContext();
       const { ref } = getElement();
       const productId = parseInt(
-        ref.getAttribute("data-product-id") || ref.closest("[data-product-id]")?.getAttribute("data-product-id") || "0",
+        ref.getAttribute("data-product-id") ||
+          ref.closest("[data-product-id]")?.getAttribute("data-product-id") ||
+          "0",
         10
       );
 
@@ -80,24 +83,8 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
         .filter((p) => selectedProductsSet.has(p.id))
         .reduce((sum, p) => sum + p.price, 0);
 
-      // Update formatted price display
-      // Use accounting.js if available (WooCommerce uses this)
-      if (typeof window.accounting !== "undefined" && typeof window.accounting.formatMoney === "function") {
-        const currency = window.wcSettings?.currency || {};
-        ctx.totalPriceFormatted = window.accounting.formatMoney(ctx.totalPrice, {
-          symbol: currency.symbol || "$",
-          precision: currency.precision || 2,
-          decimal: currency.decimalSeparator || ".",
-          thousand: currency.thousandSeparator || ",",
-          format: currency.symbolPosition === "right" ? "%v%s" : "%s%v",
-        });
-      } else {
-        // Fallback to basic formatting
-        ctx.totalPriceFormatted = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(ctx.totalPrice);
-      }
+      // Update formatted price display using shared formatPrice utility
+      ctx.totalPriceFormatted = formatPrice(ctx.totalPrice);
     },
 
     /**
@@ -132,16 +119,7 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
         const data = await response.json();
 
         if (data.success) {
-          // Trigger cart update events
-          if (typeof jQuery !== "undefined") {
-            jQuery(document.body).trigger("added_to_cart", [
-              data.data.fragments,
-              data.data.cart_hash,
-              button,
-            ]);
-          }
-
-          // Update cart fragments if available
+          // Update cart fragments FIRST (before triggering events)
           if (data.data.fragments) {
             Object.keys(data.data.fragments).forEach((key) => {
               const element = document.querySelector(key);
@@ -151,20 +129,34 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
             });
           }
 
+          // Trigger WooCommerce events for cart refresh
+          if (typeof jQuery !== "undefined") {
+            // CRITICAL: wc_fragment_refresh is needed for WooCommerce Blocks mini cart
+            jQuery(document.body).trigger("wc_fragment_refresh");
+
+            // Also trigger added_to_cart for compatibility
+            jQuery(document.body).trigger("added_to_cart", [
+              data.data.fragments,
+              data.data.cart_hash,
+              button,
+            ]);
+          }
+
           // Show success message
           if (data.data.message) {
-            // You can customize this to use WooCommerce notices
             console.log(data.data.message);
           }
 
-          // Optionally redirect or show success
+          // Update button state
           button.textContent = "Added to cart!";
           setTimeout(() => {
             button.textContent = originalText;
             button.disabled = false;
           }, 2000);
         } else {
-          throw new Error(data.data?.message || "Failed to add products to cart");
+          throw new Error(
+            data.data?.message || "Failed to add products to cart"
+          );
         }
       } catch (error) {
         console.error("FBT Batch Add Error:", error);
@@ -183,9 +175,15 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
     init() {
       const ctx = getContext();
 
+      // Initialize products array if not set (safety check)
+      if (!ctx.products || !Array.isArray(ctx.products)) {
+        ctx.products = [];
+      }
+
       // Initialize selected products if not set (default: all selected)
       if (!ctx.selectedProducts || ctx.selectedProducts.length === 0) {
-        ctx.selectedProducts = [...ctx.products.map((p) => p.id)];
+        ctx.selectedProducts =
+          ctx.products.length > 0 ? [...ctx.products.map((p) => p.id)] : [];
       }
 
       // Calculate initial total
@@ -193,9 +191,27 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
         actions.updateTotal();
       }
 
-      // Return cleanup function if needed
+      // Listen for single product add-to-cart from WooCommerce Blocks product-button
+      // This ensures mini cart refreshes when using default WooCommerce button
+      const handleSingleAddToCart = () => {
+        if (typeof jQuery !== "undefined") {
+          // Trigger fragment refresh for WooCommerce Blocks mini cart
+          jQuery(document.body).trigger("wc_fragment_refresh");
+        }
+      };
+
+      // Listen for WooCommerce Blocks add-to-cart event (DOM event)
+      document.addEventListener(
+        "wc-blocks_added_to_cart",
+        handleSingleAddToCart
+      );
+
+      // Return cleanup function
       return () => {
-        // Cleanup if needed
+        document.removeEventListener(
+          "wc-blocks_added_to_cart",
+          handleSingleAddToCart
+        );
       };
     },
   },
@@ -215,4 +231,3 @@ const { state, actions } = store("yayboost/frequently-bought-together", {
     },
   },
 });
-
