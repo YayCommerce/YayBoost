@@ -57,7 +57,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
       switch (triggerType) {
         case 'category':
           triggerLabel =
-            wooCommerceData?.categories?.find((category: any) => category.value === triggerValue)
+            wooCommerceData?.categories?.find((category: any) => String(category.id) === String(triggerValue))
               ?.label || triggerValue;
           break;
         case 'product':
@@ -67,7 +67,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
           break;
         case 'tag':
           triggerLabel =
-            wooCommerceData?.tags?.find((tag: any) => tag.id === triggerValue)?.label ||
+            wooCommerceData?.tags?.find((tag: any) => String(tag.id) === String(triggerValue))?.label ||
             triggerValue;
           break;
       }
@@ -78,7 +78,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
         switch (recommendType) {
           case 'category':
             return (
-              wooCommerceData?.categories?.find((category: any) => category.value === value)
+              wooCommerceData?.categories?.find((category: any) => String(category.id) === String(value))
                 ?.label || value
             );
           case 'product':
@@ -87,7 +87,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
               value
             );
           case 'tag':
-            return wooCommerceData?.tags?.find((tag: any) => tag.id === value)?.label || value;
+            return wooCommerceData?.tags?.find((tag: any) => String(tag.id) === String(value))?.label || value;
           default:
             return value;
         }

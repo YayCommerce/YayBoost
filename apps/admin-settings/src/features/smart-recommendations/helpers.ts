@@ -9,17 +9,17 @@ export function getOptionsFromLocalize(type: 'category' | 'product' | 'tag') {
       case 'category':
         return (localizeData.categories || []).map((item: any) => ({
           label: item.label,
-          value: item.value, // slug
+          value: String(item.id), // ID as string
         }));
       case 'product':
         return (localizeData.products || []).map((item: any) => ({
           label: item.label,
-          value: item.value, // ID as string
+          value: item.value,
         }));
       case 'tag':
         return (localizeData.tags || []).map((item: any) => ({
           label: item.label,
-          value: item.value, // slug
+          value: item.value,
         }));
       default:
         return [];

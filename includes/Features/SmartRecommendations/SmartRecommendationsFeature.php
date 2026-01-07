@@ -178,27 +178,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
         $product_id = $product->get_id();
         $category_ids = $product->get_category_ids();
         $tag_ids = wp_get_post_terms( $product_id, 'product_tag', [ 'fields' => 'ids' ] );
-    
-        $category_slugs = [];
-        if ( ! empty( $category_ids ) ) {
-            $categories = get_terms([
-                'taxonomy' => 'product_cat',
-                'include' => $category_ids,
-                'fields' => 'id=>slug',
-            ]);
-            $category_slugs = $categories ? array_values( $categories ) : [];
-        }
-    
-        $tag_slugs = [];
-        if ( ! empty( $tag_ids ) ) {
-            $tags = get_terms([
-                'taxonomy' => 'product_tag',
-                'include' => $tag_ids,
-                'fields' => 'id=>slug',
-            ]);
-            $tag_slugs = $tags ? array_values( $tags ) : [];
-        }
-
+        
         $all_rules = $this->repository->get_active_rules();
         $matching_rules = [];
 
@@ -211,16 +191,37 @@ class SmartRecommendationsFeature extends AbstractFeature {
 
             switch ( $trigger_type ) {
                 case 'product':
-                    $matches = ( (string) $product_id === (string) $trigger_value );
+                    // Compare product IDs
+                    $matches = ( (int) $product_id === (int) $trigger_value );
                     break;
+                    
                 case 'category':
-                    if ( ! empty( $category_slugs ) ) {
-                        $matches = in_array( $trigger_value, $category_slugs, true );
+                    if ( ! empty( $category_ids ) && ! empty( $trigger_value ) ) {
+                        $trigger_category_id = (int) $trigger_value;
+                        
+                        // Check if product is in this category
+                        if ( in_array( $trigger_category_id, $category_ids, true ) ) {
+                            $matches = true;
+                        } else {
+                            // Check if product is in a child category
+                            $child_categories = get_term_children( $trigger_category_id, 'product_cat' );
+                            
+                            if ( ! is_wp_error( $child_categories ) && ! empty( $child_categories ) ) {
+                                foreach ( $category_ids as $cat_id ) {
+                                    if ( in_array( $cat_id, $child_categories, true ) ) {
+                                        $matches = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                     break;
+                    
                 case 'tag':
-                    if ( ! empty( $tag_slugs ) ) {
-                        $matches = in_array( $trigger_value, $tag_slugs, true );
+                    if ( ! empty( $tag_ids ) && ! empty( $trigger_value ) ) {
+                        $trigger_tag_id = (int) $trigger_value;
+                        $matches = in_array( $trigger_tag_id, $tag_ids, true );
                     }
                     break;
             }
@@ -278,8 +279,8 @@ class SmartRecommendationsFeature extends AbstractFeature {
                 $query_args['tax_query'] = [
                     [
                         'taxonomy' => 'product_cat',
-                        'field'    => 'slug',
-                        'terms'    => $recommend_values,
+                        'field'    => 'term_id',
+                        'terms'    => array_map( 'intval', $recommend_values ),
                     ],
                 ];
                 break;
@@ -288,8 +289,8 @@ class SmartRecommendationsFeature extends AbstractFeature {
                 $query_args['tax_query'] = [
                     [
                         'taxonomy' => 'product_tag',
-                        'field'    => 'slug',
-                        'terms'    => $recommend_values,
+                        'field'    => 'term_id',
+                        'terms'    => array_map( 'intval', $recommend_values ),
                     ],
                 ];
                 break;
