@@ -66,10 +66,10 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		parent::__construct( $container );
 
 		// Register AJAX count and update visitor count
-		add_action( 'wp_ajax_yayboost_live_visitor_count_ping', array( $this, 'ajax_ping' ) );
-		add_action( 'wp_ajax_nopriv_yayboost_live_visitor_count_ping', array( $this, 'ajax_ping' ) );
-		add_action( 'wp_ajax_yayboost_live_visitor_count_count', array( $this, 'ajax_count' ) );
-		add_action( 'wp_ajax_nopriv_yayboost_live_visitor_count_count', array( $this, 'ajax_count' ) );
+		add_action( 'wp_ajax_yayboost_visitor_ping', array( $this, 'ajax_ping' ) );
+		add_action( 'wp_ajax_nopriv_yayboost_visitor_ping', array( $this, 'ajax_ping' ) );
+		add_action( 'wp_ajax_yayboost_count_visitors', array( $this, 'ajax_count' ) );
+		add_action( 'wp_ajax_nopriv_yayboost_count_visitors', array( $this, 'ajax_count' ) );
 	}
 
 	/**

@@ -41,7 +41,7 @@
   // First interval: Count visitors every minute (60000ms)
   function countVisitors() {
     const formData = new FormData();
-    formData.append("action", "yayboost_live_visitor_count_count");
+    formData.append("action", "yayboost_count_visitors");
     formData.append("nonce", yayboostLiveVisitorCount.nonce);
     formData.append("page_id", yayboostLiveVisitorCount.pageId);
 
@@ -75,7 +75,7 @@
   // Second interval: Update visitor record every activeWindow minutes
   function updateVisitor() {
     const formData = new FormData();
-    formData.append("action", "yayboost_live_visitor_count_ping");
+    formData.append("action", "yayboost_visitor_ping");
     formData.append("nonce", yayboostLiveVisitorCount.nonce);
     formData.append("page_id", yayboostLiveVisitorCount.pageId);
     formData.append("visitor_id", visitorId);
