@@ -119,10 +119,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         }
         add_action( 'yayboost_fbt_weekly_cleanup', [ $this, 'run_cleanup' ] );
 
-        // Register Gutenberg block
-        if ( $this->is_enabled() ) {
-            new FrequentlyBoughtTogetherBlock( $this );
-        }
     }
 
     /**
@@ -138,7 +134,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                 'max_products'        => 4,
                 'min_order_threshold' => 5,
                 'layout'              => 'grid',
-                'section_title'       => __( 'Complete Your Purchase', 'yayboost' ),
+                'section_title'       => __( 'Frequently Bought Together', 'yayboost' ),
                 'hide_if_in_cart'     => 'hide',
             ]
         );
@@ -296,7 +292,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
      * @return void
      */
     protected function render_template( int $current_product_id, array $fbt_products, array $settings, bool $is_mini_cart = false ): void {
-        $section_title = $settings['section_title'] ?? __( 'Complete Your Purchase', 'yayboost' );
+        $section_title = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
         $layout        = $settings['layout'] ?? 'grid';
         $max_products  = $settings['max_products'] ?? 4;
 

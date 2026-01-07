@@ -102,7 +102,7 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
   return (
     <div className="space-y-4">
       <h2 className="yayboost-fbt-title pb-5 text-center text-xl font-semibold">
-        {settings.section_title || __('Complete Your Purchase', 'yayboost')}
+        {settings.section_title || __('Frequently Bought Together', 'yayboost')}
       </h2>
 
       <div className="grid grid-cols-3 gap-5">
@@ -344,7 +344,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     <FormItem className="w-60">
                       <FormLabel>{__('Section title', 'yayboost')}</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder={__('Complete Your Purchase', 'yayboost')} />
+                        <Input {...field} placeholder={__('Frequently Bought Together', 'yayboost')} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
