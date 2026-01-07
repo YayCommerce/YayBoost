@@ -651,36 +651,33 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
     updateSettings.mutate({ id: featureId, settings: data });
   };
 
+  // Define default fallback values
+  const defaultValues: SettingsFormData = {
+    enabled: true,
+    low_stock_threshold: 10,
+    show_alert_text: true,
+    show_progress_bar: true,
+    default_message: '',
+    urgent_threshold: 5,
+    urgent_message: '',
+    fixed_stock_number: {
+      is_enabled: false,
+      number: 50,
+    },
+    fill_color: '#E53935',
+    background_color: '#EEEEEE',
+    position_on_product_page: 'below_title',
+    show_on: ['product_page', 'shop_category_pages'],
+    apply_to: 'all_products',
+    specific_categories: [],
+    specific_products: [],
+    exclude_products: [],
+  };
+
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      enabled: true,
-      low_stock_threshold: 10,
-      show_alert_text: true,
-      show_progress_bar: true,
-      default_message: '',
-      urgent_threshold: 5,
-      urgent_message: '',
-      fixed_stock_number: {
-        is_enabled: false,
-        number: 50,
-      },
-      fill_color: '#E53935',
-      background_color: '#EEEEEE',
-      position_on_product_page: 'below_title',
-      show_on: ['product_page', 'shop_category_pages'],
-      apply_to: 'all_products',
-      specific_categories: [],
-      specific_products: [],
-      exclude_products: [],
-    },
+    defaultValues: (feature?.settings as SettingsFormData) || defaultValues,
   });
-
-  useEffect(() => {
-    if (feature?.settings) {
-      form.reset(feature.settings as SettingsFormData);
-    }
-  }, [feature, form]);
 
   if (isLoading) {
     return (
