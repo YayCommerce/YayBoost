@@ -4,6 +4,7 @@ import { ArrowLeft, PencilSimple, Plus } from '@phosphor-icons/react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import {
   Table,
@@ -38,7 +39,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
   const navigate = useNavigate();
   const updateEntity = useUpdateEntity(featureId);
   const { data: feature } = useFeature(featureId);
-  const { data } = useEntities({
+  const { data, isLoading} = useEntities({
     featureId,
     entityType: 'recommendation',
   });
@@ -116,8 +117,13 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
     [updateEntity],
   );
 
-  if (recommendations?.length === 0) {
-    return <EmptyState />;
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
   }
 
   return (
@@ -145,43 +151,47 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
           </Link>
         </div>
       </div>
-      <div className="overflow-hidden rounded-lg border border-gray-200">
-        <Table className="text-[16px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[390px] font-bold">Rule name</TableHead>
-              <TableHead className="w-[222px] font-bold">Trigger</TableHead>
-              <TableHead className="w-[296px] font-bold">Recommend</TableHead>
-              <TableHead className="w-[240px] font-bold">Status</TableHead>
-              <TableHead className="w-[80px] font-bold"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {parseRecommendation?.map((recommendation) => (
-              <TableRow key={recommendation.id}>
-                <TableCell className="font-light">{recommendation.name}</TableCell>
-                <TableCell className="font-light">{recommendation.triggerLabel}</TableCell>
-                <TableCell className="font-light">
-                  {formatRecommendLabels(recommendation.recommendLabels)}
-                </TableCell>
-                <TableCell>
-                  <Switch
-                    checked={recommendation.status === 'active'}
-                    onCheckedChange={() =>
-                      handleToggleStatus(recommendation.id, recommendation.status)
-                    }
-                    disabled={false}
-                    size="sm"
-                  />
-                </TableCell>
-                <TableCell className="text-right">
-                  <PencilSimple size={16} onClick={() => navigate(`${recommendation.id}`)} />
-                </TableCell>
+      {parseRecommendation?.length === 0  ? (
+        <EmptyState />
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-gray-200">
+          <Table className="text-[16px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[390px] font-bold">Rule name</TableHead>
+                <TableHead className="w-[222px] font-bold">Trigger</TableHead>
+                <TableHead className="w-[296px] font-bold">Recommend</TableHead>
+                <TableHead className="w-[240px] font-bold">Status</TableHead>
+                <TableHead className="w-[80px] font-bold"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {parseRecommendation?.map((recommendation) => (
+                <TableRow key={recommendation.id}>
+                  <TableCell className="font-light">{recommendation.name}</TableCell>
+                  <TableCell className="font-light">{recommendation.triggerLabel}</TableCell>
+                  <TableCell className="font-light">
+                    {formatRecommendLabels(recommendation.recommendLabels)}
+                  </TableCell>
+                  <TableCell>
+                    <Switch
+                      checked={recommendation.status === 'active'}
+                      onCheckedChange={() =>
+                        handleToggleStatus(recommendation.id, recommendation.status)
+                      }
+                      disabled={false}
+                      size="sm"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <PencilSimple size={16} onClick={() => navigate(`${recommendation.id}`)} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 };
