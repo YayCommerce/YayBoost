@@ -100,7 +100,10 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return;
 		}
 
-		$position = $this->get('display.position');
+		$position = $this->get( 'display.position' );
+		if ( 'use_block' === $position ) {
+			return;
+		}
 		switch ( $position ) {
 			case 'below_product_title':
 				add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 6 );
@@ -127,7 +130,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 * @return bool
 	 */
 	public function should_apply_to_current_product(): bool {
-		$apply    = $this->get('apply_on.apply');
+		$apply = $this->get( 'apply_on.apply' );
 
 		if ( 'all' === $apply ) {
 			return true;
@@ -218,7 +221,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			);
 		}
 
-		$settings = $this->get_settings();
+		$settings      = $this->get_settings();
 		$tracking_mode = $settings['tracking_mode'];
 
 		if ( 'real-tracking' === $tracking_mode ) {
@@ -257,6 +260,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 						'pageId'              => $page_id,
 						'activeWindow'        => $settings['real_tracking']['active_window'], // in minutes (2, 5, or 10)
 						'minimumCountDisplay' => $settings['real_tracking']['minimum_count_display'],
+						'icon'                => $settings['display']['icon'],
 					)
 				);
 			}
@@ -280,7 +284,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$style                 = $settings['style']['style'] ?? 'style_1';
 		$text_color            = $settings['style']['text_color'] ?? '#a74c3c';
 		$background_color      = $settings['style']['background_color'] ?? '#fff3f3';
-		$text                  = $settings['display']['text'] ?? '{count} visitors are viewing this page';
+		$display_text          = $settings['display']['text'] ?? '{count} visitors are viewing this page';
 		$icon                  = $settings['display']['icon'] ?? 'eye';
 
 		$icon_html = $this->get_icon_html( $icon );
@@ -288,14 +292,14 @@ class LiveVisitorCountFeature extends AbstractFeature {
 
 		$is_hidden = 'real-tracking' === $tracking_mode && $count < $minimum_count_display;
 		$count     = 'real-tracking' === $tracking_mode ? $count : rand( $settings['simulated']['min'], $settings['simulated']['max'] );
-		$text      = str_replace( '{count}', '<span id="yayboost-live-visitor-count">' . $count . '</span>', $text );
+		$text      = str_replace( '{count}', $count, $display_text );
 		$content   = '';
 		if ( 'style_1' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_2' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $icon_html . $text ) . '</div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper ' . ( $is_hidden ? 'hidden' : '' ) . '"><div class="yayboost-live-visitor-count-style-3" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><div class="yayboost-live-visitor-count-style-3-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-live-visitor-count">' . esc_html( $count ) . '</span></div></div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div><div class="yayboost-lvc-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div></div>';
 		}
 		return $content;
 	}
@@ -340,8 +344,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		// Ensure visitor_id is not too long for the database field (64 chars max)
 		$visitor_id = substr( $visitor_id, 0, 64 );
 
-		$now = time();
-		$expired_time = $now - $this->get('real_tracking.active_window') * 60;
+		$now          = time();
+		$expired_time = $now - $this->get( 'real_tracking.active_window' ) * 60;
 		$this->clean_up_expired_visitors( $expired_time );
 
 		// Insert or update visitor record
@@ -403,7 +407,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		global $wpdb;
 		$table = $wpdb->prefix . 'yayboost_live_visitor';
 
-		$expired_time = time() - $this->get('real_tracking.active_window') * 60;
+		$expired_time = time() - $this->get( 'real_tracking.active_window' ) * 60;
 
 		$this->clean_up_expired_visitors( $expired_time );
 
@@ -449,7 +453,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return (int) $count;
 		}
 
-		$expired_time = time() - $this->get('real_tracking.active_window') * 60;
+		$expired_time = time() - $this->get( 'real_tracking.active_window' ) * 60;
 		$this->clean_up_expired_visitors( $expired_time );
 
 		global $wpdb;

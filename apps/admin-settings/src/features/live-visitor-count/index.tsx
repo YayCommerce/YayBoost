@@ -54,6 +54,7 @@ const settingsSchema = z.object({
       'above_add_to_cart_button',
       'below_add_to_cart_button',
       'below_price',
+      'use_block',
     ]),
   }),
   style: z.object({
@@ -443,8 +444,17 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                           {__('Below add to cart button', 'yayboost')}
                         </SelectItem>
                         <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
+                        <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
                       </SelectContent>
                     </Select>
+                    {field.value === 'use_block' && (
+                      <FormDescription>
+                        {__(
+                          'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
+                          'yayboost',
+                        )}
+                      </FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

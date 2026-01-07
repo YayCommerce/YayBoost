@@ -37,6 +37,6 @@ if ( empty( $content ) ) {
 }
 
 ?>
-<div <?php echo get_block_wrapper_attributes( array( 'class' => 'yayboost-live-visitor-count-block-wrapper' ) ); ?>>
+<div <?php echo get_block_wrapper_attributes( array( 'class' => 'yayboost-lvc-block-wrapper' ) ); ?>>
 	<?php echo wp_kses_post( $content ); ?>
 </div>

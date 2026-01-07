@@ -111,18 +111,53 @@
       yayboostLiveVisitorCount.minimumCountDisplay
     );
 
-    const countEl = document.querySelectorAll("#yayboost-live-visitor-count");
+    const countEl = document.querySelectorAll(".yayboost-lvc");
     for (const el of countEl) {
-      const wrapperEl = el.closest(".yayboost-live-visitor-count");
-      if (wrapperEl) {
-        if (minimumCountDisplay > 0 && count < minimumCountDisplay) {
-          wrapperEl.classList.add("hidden");
-        } else {
-          wrapperEl.classList.remove("hidden");
+      if (el) {
+        const isBubble = el.classList.contains("yayboost-lvc-style-3");
+        const text = el.getAttribute("data-text");
+        const currentCount = el.getAttribute("data-count");
+        if (Number(currentCount) === Number(count)) {
+          break;
         }
+        if (minimumCountDisplay > 0 && count < minimumCountDisplay) {
+          el.classList.add("hidden");
+        } else {
+          el.classList.remove("hidden");
+        }
+        const icon = getIconHtml(yayboostLiveVisitorCount.icon);
+        const updateText = getUpdateText(text, count);
+        if (isBubble) {
+          const textEl = el.querySelector(".yayboost-lvc-text");
+          const iconEl = el.querySelector(".yayboost-lvc-icon");
+          iconEl.innerHTML =
+            icon + " <span id='yayboost-lvc-number'>" + count + "</span>";
+          textEl.innerHTML = updateText;
+        } else {
+          el.innerHTML = icon + updateText;
+        }
+        el.setAttribute("data-count", count);
       }
-      el.innerHTML = count;
     }
+  }
+
+  function getIconHtml(icon) {
+    switch (icon) {
+      case "eye":
+        return "👁️";
+      case "person":
+        return "👤";
+      case "fire":
+        return "🔥";
+      case "lightning":
+        return "⚡";
+      default:
+        return "";
+    }
+  }
+
+  function getUpdateText(text, count) {
+    return text ? text.replace("{count}", count) : count;
   }
 
   // Get activeWindow in minutes, convert to milliseconds for setInterval

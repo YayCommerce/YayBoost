@@ -57,16 +57,16 @@ function getPreviewContent(config) {
   const iconHtml = getIconHtml(icon);
   const textWithCount = text.replace(
     "{count}",
-    `<span id="yayboost-live-visitor-count">${count}</span>`
+    `<span id="yayboost-lvc-number">${count}</span>`
   );
 
   let content = "";
   if (style === "style_1") {
-    content = `<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-1" style="color: ${textColor};">${iconHtml}${textWithCount}</div>`;
+    content = `<div class="yayboost-lvc yayboost-lvc-style-1" style="color: ${textColor};">${iconHtml}${textWithCount}</div>`;
   } else if (style === "style_2") {
-    content = `<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-2" style="color: ${textColor}; background-color: ${backgroundColor};">${iconHtml}${textWithCount}</div>`;
+    content = `<div class="yayboost-lvc yayboost-lvc-style-2" style="color: ${textColor}; background-color: ${backgroundColor};">${iconHtml}${textWithCount}</div>`;
   } else if (style === "style_3") {
-    content = `<div class="yayboost-live-visitor-count yayboost-live-visitor-count-style-3-wrapper"><div class="yayboost-live-visitor-count-style-3" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-live-visitor-count-style-3-icon">${iconHtml} <span id="yayboost-live-visitor-count">${count}</span></div></div>`;
+    content = `<div class="yayboost-lvc yayboost-lvc-style-3"><div class="yayboost-lvc-text" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-lvc-icon">${iconHtml} <span id="yayboost-lvc-number">${count}</span></div></div>`;
   }
 
   return content;
@@ -74,8 +74,7 @@ function getPreviewContent(config) {
 
 export default function Edit({ attributes }) {
   const blockProps = useBlockProps({
-    className:
-      "yayboost-live-visitor-count-block-wrapper yayboost-live-visitor-count-block-wrapper--preview",
+    className: "yayboost-lvc-block-wrapper yayboost-lvc-block-wrapper--preview",
   });
 
   const config = getConfig();

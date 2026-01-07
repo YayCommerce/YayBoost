@@ -1,6 +1,6 @@
 /* Live Visitor Count Styles */
 
-.yayboost-live-visitor-count {
+.yayboost-lvc {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -12,14 +12,14 @@
 }
 
 /* Style 2: Rounded box */
-.yayboost-live-visitor-count-style-2 {
+.yayboost-lvc-style-2 {
   width: max-content;
   border-radius: 6px;
   padding: 6px;
 }
 
 /* Style 3: Bubble and icon wrapper */
-.yayboost-live-visitor-count-style-3-wrapper {
+.yayboost-lvc-style-3 {
   position: relative;
   display: inline-flex;
   flex-direction: column;
@@ -28,7 +28,7 @@
 }
 
 /* Style 3: Bubble - simple rounded rectangle, no tail - hidden by default */
-.yayboost-live-visitor-count-style-3 {
+.yayboost-lvc-text {
   padding: 10px 14px;
   border-radius: 8px;
   width: max-content;
@@ -46,15 +46,14 @@
 }
 
 /* Show bubble when hovering over wrapper (icon or bubble area) */
-.yayboost-live-visitor-count-style-3-wrapper:hover
-  .yayboost-live-visitor-count-style-3 {
+.yayboost-lvc-style-3:hover .yayboost-lvc-text {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
 }
 
 /* Icon container - positioned at bottom */
-.yayboost-live-visitor-count-style-3-icon {
+.yayboost-lvc-icon {
   display: flex;
   align-items: center;
   justify-content: center;
