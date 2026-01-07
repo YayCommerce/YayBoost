@@ -131,9 +131,9 @@ function StylePreview({
 
   if (style === 'style_3') {
     return (
-      <div className="yayboost-lvc yayboost-lvc-style-3 relative inline-flex flex-col items-center gap-1">
+      <div className="yayboost-lvc yayboost-lvc-style-3 group relative inline-flex flex-col items-center gap-1">
         <div
-          className="yayboost-lvc-text absolute top-1/2 left-full z-10 ml-2 -translate-y-1/2 rounded-lg px-3.5 py-2.5 whitespace-nowrap opacity-100"
+          className="yayboost-lvc-text pointer-events-none absolute top-1/2 left-full z-10 ml-2 -translate-y-1/2 rounded-lg px-3.5 py-2.5 whitespace-nowrap opacity-0 transition-opacity duration-300 group-hover:pointer-events-auto group-hover:opacity-100"
           style={{ color: textColor, backgroundColor: backgroundColor }}
         >
           {text}
