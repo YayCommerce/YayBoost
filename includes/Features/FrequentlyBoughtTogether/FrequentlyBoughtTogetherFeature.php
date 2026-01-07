@@ -155,7 +155,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         wp_enqueue_script(
             'yayboost-fbt',
             YAYBOOST_URL . 'assets/js/frequently-bought-together.js',
-            [ 'jquery', 'wc-add-to-cart' ],
+            [ 'jquery', 'wc-add-to-cart', 'wc-accounting' ],
             YAYBOOST_VERSION,
             true
         );
@@ -168,6 +168,24 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             YAYBOOST_VERSION
         );
 
+        // Get WooCommerce currency settings
+        $currency_symbol = get_woocommerce_currency_symbol();
+        $currency_pos    = get_option( 'woocommerce_currency_pos', 'left' );
+        $price_format    = get_woocommerce_price_format();
+        $decimal_sep     = wc_get_price_decimal_separator();
+        $thousand_sep    = wc_get_price_thousand_separator();
+        $num_decimals    = wc_get_price_decimals();
+
+        // Convert currency position to accounting.js format
+        $format = '%s%v'; // default left
+        if ( 'right' === $currency_pos ) {
+            $format = '%v%s';
+        } elseif ( 'left_space' === $currency_pos ) {
+            $format = '%s %v';
+        } elseif ( 'right_space' === $currency_pos ) {
+            $format = '%v %s';
+        }
+
         // Localize script
         wp_localize_script(
             'yayboost-fbt',
@@ -175,6 +193,13 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'yayboost_fbt_batch' ),
+                'currency' => [
+                    'symbol'    => $currency_symbol,
+                    'format'    => $format,
+                    'decimal'   => $decimal_sep,
+                    'thousand'  => $thousand_sep,
+                    'precision' => $num_decimals,
+                ],
                 'i18n'     => [
                     'adding'          => __( 'Adding to cart...', 'yayboost' ),
                     'added'           => __( 'Added to cart', 'yayboost' ),

@@ -90,7 +90,7 @@ if ( function_exists( 'wp_increase_content_media_count' ) ) {
         <div class="yayboost-fbt-total">
             <?php esc_html_e( 'Total:', 'yayboost' ); ?> <span class="yayboost-fbt-total-price"><?php echo wc_price( 0 ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
         </div>
-        <button type="button" class="button yayboost-fbt-batch-add">
+        <button type="button" class="button yayboost-fbt-batch-add wp-element-button">
             <?php esc_html_e( 'Add Selected to Cart', 'yayboost' ); ?>
         </button>
     </div>
