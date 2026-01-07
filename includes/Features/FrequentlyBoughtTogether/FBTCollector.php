@@ -115,6 +115,97 @@ class FBTCollector {
     }
 
     /**
+     * Process multiple orders in batch (optimized for backfill)
+     *
+     * Collects pairs from all orders first, then performs batch insert.
+     * This is more efficient than calling process_order() multiple times.
+     *
+     * @param array $order_ids Array of order IDs to process.
+     * @return array Result with 'processed' count and 'pairs' count.
+     */
+    public function process_orders_batch( array $order_ids ): array {
+        if ( empty( $order_ids ) ) {
+            return [
+                'processed' => 0,
+                'pairs'     => 0,
+            ];
+        }
+
+        $all_pairs       = [];
+        $all_product_ids = [];
+        $processed_count = 0;
+
+        foreach ( $order_ids as $order_id ) {
+            try {
+                $order = \wc_get_order( $order_id );
+
+                if ( ! $order ) {
+                    continue;
+                }
+
+                // Skip if already processed.
+                if ( $this->is_order_processed( $order ) ) {
+                    continue;
+                }
+
+                // Extract product IDs.
+                $product_ids = $this->extract_product_ids( $order );
+
+                if ( count( $product_ids ) >= 2 ) {
+                    // Generate pairs.
+                    $pairs = $this->generate_pairs( $product_ids );
+                    if ( ! empty( $pairs ) ) {
+                        $all_pairs       = array_merge( $all_pairs, $pairs );
+                        $all_product_ids = array_merge( $all_product_ids, $product_ids );
+                    }
+                }
+
+                // Mark order as processed.
+                $this->mark_order_processed( $order );
+
+                ++$processed_count;
+            } catch ( \Exception $e ) {
+                // Log error but continue with next order.
+                error_log(
+                    sprintf(
+                        'FBT Collector: Error processing order #%d: %s',
+                        $order_id,
+                        $e->getMessage()
+                    )
+                );
+                // Continue processing other orders.
+            }//end try
+        }//end foreach
+
+        // Batch insert all pairs at once (with error handling).
+        if ( ! empty( $all_pairs ) ) {
+            try {
+                $this->increment_pairs_batch( $all_pairs );
+            } catch ( \Exception $e ) {
+                error_log( 'FBT Collector: Error inserting pairs: ' . $e->getMessage() );
+                // Don't fail the entire batch if insert fails.
+            }
+        }
+
+        // Invalidate cache for affected products (dedupe first).
+        // Use skip_transients=true for performance during backfill.
+        if ( ! empty( $all_product_ids ) ) {
+            try {
+                $unique_product_ids = array_unique( $all_product_ids );
+                $this->invalidate_cache_for_products( $unique_product_ids, true );
+            } catch ( \Exception $e ) {
+                error_log( 'FBT Collector: Error invalidating cache: ' . $e->getMessage() );
+                // Don't fail the entire batch if cache invalidation fails.
+            }
+        }
+
+        return [
+            'processed' => $processed_count,
+            'pairs'     => count( $all_pairs ),
+        ];
+    }
+
+    /**
      * Check if order has been processed
      *
      * @param int|\WC_Order $order Order ID or WC_Order object
@@ -251,15 +342,34 @@ class FBTCollector {
     /**
      * Invalidate cache for products
      *
-     * @param array $product_ids Array of product IDs
+     * For backfill operations, we skip transient deletion to improve performance.
+     * Transients will expire naturally or be rebuilt on next access.
+     *
+     * @param array $product_ids Array of product IDs.
+     * @param bool  $skip_transients Whether to skip transient deletion (default true for performance).
      * @return void
      */
-    public function invalidate_cache_for_products( array $product_ids ): void {
-        global $wpdb;
+    public function invalidate_cache_for_products( array $product_ids, bool $skip_transients = true ): void {
+        if ( empty( $product_ids ) ) {
+            return;
+        }
 
+        // Clear object cache group once (not per product).
+        if ( function_exists( 'wp_cache_flush_group' ) ) {
+            wp_cache_flush_group( 'yayboost_fbt' );
+        }
+
+        // Skip transient deletion during backfill for performance.
+        // Transients will expire naturally or be rebuilt on next access.
+        if ( $skip_transients ) {
+            return;
+        }
+
+        // Only delete transients when explicitly requested (e.g., single order processing).
+        global $wpdb;
         foreach ( $product_ids as $product_id ) {
-            // Delete transients matching pattern
             $pattern = '%yayboost_fbt_' . (int) $product_id . '_%';
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$wpdb->options} 
@@ -268,9 +378,6 @@ class FBTCollector {
                     $pattern
                 )
             );
-
-            // Clear object cache group
-            wp_cache_flush_group( 'yayboost_fbt' );
         }
     }
 }

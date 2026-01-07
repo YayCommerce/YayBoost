@@ -209,4 +209,68 @@ export const entityApi = {
   },
 };
 
+// FBT Backfill types
+export interface FBTBackfillStartResponse {
+  total: number;
+  total_orders: number;
+  already_processed: number;
+  batch_size: number;
+  batches_count: number;
+}
+
+export interface FBTBackfillBatchResponse {
+  processed: number;
+  last_order_id: number;
+  remaining: number;
+  completed: boolean;
+  errors: number;
+}
+
+export interface FBTBackfillStatusResponse {
+  total: number;
+  unprocessed: number;
+  already_processed: number;
+  last_order_id: number;
+  is_running: boolean;
+  last_run: string | null;
+}
+
+// FBT API
+export const fbtApi = {
+  /**
+   * Start backfill process
+   */
+  startBackfill: async (batchSize: number): Promise<FBTBackfillStartResponse> => {
+    const { data } = await api.post<ApiResponse<FBTBackfillStartResponse>>('/fbt/backfill/start', {
+      batch_size: batchSize,
+    });
+    return data.data;
+  },
+
+  /**
+   * Process a batch of orders
+   */
+  processBatch: async (
+    batchSize: number,
+    lastOrderId: number,
+  ): Promise<FBTBackfillBatchResponse> => {
+    const { data } = await api.post<ApiResponse<FBTBackfillBatchResponse>>(
+      '/fbt/backfill/process',
+      {
+        batch_size: batchSize,
+        last_order_id: lastOrderId,
+      },
+    );
+    return data.data;
+  },
+
+  /**
+   * Get current backfill status
+   */
+  getStatus: async (): Promise<FBTBackfillStatusResponse> => {
+    const { data } = await api.get<ApiResponse<FBTBackfillStatusResponse>>('/fbt/backfill/status');
+    return data.data;
+  },
+};
+
 export default api;

@@ -38,6 +38,8 @@ import FeatureLayoutHeader from '@/components/feature-layout-header';
 import WooCommercePlaceholder from '@/components/svgs/WooCommercePlaceholder';
 import UnavailableFeature from '@/components/unavailable-feature';
 
+import { FBTBackfillCard } from './fbt-backfill-card';
+
 // Get currency symbol from admin data
 const currencySymbol = window.yayboostData?.currencySymbol || '$';
 
@@ -397,6 +399,9 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                 />
               </CardContent>
             </Card>
+
+            {/* Backfill Section */}
+            <FBTBackfillCard />
 
             {/* Save Button - Bottom Right */}
             <div className="flex justify-end">
