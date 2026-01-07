@@ -100,8 +100,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return;
 		}
 
-		$settings = $this->get_settings();
-		$position = $settings['display']['position'] ?? 'below_product_title';
+		$position = $this->get('display.position');
 		switch ( $position ) {
 			case 'below_product_title':
 				add_action( 'woocommerce_single_product_summary', array( $this, 'render_content' ), 6 );
@@ -128,9 +127,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 * @return bool
 	 */
 	public function should_apply_to_current_product(): bool {
-		$settings = $this->get_settings();
-		$apply_on = $settings['apply_on'] ?? array();
-		$apply    = $apply_on['apply'] ?? 'all';
+		$apply    = $this->get('apply_on.apply');
 
 		if ( 'all' === $apply ) {
 			return true;
@@ -222,8 +219,9 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		}
 
 		$settings = $this->get_settings();
+		$tracking_mode = $settings['tracking_mode'];
 
-		if ( 'real-tracking' === $settings['tracking_mode'] ) {
+		if ( 'real-tracking' === $tracking_mode ) {
 			// Prevent duplicate enqueuing - WordPress handles this, but check anyway for safety
 			if ( ! wp_script_is( 'yayboost-live-visitor-count', 'enqueued' ) ) {
 				wp_enqueue_script(
@@ -257,8 +255,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 						'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
 						'nonce'               => wp_create_nonce( 'yayboost_live_visitor_count' ),
 						'pageId'              => $page_id,
-						'activeWindow'        => $settings['real_tracking']['active_window'] ?? 2, // in minutes (2, 5, or 10)
-						'minimumCountDisplay' => $settings['real_tracking']['minimum_count_display'] ?? 1,
+						'activeWindow'        => $settings['real_tracking']['active_window'], // in minutes (2, 5, or 10)
+						'minimumCountDisplay' => $settings['real_tracking']['minimum_count_display'],
 					)
 				);
 			}
@@ -329,14 +327,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$page_id    = isset( $_POST['page_id'] ) ? intval( $_POST['page_id'] ) : 0;
 		$visitor_id = isset( $_POST['visitor_id'] ) ? sanitize_text_field( wp_unslash( $_POST['visitor_id'] ) ) : '';
 
-		// Get settings to use active_window setting
-		$settings      = $this->get_settings();
-		$active_window = isset( $settings['real_tracking']['active_window'] ) ? intval( $settings['real_tracking']['active_window'] ) : 10;
-
 		global $wpdb;
 		$table = $wpdb->prefix . 'yayboost_live_visitor';
-
-		$now = time();
 
 		// Use visitor_id from client if provided, otherwise generate a unique one
 		// Never use PHP session_id as it's shared across tabs
@@ -348,7 +340,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		// Ensure visitor_id is not too long for the database field (64 chars max)
 		$visitor_id = substr( $visitor_id, 0, 64 );
 
-		$expired_time = $now - $active_window * 60;
+		$now = time();
+		$expired_time = $now - $this->get('real_tracking.active_window') * 60;
 		$this->clean_up_expired_visitors( $expired_time );
 
 		// Insert or update visitor record
@@ -407,16 +400,10 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return;
 		}
 
-		// Get settings to use active_window setting
-		$settings      = $this->get_settings();
-		$active_window = isset( $settings['real_tracking']['active_window'] ) ? intval( $settings['real_tracking']['active_window'] ) : 10;
-
 		global $wpdb;
 		$table = $wpdb->prefix . 'yayboost_live_visitor';
 
-		$now                   = time();
-		$active_window_seconds = $active_window * 60; // Convert minutes to seconds
-		$expired_time          = $now - $active_window_seconds;
+		$expired_time = time() - $this->get('real_tracking.active_window') * 60;
 
 		$this->clean_up_expired_visitors( $expired_time );
 
@@ -462,9 +449,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return (int) $count;
 		}
 
-		$settings      = $this->get_settings();
-		$active_window = isset( $settings['real_tracking']['active_window'] ) ? intval( $settings['real_tracking']['active_window'] ) : 10;
-		$expired_time  = time() - $active_window * 60;
+		$expired_time = time() - $this->get('real_tracking.active_window') * 60;
 		$this->clean_up_expired_visitors( $expired_time );
 
 		global $wpdb;
