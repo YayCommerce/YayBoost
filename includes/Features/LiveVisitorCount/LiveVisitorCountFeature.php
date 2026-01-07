@@ -142,7 +142,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		}
 
 		if ( 'specific_products' === $apply ) {
-			$specific_products = $apply_on['products'] ?? array();
+			$specific_products = $this->get( 'apply_on.products' ) ?? array();
 			if ( empty( $specific_products ) ) {
 				return false;
 			}
@@ -152,7 +152,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		}
 
 		if ( 'specific_categories' === $apply ) {
-			$specific_categories = $apply_on['categories'] ?? array();
+			$specific_categories = $this->get( 'apply_on.categories' ) ?? array();
 			if ( empty( $specific_categories ) ) {
 				return false;
 			}
@@ -221,8 +221,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			);
 		}
 
-		$settings      = $this->get_settings();
-		$tracking_mode = $settings['tracking_mode'];
+		$tracking_mode = $this->get( 'tracking_mode' );
 
 		if ( 'real-tracking' === $tracking_mode ) {
 			// Prevent duplicate enqueuing - WordPress handles this, but check anyway for safety
@@ -258,9 +257,9 @@ class LiveVisitorCountFeature extends AbstractFeature {
 						'ajaxUrl'             => admin_url( 'admin-ajax.php' ),
 						'nonce'               => wp_create_nonce( 'yayboost_live_visitor_count' ),
 						'pageId'              => $page_id,
-						'activeWindow'        => $settings['real_tracking']['active_window'], // in minutes (2, 5, or 10)
-						'minimumCountDisplay' => $settings['real_tracking']['minimum_count_display'],
-						'icon'                => $settings['display']['icon'],
+						'activeWindow'        => $this->get( 'real_tracking.active_window' ), // in minutes (2, 5, or 10)
+						'minimumCountDisplay' => $this->get( 'real_tracking.minimum_count_display' ),
+						'icon'                => $this->get( 'display.icon' ),
 					)
 				);
 			}
@@ -278,28 +277,27 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	}
 
 	public function get_content(): string {
-		$settings              = $this->get_settings();
-		$tracking_mode         = $settings['tracking_mode'] ?? 'real-tracking';
-		$minimum_count_display = (int) ( $settings['real_tracking']['minimum_count_display'] ?? 1 );
-		$style                 = $settings['style']['style'] ?? 'style_1';
-		$text_color            = $settings['style']['text_color'] ?? '#a74c3c';
-		$background_color      = $settings['style']['background_color'] ?? '#fff3f3';
-		$display_text          = $settings['display']['text'] ?? '{count} visitors are viewing this page';
-		$icon                  = $settings['display']['icon'] ?? 'eye';
+		$tracking_mode         = $this->get( 'tracking_mode' );
+		$minimum_count_display = (int) ( $this->get( 'real_tracking.minimum_count_display' ) ?? 1 );
+		$style                 = $this->get( 'style.style' ) ?? 'style_1';
+		$text_color            = $this->get( 'style.text_color' ) ?? '#a74c3c';
+		$background_color      = $this->get( 'style.background_color' ) ?? '#fff3f3';
+		$display_text          = $this->get( 'display.text' ) ?? '{count} visitors are viewing this page';
+		$icon                  = $this->get( 'display.icon' ) ?? 'eye';
 
 		$icon_html = $this->get_icon_html( $icon );
 		$count     = $this->get_visitor_count();
 
 		$is_hidden = 'real-tracking' === $tracking_mode && $count < $minimum_count_display;
-		$count     = 'real-tracking' === $tracking_mode ? $count : rand( $settings['simulated']['min'], $settings['simulated']['max'] );
-		$text      = str_replace( '{count}', $count, $display_text );
-		$content   = '';
+		//$count     = 'real-tracking' === $tracking_mode ? $count : rand( $settings['simulated']['min'], $settings['simulated']['max'] );
+		$text    = str_replace( '{count}', $count, $display_text );
+		$content = '';
 		if ( 'style_1' === $style ) {
 			$content = '<div class="yayboost-lvc yayboost-lvc-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_2' === $style ) {
 			$content = '<div class="yayboost-lvc yayboost-lvc-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $icon_html . $text ) . '</div>';
 		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div><div class="yayboost-lvc-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div></div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><div class="yayboost-lvc-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div></div>';
 		}
 		return $content;
 	}
@@ -453,20 +451,26 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			return (int) $count;
 		}
 
-		$expired_time = time() - $this->get( 'real_tracking.active_window' ) * 60;
-		$this->clean_up_expired_visitors( $expired_time );
+		$tracking_mode = $this->get( 'tracking_mode' );
+		if ( 'simulated' === $tracking_mode ) {
+			$count = rand( $this->get( 'simulated.min' ), $this->get( 'simulated.max' ) );
 
-		global $wpdb;
-		$table = $wpdb->prefix . 'yayboost_live_visitor';
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $table WHERE page_id = %d AND last_active >= %d",
-				$page_id,
-				$expired_time
-			)
-		);
+		} else {
+			$expired_time = time() - $this->get( 'real_tracking.active_window' ) * 60;
+			$this->clean_up_expired_visitors( $expired_time );
 
-		$count = (int) $count;
+			global $wpdb;
+			$table = $wpdb->prefix . 'yayboost_live_visitor';
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM $table WHERE page_id = %d AND last_active >= %d",
+					$page_id,
+					$expired_time
+				)
+			);
+
+			$count = (int) $count;
+		}
 
 		// Cache the count for 30 seconds
 		$this->set_cached_visitor_count( $page_id, $count, 30 );
