@@ -71,6 +71,84 @@ const settingsSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
+// Helper function to get icon HTML
+function getIconHtml(icon: string): string {
+  switch (icon) {
+    case 'eye':
+      return '👁️';
+    case 'person':
+      return '👤';
+    case 'fire':
+      return '🔥';
+    case 'lightning':
+      return '⚡';
+    default:
+      return '';
+  }
+}
+
+// Style Preview Component
+function StylePreview({
+  style,
+  textColor,
+  backgroundColor,
+  displayText,
+  displayIcon,
+}: {
+  style: string;
+  textColor: string;
+  backgroundColor: string;
+  displayText: string;
+  displayIcon: string;
+}) {
+  const iconHtml = getIconHtml(displayIcon);
+  const previewCount = 12;
+  const text = displayText.replace('{count}', previewCount.toString());
+
+  if (style === 'style_1') {
+    return (
+      <div
+        className="yayboost-lvc yayboost-lvc-style-1 inline-flex items-center gap-1.5 text-sm"
+        style={{ color: textColor }}
+      >
+        {iconHtml && <span>{iconHtml}</span>}
+        <span>{text}</span>
+      </div>
+    );
+  }
+
+  if (style === 'style_2') {
+    return (
+      <div
+        className="yayboost-lvc yayboost-lvc-style-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-sm"
+        style={{ color: textColor, backgroundColor: backgroundColor }}
+      >
+        {iconHtml && <span>{iconHtml}</span>}
+        <span>{text}</span>
+      </div>
+    );
+  }
+
+  if (style === 'style_3') {
+    return (
+      <div className="yayboost-lvc yayboost-lvc-style-3 relative inline-flex flex-col items-center gap-1">
+        <div
+          className="yayboost-lvc-text absolute top-1/2 left-full z-10 ml-2 -translate-y-1/2 rounded-lg px-3.5 py-2.5 whitespace-nowrap opacity-100"
+          style={{ color: textColor, backgroundColor: backgroundColor }}
+        >
+          {text}
+        </div>
+        <div className="yayboost-lvc-icon flex cursor-pointer items-center justify-center">
+          {iconHtml && <span>{iconHtml}</span>}
+          <span>{previewCount}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default function LiveVisitorCountFeature({ featureId }: FeatureComponentProps) {
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
@@ -90,6 +168,10 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
   const trackingMode = form.watch('tracking_mode');
   const style = form.watch('style.style');
   const applyOn = form.watch('apply_on.apply');
+  const textColor = form.watch('style.text_color');
+  const backgroundColor = form.watch('style.background_color');
+  const displayText = form.watch('display.text');
+  const displayIcon = form.watch('display.icon');
 
   // Update expanded state based on tracking mode
   useEffect(() => {
@@ -143,25 +225,16 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                             const newEnabled = value === 'on';
                             field.onChange(newEnabled);
                           }}
-                          disabled={toggleMutation.isPending}
                           className="flex items-center gap-6"
                         >
                           <div className="flex items-center gap-2">
-                            <RadioGroupItem
-                              value="on"
-                              id="enabled-on"
-                              disabled={toggleMutation.isPending}
-                            />
+                            <RadioGroupItem value="on" id="enabled-on" />
                             <label htmlFor="enabled-on" className="cursor-pointer">
                               {__('On', 'yayboost')}
                             </label>
                           </div>
                           <div className="flex items-center gap-2">
-                            <RadioGroupItem
-                              value="off"
-                              id="enabled-off"
-                              disabled={toggleMutation.isPending}
-                            />
+                            <RadioGroupItem value="off" id="enabled-off" />
                             <label htmlFor="enabled-off" className="cursor-pointer">
                               {__('Off', 'yayboost')}
                             </label>
@@ -467,116 +540,109 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             <CardHeader>
               <CardTitle>{__('Style', 'yayboost')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="style.style"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{__('Choose Style', 'yayboost')}</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        className="flex gap-4"
-                      >
-                        <label
-                          htmlFor="style_1"
-                          className={`flex flex-1 cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all ${
-                            field.value === 'style_1' ? 'border-black' : 'border-gray-200'
-                          }`}
-                        >
-                          <div className="mb-3 text-center font-medium">
-                            {__('Style 1', 'yayboost')}
-                          </div>
-                          <div className="mb-4 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm">
-                            {__('Text only', 'yayboost')}
-                          </div>
-                          <RadioGroupItem
-                            value="style_1"
-                            id="style_1"
-                            className="h-4 w-4 border-gray-300 data-[state=checked]:border-black data-[state=checked]:bg-black [&[data-state=checked]>span>span]:hidden"
-                          />
-                        </label>
-                        <label
-                          htmlFor="style_2"
-                          className={`flex flex-1 cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all ${
-                            field.value === 'style_2' ? 'border-black' : 'border-gray-200'
-                          }`}
-                        >
-                          <div className="mb-3 text-center font-medium">
-                            {__('Style 2', 'yayboost')}
-                          </div>
-                          <div className="mb-4 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm">
-                            {__('Badge style', 'yayboost')}
-                          </div>
-                          <RadioGroupItem
-                            value="style_2"
-                            id="style_2"
-                            className="h-4 w-4 border-gray-300 data-[state=checked]:border-black data-[state=checked]:bg-black [&[data-state=checked]>span>span]:hidden"
-                          />
-                        </label>
-                        <label
-                          htmlFor="style_3"
-                          className={`flex flex-1 cursor-pointer flex-col items-center rounded-lg border-2 p-4 transition-all ${
-                            field.value === 'style_3' ? 'border-black' : 'border-gray-200'
-                          }`}
-                        >
-                          <div className="mb-3 text-center font-medium">
-                            {__('Style 3', 'yayboost')}
-                          </div>
-                          <div className="mb-4 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm">
-                            {__('Bubble style', 'yayboost')}
-                          </div>
-                          <RadioGroupItem
-                            value="style_3"
-                            id="style_3"
-                            className="h-4 w-4 border-gray-300 data-[state=checked]:border-black data-[state=checked]:bg-black [&[data-state=checked]>span>span]:hidden"
-                          />
-                        </label>
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <CardContent>
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Left Column: Settings */}
+                <div className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="style.style"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{__('Choose Style', 'yayboost')}</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="flex items-center gap-6"
+                          >
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="style_1" id="style-1" />
+                              <div className="space-y-1">
+                                <label htmlFor="style-1" className="cursor-pointer">
+                                  {__('Text only', 'yayboost')}
+                                </label>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="style_2" id="style-2" />
+                              <div className="space-y-1">
+                                <label htmlFor="style-2" className="cursor-pointer">
+                                  {__('Badge style', 'yayboost')}
+                                </label>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <RadioGroupItem value="style_3" id="style-3" />
+                              <div className="space-y-1">
+                                <label htmlFor="style-3" className="cursor-pointer">
+                                  {__('Bubble style', 'yayboost')}
+                                </label>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="style.text_color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{__('Text Color', 'yayboost')}</FormLabel>
-                    <FormControl>
-                      <div className="flex gap-2">
-                        <Input type="color" {...field} className="h-10 w-14 p-1" />
-                        <Input {...field} className="flex-1" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {style !== 'style_1' && (
-                <FormField
-                  control={form.control}
-                  name="style.background_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {__('Background Color (for Badge/Bubble styles)', 'yayboost')}
-                      </FormLabel>
-                      <FormControl>
-                        <div className="flex gap-2">
-                          <Input type="color" {...field} className="h-10 w-14 p-1" />
-                          <Input {...field} className="flex-1" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                  <FormField
+                    control={form.control}
+                    name="style.text_color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{__('Text Color', 'yayboost')}</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <Input type="color" {...field} className="h-10 w-14 p-1" />
+                            <Input {...field} className="flex-1" />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {style !== 'style_1' && (
+                    <FormField
+                      control={form.control}
+                      name="style.background_color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            {__('Background Color (for Badge/Bubble styles)', 'yayboost')}
+                          </FormLabel>
+                          <FormControl>
+                            <div className="flex gap-2">
+                              <Input type="color" {...field} className="h-10 w-14 p-1" />
+                              <Input {...field} className="flex-1" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              )}
+                </div>
+
+                {/* Right Column: Preview */}
+                <div className="space-y-4">
+                  <div>
+                    <FormLabel>{__('Preview', 'yayboost')}</FormLabel>
+                    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-8">
+                      <div className="flex items-center justify-center">
+                        <StylePreview
+                          style={style || 'style_1'}
+                          textColor={textColor || '#a74c3c'}
+                          backgroundColor={backgroundColor || '#fff3f3'}
+                          displayText={displayText || '{count} people are viewing this right now'}
+                          displayIcon={displayIcon || 'eye'}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
