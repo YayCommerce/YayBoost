@@ -424,26 +424,4 @@ class SmartRecommendationsFeature extends AbstractFeature {
     
         wp_send_json_success( [ 'html' => $html ] );
     }
-
-    /**
-     * Get default settings
-     *
-     * @return array
-     */
-    protected function get_default_settings(): array {
-        return array_merge(
-            parent::get_default_settings(),
-            [
-                'when_customer_views_type'               => '',
-                'when_customer_views_value'               => '',
-                'recommend_products_from_type'            => '',
-                'recommend_products_from_value'           => [],
-                'max_products_to_show'                    => 3,
-                'sort_by'                                   => 'best_selling',
-                'layout'                                    => 'grid',
-                'section_title'                             => __( 'Pairs perfectly with', 'yayboost' ),
-                'behavior_if_in_cart'  => 'hide',
-            ]
-        );
-    }
 }
