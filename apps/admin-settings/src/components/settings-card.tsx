@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 
 interface SettingsCardProps {
-  title: string;
+  title?: string;
   description?: string;
   children: ReactNode;
   onSave: () => void;
@@ -34,7 +34,7 @@ export function SettingsCard({
         {!headless && (
           <>
             <CardHeader>
-              <CardTitle>{title}</CardTitle>
+              {title && <CardTitle>{title}</CardTitle>}
               {description && <CardDescription>{description}</CardDescription>}
             </CardHeader>
             <Separator />
@@ -52,7 +52,7 @@ export function SettingsCard({
       {!headless && (
         <>
           <CardHeader>
-            <CardTitle className="text-base">{title}</CardTitle>
+            {title && <CardTitle className="text-base">{title}</CardTitle>}
             {description && <CardDescription>{description}</CardDescription>}
           </CardHeader>
           <Separator />

@@ -124,13 +124,13 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="on" id="enabled-on" />
-                        <label htmlFor="enabled-on" className="cursor-pointer">
+                        <label htmlFor="enabled-on">
                           {__('On', 'yayboost')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="off" id="enabled-off" />
-                        <label htmlFor="enabled-off" className="cursor-pointer">
+                        <label htmlFor="enabled-off">
                           {__('Off', 'yayboost')}
                         </label>
                       </div>
@@ -317,13 +317,13 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="hide" id="hide-if-in-cart" />
-                        <label htmlFor="hide-if-in-cart" className="cursor-pointer">
+                        <label htmlFor="hide-if-in-cart">
                           {__('Hide it', 'yayboost')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="show" id="show-if-in-cart" />
-                        <label htmlFor="show-if-in-cart" className="cursor-pointer">
+                        <label htmlFor="show-if-in-cart">
                           {__('Still show it', 'yayboost')}
                         </label>
                       </div>
