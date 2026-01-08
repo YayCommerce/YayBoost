@@ -141,10 +141,27 @@ class StockScarcityFeature extends AbstractFeature {
                     return false;
                 }
 
-                $product_categories = wp_get_post_terms($product->get_id(), 'product_cat', ['fields' => 'slugs']);
-                $has_matching_category = !empty(array_intersect($selected_categories, $product_categories));
+                $product_category_ids = wp_get_post_terms($product->get_id(), 'product_cat', ['fields' => 'ids']);
 
-                return $has_matching_category;
+                if (empty($product_category_ids) || is_wp_error($product_category_ids)) {
+                    return false;
+                }
+
+                // Build list of all category IDs to match (selected + all their descendants)
+                $categories_to_match = [];
+                foreach ($selected_categories as $category_slug) {
+                    $term = get_term_by('slug', $category_slug, 'product_cat');
+                    if ($term) {
+                        $categories_to_match[] = $term->term_id;
+                        // Add all children (descendants) of this category
+                        $children = get_term_children($term->term_id, 'product_cat');
+                        if (!empty($children) && !is_wp_error($children)) {
+                            $categories_to_match = array_merge($categories_to_match, $children);
+                        }
+                    }
+                }
+
+                return !empty(array_intersect($product_category_ids, $categories_to_match));
             case 'specific_products':
                 $selected_products = $settings['specific_products'] ?? [];
 
@@ -161,6 +178,11 @@ class StockScarcityFeature extends AbstractFeature {
 
     public function render_stock_scarcity_template($current_product = null): void
     {
+
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
         global $product;
 
         if (empty($current_product) && !empty($product)) {
@@ -176,18 +198,10 @@ class StockScarcityFeature extends AbstractFeature {
             return;
         }
 
-        $settings = $this->get_settings();
-
-        if ( ! $this->is_enabled() ) {
-            return;
-        }
-
-        $default_settings = $this->get_default_settings();
-
         $args = array(
             'product' => $current_product,
-            'settings' => $settings,
-            'default_settings' => $default_settings,
+            'settings' => $this->get_settings(),
+            'default_settings' => $this->get_default_settings(),
         );
 
         $path = YAYBOOST_PATH . 'includes/Features/StockScarcity/templates/stock-scarcity.php';
