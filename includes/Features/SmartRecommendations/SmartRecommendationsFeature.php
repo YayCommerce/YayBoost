@@ -2,7 +2,8 @@
 /**
  * Smart Recommendations Feature
  *
- * Stream music and manage playlists for your workspace..
+ * Display intelligent product recommendations on single product pages
+ * based on configurable rules and customer behavior.
  *
  * @package YayBoost
  */
@@ -12,7 +13,7 @@ namespace YayBoost\Features\SmartRecommendations;
 use YayBoost\Features\AbstractFeature;
 
 /**
- * Free Shipping Bar feature implementation
+ * Smart Recommendations feature implementation
  */
 class SmartRecommendationsFeature extends AbstractFeature {
     /**
@@ -58,36 +59,38 @@ class SmartRecommendationsFeature extends AbstractFeature {
     protected $priority = 1;
 
     /**
+     * Recommendation repository
+     *
+     * @var RecommendationRepository
+     */
+    protected $repository;
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
     public function init(): void {
-        // Display bar based on position setting
         $settings = $this->get_settings();
-        $position = $settings['position'] ?? 'top';
 
-        // Hook into appropriate locations based on show_on setting
-        $show_on = $settings['show_on'] ?? [ 'cart', 'checkout' ];
+        // Include the repository class
+        require_once plugin_dir_path( __FILE__ ) . 'RecommendationRepository.php';
+        
+        $this->repository = new RecommendationRepository();
 
-        if (in_array( 'cart', $show_on, true )) {
-            add_action( 'woocommerce_before_cart', [ $this, 'render_bar' ] );
-        }
+        // Hook into single product pages
+        add_action( 'woocommerce_after_single_product_summary', [ $this, 'render_recommendations' ], 20 );
 
-        if (in_array( 'checkout', $show_on, true )) {
-            add_action( 'woocommerce_before_checkout_form', [ $this, 'render_bar' ] );
-        }
-
-        if (in_array( 'mini_cart', $show_on, true )) {
-            add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
-        }
-
-        // Enqueue styles
+        // Enqueue frontend assets
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 
-        // AJAX endpoint for dynamic updates
-        add_action( 'wp_ajax_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
-        add_action( 'wp_ajax_nopriv_yayboost_get_shipping_bar', [ $this, 'ajax_get_bar_data' ] );
+        // AJAX endpoints for dynamic updates
+        add_action( 'wp_ajax_yayboost_get_recommendations', [ $this, 'ajax_get_recommendations' ] );
+        add_action( 'wp_ajax_nopriv_yayboost_get_recommendations', [ $this, 'ajax_get_recommendations' ] );
+    
+        if ( $settings['enabled'] ) {
+            new SmartRecommendationsBlock( $this );
+        }
     }
 
     /**
@@ -96,133 +99,331 @@ class SmartRecommendationsFeature extends AbstractFeature {
      * @return void
      */
     public function enqueue_assets(): void {
-        if ( ! is_cart() && ! is_checkout()) {
+        if ( ! is_product()) {
             return;
         }
 
-        $settings = $this->get_settings();
+        // Enqueue CSS
+        wp_enqueue_style(
+            'yayboost-recommendations',
+            plugin_dir_url( __FILE__ ) . 'assets/recommendations.css',
+            [],
+            YAYBOOST_VERSION
+        );
 
-        // Inline styles for the bar
-        $custom_css = $this->generate_custom_css( $settings );
-        wp_add_inline_style( 'yayboost-frontend', $custom_css );
+        // Enqueue JavaScript
+        wp_enqueue_script(
+            'yayboost-recommendations',
+            plugin_dir_url( __FILE__ ) . 'assets/recommendations.js',
+            [ 'jquery' ],
+            YAYBOOST_VERSION,
+            true
+        );
+
+        // Localize script for AJAX
+        wp_localize_script(
+            'yayboost-recommendations',
+            'yayboostRecommendations',
+            [
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'yayboost_recommendations' ),
+            ]
+        );
     }
 
     /**
-     * Generate custom CSS based on settings
-     *
-     * @param array $settings
-     * @return string
-     */
-    protected function generate_custom_css(array $settings): string {
-        $bar_color  = $settings['bar_color'] ?? '#4CAF50';
-        $bg_color   = $settings['background_color'] ?? '#e0e0e0';
-        $text_color = $settings['text_color'] ?? '#333333';
-
-        return "
-            .yayboost-shipping-bar {
-                background: {$bg_color};
-                color: {$text_color};
-                padding: 15px 20px;
-                margin-bottom: 20px;
-                border-radius: 8px;
-            }
-            .yayboost-shipping-bar__progress {
-                background: {$bg_color};
-                border-radius: 10px;
-                height: 10px;
-                margin-top: 10px;
-                overflow: hidden;
-            }
-            .yayboost-shipping-bar__progress-fill {
-                background: {$bar_color};
-                height: 100%;
-                border-radius: 10px;
-                transition: width 0.3s ease;
-            }
-            .yayboost-shipping-bar--achieved {
-                background: {$bar_color};
-                color: #ffffff;
-            }
-        ";
-    }
-
-    /**
-     * Render the shipping bar
+     * Render recommendations on single product page
      *
      * @return void
      */
-    public function render_bar(): void {
-        $data = $this->get_bar_data();
+    public function render_recommendations( $current_product = null ): void {
+        if ( ! $current_product instanceof \WC_Product ) {
+            global $product;
+            $current_product = $product;
+        }
+    
+        if ( ! $current_product || ! $current_product->get_id()) {
+            return;
+        }
+    
+        $matching_rules = $this->get_matching_rules( $current_product );
 
-        if ( ! $data) {
+        if (empty( $matching_rules )) {
             return;
         }
 
-        $settings       = $this->get_settings();
-        $achieved_class = $data['achieved'] ? ' yayboost-shipping-bar--achieved' : '';
-        ?>
-        <div class="yayboost-shipping-bar<?php echo esc_attr( $achieved_class ); ?>">
-            <div class="yayboost-shipping-bar__message">
-                <?php echo wp_kses_post( $data['message'] ); ?>
-            </div>
-            <?php if ( ! $data['achieved']) : ?>
-                <div class="yayboost-shipping-bar__progress">
-                    <div
-                        class="yayboost-shipping-bar__progress-fill"
-                        style="width: <?php echo esc_attr( $data['progress'] ); ?>%"
-                    ></div>
-                </div>
-            <?php endif; ?>
-        </div>
-        <?php
+        foreach ( $matching_rules as $rule ) {
+            $settings = $rule['settings'] ?? [];
+            
+            // Check if rule is active
+            if ( ($rule['status'] ?? 'active' ) !== 'active' ) {
+                continue;
+            }
+
+            $recommended_products = $this->get_recommended_products( $rule, $current_product );
+
+            if ( ! empty( $recommended_products )) {
+                $this->render_recommendation_section( $rule, $recommended_products );
+            }
+        }
     }
 
     /**
-     * Get bar data based on cart contents
+     * Get recommendation rules that match current product
      *
-     * @return array|null
+     * @param WC_Product $product Current product
+     * @return array Matching rules
      */
-    protected function get_bar_data(): ?array {
-        if ( ! WC()->cart) {
-            return null;
+    public function get_matching_rules( $product ): array {
+        $product_id = $product->get_id();
+        $category_ids = $product->get_category_ids();
+        $tag_ids = wp_get_post_terms( $product_id, 'product_tag', [ 'fields' => 'ids' ] );
+        
+        $all_rules = $this->repository->get_active_rules();
+        $matching_rules = [];
+
+        foreach ( $all_rules as $rule ) {
+            $settings = $rule['settings'] ?? [];
+            $trigger_type = $settings['when_customer_views_type'] ?? 'category';
+            $trigger_value = $settings['when_customer_views_value'] ?? '';
+
+            $matches = false;
+
+            switch ( $trigger_type ) {
+                case 'product':
+                    // Compare product IDs
+                    $matches = ( (int) $product_id === (int) $trigger_value );
+                    break;
+                    
+                case 'category':
+                    if ( ! empty( $category_ids ) && ! empty( $trigger_value ) ) {
+                        $trigger_category_id = (int) $trigger_value;
+                        
+                        // Check if product is in this category
+                        if ( in_array( $trigger_category_id, $category_ids, true ) ) {
+                            $matches = true;
+                        } else {
+                            // Check if product is in a child category
+                            $child_categories = get_term_children( $trigger_category_id, 'product_cat' );
+                            
+                            if ( ! is_wp_error( $child_categories ) && ! empty( $child_categories ) ) {
+                                foreach ( $category_ids as $cat_id ) {
+                                    if ( in_array( $cat_id, $child_categories, true ) ) {
+                                        $matches = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'tag':
+                    if ( ! empty( $tag_ids ) && ! empty( $trigger_value ) ) {
+                        $trigger_tag_id = (int) $trigger_value;
+                        $matches = in_array( $trigger_tag_id, $tag_ids, true );
+                    }
+                    break;
+            }
+
+            if ( $matches ) {
+                $matching_rules[] = $rule;
+            }
         }
 
-        $settings   = $this->get_settings();
-        $threshold  = (float) ($settings['threshold'] ?? 50);
-        $cart_total = (float) WC()->cart->get_subtotal();
+        // Sort by priority if available
+        usort( $matching_rules, function( $a, $b ) {
+            $priority_a = $a['priority'] ?? 10;
+            $priority_b = $b['priority'] ?? 10;
+            return $priority_a - $priority_b;
+        });
 
-        $remaining = $threshold - $cart_total;
-        $achieved  = $remaining <= 0;
-        $progress  = $threshold > 0 ? min( 100, ($cart_total / $threshold) * 100 ) : 100;
+        return $matching_rules;
+    }
 
-        // Get appropriate message
-        if ($achieved) {
-            $message = $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' );
-        } else {
-            $message = $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' );
-            $message = str_replace( '{remaining}', wc_price( $remaining ), $message );
-            $message = str_replace( '{threshold}', wc_price( $threshold ), $message );
-            $message = str_replace( '{current}', wc_price( $cart_total ), $message );
+    /**
+     * Get recommended products based on rule
+     *
+     * @param array $rule Recommendation rule
+     * @param WC_Product $current_product Current product being viewed
+     * @return array Recommended products
+     */
+    public function get_recommended_products( $rule, $current_product ): array {
+        $settings = $rule['settings'] ?? [];
+        $recommend_type = $settings['recommend_products_from_type'] ?? 'category';
+        $recommend_values = $settings['recommend_products_from_value'] ?? [];
+        $max_products = (int) ( $settings['max_products_to_show'] ?? 3 );
+        $sort_by = $settings['sort_by'] ?? 'best_selling';
+
+        if ( ! is_array( $recommend_values )) {
+            $recommend_values = [ $recommend_values ];
         }
 
-        return [
-            'threshold' => $threshold,
-            'current'   => $cart_total,
-            'remaining' => max( 0, $remaining ),
-            'progress'  => round( $progress, 2 ),
-            'achieved'  => $achieved,
-            'message'   => $message,
+        $query_args = [
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => $max_products * 2, // Get more to filter out cart items
+            'post__not_in'   => [ $current_product->get_id() ], // Exclude current product
+            'meta_query'     => [
+                [
+                    'key'     => '_stock_status',
+                    'value'   => 'instock',
+                    'compare' => '=',
+                ],
+            ],
         ];
+
+        // Add taxonomy query based on recommend type
+        switch ( $recommend_type ) {
+            case 'category':
+                $query_args['tax_query'] = [
+                    [
+                        'taxonomy' => 'product_cat',
+                        'field'    => 'term_id',
+                        'terms'    => array_map( 'intval', $recommend_values ),
+                    ],
+                ];
+                break;
+
+            case 'tag':
+                $query_args['tax_query'] = [
+                    [
+                        'taxonomy' => 'product_tag',
+                        'field'    => 'term_id',
+                        'terms'    => array_map( 'intval', $recommend_values ),
+                    ],
+                ];
+                break;
+
+            case 'product':
+                $product_ids = array_map( 'intval', $recommend_values );
+                $query_args['post__in'] = $product_ids;
+                break;
+        }
+
+        // Add sorting
+        switch ( $sort_by ) {
+            case 'best_selling':
+                $query_args['meta_key'] = 'total_sales';
+                $query_args['orderby'] = 'meta_value_num';
+                $query_args['order'] = 'DESC';
+                break;
+
+            case 'newest':
+                $query_args['orderby'] = 'date';
+                $query_args['order'] = 'DESC';
+                break;
+
+            case 'price_low':
+                $query_args['meta_key'] = '_price';
+                $query_args['orderby'] = 'meta_value_num';
+                $query_args['order'] = 'ASC';
+                break;
+
+            case 'price_high':
+                $query_args['meta_key'] = '_price';
+                $query_args['orderby'] = 'meta_value_num';
+                $query_args['order'] = 'DESC';
+                break;
+
+            default:
+                $query_args['orderby'] = 'rand';
+        }
+
+        $products_query = new \WP_Query( $query_args );
+        $products = [];
+
+        if ( $products_query->have_posts()) {
+            while ( $products_query->have_posts()) {
+                $products_query->the_post();
+                $product = wc_get_product( get_the_ID());
+
+                if ( $product && $this->should_show_product( $product, $settings )) {
+                    $products[] = $product;
+
+                    if ( count( $products ) >= $max_products ) {
+                        break;
+                    }
+                }
+            }
+            wp_reset_postdata();
+        }
+
+        return $products;
     }
 
     /**
-     * AJAX handler to get bar data
+     * Check if product should be shown based on cart behavior setting
+     *
+     * @param WC_Product $product Product to check
+     * @param array $settings Rule settings
+     * @return bool Whether to show the product
+     */
+    protected function should_show_product( $product, $settings ): bool {
+        $behavior = $settings['behavior_if_in_cart'] ?? 'hide';
+
+        if ( $behavior === 'show' ) {
+            return true;
+        }
+
+        // Check if product is in cart
+        if ( ! WC()->cart ) {
+            return true;
+        }
+
+        foreach ( WC()->cart->get_cart() as $cart_item ) {
+            if ( $cart_item['product_id'] === $product->get_id()) {
+                return false; // Hide if in cart
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Render recommendation section
+     *
+     * @param array $rule Recommendation rule
+     * @param array $products Recommended products
+     * @return void
+     */
+    public function render_recommendation_section( $rule, $products ): void {
+        $settings = $rule['settings'] ?? [];
+        $section_title = $settings['section_title'] ?? __( 'Pairs perfectly with', 'yayboost' );
+        $layout = $settings['layout'] ?? 'grid';
+
+        $template_path = plugin_dir_path( __FILE__ ) . 'templates/recommendation-section.php';
+
+        if ( file_exists( $template_path )) {
+            include $template_path;
+        }
+    }
+
+    /**
+     * AJAX handler to get updated recommendations
      *
      * @return void
      */
-    public function ajax_get_bar_data(): void {
-        $data = $this->get_bar_data();
-        wp_send_json_success( $data );
+    public function ajax_get_recommendations(): void {
+        check_ajax_referer( 'yayboost_recommendations', 'nonce' );
+    
+        $product_id = (int) ( $_POST['product_id'] ?? 0 );
+    
+        if ( ! $product_id ) {
+            wp_send_json_error( 'Invalid product ID' );
+        }
+    
+        $product = wc_get_product( $product_id );
+    
+        if ( ! $product ) {
+            wp_send_json_error( 'Product not found' );
+        }
+    
+        ob_start();
+        $this->render_recommendations( $product );
+        $html = ob_get_clean();
+    
+        wp_send_json_success( [ 'html' => $html ] );
     }
 
     /**
@@ -234,15 +435,15 @@ class SmartRecommendationsFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'threshold'         => 50,
-                'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
-                'bar_color'         => '#4CAF50',
-                'background_color'  => '#e8f5e9',
-                'text_color'        => '#2e7d32',
-                'position'          => 'top',
-                'show_on'           => [ 'cart', 'checkout' ],
-                'show_progress_bar' => true,
+                'when_customer_views_type' => 'category',
+                'when_customer_views_value' => '',
+                'recommend_products_from_type' => 'category',
+                'recommend_products_from_value' => '',
+                'max_products_to_show' => 3,
+                'sort_by' => 'best_selling',
+                'layout' => 'grid',
+                'section_title' => '',
+                'behavior_if_in_cart' => 'hide',
             ]
         );
     }

@@ -1,0 +1,25 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "yayboost/smart-recommendations",
+    "version": "1.0.0",
+    "title": "Smart Recommendations",
+    "category": "widgets",
+    "icon": "star-filled",
+    "description": "Display smart recommendations based on customer behavior",
+    "keywords": ["yayboost", "smart", "recommendations", "products"],
+    "attributes": {},
+    "supports": {
+      "html": false,
+      "anchor": true,
+      "align": true,
+      "spacing": {
+        "margin": true,
+        "padding": true
+      }
+    },
+    "textdomain": "yayboost",
+    "editorScript": "file:./index.js",
+    "style": "file:./style-index.css",
+    "render": "file:./render.php"
+}
