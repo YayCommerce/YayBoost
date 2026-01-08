@@ -80,8 +80,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     public function init(): void {
         // Hook into appropriate locations based on show_on setting
-        $settings = $this->get_settings();
-        $show_on  = $settings['show_on'] ?? [ 'top_cart', 'top_checkout' ];
+        $show_on  = $this->get('show_on');
 
         // Map show_on values to WooCommerce hooks
         $hook_map = [
@@ -129,11 +128,11 @@ class FreeShippingBarFeature extends AbstractFeature {
             'templates'     => $this->get_html_templates(),
             'settingsHash'  => $this->get_settings_hash(),
             'settings'      => [
-                'messageProgress' => $settings['message_progress'] ?? $this->get_default_settings()['message_progress'],
-                'messageAchieved' => $settings['message_achieved'] ?? $this->get_default_settings()['message_achieved'],
-                'messageCoupon'   => $settings['message_coupon'] ?? $this->get_default_settings()['message_coupon'],
-                'primaryColor'    => $settings['primary_color'] ?? $this->get_default_settings()['primary_color'],
-                'displayStyle'    => $settings['display_style'] ?? $this->get_default_settings()['display_style'],
+                'messageProgress' => $settings['message_progress'],
+                'messageAchieved' => $settings['message_achieved'],
+                'messageCoupon'   => $settings['message_coupon'],
+                'primaryColor'    => $settings['primary_color'],
+                'displayStyle'    => $settings['display_style'],
                 'shopPageUrl'     => function_exists( 'wc_get_page_id' ) ? get_permalink( wc_get_page_id( 'shop' ) ) : '', // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
             ],
         ];
@@ -247,10 +246,9 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string HTML string
      */
     protected function build_minimal_text_html(array $data): string {
-        $settings      = $this->get_settings();
         $templates     = $this->get_html_templates();
         $achieved      = $data['achieved'] && ! $data['show_coupon_message'];
-        $primary_color = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
+        $primary_color = $this->get('primary_color');
         $bg_color      = $achieved ? $primary_color : $this->apply_opacity( $primary_color );
         $text_color    = $achieved ? '#ffffff' : $primary_color;
 
@@ -276,9 +274,8 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string HTML string
      */
     protected function build_progress_bar_html(array $data): string {
-        $settings         = $this->get_settings();
         $templates        = $this->get_html_templates();
-        $primary_color    = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
+        $primary_color    = $this->get('primary_color');
         $bar_color        = $primary_color;
         $background_color = $this->apply_opacity( $primary_color );
         $text_color       = $primary_color;
@@ -306,10 +303,9 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string HTML string
      */
     protected function build_full_detail_html(array $data): string {
-        $settings         = $this->get_settings();
         $templates        = $this->get_html_templates();
         $achieved         = $data['achieved'] && ! $data['show_coupon_message'];
-        $primary_color    = $settings['primary_color'] ?? $this->get_default_settings()['primary_color'];
+        $primary_color    = $this->get('primary_color');
         $bar_color        = $primary_color;
         $background_color = $this->apply_opacity( $primary_color );
         $bg_color         = $achieved ? $primary_color : $background_color;
@@ -359,8 +355,7 @@ class FreeShippingBarFeature extends AbstractFeature {
             return '';
         }
 
-        $settings      = $this->get_settings();
-        $display_style = $settings['display_style'] ?? 'minimal_text';
+        $display_style = $this->get('display_style');
 
         // Route to appropriate method based on display style
         if ($display_style === 'minimal_text') {
@@ -679,17 +674,18 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return string Formatted message
      */
     protected function build_message(string $state, array $settings, array $progress_data, float $threshold, float $cart_total): string {
+        $default_settings = $this->get_default_settings();
         switch ($state) {
             case self::STATE_ACHIEVED:
-                return $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' );
+                return $settings['message_achieved'] ? $settings['message_achieved'] : $default_settings['message_achieved'];
 
             case self::STATE_NEED_COUPON:
-                return $settings['message_coupon'] ?? __( 'Please enter coupon code to receive free shipping', 'yayboost' );
+                return $settings['message_coupon'] ? $settings['message_coupon'] : $default_settings['message_coupon'];
 
             case self::STATE_IN_PROGRESS:
             default:
                 return $this->format_message(
-                    $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' ),
+                    $settings['message_progress'] ? $settings['message_progress'] : $default_settings['message_progress'],
                     $progress_data['remaining'],
                     $threshold,
                     $cart_total

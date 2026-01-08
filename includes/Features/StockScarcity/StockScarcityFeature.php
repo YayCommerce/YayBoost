@@ -69,13 +69,12 @@ class StockScarcityFeature extends AbstractFeature {
 
     public function render_stock_scarcity(): void
     {
-        $settings = $this->get_settings();
 
-        if (empty($settings['enabled'])) {
+        if (! $this->is_enabled()) {
             return;
         }
 
-        $show_on = $settings['show_on'] ?? [];
+        $show_on = $this->get('show_on', []);
 
         // Hook for product page based on position
         if (in_array('product_page', $show_on)) {
@@ -90,8 +89,7 @@ class StockScarcityFeature extends AbstractFeature {
 
     protected function render_stock_scarcity_product_page(): void
     {
-        $settings = $this->get_settings();
-        $position = $settings['position_on_product_page'] ?? 'below_title';
+        $position = $this->get('position_on_product_page');
 
         switch ($position) {
             case 'below_title':
@@ -124,6 +122,7 @@ class StockScarcityFeature extends AbstractFeature {
         }
 
         $settings = $this->get_settings();
+
         $apply_to = $settings['apply_to'] ?? 'all_products';
 
         $exclude_products = $settings['exclude_products'] ?? [];
