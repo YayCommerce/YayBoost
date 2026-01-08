@@ -274,4 +274,19 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return void
      */
     abstract public function init(): void;
+
+    public function get(string $key, $default = null) {
+        $settings = $this->get_settings();
+        $keys = explode('.', $key);
+        $value = $settings;
+
+        foreach ($keys as $k) {
+            if (!isset($value[$k])) {
+                return $default;
+            }
+            $value = $value[$k];
+        }
+
+        return $value;
+    }
 }
