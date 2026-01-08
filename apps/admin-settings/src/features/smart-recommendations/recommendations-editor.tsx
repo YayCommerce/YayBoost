@@ -1,9 +1,8 @@
-import * as React from 'react';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useCreateEntity, useEntity, useUpdateEntity } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Check } from '@phosphor-icons/react';
-import { useForm, UseFormReturn, useWatch } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
@@ -30,14 +29,6 @@ import {
 } from '@/components/ui/select';
 
 import { FeatureComponentProps } from '..';
-import {
-  FORM_LABEL_CLASS,
-  MAX_PRODUCTS_OPTIONS,
-  SECTION_CLASS,
-  SECTION_TITLE_CLASS,
-  SORT_BY_OPTIONS,
-  TYPE_OPTIONS,
-} from './constants';
 import { getOptionsFromLocalize } from './helpers';
 
 // ==================== Schema & Types ====================
@@ -57,147 +48,20 @@ const recommendationRuleSchema = z.object({
 
 type RecommendationRuleFormData = z.infer<typeof recommendationRuleSchema>;
 
-// ==================== Shared Components ====================
-interface SectionTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function SectionTitle({ children, className }: SectionTitleProps) {
-  return <h3 className={cn(SECTION_TITLE_CLASS, className)}>{children}</h3>;
-}
-
-interface SectionContainerProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function SectionContainer({ children, className }: SectionContainerProps) {
-  return (
-    <div className={cn(SECTION_CLASS, className)}>
-      {children}
-      {className !== 'border-none' && <hr className="mt-[32px]" />}
-    </div>
-  );
-}
-
-interface FormLabelTextProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-function FormLabelText({ children, className }: FormLabelTextProps) {
-  return <FormLabel className={cn(FORM_LABEL_CLASS, className)}>{children}</FormLabel>;
-}
-
-interface SelectFieldProps {
-  control: any;
-  name: string;
-  label: string;
-  placeholder: string;
-  options: { label: string; value: string }[];
-  onChange?: (value: string) => void;
-}
-
-function SelectField({ control, name, label, placeholder, options, onChange }: SelectFieldProps) {
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabelText>{label}</FormLabelText>
-          <Select onValueChange={(value) => { field.onChange(value); onChange?.(value); }} value={field.value} >
-            <FormControl>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder={placeholder} />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-}
-
-interface RadioFieldProps {
-  control: any;
-  name: string;
-  options: { value: string; label: string; id: string }[];
-  direction?: 'row' | 'col';
-  gap?: string;
-}
-
-function RadioField({
-  control,
-  name,
-  options,
-  direction = 'row',
-  gap = 'gap-[24px]',
-}: RadioFieldProps) {
-  return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormControl>
-            <RadioGroup
-              onValueChange={field.onChange}
-              value={field.value}
-              className={cn(direction === 'row' ? 'flex items-center' : 'flex flex-col', gap)}
-            >
-              {options.map((option) => (
-                <div key={option.value} className="flex items-center gap-2">
-                  <RadioGroupItem value={option.value} id={option.id} />
-                  <Label htmlFor={option.id} className="cursor-pointer font-normal">
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
-}
-
-// ==================== MultiSelect Components ====================
-interface MultiSelectWithSelectProps {
+// ==================== MultiSelect Component ====================
+interface MultiSelectProps {
   options: { label: string; value: string }[];
   value: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
-  className?: string;
 }
 
-function MultiSelectWithSelect({
-  options,
-  value,
-  onChange,
-  placeholder = 'Select options',
-  className,
-}: MultiSelectWithSelectProps) {
+function MultiSelect({ options, value, onChange, placeholder = 'Select options' }: MultiSelectProps) {
   const [open, setOpen] = useState(false);
 
-  const selectedOptions = useMemo(
-    () => options.filter((o) => value.includes(o.value)),
-    [options, value],
-  );
-
   const selectedLabels = useMemo(
-    () => selectedOptions.map((opt) => opt.label),
-    [selectedOptions],
+    () => options.filter((o) => value.includes(o.value)).map((o) => o.label),
+    [options, value],
   );
 
   const handleSelect = (selectedValue: string) => {
@@ -216,28 +80,18 @@ function MultiSelectWithSelect({
         <Button
           variant="outline"
           role="combobox"
-          aria-expanded={open}
           className={cn(
             'h-9 w-full justify-between font-normal',
             selectedLabels.length === 0 && 'text-muted-foreground',
-            className,
           )}
         >
           <span className="truncate text-left">{displayText}</span>
           <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
+            className={cn('ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform', open && 'rotate-180')}
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={cn(
-              'ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform',
-              open && 'rotate-180',
-            )}
+            viewBox="0 0 24 24"
           >
             <path d="m6 9 6 6 6-6" />
           </svg>
@@ -246,7 +100,7 @@ function MultiSelectWithSelect({
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <div className="max-h-[300px] overflow-auto">
           {options.length === 0 ? (
-            <div className="text-muted-foreground px-2 py-1.5 text-sm">No options available</div>
+            <div className="px-2 py-1.5 text-sm text-muted-foreground">No options available</div>
           ) : (
             options.map((option) => {
               const isSelected = value.includes(option.value);
@@ -255,18 +109,16 @@ function MultiSelectWithSelect({
                   key={option.value}
                   onClick={() => handleSelect(option.value)}
                   className={cn(
-                    'hover:bg-accent relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none',
+                    'relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent outline-none select-none',
                     isSelected && 'bg-accent',
                   )}
                 >
-                  <div className="flex w-full items-center gap-2">
-                    {isSelected ? (
-                      <Check className="text-primary h-4 w-4 shrink-0" weight="bold" />
-                    ) : (
-                      <div className="h-4 w-4 shrink-0" />
-                    )}
-                    <span className="flex-1">{option.label}</span>
-                  </div>
+                  {isSelected ? (
+                    <Check className="h-4 w-4 shrink-0 text-primary" weight="bold" />
+                  ) : (
+                    <div className="h-4 w-4 shrink-0" />
+                  )}
+                  <span className="flex-1">{option.label}</span>
                 </div>
               );
             })
@@ -277,12 +129,11 @@ function MultiSelectWithSelect({
   );
 }
 
-// ==================== Form Section Components ====================
-
-function RuleNameSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) {
+// ==================== Section Components ====================
+const RuleNameSection = ({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) => {
   return (
-    <SectionContainer>
-      <SectionTitle>Rule Name</SectionTitle>
+    <div className="p-[9px]">
+      <h3 className="text-[18px] leading-[28px] tracking-[-0.89px] font-semibold">Rule Name</h3>
       <FormField
         control={form.control}
         name="name"
@@ -295,81 +146,157 @@ function RuleNameSection({ form }: { form: UseFormReturn<RecommendationRuleFormD
           </FormItem>
         )}
       />
-    </SectionContainer>
+      <hr className="mt-[32px]" />
+    </div>
   );
-}
+};
 
-function WhenCustomerViewsSection({form}: { form: UseFormReturn<RecommendationRuleFormData> } ) {
-  const watchType = useWatch({
-    control: form.control,
-    name: 'when_customer_views_type',
-  }) as 'category' | 'product' | 'tag';
-
-  const valueOptions = useMemo(() => {
-    return getOptionsFromLocalize(watchType);
-  }, [watchType]);
+const WhenCustomerViewsSection = ({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) => {
+  const watchType = form.watch('when_customer_views_type');
+  const valueOptions = useMemo(() => getOptionsFromLocalize(watchType), [watchType]);
+  
+  const typeOptions = [
+    { label: 'Category', value: 'category' },
+    { label: 'Product', value: 'product' },
+    { label: 'Tag', value: 'tag' },
+  ];
 
   return (
-    <SectionContainer>
-      <SectionTitle>When Customer Views</SectionTitle>
+    <div className="p-[9px]">
+      <h3 className="text-[18px] leading-[28px] tracking-[-0.89px] font-semibold">When Customer Views</h3>
       <div className="grid grid-cols-2 gap-4">
-        <SelectField
+        {/* Type Select */}
+        <FormField
           control={form.control}
           name="when_customer_views_type"
-          label="Type"
-          placeholder="Select type"
-          options={TYPE_OPTIONS}
-          onChange={() => form.resetField('when_customer_views_value')}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base leading-6 font-normal">Type</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  form.resetField('when_customer_views_value');
+                }}
+                value={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {typeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        <SelectField
-          key={`${watchType}`}
+
+        {/* Value Select */}
+        <FormField
           control={form.control}
           name="when_customer_views_value"
-          label="Value"
-          placeholder="Select value"
-          options={valueOptions}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base leading-6 font-normal">Value</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value} key={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select value" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {valueOptions.map((option: { label: string; value: string }) => (
+                    <SelectItem key={option.value} value={option.value as string}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
-    </SectionContainer>
+      <hr className="mt-[32px]" />
+    </div>
   );
-}
+};
 
-function RecommendProductsFromSection({form}: { form: UseFormReturn<RecommendationRuleFormData> } ) {
-  const watchType = useWatch({
-    control: form.control,
-    name: 'recommend_products_from_type',
-  }) as 'category' | 'product' | 'tag';
+const RecommendProductsFromSection = ({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) => {
+  const watchType = form.watch('recommend_products_from_type');
+  const valueOptions = useMemo(() => getOptionsFromLocalize(watchType), [watchType]);
 
-  const valueOptions = useMemo(() => {
-    return getOptionsFromLocalize(watchType);
-  }, [watchType]);
+  const typeOptions = [
+    { label: 'Category', value: 'category' },
+    { label: 'Product', value: 'product' },
+    { label: 'Tag', value: 'tag' },
+  ];
 
-  const maxProductsOptionsFormatted = MAX_PRODUCTS_OPTIONS.map((num) => ({
+  const maxProductsOptions = ['1', '2', '3', '4', '5', '6', '8', '10', '12'].map((num) => ({
     label: num,
     value: num,
   }));
 
+  const sortByOptions = [
+    { label: 'Best Selling', value: 'best_selling' },
+    { label: 'Price: Low to High', value: 'price_low' },
+    { label: 'Price: High to Low', value: 'price_high' },
+    { label: 'Newest', value: 'newest' },
+    { label: 'Relevance', value: 'relevance' },
+  ];
+
   return (
-    <SectionContainer>
-      <SectionTitle>Recommend Products From</SectionTitle>
+    <div className="p-[9px]">
+      <h3 className="text-[18px] leading-[28px] tracking-[-0.89px] font-semibold">Recommend Products From</h3>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <SelectField
+          {/* Type Select */}
+          <FormField
             control={form.control}
             name="recommend_products_from_type"
-            label="Type"
-            placeholder="Select type"
-            options={TYPE_OPTIONS}
-            onChange={() => form.resetField('recommend_products_from_value')}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base leading-6 font-normal">Type</FormLabel>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    form.resetField('recommend_products_from_value');
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {typeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
           />
+
+          {/* Value MultiSelect */}
           <FormField
             control={form.control}
             name="recommend_products_from_value"
             render={({ field }) => (
               <FormItem>
-                <FormLabelText>Value</FormLabelText>
+                <FormLabel className="text-base leading-6 font-normal">Value</FormLabel>
                 <FormControl>
-                  <MultiSelectWithSelect
+                  <MultiSelect
                     options={valueOptions}
                     value={field.value || []}
                     onChange={field.onChange}
@@ -381,100 +308,191 @@ function RecommendProductsFromSection({form}: { form: UseFormReturn<Recommendati
             )}
           />
         </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <SelectField
-            control={form.control}
-            name="max_products_to_show"
-            label="Max products to show"
-            placeholder="Select max products"
-            options={maxProductsOptionsFormatted}
-          />
-          <SelectField
-            control={form.control}
-            name="sort_by"
-            label="Sort by"
-            placeholder="Select sort option"
-            options={SORT_BY_OPTIONS}
-          />
-        </div>
-      </div>
-    </SectionContainer>
-  );
-}
-
-function DisplaySettingsSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> } ) {
-  const layoutOptions = [
-    { label: 'Grid', value: 'grid' },
-    { label: 'List', value: 'list' },
-  ];
-
-  return (
-    <SectionContainer>
-      <SectionTitle>Display Settings</SectionTitle>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="space-y-4">
-          <SelectField
-            control={form.control}
-            name="layout"
-            label="Layout"
-            placeholder="Select layout"
-            options={layoutOptions}
-          />
+          {/* Max Products */}
           <FormField
             control={form.control}
-            name="section_title"
+            name="max_products_to_show"
             render={({ field }) => (
               <FormItem>
-                <FormLabelText>Section title</FormLabelText>
-                <FormControl>
-                  <Input {...field} placeholder="Complete Your Purchase" className="w-full" />
-                </FormControl>
+                <FormLabel className="text-base leading-6 font-normal">Max products to show</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select max products" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {maxProductsOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Sort By */}
+          <FormField
+            control={form.control}
+            name="sort_by"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-base leading-6 font-normal">Sort by</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select sort option" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {sortByOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
       </div>
-    </SectionContainer>
+      <hr className="mt-[32px]" />
+    </div>
   );
-}
+};
 
-function BehaviorSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> } ) {
-  const behaviorOptions = [
-    { value: 'hide', label: 'Hide it', id: 'hide' },
-    { value: 'show', label: 'Still show it', id: 'show' },
+const DisplaySettingsSection = ({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) => {
+  const layoutOptions = [
+    { label: 'Grid', value: 'grid' },
+    { label: 'List', value: 'list' },
   ];
 
   return (
-    <SectionContainer>
-      <SectionTitle>Behavior</SectionTitle>
-      <div className="space-y-3">
-        <Label className={FORM_LABEL_CLASS}>If recommended product is already in cart:</Label>
-        <RadioField
+    <div className="p-[9px]">
+      <h3 className="text-[18px] leading-[28px] tracking-[-0.89px] font-semibold">Display Settings</h3>
+      <div className="space-y-4">
+        {/* Layout */}
+        <FormField
           control={form.control}
-          name="behavior_if_in_cart"
-          options={behaviorOptions}
-          direction="col"
-          gap="gap-[8px]"
+          name="layout"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base leading-6 font-normal">Layout</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select layout" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {layoutOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Section Title */}
+        <FormField
+          control={form.control}
+          name="section_title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-base leading-6 font-normal">Section title</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="Complete Your Purchase" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
-    </SectionContainer>
+      <hr className="mt-[32px]" />
+    </div>
   );
-}
+};
 
-function StatusSection({ form }: { form: UseFormReturn<RecommendationRuleFormData> } ) {
-  const statusOptions = [
-    { value: 'active', label: 'Active', id: 'active' },
-    { value: 'inactive', label: 'Inactive', id: 'inactive' },
-  ];
-
+const BehaviorSection = ({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) => {
   return (
-    <SectionContainer className="border-none">
-      <SectionTitle>Status</SectionTitle>
-      <RadioField control={form.control} name="status" options={statusOptions} />
-    </SectionContainer>
+    <div className="p-[9px]">
+      <h3 className="text-[18px] leading-[28px] tracking-[-0.89px] font-semibold">Behavior</h3>
+      <div className="space-y-3">
+        <Label className="text-base leading-6 font-normal">If recommended product is already in cart:</Label>
+        <FormField
+          control={form.control}
+          name="behavior_if_in_cart"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col gap-[8px]">
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="hide" id="hide" />
+                    <Label htmlFor="hide" className="cursor-pointer font-normal">
+                      Hide it
+                    </Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="show" id="show" />
+                    <Label htmlFor="show" className="cursor-pointer font-normal">
+                      Still show it
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      <hr className="mt-[32px]" />
+    </div>
   );
-}
+};
+
+const StatusSection = ({ form }: { form: UseFormReturn<RecommendationRuleFormData> }) => {
+  return (
+    <div className="p-[9px]">
+      <h3 className="text-[18px] leading-[28px] tracking-[-0.89px] font-semibold ">Status</h3>
+      <FormField
+        control={form.control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormControl>
+              <RadioGroup onValueChange={field.onChange} value={field.value} className="flex items-center gap-[24px]">
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="active" id="active" />
+                  <Label htmlFor="active" className="cursor-pointer font-normal">
+                    Active
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="inactive" id="inactive" />
+                  <Label htmlFor="inactive" className="cursor-pointer font-normal">
+                    Inactive
+                  </Label>
+                </div>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
+  );
+};
 
 // ==================== Main Component ====================
 const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
@@ -573,29 +591,32 @@ const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
         <div className="flex items-center gap-4">
           <Link
             to={`/features/${featureId}`}
-            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
+            className="flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div>
-            <h1 className="text-2xl font-semibold">{'Edit Rule'}</h1>
-            <p className="text-muted-foreground text-sm">
-              {'Configure your product recommendation rule'}
+            <h1 className="text-2xl font-semibold">
+              {isEditing ? 'Edit Rule' : 'Create Rule'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Configure your product recommendation rule
             </p>
           </div>
         </div>
       </div>
-      <div className="rounded-lg border p-6">
+
+      <div className="rounded-lg border p-6" key={recommendation?.id}>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-[14px]">
             <RuleNameSection form={form} />
             <WhenCustomerViewsSection form={form} />
-            <RecommendProductsFromSection form={form}/>
+            <RecommendProductsFromSection form={form} />
             <DisplaySettingsSection form={form} />
             <BehaviorSection form={form} />
             <StatusSection form={form} />
 
-            {/* Submit button */}
+            {/* Submit Buttons */}
             <div className="flex justify-end gap-3">
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 Cancel
