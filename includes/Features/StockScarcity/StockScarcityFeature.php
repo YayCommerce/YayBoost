@@ -184,4 +184,35 @@ class StockScarcityFeature extends AbstractFeature {
             include $path;
         }
     }
+
+    /**
+     * Get default settings
+     *
+     * @return array
+     */
+    protected function get_default_settings(): array {
+        return array_merge(
+            parent::get_default_settings(),
+            [
+                'low_stock_threshold' => 10,
+                'show_alert_text' => true,
+                'show_progress_bar' => true,
+                'default_message' => '',
+                'urgent_threshold' => 5,
+                'urgent_message' => '',
+                'fixed_stock_number' => [
+                    'is_enabled' => false,
+                    'number' => 50,
+                ],
+                'fill_color' => '#E53935',
+                'background_color' => '#EEEEEE',
+                'position_on_product_page' => 'below_title',
+                'show_on' => ['product_page', 'shop_category_pages'],
+                'apply_to' => 'all_products',
+                'specific_categories' => [],
+                'specific_products' => [],
+                'exclude_products' => [],
+            ]
+        );
+    }
 }
