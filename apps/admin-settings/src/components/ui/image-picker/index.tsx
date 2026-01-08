@@ -44,11 +44,7 @@ function ImagePicker({
       </Button>
 
       {coverSrc && (
-        <Button
-          variant="outline"
-          onClick={onRemoveCover}
-          className="hover:text-destructive text-muted-foreground flex cursor-pointer items-center justify-center border-none shadow-none transition-colors disabled:opacity-50"
-        >
+        <Button variant="outline" onClick={onRemoveCover}>
           <TrashIcon className="text-red-600" />
         </Button>
       )}

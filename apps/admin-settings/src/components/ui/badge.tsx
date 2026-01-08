@@ -10,36 +10,36 @@ const badgeVariants = cva(
     variants: {
       variant: {
         outline:
-          'bg-background hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
-        ghost: 'hover:bg-[#F2F5F9] text-foreground bg-transparent focus-visible:text-primary',
-        link: 'text-foreground hover:text-primary underline-offset-4 hover:underline',
-        muted: 'bg-muted text-muted-foreground hover:bg-muted-accent',
+          'bg-background dark:bg-input/30 dark:border-input',
+        ghost: 'text-foreground bg-transparent focus-visible:text-primary',
+        link: 'text-foreground underline-offset-4',
+        muted: 'bg-muted text-muted-foreground',
 
-        primary: 'border-transparent bg-primary text-primary-foreground hover:bg-primary-accent',
-        'primary-soft': 'border-transparent bg-primary/6 text-primary hover:text-primary-accent',
+        primary: 'border-transparent bg-primary text-primary-foreground',
+        'primary-soft': 'border-transparent bg-primary/6 text-primary',
         'primary-outline':
-          'border border-primary text-primary hover:border-primary-accent hover:text-primary-accent',
+          'border border-primary text-primary',
 
         destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive-accent ring-destructive/50 hover:ring-destructive-accent/50',
+          'border-transparent bg-destructive text-destructive-foreground',
         'destructive-soft':
-          'border-transparent bg-destructive/6 text-destructive hover:text-destructive-accent ring-destructive/50 hover:ring-destructive-accent/50',
+          'border-transparent bg-destructive/6 text-destructive',
         'destructive-outline':
-          'border border-destructive text-destructive hover:border-destructive-accent hover:text-destructive-accent ring-destructive/50 hover:ring-destructive-accent/50',
+          'border border-destructive text-destructive',
 
         success:
-          'border-transparent bg-success text-success-foreground hover:bg-success-accent ring-success/50 hover:ring-success-accent/50',
+          'border-transparent bg-success text-success-foreground',
         'success-soft':
-          'border-transparent bg-success/6 text-success hover:text-success-accent ring-success/50 hover:ring-success-accent/50',
+          'border-transparent bg-success/6 text-success',
         'success-outline':
-          'border border-success text-success hover:border-success-accent hover:text-success-accent ring-success/50 hover:ring-success-accent/50',
+          'border border-success text-success',
 
         warning:
-          'border-transparent bg-warning text-warning-foreground hover:bg-warning-accent ring-warning/50 hover:ring-warning-accent/50',
+          'border-transparent bg-warning text-warning-foreground',
         'warning-soft':
-          'border-transparent bg-warning/6 text-warning hover:text-warning-accent ring-warning/50 hover:ring-warning-accent/50',
+          'border-transparent bg-warning/6 text-warning',
         'warning-outline':
-          'border border-warning text-warning hover:border-warning-accent hover:text-warning-accent ring-warning/50 hover:ring-warning-accent/50',
+          'border border-warning text-warning',
       },
     },
     defaultVariants: {
