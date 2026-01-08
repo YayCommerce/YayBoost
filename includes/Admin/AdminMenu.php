@@ -63,6 +63,7 @@ class AdminMenu {
                 'nonce'          => wp_create_nonce( 'wp_rest' ),
                 'version'        => YAYBOOST_VERSION,
                 'currencySymbol' => get_woocommerce_currency_symbol(),
+                'hasReviewed'    => (bool) get_option( 'yayboost_has_reviewed', false ) ?? false,
             ]
         );
     }

@@ -49,6 +49,9 @@ class Router {
      * @return void
      */
     public function register_routes(): void {
+
+        $this->register_controller( new Controllers\AdminController( $this->container ) );
+
         // Register feature routes
         $this->register_controller( new Controllers\FeatureController( $this->container ) );
 

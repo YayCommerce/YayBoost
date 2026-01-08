@@ -9,6 +9,7 @@ import { __ } from '@wordpress/i18n';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
+import { Footer } from '@/components/layout/Footer';
 
 const navigation = [
   { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: House },
@@ -73,6 +74,7 @@ export function DashboardLayout() {
         <main className="p-6">
           <Outlet />
         </main>
+        <Footer />
       </TabsPrimitive.Root>
     </div>
   );
