@@ -48,7 +48,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
   }, [feature.enabled]);
 
   return (
-    <Card className="group rounded-[10px] transition-all hover:shadow-md">
+    <Card className="group rounded-[10px] transition-all hover:shadow-md justify-between">
       <CardHeader className="pb-3">
         {/* Top row: Icon + Title + Badge */}
         <div className="flex items-center gap-3">

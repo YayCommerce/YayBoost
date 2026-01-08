@@ -33,11 +33,6 @@
   padding-left: 0px !important;
 }
 
-.yayboost-ui #wpbody-content {
-  padding-bottom: 0;
-  float: unset;
-}
-
 .yayboost-ui #wpbody-content > .wrap {
   margin: 0;
 }

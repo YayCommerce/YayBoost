@@ -157,7 +157,7 @@ export function ColorPicker({
               type="button"
               onClick={handleClear}
             >
-              {__('reset_text')}
+              {__('Reset', 'yayboost')}
             </Button>
           </div>
         </div>
