@@ -1,9 +1,11 @@
-import { useFeature } from '@/hooks';
+import { useEffect, useMemo, useState } from 'react';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningCircle } from '@phosphor-icons/react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,22 +23,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
 
 import { FeatureComponentProps } from '..';
-
-const categoryOptions = [
-  { label: 'Phones', value: 'phones' },
-  { label: 'Phone Cases', value: 'phone-cases' },
-  { label: 'Screen Protectors', value: 'screen-protectors' },
-  { label: 'Accessories', value: 'accessories' },
-];
-
-const productOptions = [
-  { label: 'iPhone 15 Pro', value: 'iphone-15-pro' },
-  { label: 'Samsung Galaxy S24', value: 'samsung-galaxy-s24' },
-  { label: 'AirPods Pro', value: 'airpods-pro' },
-];
 
 // Settings schema
 const settingsSchema = z.object({
@@ -44,10 +34,9 @@ const settingsSchema = z.object({
   low_stock_threshold: z.number().min(0),
   show_alert_text: z.boolean(),
   show_progress_bar: z.boolean(),
-  default_message: z.string().min(1),
+  default_message: z.string().optional(),
   urgent_threshold: z.number().min(0),
-  urgent_message: z.string().min(1),
-  progress_source: z.enum(['auto', 'fixed']),
+  urgent_message: z.string().optional(),
   fixed_stock_number: z
     .object({
       is_enabled: z.boolean(),
@@ -83,7 +72,7 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
                 <FormLabel className="text-sm">Enable Stock Scarcity</FormLabel>
                 <FormControl>
                   <RadioGroup
-                    onValueChange={field.onChange}
+                    onValueChange={(value) => field.onChange(value === 'true')}
                     value={field.value.toString()}
                     className="flex flex-col gap-2"
                   >
@@ -112,7 +101,12 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
                 <FormLabel className="text-sm">Show when stock is at or below</FormLabel>
                 <div className="flex w-fit items-center gap-2">
                   <FormControl>
-                    <Input type="number" step="1" {...field} />
+                    <Input
+                      type="number"
+                      step="1"
+                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      value={field.value || 1}
+                    />
                   </FormControl>
                   <span className="text-[#6A7282]">items</span>
                 </div>
@@ -293,7 +287,7 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
                         }}
                       />
                       <Label className="cursor-pointer font-normal">
-                        Calculate percentage from Fixed Number
+                        Calculate percentage from "fixed number"
                       </Label>
                     </div>
                   </div>
@@ -312,7 +306,14 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
                   render={({ field }) => (
                     <FormItem className="m-0">
                       <FormControl>
-                        <Input type="number" step="1" min="1" className="w-28" {...field} />
+                        <Input
+                          type="number"
+                          step="1"
+                          min="1"
+                          className="w-28"
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          value={field.value || 1}
+                        />
                       </FormControl>
                     </FormItem>
                   )}
@@ -437,10 +438,24 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
 };
 
 const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
+  const [selectProductsSearch, setSelectProductsSearch] = useState('');
+  const [excludeProductsSearch, setExcludeProductsSearch] = useState('');
+
+  const { data: categories } = useProductCategories();
+  const { data: selectProducts } = useProducts(selectProductsSearch);
+  const { data: excludeProducts } = useProducts(excludeProductsSearch);
+
+  const onSelectProductsSearch = (search: string) => {
+    setSelectProductsSearch(search);
+  };
+
+  const onExcludeProductsSearch = (search: string) => {
+    setExcludeProductsSearch(search);
+  };
+
   const applyTo = form.watch('apply_to');
   const isCategories = applyTo === 'specific_categories';
   const isProducts = applyTo === 'specific_products';
-  const options = isCategories ? categoryOptions : isProducts ? productOptions : [];
 
   return (
     <Card>
@@ -497,7 +512,7 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
                   <FormLabel>Select categories</FormLabel>
                   <FormControl>
                     <MultiSelect
-                      options={options}
+                      options={categories ?? []}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={`Search categories...`}
@@ -520,11 +535,12 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
                   <FormLabel>Select products</FormLabel>
                   <FormControl>
                     <MultiSelect
-                      options={options}
+                      options={selectProducts ?? []}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder={`Search products...`}
                       showSearch={true}
+                      onSearchChange={onSelectProductsSearch}
                       emptyText={`No products found`}
                     />
                   </FormControl>
@@ -544,10 +560,12 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
               <FormItem>
                 <FormControl>
                   <MultiSelect
-                    options={productOptions}
+                    key={'exclude_products'}
+                    options={excludeProducts ?? []}
                     value={field.value}
                     onChange={field.onChange}
                     placeholder={`Search products...`}
+                    onSearchChange={onExcludeProductsSearch}
                     showSearch={true}
                     emptyText={`No products found`}
                   />
@@ -562,20 +580,30 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
   );
 };
 
+const SAMPLE_STOCK_LEFT = 8;
+const SAMPLE_MAX_STOCK = 50;
+
 const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
-  const sampleStockLeft = 8;
   const watchedValues = form.watch();
 
-  const isUrgent = sampleStockLeft <= watchedValues.urgent_threshold;
-  const message = isUrgent
-    ? watchedValues.urgent_message.replace('{stock}', sampleStockLeft.toString())
-    : watchedValues.default_message.replace('{stock}', sampleStockLeft.toString());
+  const message = useMemo(() => {
+    const isUrgent = SAMPLE_STOCK_LEFT <= watchedValues.urgent_threshold;
+    let message = watchedValues.default_message || '⚠️ Hurry! Only {stock} left!';
+    if (isUrgent) {
+      message = watchedValues.urgent_message || '🔥 Only {stock} left in stock!';
+    }
+    return message.replace('{stock}', SAMPLE_STOCK_LEFT.toString());
+  }, [watchedValues]);
 
-  const maxStock =
-    watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number
-      ? watchedValues.fixed_stock_number.number
-      : 50;
-  const progress = Math.min(100, (sampleStockLeft / maxStock) * 100);
+  const progress = useMemo(() => {
+    let maxStock = SAMPLE_MAX_STOCK;
+
+    if (watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number) {
+      maxStock = watchedValues.fixed_stock_number.number;
+    }
+
+    return Math.min(100, (SAMPLE_STOCK_LEFT / maxStock) * 100);
+  }, [watchedValues]);
 
   return (
     <Card>
@@ -590,7 +618,7 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
             {watchedValues.show_alert_text && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium whitespace-nowrap text-gray-900">
-                  {message ? message : '🔥 Only {stock} left in stock!'}
+                  {message}
                 </span>
               </div>
             )}
@@ -611,7 +639,7 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
                   />
                 </div>
                 <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
-                  {sampleStockLeft} left
+                  {SAMPLE_STOCK_LEFT} left
                 </span>
               </div>
             )}
@@ -623,37 +651,26 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
 };
 
 const StockScarcity = ({ featureId }: FeatureComponentProps) => {
-  const { data: feature } = useFeature(featureId);
+  const { data: feature, isLoading } = useFeature(featureId);
+  const updateSettings = useUpdateFeatureSettings();
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log(data);
+    updateSettings.mutate({ id: featureId, settings: data });
   };
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      enabled: false,
-      low_stock_threshold: 10,
-      show_alert_text: true,
-      show_progress_bar: true,
-      default_message: '',
-      urgent_threshold: 5,
-      urgent_message: '',
-      progress_source: 'auto',
-      fixed_stock_number: {
-        is_enabled: false,
-        number: 50,
-      },
-      fill_color: '#E53935',
-      background_color: '#EEEEEE',
-      position_on_product_page: 'below_title',
-      show_on: ['product_page', 'shop_category_pages'],
-      apply_to: 'all_products',
-      specific_categories: [],
-      specific_products: [],
-      exclude_products: [],
-    },
+    defaultValues: feature?.settings,
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -671,15 +688,19 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
               <DisplaySection form={form} />
               {form.watch('show_alert_text') && <AlertTextSection form={form} />}
               {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
+              <PreviewSection form={form} />
               <DisplayLocationSection form={form} />
               <ProductTargetingSection form={form} />
-              <PreviewSection form={form} />
             </div>
 
             {/* Submit button */}
             <div className="flex justify-end gap-3">
-              <Button type="submit" className="bg-[#171717] text-white">
-                Save Changes
+              <Button
+                type="submit"
+                className="bg-[#171717] text-white"
+                disabled={updateSettings.isPending}
+              >
+                {updateSettings.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </div>

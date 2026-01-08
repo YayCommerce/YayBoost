@@ -57,6 +57,9 @@ class Router {
 
         // Register settings routes
         $this->register_controller( new Controllers\SettingsController( $this->container ) );
+    
+        // Register Product Data routes
+        $this->register_controller( new Controllers\ProductDataController( $this->container ) );
     }
 
     /**
