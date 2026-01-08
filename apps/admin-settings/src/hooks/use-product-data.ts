@@ -1,11 +1,11 @@
-import api from '@/lib/api';
-import { useQuery, UseQueryResult,useInfiniteQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { useInfiniteQuery, useQuery, UseQueryResult } from '@tanstack/react-query';
+
+import api from '@/lib/api';
 
 export interface CategoryOption {
   value: string;
   label: string;
-  count: number;
 }
 
 export interface ProductOption {
