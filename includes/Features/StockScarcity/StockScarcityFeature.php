@@ -178,6 +178,18 @@ class StockScarcityFeature extends AbstractFeature {
 
         $settings = $this->get_settings();
 
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
+        $default_settings = $this->get_default_settings();
+
+        $args = array(
+            'product' => $current_product,
+            'settings' => $settings,
+            'default_settings' => $default_settings,
+        );
+
         $path = YAYBOOST_PATH . 'includes/Features/StockScarcity/templates/stock-scarcity.php';
 
         if (file_exists($path)) {
@@ -197,9 +209,9 @@ class StockScarcityFeature extends AbstractFeature {
                 'low_stock_threshold' => 10,
                 'show_alert_text' => true,
                 'show_progress_bar' => true,
-                'default_message' => '',
+                'default_message' => '🔥 Only {stock} left in stock!',
                 'urgent_threshold' => 5,
-                'urgent_message' => '',
+                'urgent_message' => '⚠️ Hurry! Only {stock} left!',
                 'fixed_stock_number' => [
                     'is_enabled' => false,
                     'number' => 50,

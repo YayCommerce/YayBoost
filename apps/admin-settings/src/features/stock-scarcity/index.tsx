@@ -1,14 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningCircle } from '@phosphor-icons/react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
-import {
-  useProductCategories,
-  useProducts,
-} from '@/hooks/use-product-data';
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -37,9 +34,9 @@ const settingsSchema = z.object({
   low_stock_threshold: z.number().min(0),
   show_alert_text: z.boolean(),
   show_progress_bar: z.boolean(),
-  default_message: z.string().min(1),
+  default_message: z.string().optional(),
   urgent_threshold: z.number().min(0),
-  urgent_message: z.string().min(1),
+  urgent_message: z.string().optional(),
   fixed_stock_number: z
     .object({
       is_enabled: z.boolean(),
@@ -290,7 +287,7 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
                         }}
                       />
                       <Label className="cursor-pointer font-normal">
-                        Calculate percentage from Fixed Number
+                        Calculate percentage from "fixed number"
                       </Label>
                     </div>
                   </div>
@@ -583,20 +580,30 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
   );
 };
 
+const SAMPLE_STOCK_LEFT = 8;
+const SAMPLE_MAX_STOCK = 50;
+
 const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
-  const sampleStockLeft = 8;
   const watchedValues = form.watch();
 
-  const isUrgent = sampleStockLeft <= watchedValues.urgent_threshold;
-  const message = isUrgent
-    ? watchedValues.urgent_message.replace('{stock}', sampleStockLeft.toString())
-    : watchedValues.default_message.replace('{stock}', sampleStockLeft.toString());
+  const message = useMemo(() => {
+    const isUrgent = SAMPLE_STOCK_LEFT <= watchedValues.urgent_threshold;
+    let message = watchedValues.default_message || '⚠️ Hurry! Only {stock} left!';
+    if (isUrgent) {
+      message = watchedValues.urgent_message || '🔥 Only {stock} left in stock!';
+    }
+    return message.replace('{stock}', SAMPLE_STOCK_LEFT.toString());
+  }, [watchedValues]);
 
-  const maxStock =
-    watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number
-      ? watchedValues.fixed_stock_number.number
-      : 50;
-  const progress = Math.min(100, (sampleStockLeft / maxStock) * 100);
+  const progress = useMemo(() => {
+    let maxStock = SAMPLE_MAX_STOCK;
+
+    if (watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number) {
+      maxStock = watchedValues.fixed_stock_number.number;
+    }
+
+    return Math.min(100, (SAMPLE_STOCK_LEFT / maxStock) * 100);
+  }, [watchedValues]);
 
   return (
     <Card>
@@ -611,7 +618,7 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
             {watchedValues.show_alert_text && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium whitespace-nowrap text-gray-900">
-                  {message ? message : '🔥 Only {stock} left in stock!'}
+                  {message}
                 </span>
               </div>
             )}
@@ -632,7 +639,7 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
                   />
                 </div>
                 <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
-                  {sampleStockLeft} left
+                  {SAMPLE_STOCK_LEFT} left
                 </span>
               </div>
             )}
@@ -681,9 +688,9 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
               <DisplaySection form={form} />
               {form.watch('show_alert_text') && <AlertTextSection form={form} />}
               {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
+              <PreviewSection form={form} />
               <DisplayLocationSection form={form} />
               <ProductTargetingSection form={form} />
-              <PreviewSection form={form} />
             </div>
 
             {/* Submit button */}

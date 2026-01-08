@@ -1,21 +1,38 @@
 <?php
-if (empty($settings) || ! isset($settings['enabled']) || ! $settings['enabled']) {
+
+/**
+ * Template for stock scarcity feature
+ *
+ * @param array $args
+ * @return void
+ *
+ * @var \WC_Product $current_product
+ * @var array $settings
+ */
+
+if ( empty($args) || ! is_array($args) ) {
     return;
 }
 
-if (! $current_product || ! $current_product->is_in_stock()) {
+extract($args);
+
+if ( empty($product) || ! $product instanceof \WC_Product ) {
     return;
 }
 
-$urgent_threshold = $settings['urgent_threshold'] ?? '';
-$show_alert_text = $settings['show_alert_text'] ?? false;
-$show_progress_bar = $settings['show_progress_bar'] ?? false;
-$default_message = $settings['default_message'] ?? '';
-$urgent_message = $settings['urgent_message'] ?? '';
-$fill_color = $settings['fill_color'] ?? '#E53935';
-$background_color = $settings['background_color'] ?? '#EEEEEE';
+if (! $product->is_in_stock()) {
+    return;
+}
 
-$low_stock_threshold = $settings['low_stock_threshold'] ?? '';
+$urgent_threshold = $settings['urgent_threshold'] ?? $default_settings['urgent_threshold'];
+$show_alert_text = $settings['show_alert_text'] ?? $default_settings['show_alert_text'];
+$show_progress_bar = $settings['show_progress_bar'] ?? $default_settings['show_progress_bar'];
+$default_message = ! empty($settings['default_message']) ? $settings['default_message'] : $default_settings['default_message'];
+$urgent_message = ! empty($settings['urgent_message']) ? $settings['urgent_message'] : $default_settings['urgent_message'];
+$fill_color = $settings['fill_color'] ?? $default_settings['fill_color'];
+$background_color = $settings['background_color'] ?? $default_settings['background_color'];
+$low_stock_threshold = $settings['low_stock_threshold'] ?? $default_settings['low_stock_threshold'];
+
 $stock_quantity = $current_product->get_stock_quantity();
 if ($stock_quantity === null || $stock_quantity <= 0 || $stock_quantity > $low_stock_threshold) {
     return;
@@ -30,9 +47,9 @@ $message = $is_urgent
 // Calculate progress
 $progress = min(100, ($stock_quantity / $low_stock_threshold) * 100);
 
-$use_fixed_number = $settings['fixed_stock_number']['is_enabled'] ?? false;
+$use_fixed_number = $settings['fixed_stock_number']['is_enabled'] ?? $default_settings['fixed_stock_number']['is_enabled'];
 if ($use_fixed_number) {
-    $fixed_stock_number = $settings['fixed_stock_number']['number'] ?? 0;
+    $fixed_stock_number = $settings['fixed_stock_number']['number'] ?? $default_settings['fixed_stock_number']['number'];
 
     if ($fixed_stock_number > 0) {
         // Calculate percentage SOLD, not remaining
@@ -43,11 +60,11 @@ if ($use_fixed_number) {
 
 ?>
 
-<div class="yayboost-stock-scarcity" style="background-color: #f9fafb; border-radius: 8px; margin: 10px 0;">
+<div class="yayboost-stock-scarcity">
     <?php if ($show_alert_text) : ?>
         <div class="yayboost-stock-scarcity__message" style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 14px; font-weight: 500; color: #111827;">
-                <?php echo esc_html($message); ?>
+                <?php echo wp_kses_post($message); ?>
             </span>
         </div>
     <?php endif; ?>
