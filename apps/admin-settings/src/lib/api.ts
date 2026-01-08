@@ -12,14 +12,11 @@ declare global {
       nonce: string;
       version: string;
       currencySymbol?: string;
-      product_categories: {
-        id: string;
-        name: string;
-      }[];
-      products: {
-        id: string;
-        name: string;
-      }[];
+      hasReviewed: boolean;
+      urls: {
+        images: string;
+        wcPlaceholderImage: string;
+      };
     };
   }
 }

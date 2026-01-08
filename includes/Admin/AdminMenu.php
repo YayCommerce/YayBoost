@@ -80,26 +80,23 @@ class AdminMenu {
 			$products
 		);
 
-		// Enqueue CSS
-		wp_enqueue_style( ScriptName::STYLE_SETTINGS );
-
-		// Enqueue JS
-		wp_enqueue_script( ScriptName::ADMIN_SETTINGS );
-
-		// Localize script with API data
-		wp_localize_script(
-			ScriptName::ADMIN_SETTINGS,
-			'yayboostData',
-			array(
-				'apiUrl'             => rest_url( 'yayboost/v1/' ),
-				'nonce'              => wp_create_nonce( 'wp_rest' ),
-				'version'            => YAYBOOST_VERSION,
-				'currencySymbol'     => get_woocommerce_currency_symbol(),
-				'product_categories' => $categories,
-				'products'           => $products,
-			)
-		);
-	}
+        // Localize script with API data
+        wp_localize_script(
+            ScriptName::ADMIN_SETTINGS,
+            'yayboostData',
+            [
+                'apiUrl'         => rest_url( 'yayboost/v1/' ),
+                'nonce'          => wp_create_nonce( 'wp_rest' ),
+                'version'        => YAYBOOST_VERSION,
+                'currencySymbol' => get_woocommerce_currency_symbol(),
+                'hasReviewed'    => (bool) get_option( 'yayboost_has_reviewed', false ) ?? false,
+                'urls'           => array(
+                    'images'       => YAYBOOST_URL . 'assets/images/',
+                    'wcPlaceholderImage' => \wc_placeholder_img_src(),
+                ),
+            ]
+        );
+    }
 
 	public function render_page() {
 		ob_start();
