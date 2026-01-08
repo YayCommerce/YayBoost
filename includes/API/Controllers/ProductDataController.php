@@ -58,9 +58,24 @@ class ProductDataController extends BaseController
         }
 
         $formatted = array_map(function ($cat) {
+            $label = $cat->name;
+
+            // Build full hierarchy path if category has parents
+            $ancestors = get_ancestors($cat->term_id, 'product_cat', 'taxonomy');
+            if (!empty($ancestors)) {
+                // Ancestors are returned from immediate parent to root, so reverse them
+                $ancestors = array_reverse($ancestors);
+                $ancestor_names = array_map(function ($ancestor_id) {
+                    $ancestor = get_term($ancestor_id, 'product_cat');
+                    return $ancestor ? $ancestor->name : '';
+                }, $ancestors);
+                $ancestor_names = array_filter($ancestor_names);
+                $label = implode(' > ', $ancestor_names) . ' > ' . $cat->name;
+            }
+
             return [
                 'value' => $cat->slug,
-                'label' => $cat->name,
+                'label' => $label,
             ];
         }, $categories);
 
