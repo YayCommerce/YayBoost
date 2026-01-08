@@ -73,11 +73,18 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
     protected $collector;
 
     /**
-     * Flag to track if currently rendering FBT section
+     * FBT Cache Manager instance
      *
-     * @var bool
+     * @var FBTCacheManager
      */
-    protected static $is_rendering_fbt = false;
+    protected $cache_manager;
+
+    /**
+     * FBT Renderer instance
+     *
+     * @var FBTRenderer
+     */
+    protected $renderer;
 
     /**
      * Initialize the feature
@@ -89,13 +96,15 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             return;
         }
 
-        // Initialize repository and collector
-        $this->repository = new FBTRepository();
-        $this->collector  = new FBTCollector();
+        // Initialize dependencies with dependency injection
+        $this->cache_manager = new FBTCacheManager();
+        $this->repository    = new FBTRepository( $this->cache_manager );
+        $this->collector     = new FBTCollector( $this->cache_manager );
+        $this->renderer      = new FBTRenderer( $this->repository );
 
         // Register data collection hooks (hybrid approach)
-        add_action( 'woocommerce_thankyou', [ $this->collector, 'handle_order_thankyou' ], 10 );
-        add_action( 'woocommerce_order_status_completed', [ $this->collector, 'handle_order_completed' ], 20 );
+        add_action( 'woocommerce_thankyou', [ $this, 'handle_order_thankyou_with_cache' ], 10 );
+        add_action( 'woocommerce_order_status_completed', [ $this, 'handle_order_completed_with_cache' ], 20 );
         add_action( 'yayboost_process_fbt_order', [ $this->collector, 'handle_background_job' ] );
 
         // Register display hooks - only check enabled
@@ -107,7 +116,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 
         // Register hook to add FBT checkbox via WooCommerce hook
-        add_action( 'woocommerce_after_shop_loop_item', [ $this, 'render_fbt_checkbox' ], 15 );
+        add_action( 'woocommerce_after_shop_loop_item', [ $this->renderer, 'render_fbt_checkbox' ], 15 );
 
         // Register AJAX handler for batch add-to-cart
         add_action( 'wp_ajax_yayboost_fbt_batch_add', [ $this, 'ajax_add_fbt_batch' ] );
@@ -118,7 +127,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             wp_schedule_event( time(), 'weekly', 'yayboost_fbt_weekly_cleanup' );
         }
         add_action( 'yayboost_fbt_weekly_cleanup', [ $this, 'run_cleanup' ] );
-
     }
 
     /**
@@ -171,13 +179,13 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         // Get WooCommerce currency settings
         $currency_symbol = get_woocommerce_currency_symbol();
         $currency_pos    = get_option( 'woocommerce_currency_pos', 'left' );
-        $price_format    = get_woocommerce_price_format();
         $decimal_sep     = wc_get_price_decimal_separator();
         $thousand_sep    = wc_get_price_thousand_separator();
         $num_decimals    = wc_get_price_decimals();
 
         // Convert currency position to accounting.js format
-        $format = '%s%v'; // default left
+        // Default left
+        $format = '%s%v';
         if ( 'right' === $currency_pos ) {
             $format = '%v%s';
         } elseif ( 'left_space' === $currency_pos ) {
@@ -222,118 +230,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             return;
         }
 
-        $product_id = $product->get_id();
-        $this->render_fbt_section_for_product( $product_id );
-    }
-
-    /**
-     * Render FBT section for a specific product
-     *
-     * @param int  $product_id Product ID.
-     * @param bool $is_mini_cart Whether this is for mini cart.
-     * @return void
-     */
-    protected function render_fbt_section_for_product( int $product_id, bool $is_mini_cart = false ): void {
-        if ( ! $this->should_display( $product_id ) ) {
-            return;
-        }
-
-        $settings = $this->get_settings();
-        $products = $this->get_fbt_products( $product_id );
-
-        if ( empty( $products ) ) {
-            return;
-        }
-
-        // Include template
-        $this->render_template( $product_id, $products, $settings, $is_mini_cart );
-    }
-
-    /**
-     * Check if FBT section should be displayed
-     *
-     * @param int $product_id Product ID.
-     * @return bool
-     */
-    protected function should_display( int $product_id ): bool {
-        if ( ! $this->is_enabled() ) {
-            return false;
-        }
-
-        $product = wc_get_product( $product_id );
-        if ( ! $product || ! $product->is_purchasable() ) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Get FBT products for a product
-     *
-     * @param int $product_id Product ID.
-     * @return array Array of WC_Product objects.
-     */
-    protected function get_fbt_products( int $product_id ): array {
-        $settings = $this->get_settings();
-        $limit    = isset( $settings['max_products'] ) ? (int) $settings['max_products'] : 4;
-
-        return $this->repository->get_recommendations( $product_id, $limit, $settings );
-    }
-
-    /**
-     * Render FBT checkbox via WooCommerce hook
-     *
-     * @return void
-     */
-    public function render_fbt_checkbox(): void {
-        global $product;
-
-        if ( ! $product || ! self::$is_rendering_fbt ) {
-            return;
-        }
-
-        ?>
-        <div>
-            <label class="yayboost-fbt-checkbox-label">
-                <input type="checkbox"
-                        class="yayboost-fbt-selectable"
-                        checked
-                        data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-                        data-price="<?php echo esc_attr( $product->get_price() ); ?>">
-                <span><?php echo esc_html( $product->get_name() ); ?></span>
-            </label>
-        </div>
-        <?php
-    }
-
-    /**
-     * Render template
-     *
-     * @param int   $current_product_id Current product ID.
-     * @param array $fbt_products FBT products.
-     * @param array $settings Settings.
-     * @param bool  $is_mini_cart Whether this is for mini cart.
-     * @return void
-     */
-    protected function render_template( int $current_product_id, array $fbt_products, array $settings, bool $is_mini_cart = false ): void {
-        $section_title = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
-        $layout        = $settings['layout'] ?? 'grid';
-        $max_products  = $settings['max_products'] ?? 4;
-
-        $template_path = YAYBOOST_PATH . 'includes/views/features/frequently-bought-together/template.php';
-
-        if ( ! file_exists( $template_path ) ) {
-            return;
-        }
-
-        // Set flag to indicate we're rendering FBT section
-        self::$is_rendering_fbt = true;
-
-        include $template_path;
-
-        // Reset flag after rendering
-        self::$is_rendering_fbt = false;
+        $this->renderer->render( $product->get_id(), $this->get_settings() );
     }
 
     /**
@@ -404,9 +301,9 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         $fragments = apply_filters( 'woocommerce_add_to_cart_fragments', [] );
 
         if ( ! empty( $added_products ) ) {
-            /* translators: %d: Number of products */
             wp_send_json_success(
                 [
+                    /* translators: %d: Number of products */
                     'message'        => sprintf( __( 'Added %d product(s) to cart.', 'yayboost' ), count( $added_products ) ),
                     'added_products' => $added_products,
                     'errors'         => $errors,
@@ -430,7 +327,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
      * @return void
      */
     public function run_cleanup(): void {
-        $cleanup  = new FBTCleanup();
+        $cleanup  = new FBTCleanup( $this->repository );
         $settings = $this->get_settings();
         $stats    = $cleanup->run_cleanup( $settings );
 
@@ -441,30 +338,44 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
     }
 
     /**
-     * Get localization data for JavaScript
-     * Shared method used by both classic feature and block
+     * Handle order thank you page with cache invalidation
      *
-     * @return array Localization data array
+     * Wrapper around collector's handle_order_thankyou that also invalidates
+     * total orders count cache when order is processed.
+     *
+     * @param int $order_id Order ID.
+     * @return void
      */
-    public function get_localization_data(): array {
-        $settings = $this->get_settings();
+    public function handle_order_thankyou_with_cache( int $order_id ): void {
+        // Check if order will be processed (not already processed)
+        if ( ! $this->collector->is_order_processed( $order_id ) ) {
+            // Process order (this will invalidate product caches via cache manager)
+            $this->collector->handle_order_thankyou( $order_id );
 
-        return [
-            'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'yayboost_fbt_batch' ),
-            'settings' => [
-                'maxProducts'       => $settings['max_products'] ?? $this->get_default_settings()['max_products'],
-                'sectionTitle'      => $settings['section_title'] ?? $this->get_default_settings()['section_title'],
-                'layout'            => $settings['layout'] ?? $this->get_default_settings()['layout'],
-                'minOrderThreshold' => $settings['min_order_threshold'] ?? $this->get_default_settings()['min_order_threshold'],
-                'hideIfInCart'      => $settings['hide_if_in_cart'] ?? $this->get_default_settings()['hide_if_in_cart'],
-            ],
-            'i18n'     => [
-                'adding'          => __( 'Adding to cart...', 'yayboost' ),
-                'added'           => __( 'Added to cart', 'yayboost' ),
-                'error'           => __( 'Error adding to cart', 'yayboost' ),
-                'select_products' => __( 'Please select at least one product', 'yayboost' ),
-            ],
-        ];
+            // Invalidate total orders count cache using cache manager
+            $this->cache_manager->invalidate_total_orders();
+        }
+    }
+
+    /**
+     * Handle order completed hook with cache invalidation
+     *
+     * Wrapper around collector's handle_order_completed that also invalidates
+     * total orders count cache when order is processed.
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    public function handle_order_completed_with_cache( int $order_id ): void {
+        // Check if order will be processed (not already processed)
+        if ( ! $this->collector->is_order_processed( $order_id ) ) {
+            // Process order (this will invalidate product caches via cache manager)
+            $this->collector->handle_order_completed( $order_id );
+
+            // Invalidate total orders count cache using cache manager
+            // Note: This runs before background job, so we invalidate immediately
+            // The background job will process the order and invalidate product caches
+            $this->cache_manager->invalidate_total_orders();
+        }
     }
 }

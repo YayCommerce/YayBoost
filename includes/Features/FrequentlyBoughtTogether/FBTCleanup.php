@@ -21,6 +21,22 @@ class FBTCleanup {
     const BATCH_SIZE = 1000;
 
     /**
+     * FBT Repository instance
+     *
+     * @var FBTRepository
+     */
+    protected FBTRepository $repository;
+
+    /**
+     * Constructor
+     *
+     * @param FBTRepository $repository FBT Repository instance
+     */
+    public function __construct( FBTRepository $repository ) {
+        $this->repository = $repository;
+    }
+
+    /**
      * Run cleanup tasks
      *
      * @param array $settings Feature settings
@@ -34,7 +50,7 @@ class FBTCleanup {
         ];
 
         // Delete low count pairs
-        $threshold = isset( $settings['min_order_threshold'] ) ? (float) $settings['min_order_threshold'] : 5;
+        $threshold                  = isset( $settings['min_order_threshold'] ) ? (float) $settings['min_order_threshold'] : 5;
         $stats['low_count_deleted'] = $this->delete_low_count_pairs( $threshold );
 
         // Delete orphaned pairs (products that no longer exist)
@@ -63,9 +79,8 @@ class FBTCleanup {
         global $wpdb;
         $table_name = FBTRelationshipTable::get_table_name();
 
-        // Get total orders count
-        $repository = new FBTRepository();
-        $total_orders = $repository->get_total_orders_count();
+        // Get total orders count using injected repository
+        $total_orders = $this->repository->get_total_orders_count();
 
         if ( $total_orders <= 0 ) {
             return 0;
@@ -77,7 +92,7 @@ class FBTCleanup {
         // Delete in batches
         $deleted = 0;
         do {
-            $result = $wpdb->query(
+            $result   = $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$table_name} WHERE count < %d LIMIT %d",
                     $min_count,
@@ -121,7 +136,7 @@ class FBTCleanup {
         );
 
         $existing_ids = array_map( 'intval', $existing_ids );
-        $missing_ids   = array_diff( $product_ids, $existing_ids );
+        $missing_ids  = array_diff( $product_ids, $existing_ids );
 
         if ( empty( $missing_ids ) ) {
             return 0;
@@ -149,12 +164,12 @@ class FBTCleanup {
         global $wpdb;
         $table_name = FBTRelationshipTable::get_table_name();
 
-        $one_year_ago = date( 'Y-m-d H:i:s', strtotime( '-1 year' ) );
+        $one_year_ago = gmdate( 'Y-m-d H:i:s', strtotime( '-1 year' ) );
 
         // Delete in batches
         $deleted = 0;
         do {
-            $result = $wpdb->query(
+            $result   = $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$table_name} 
                     WHERE last_updated < %s 
@@ -182,4 +197,3 @@ class FBTCleanup {
         $wpdb->query( "OPTIMIZE TABLE {$table_name}" );
     }
 }
-

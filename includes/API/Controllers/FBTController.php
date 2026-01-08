@@ -13,6 +13,7 @@ use WP_REST_Request;
 use WP_REST_Server;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTBackfill;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTCollector;
+use YayBoost\Features\FrequentlyBoughtTogether\FBTCacheManager;
 
 /**
  * Handles FBT API endpoints
@@ -52,7 +53,8 @@ class FBTController extends BaseController {
      * @return FBTBackfill
      */
     private function get_backfill_instance(): FBTBackfill {
-        $collector = new FBTCollector();
+        $cache_manager = new FBTCacheManager();
+        $collector     = new FBTCollector( $cache_manager );
         return new FBTBackfill( $collector );
     }
 
@@ -79,7 +81,7 @@ class FBTController extends BaseController {
             }
 
             try {
-                $total = $backfill->get_total_completed_orders();
+                $total = wc_orders_count( 'completed' );
             } catch ( \Exception $e ) {
                 error_log( 'FBT: Error counting total orders in start: ' . $e->getMessage() );
             }
@@ -199,7 +201,7 @@ class FBTController extends BaseController {
             }
 
             try {
-                $total = $backfill->get_total_completed_orders();
+                $total = wc_orders_count( 'completed' );
             } catch ( \Exception $e ) {
                 // Log error but don't fail the request.
                 error_log( 'FBT: Error counting total orders: ' . $e->getMessage() );

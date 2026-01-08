@@ -21,6 +21,22 @@ class FBTCollector {
     const PROCESSED_META_KEY = '_yayboost_fbt_processed';
 
     /**
+     * Cache manager instance
+     *
+     * @var FBTCacheManager
+     */
+    protected FBTCacheManager $cache_manager;
+
+    /**
+     * Constructor
+     *
+     * @param FBTCacheManager $cache_manager Cache manager instance
+     */
+    public function __construct( FBTCacheManager $cache_manager ) {
+        $this->cache_manager = $cache_manager;
+    }
+
+    /**
      * Handle order thank you page (primary handler)
      *
      * @param int $order_id Order ID
@@ -107,8 +123,8 @@ class FBTCollector {
         // Batch UPSERT pairs into database
         $this->increment_pairs_batch( $pairs );
 
-        // Invalidate cache for related products
-        $this->invalidate_cache_for_products( $product_ids );
+        // Invalidate cache for related products using cache manager
+        $this->cache_manager->invalidate_products( $product_ids, false );
 
         // Mark order as processed (pass order object to reuse)
         $this->mark_order_processed( $order );
@@ -192,7 +208,7 @@ class FBTCollector {
         if ( ! empty( $all_product_ids ) ) {
             try {
                 $unique_product_ids = array_unique( $all_product_ids );
-                $this->invalidate_cache_for_products( $unique_product_ids, true );
+                $this->cache_manager->invalidate_products( $unique_product_ids, true );
             } catch ( \Exception $e ) {
                 error_log( 'FBT Collector: Error invalidating cache: ' . $e->getMessage() );
                 // Don't fail the entire batch if cache invalidation fails.
@@ -337,47 +353,5 @@ class FBTCollector {
         // Execute query
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $wpdb->query( $sql );
-    }
-
-    /**
-     * Invalidate cache for products
-     *
-     * For backfill operations, we skip transient deletion to improve performance.
-     * Transients will expire naturally or be rebuilt on next access.
-     *
-     * @param array $product_ids Array of product IDs.
-     * @param bool  $skip_transients Whether to skip transient deletion (default true for performance).
-     * @return void
-     */
-    public function invalidate_cache_for_products( array $product_ids, bool $skip_transients = true ): void {
-        if ( empty( $product_ids ) ) {
-            return;
-        }
-
-        // Clear object cache group once (not per product).
-        if ( function_exists( 'wp_cache_flush_group' ) ) {
-            wp_cache_flush_group( 'yayboost_fbt' );
-        }
-
-        // Skip transient deletion during backfill for performance.
-        // Transients will expire naturally or be rebuilt on next access.
-        if ( $skip_transients ) {
-            return;
-        }
-
-        // Only delete transients when explicitly requested (e.g., single order processing).
-        global $wpdb;
-        foreach ( $product_ids as $product_id ) {
-            $pattern = '%yayboost_fbt_' . (int) $product_id . '_%';
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-            $wpdb->query(
-                $wpdb->prepare(
-                    "DELETE FROM {$wpdb->options} 
-                    WHERE option_name LIKE %s 
-                    AND (option_name LIKE '_transient_%' OR option_name LIKE '_transient_timeout_%')",
-                    $pattern
-                )
-            );
-        }
     }
 }

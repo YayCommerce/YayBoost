@@ -12,18 +12,24 @@ namespace YayBoost\Features\FrequentlyBoughtTogether;
 use YayBoost\Database\FBTRelationshipTable;
 
 /**
- * Handles FBT data retrieval and caching
+ * Handles FBT data retrieval
  */
 class FBTRepository {
     /**
-     * Cache group name
+     * Cache manager instance
+     *
+     * @var FBTCacheManager
      */
-    const CACHE_GROUP = 'yayboost_fbt';
+    protected FBTCacheManager $cache_manager;
 
     /**
-     * Cache duration in seconds (1 hour)
+     * Constructor
+     *
+     * @param FBTCacheManager $cache_manager Cache manager instance
      */
-    const CACHE_DURATION = HOUR_IN_SECONDS;
+    public function __construct( FBTCacheManager $cache_manager ) {
+        $this->cache_manager = $cache_manager;
+    }
 
     /**
      * Get recommendations for a product
@@ -34,21 +40,21 @@ class FBTRepository {
      * @return array Array of WC_Product objects
      */
     public function get_recommendations( int $product_id, int $limit, array $settings ): array {
-        // Generate cache key
-        $cache_key = $this->get_cache_key( $product_id, $limit, $settings );
+        // Generate cache key using cache manager
+        $cache_key = $this->cache_manager->get_recommendations_cache_key( $product_id, $limit, $settings );
 
         // Try to get from cache
         $cached = get_transient( $cache_key );
-        if ( false !== $cached ) {
+        if ( false !== $cached && ! empty( $cached ) ) {
             // Load products from cached IDs
             return $this->load_products_from_ids( $cached );
         }
 
         // Try object cache
-        $cached = wp_cache_get( $cache_key, self::CACHE_GROUP );
-        if ( false !== $cached ) {
+        $cached = wp_cache_get( $cache_key, FBTCacheManager::CACHE_GROUP );
+        if ( false !== $cached && ! empty( $cached ) ) {
             // Update transient with object cache data
-            set_transient( $cache_key, $cached, self::CACHE_DURATION );
+            set_transient( $cache_key, $cached, FBTCacheManager::CACHE_DURATION );
             return $this->load_products_from_ids( $cached );
         }
 
@@ -58,14 +64,14 @@ class FBTRepository {
 
         if ( empty( $results ) ) {
             // Cache empty result
-            set_transient( $cache_key, [], self::CACHE_DURATION );
-            wp_cache_set( $cache_key, [], self::CACHE_GROUP, self::CACHE_DURATION );
+            set_transient( $cache_key, [], FBTCacheManager::CACHE_DURATION );
+            wp_cache_set( $cache_key, [], FBTCacheManager::CACHE_GROUP, FBTCacheManager::CACHE_DURATION );
             return [];
         }
 
         // Filter by threshold
         $threshold = isset( $settings['min_order_threshold'] ) ? (float) $settings['min_order_threshold'] : 5;
-        $results   = $this->filter_by_threshold( $results, $threshold );
+        $results   = $this->filter_by_threshold( $results, $threshold, $product_id );
 
         // Extract product IDs
         $product_ids = array_column( $results, 'product_id' );
@@ -92,8 +98,8 @@ class FBTRepository {
             },
             $products
         );
-        set_transient( $cache_key, $cached_ids, self::CACHE_DURATION );
-        wp_cache_set( $cache_key, $cached_ids, self::CACHE_GROUP, self::CACHE_DURATION );
+        set_transient( $cache_key, $cached_ids, FBTCacheManager::CACHE_DURATION );
+        wp_cache_set( $cache_key, $cached_ids, FBTCacheManager::CACHE_GROUP, FBTCacheManager::CACHE_DURATION );
 
         return $products;
     }
@@ -135,25 +141,37 @@ class FBTRepository {
     /**
      * Filter results by threshold
      *
+     * New logic: Threshold is based on orders containing the current product,
+     * not total orders. Example: "In 10 orders with Product A,
+     * Product B appears in at least 50% (5 orders)"
+     *
+     * Uses FBT table to calculate threshold (fast, approximate).
+     * Logic: MAX(count) from FBT table = lower bound of orders containing the product.
+     *
      * @param array $results Query results
      * @param float $threshold Minimum threshold percentage
+     * @param int   $current_product_id Current product ID (for calculating base)
      * @return array Filtered results
      */
-    public function filter_by_threshold( array $results, float $threshold ): array {
+    public function filter_by_threshold( array $results, float $threshold, int $current_product_id ): array {
         if ( empty( $results ) || $threshold <= 0 ) {
             return $results;
         }
 
-        // Get total orders count (cached)
-        $total_orders = $this->get_total_orders_count();
-        if ( $total_orders <= 0 ) {
-            return $results;
+        // Get count of orders containing current product from FBT table (fast, approximate)
+        $orders_with_product = $this->get_orders_count_with_product_from_fbt( $current_product_id );
+
+        if ( $orders_with_product <= 0 ) {
+            // No orders with this product, return empty
+            return [];
         }
 
-        // Calculate minimum count
-        $min_count = ceil( ( $threshold / 100 ) * $total_orders );
+        // Calculate minimum count based on orders containing current product
+        // Example: 50% of 10 orders = 5 orders minimum
+        $min_count = ceil( ( $threshold / 100 ) * $orders_with_product );
 
-        // Filter results
+        // Filter results: pair count must be >= min_count
+        // This means: product X appears in at least min_count orders together with current product
         return array_filter(
             $results,
             function ( $result ) use ( $min_count ) {
@@ -243,58 +261,72 @@ class FBTRepository {
     }
 
     /**
+     * Get count of orders containing a specific product from FBT table (fast approximation)
+     *
+     * Uses MAX(count) from FBT table as a lower bound estimate.
+     * Logic: If product A appears with product X in 7 orders, and with product Y in 10 orders,
+     * then at least 10 orders contain product A.
+     *
+     * This is faster than querying WooCommerce orders directly and works well for threshold calculation.
+     *
+     * @param int $product_id Product ID
+     * @return int Estimated number of orders containing this product (lower bound)
+     */
+    private function get_orders_count_with_product_from_fbt( int $product_id ): int {
+        $cache_key = $this->cache_manager->get_orders_with_product_cache_key( $product_id, true );
+        $cached    = get_transient( $cache_key );
+
+        if ( false !== $cached && ! empty( $cached ) ) {
+            return (int) $cached;
+        }
+
+        global $wpdb;
+        $table_name = FBTRelationshipTable::get_table_name();
+
+        // Get MAX(count) from all pairs containing this product
+        // This represents the minimum number of orders containing the product
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COALESCE(MAX(count), 0) 
+                FROM {$table_name}
+                WHERE product_a = %d OR product_b = %d",
+                $product_id,
+                $product_id
+            )
+        );
+
+        $count = (int) max( 0, $count );
+
+        // Cache for 1 hour
+        set_transient( $cache_key, $count, HOUR_IN_SECONDS );
+
+        return $count;
+    }
+
+    /**
      * Get total orders count (cached)
+     *
+     * Uses WooCommerce API which automatically handles HPOS compatibility.
+     * This function works with both legacy wp_posts and HPOS custom tables.
      *
      * @return int Total orders count
      */
     public function get_total_orders_count(): int {
-        $cache_key = 'yayboost_fbt_total_orders';
+        $cache_key = FBTCacheManager::TOTAL_ORDERS_CACHE_KEY;
         $cached    = get_transient( $cache_key );
 
         if ( false !== $cached ) {
             return (int) $cached;
         }
 
-        // Use COUNT(*) query directly for better performance
-        global $wpdb;
-        $count = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) 
-                FROM {$wpdb->posts} 
-                WHERE post_type = %s 
-                AND post_status = %s",
-                'shop_order',
-                'wc-completed'
-            )
-        );
-
+        // Use WooCommerce API - automatically handles HPOS vs legacy
+        $count = wc_orders_count( 'completed' );
         $count = (int) $count;
 
         // Cache for 6 hours
-        set_transient( $cache_key, $count, 6 * HOUR_IN_SECONDS );
+        set_transient( $cache_key, $count, FBTCacheManager::TOTAL_ORDERS_CACHE_DURATION );
 
         return $count;
-    }
-
-    /**
-     * Generate cache key
-     *
-     * @param int   $product_id Product ID
-     * @param int   $limit Limit
-     * @param array $settings Settings array
-     * @return string Cache key
-     */
-    public function get_cache_key( int $product_id, int $limit, array $settings ): string {
-        // Create hash of relevant settings
-        $settings_hash = md5(
-            serialize(
-                [
-                    'min_order_threshold' => $settings['min_order_threshold'] ?? 5,
-                    'hide_if_in_cart'     => $settings['hide_if_in_cart'] ?? 'hide',
-                ]
-            )
-        );
-
-        return "yayboost_fbt_{$product_id}_{$limit}_{$settings_hash}";
     }
 }

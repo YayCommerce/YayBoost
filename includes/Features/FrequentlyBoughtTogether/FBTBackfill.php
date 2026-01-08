@@ -324,33 +324,4 @@ class FBTBackfill {
     public function reset_status(): void {
         delete_option( self::STATUS_OPTION_KEY );
     }
-
-    /**
-     * Get total completed orders count
-     *
-     * @return int
-     */
-    public function get_total_completed_orders(): int {
-        try {
-            global $wpdb;
-
-            if ( $this->is_hpos_enabled() ) {
-                $orders_table = $wpdb->prefix . 'wc_orders';
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                $count = $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$orders_table} WHERE type = 'shop_order' AND status = 'wc-completed'"
-                );
-            } else {
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                $count = $wpdb->get_var(
-                    "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'shop_order' AND post_status = 'wc-completed'"
-                );
-            }
-
-            return (int) $count;
-        } catch ( \Exception $e ) {
-            error_log( 'FBT Backfill: Error in get_total_completed_orders: ' . $e->getMessage() );
-            return 0;
-        }//end try
-    }
 }
