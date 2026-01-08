@@ -35,7 +35,6 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
-import WooCommercePlaceholder from '@/components/svgs/WooCommercePlaceholder';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FBTBackfillCard } from './fbt-backfill-card';
@@ -115,7 +114,7 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
             >
               {/* Product Image Placeholder */}
               <div className="relative flex justify-center">
-                <WooCommercePlaceholder className="aspect-square w-full max-w-[200px]" />
+                <img src={window.yayboostData?.urls?.wcPlaceholderImage} alt="WooCommerce Placeholder" className="aspect-square w-full max-w-[200px]" />
               </div>
 
               <h1 className="pb-2 text-center text-lg font-medium">{product.name}</h1>

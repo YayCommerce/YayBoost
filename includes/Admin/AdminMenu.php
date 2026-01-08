@@ -63,6 +63,10 @@ class AdminMenu {
                 'nonce'          => wp_create_nonce( 'wp_rest' ),
                 'version'        => YAYBOOST_VERSION,
                 'currencySymbol' => get_woocommerce_currency_symbol(),
+                'urls'           => array(
+                    'images'       => YAYBOOST_URL . 'assets/images/',
+                    'wcPlaceholderImage' => \wc_placeholder_img_src(),
+                ),
             ]
         );
     }

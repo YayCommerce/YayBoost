@@ -12,6 +12,10 @@ declare global {
       nonce: string;
       version: string;
       currencySymbol?: string;
+      urls: {
+        images: string;
+        wcPlaceholderImage: string;
+      };
     };
   }
 }
