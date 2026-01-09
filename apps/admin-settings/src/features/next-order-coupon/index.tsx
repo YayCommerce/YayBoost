@@ -129,54 +129,6 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             form.reset(feature.settings as SettingsFormData);
           }}
         >
-          {/* General Section */}
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
-            <p className="text-muted-foreground text-xs">
-              {__('Enable or disable the Next Order Coupon feature', 'yayboost')}
-            </p>
-          </div>
-          <FormField
-            control={form.control}
-            name="enabled"
-            render={({ field }) => (
-              <FormItem>
-                <Label>{__('Enable Next Order Coupon', 'yayboost')}</Label>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value ? 'on' : 'off'}
-                    onValueChange={(value) => {
-                      const newEnabled = value === 'on';
-                      field.onChange(newEnabled);
-                    }}
-                    disabled={toggleMutation.isPending}
-                    className="flex items-center gap-6"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value="on"
-                        id="enabled-on"
-                        disabled={toggleMutation.isPending}
-                      />
-                      <label htmlFor="enabled-on">{__('On', 'yayboost')}</label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value="off"
-                        id="enabled-off"
-                        disabled={toggleMutation.isPending}
-                      />
-                      <label htmlFor="enabled-off">{__('Off', 'yayboost')}</label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Separator />
-
           {/* Coupon Settings Section */}
           <div className="space-y-1">
             <h3 className="text-sm font-medium">{__('Coupon settings', 'yayboost')}</h3>
