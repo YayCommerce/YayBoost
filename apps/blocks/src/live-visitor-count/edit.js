@@ -45,16 +45,16 @@ function getPreviewContent(config) {
     `<span id="yayboost-lvc-number">${count}</span>`
   );
 
-  let content = "";
-  if (style === "style_1") {
-    content = `<div class="yayboost-lvc yayboost-lvc-style-1" style="color: ${textColor};">${textWithCount}</div>`;
-  } else if (style === "style_2") {
-    content = `<div class="yayboost-lvc yayboost-lvc-style-2" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div>`;
-  } else if (style === "style_3") {
-    content = `<div class="yayboost-lvc yayboost-lvc-style-3"><div class="yayboost-lvc-text" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-lvc-icon">${iconHtml} <span id="yayboost-lvc-number">${count}</span></div></div>`;
+  if ( style === 'style_2' ) {
+    return `<div class="yayboost-lvc yayboost-lvc-style-2" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div>`;
   }
 
-  return content;
+  if (style === "style_3") {
+    return `<div class="yayboost-lvc yayboost-lvc-style-3"><div class="yayboost-lvc-text" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-lvc-icon">${iconHtml} <span id="yayboost-lvc-number">${count}</span></div></div>`;
+  }
+  
+  return `<div class="yayboost-lvc yayboost-lvc-style-1" style="color: ${textColor};">${textWithCount}</div>`;
+
 }
 
 export default function Edit({ attributes }) {

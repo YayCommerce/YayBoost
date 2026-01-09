@@ -89,17 +89,6 @@ function StylePreview({
   const previewCount = 12;
   const text = displayText.replace('{count}', previewCount.toString());
 
-  if (style === 'style_1') {
-    return (
-      <div
-        className="yayboost-lvc yayboost-lvc-style-1 inline-flex items-center gap-1.5 text-sm"
-        style={{ color: textColor }}
-      >
-        <span>{text}</span>
-      </div>
-    );
-  }
-
   if (style === 'style_2') {
     return (
       <div
@@ -127,7 +116,14 @@ function StylePreview({
     );
   }
 
-  return null;
+  return (
+    <div
+      className="yayboost-lvc yayboost-lvc-style-1 inline-flex items-center gap-1.5 text-sm"
+      style={{ color: textColor }}
+    >
+      <span>{text}</span>
+    </div>
+  );
 }
 
 export default function LiveVisitorCountFeature({ featureId }: FeatureComponentProps) {

@@ -286,15 +286,16 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$is_hidden = 'real-tracking' === $tracking_mode && $count < $minimum_count_display;
 		//$count     = 'real-tracking' === $tracking_mode ? $count : rand( $settings['simulated']['min'], $settings['simulated']['max'] );
 		$text    = str_replace( '{count}', $count, $display_text );
-		$content = '';
-		if ( 'style_1' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div>';
-		} elseif ( 'style_2' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div>';
-		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div>';
+
+		if ( 'style_2' === $style ) {
+			return '<div class="yayboost-lvc yayboost-lvc-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div>';
 		}
-		return $content;
+
+		if ( 'style_3' === $style ) {
+			return '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div>';
+		}
+
+		return '<div class="yayboost-lvc yayboost-lvc-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div>';
 	}
 
 	public function ajax_ping(): void {
