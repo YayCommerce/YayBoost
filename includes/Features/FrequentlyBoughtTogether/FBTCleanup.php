@@ -108,51 +108,71 @@ class FBTCleanup {
     /**
      * Delete pairs where products no longer exist
      *
+     * Uses batched processing to prevent memory exhaustion on large stores.
+     *
      * @return int Number of deleted rows
      */
     protected function delete_orphaned_pairs(): int {
         global $wpdb;
         $table_name = FBTRelationshipTable::get_table_name();
 
-        // Get all product IDs from relationships
-        $product_ids = $wpdb->get_col(
-            "SELECT DISTINCT product_a FROM {$table_name}
-            UNION
-            SELECT DISTINCT product_b FROM {$table_name}"
-        );
+        $deleted = 0;
+        $offset  = 0;
 
-        if ( empty( $product_ids ) ) {
-            return 0;
-        }
+        // Process product IDs in batches to prevent memory exhaustion
+        do {
+            // Get batch of distinct product IDs from relationships
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            $product_ids = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT DISTINCT product_id FROM (
+                        SELECT product_a AS product_id FROM {$table_name}
+                        UNION
+                        SELECT product_b AS product_id FROM {$table_name}
+                    ) AS all_products
+                    LIMIT %d OFFSET %d",
+                    self::BATCH_SIZE,
+                    $offset
+                )
+            );
 
-        // Check which products exist
-        $existing_ids = get_posts(
-            [
-                'post_type'      => 'product',
-                'post__in'       => $product_ids,
-                'posts_per_page' => -1,
-                'fields'         => 'ids',
-            ]
-        );
+            if ( empty( $product_ids ) ) {
+                break;
+            }
 
-        $existing_ids = array_map( 'intval', $existing_ids );
-        $missing_ids  = array_diff( $product_ids, $existing_ids );
+            $product_ids = array_map( 'intval', $product_ids );
 
-        if ( empty( $missing_ids ) ) {
-            return 0;
-        }
+            // Check which products exist using WooCommerce API (handles HPOS)
+            $existing_ids = wc_get_products(
+                [
+                    'include' => $product_ids,
+                    'limit'   => -1,
+                    'return'  => 'ids',
+                ]
+            );
 
-        // Delete pairs with missing products
-        $placeholders = implode( ',', array_fill( 0, count( $missing_ids ), '%d' ) );
-        $deleted      = $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM {$table_name} 
-                WHERE product_a IN ({$placeholders}) OR product_b IN ({$placeholders})",
-                array_merge( $missing_ids, $missing_ids )
-            )
-        );
+            $existing_ids = array_map( 'intval', $existing_ids );
+            $missing_ids  = array_diff( $product_ids, $existing_ids );
 
-        return (int) $deleted;
+            // Delete pairs with missing products
+            if ( ! empty( $missing_ids ) ) {
+                $placeholders = implode( ',', array_fill( 0, count( $missing_ids ), '%d' ) );
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $result   = $wpdb->query(
+                    $wpdb->prepare(
+                        "DELETE FROM {$table_name}
+                        WHERE product_a IN ({$placeholders}) OR product_b IN ({$placeholders})",
+                        array_merge( $missing_ids, $missing_ids )
+                    )
+                );
+                $deleted += (int) $result;
+            }
+
+            $offset += self::BATCH_SIZE;
+
+        } while ( count( $product_ids ) === self::BATCH_SIZE );
+
+        return $deleted;
     }
 
     /**

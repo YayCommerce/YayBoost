@@ -70,27 +70,28 @@ class FBTCacheManager {
     /**
      * Invalidate all caches for a product
      *
+     * Deletes product-specific transients. Group cache flush is handled
+     * by invalidate_products() to avoid redundant flushes.
+     *
      * @param int $product_id Product ID
      * @return void
      */
     public function invalidate_product( int $product_id ): void {
-        // Clear object cache group
-        if ( function_exists( 'wp_cache_flush_group' ) ) {
-            wp_cache_flush_group( self::CACHE_GROUP );
-        }
-
         // Delete product-specific transients
         global $wpdb;
         $pattern = '%yayboost_fbt_' . (int) $product_id . '_%';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         $wpdb->query(
             $wpdb->prepare(
-                "DELETE FROM {$wpdb->options} 
-                WHERE option_name LIKE %s 
+                "DELETE FROM {$wpdb->options}
+                WHERE option_name LIKE %s
                 AND (option_name LIKE '_transient_%' OR option_name LIKE '_transient_timeout_%')",
                 $pattern
             )
         );
+
+        // Also delete from object cache if available
+        wp_cache_delete( "yayboost_fbt_{$product_id}", self::CACHE_GROUP );
     }
 
     /**

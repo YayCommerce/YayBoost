@@ -213,6 +213,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                     'added'           => __( 'Added to cart', 'yayboost' ),
                     'error'           => __( 'Error adding to cart', 'yayboost' ),
                     'select_products' => __( 'Please select at least one product', 'yayboost' ),
+                    'add_selected'    => __( 'Add Selected to Cart', 'yayboost' ),
                 ],
             ]
         );

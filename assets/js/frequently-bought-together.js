@@ -189,7 +189,7 @@
         complete: function () {
           $button.prop("disabled", false).text(yayboostFBT.i18n.added);
           setTimeout(function () {
-            $button.text("Add Selected to Cart");
+            $button.text(yayboostFBT.i18n.add_selected);
           }, 2000);
         },
       });
