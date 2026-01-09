@@ -280,13 +280,13 @@ class LiveVisitorCountFeature extends AbstractFeature {
 					'max' => 50,
 				),
 				'display'       => array(
-					'text'     => '👁️ {count} visitors are viewing this page',
+					'text'     => '👁️ {count} visitors are viewing this product',
 					'position' => 'below_product_title',
 				),
 				'style'         => array(
 					'style'            => 'style_1',
-					'text_color'       => '#a74c3c',
-					'background_color' => '#fff3f3',
+					'text_color'       => '#000000',
+					'background_color' => '#efefef',
 				),
 				'apply_on'      => array(
 					'apply'      => 'all',
