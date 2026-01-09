@@ -120,10 +120,17 @@ class LiveVisitorCountBlock {
 			return $allowed_block_types;
 		}
 
-		// If we're not on a product page, remove this block from allowed blocks
+		// Not on product page - remove this block
+		$block_name = 'yayboost/live-visitor-count';
+
+		// If all blocks allowed (true), get all registered blocks and exclude ours
+		if ( true === $allowed_block_types ) {
+			$all_blocks          = \WP_Block_Type_Registry::get_instance()->get_all_registered();
+			$allowed_block_types = array_keys( $all_blocks );
+		}
+
 		if ( is_array( $allowed_block_types ) ) {
-			$allowed_block_types = array_diff( $allowed_block_types, array( 'yayboost/live-visitor-count' ) );
-			return $allowed_block_types;
+			$allowed_block_types = array_diff( $allowed_block_types, array( $block_name ) );
 		}
 
 		return $allowed_block_types;
