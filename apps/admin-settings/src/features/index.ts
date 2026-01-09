@@ -38,6 +38,10 @@ export const featureComponents: Record<
 
   stock_scarcity: lazy(() => import('./stock-scarcity')),
 
+  // Next Order Coupon
+  next_order_coupon: lazy(() => import('./next-order-coupon')),
+
+  // Live Visitor Count
   live_visitor_count: lazy(() => import('./live-visitor-count')),
 };
 
