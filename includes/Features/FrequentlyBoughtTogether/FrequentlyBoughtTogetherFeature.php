@@ -109,13 +109,8 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         add_action( 'woocommerce_order_status_completed', [ $this, 'handle_order_completed_with_cache' ], 20 );
         add_action( 'yayboost_process_fbt_order', [ $this->collector, 'handle_background_job' ] );
 
-        // Register display hooks - only check enabled
-        if ( $this->is_enabled() ) {
-            add_action( 'woocommerce_after_single_product_summary', [ $this, 'render_fbt_section' ], 25 );
-        }
-
-        // Enqueue frontend assets
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+        // Register display hooks
+        add_action( 'woocommerce_after_single_product_summary', [ $this, 'render_fbt_section' ], 25 );
 
         // Register hook to add FBT checkbox via WooCommerce hook
         add_action( 'woocommerce_after_shop_loop_item', [ $this->renderer, 'render_fbt_checkbox' ], 15 );
@@ -140,77 +135,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                 'layout'              => 'grid',
                 'section_title'       => __( 'Frequently Bought Together', 'yayboost' ),
                 'hide_if_in_cart'     => 'hide',
-            ]
-        );
-    }
-
-    /**
-     * Enqueue frontend assets
-     *
-     * @return void
-     */
-    public function enqueue_assets(): void {
-        // Only enqueue on product pages
-        if ( ! is_product() ) {
-            return;
-        }
-
-        // Enqueue script
-        wp_enqueue_script(
-            'yayboost-fbt',
-            YAYBOOST_URL . 'assets/js/frequently-bought-together.js',
-            [ 'jquery', 'wc-add-to-cart', 'wc-accounting' ],
-            YAYBOOST_VERSION,
-            true
-        );
-
-        // Enqueue style
-        wp_enqueue_style(
-            'yayboost-fbt',
-            YAYBOOST_URL . 'assets/css/frequently-bought-together.css',
-            [],
-            YAYBOOST_VERSION
-        );
-
-        // Get WooCommerce currency settings
-        $currency_symbol = get_woocommerce_currency_symbol();
-        $currency_pos    = get_option( 'woocommerce_currency_pos', 'left' );
-        $decimal_sep     = wc_get_price_decimal_separator();
-        $thousand_sep    = wc_get_price_thousand_separator();
-        $num_decimals    = wc_get_price_decimals();
-
-        // Convert currency position to accounting.js format
-        // Default left
-        $format = '%s%v';
-        if ( 'right' === $currency_pos ) {
-            $format = '%v%s';
-        } elseif ( 'left_space' === $currency_pos ) {
-            $format = '%s %v';
-        } elseif ( 'right_space' === $currency_pos ) {
-            $format = '%v %s';
-        }
-
-        // Localize script
-        wp_localize_script(
-            'yayboost-fbt',
-            'yayboostFBT',
-            [
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'yayboost_fbt_batch' ),
-                'currency' => [
-                    'symbol'    => $currency_symbol,
-                    'format'    => $format,
-                    'decimal'   => $decimal_sep,
-                    'thousand'  => $thousand_sep,
-                    'precision' => $num_decimals,
-                ],
-                'i18n'     => [
-                    'adding'          => __( 'Adding to cart...', 'yayboost' ),
-                    'added'           => __( 'Added to cart', 'yayboost' ),
-                    'error'           => __( 'Error adding to cart', 'yayboost' ),
-                    'select_products' => __( 'Please select at least one product', 'yayboost' ),
-                    'add_selected'    => __( 'Add Selected to Cart', 'yayboost' ),
-                ],
             ]
         );
     }
