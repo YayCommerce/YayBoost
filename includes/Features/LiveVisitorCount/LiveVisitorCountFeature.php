@@ -83,8 +83,6 @@ class LiveVisitorCountFeature extends AbstractFeature {
 			// Use 'wp' hook to check product page after query is parsed
 			add_action( 'wp', array( $this, 'register_product_hooks' ) );
 
-			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-
 			new LiveVisitorCountBlock( $this );
 		}
 	}
@@ -206,10 +204,6 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	}
 
 	public function enqueue_assets(): void {
-		// Only enqueue on single product pages
-		if ( ! function_exists( 'is_product' ) || ! is_product() || ! $this->should_apply_to_current_product() ) {
-			return;
-		}
 
 		if ( ! wp_style_is( 'yayboost-live-visitor-count', 'enqueued' ) ) {
 			wp_enqueue_style(
@@ -269,6 +263,8 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		if ( ! $this->should_apply_to_current_product() ) {
 			return;
 		}
+
+		$this->enqueue_assets();
 
 		$content = $this->get_content();
 		echo wp_kses_post( $content );
