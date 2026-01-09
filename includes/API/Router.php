@@ -49,6 +49,9 @@ class Router {
      * @return void
      */
     public function register_routes(): void {
+
+        $this->register_controller( new Controllers\AdminController( $this->container ) );
+
         // Register feature routes
         $this->register_controller( new Controllers\FeatureController( $this->container ) );
 
@@ -60,6 +63,9 @@ class Router {
 
         // Register FBT routes
         $this->register_controller( new Controllers\FBTController( $this->container ) );
+    
+        // Register Product Data routes
+        $this->register_controller( new Controllers\ProductDataController( $this->container ) );
     }
 
     /**

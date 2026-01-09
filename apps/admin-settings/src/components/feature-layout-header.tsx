@@ -17,7 +17,7 @@ export default function FeatureLayoutHeader({
       <div className="flex items-center gap-4">
         <Link
           to={goBackRoute ?? '/features'}
-          className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
+          className="bg-white flex h-8 w-8 items-center justify-center rounded-md border"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>

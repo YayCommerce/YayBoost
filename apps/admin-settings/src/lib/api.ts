@@ -12,6 +12,7 @@ declare global {
       nonce: string;
       version: string;
       currencySymbol?: string;
+      hasReviewed: boolean;
       urls: {
         images: string;
         wcPlaceholderImage: string;

@@ -3,17 +3,21 @@
  * Uses tab-based navigation synced with React Router
  */
 
-import { Gear, House, Lightning, Package } from '@phosphor-icons/react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { __ } from '@wordpress/i18n';
+import { BookIcon, HeadsetIcon, HouseIcon, PackageIcon, SettingsIcon } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
+import { getImageUrl } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Footer } from '@/components/layout/Footer';
 
 const navigation = [
-  { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: House },
-  { name: __('Features', 'yayboost'), key: 'features', path: '/features', icon: Lightning },
-  { name: __('Settings', 'yayboost'), key: 'settings', path: '/settings', icon: Gear },
+  { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: HouseIcon },
+  { name: __('Features', 'yayboost'), key: 'features', path: '/features', icon: PackageIcon },
+  { name: __('Settings', 'yayboost'), key: 'settings', path: '/settings', icon: SettingsIcon },
 ];
 
 // Get current tab from location pathname
@@ -41,21 +45,23 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="yayboost-admin bg-background min-h-screen">
-      <TabsPrimitive.Root value={currentTab} onValueChange={handleTabChange}>
-        {/* Header */}
-        <header className="bg-card border-b">
-          <div className="flex h-16 items-center justify-between px-6">
-            {/* Logo */}
-            <div className="flex items-center gap-3 pr-6">
-              <div className="bg-primary text-primary-foreground flex h-9 w-9 items-center justify-center rounded-lg">
-                <Package weight="duotone" className="h-5 w-5" />
-              </div>
-            </div>
+    <div className="yayboost-admin min-h-screen">
+      {/* Header */}
+      <header className="bg-card border-b">
+        <div className="bg-background relative flex h-[54px] items-center gap-2 pr-2.5 sm:gap-5 sm:pr-6">
+          {/* Logo */}
+          <div className="border-input hidden h-full items-center bg-[#FFF5DB] px-[3px] pt-[3px] sm:flex">
+            <img
+              className="h-[30px] w-[30px] sm:h-[50px] sm:w-[50px]"
+              src={getImageUrl('yayrev-logo.png')}
+              alt="YayReviews Logo"
+            />
+          </div>
 
-            {/* Tab Navigation */}
+          {/* Tab Navigation */}
+          <TabsPrimitive.Root value={currentTab} onValueChange={(value) => handleTabChange(value)}>
             <TabsPrimitive.List asChild>
-              <HeaderNavMenuList className="h-16 justify-start gap-0" activeValue={currentTab}>
+              <HeaderNavMenuList className="h-[54px] justify-start gap-0" activeValue={currentTab}>
                 {navigation.map((item) => (
                   <TabsPrimitive.Trigger key={item.key} value={item.key} asChild>
                     <HeaderNavMenuItem className="flex min-w-[50px] items-center justify-center gap-2 px-2 py-3 sm:px-5">
@@ -66,14 +72,45 @@ export function DashboardLayout() {
                 ))}
               </HeaderNavMenuList>
             </TabsPrimitive.List>
+          </TabsPrimitive.Root>
+          <div className="absolute top-[calc(100%+10px)] right-2 ml-auto flex items-center gap-2 sm:relative sm:top-0 sm:right-0 sm:gap-5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => window.open('https://yaycommerce.com/support/', '_blank')}
+                >
+                  <HeadsetIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Chat Support</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => window.open('https://docs.yaycommerce.com/yayreviews', '_blank')}
+                >
+                  <BookIcon />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Documentation</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Main content */}
-        <main className="p-6">
-          <Outlet />
-        </main>
-      </TabsPrimitive.Root>
+      {/* Main content */}
+      <main className="p-6">
+        <Outlet />
+      </main>
+      <Footer />
     </div>
   );
 }

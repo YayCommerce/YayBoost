@@ -15,10 +15,8 @@ import { cn } from '@/lib/utils';
 
 import { Input } from '../input';
 
-interface InputNumberContextValue extends Omit<
-  NumericFormatProps,
-  'value' | 'onValueChange' | 'className' | 'step'
-> {
+interface InputNumberContextValue
+  extends Omit<NumericFormatProps, 'value' | 'onValueChange' | 'className' | 'step'> {
   defaultValue?: number;
   value?: number; // Controlled value
   onValueChange?: (value: number | undefined) => void; // Controlled change.
@@ -39,10 +37,15 @@ const useInputNumberContext = () => {
   return ctx;
 };
 
-interface InputNumberRootProps extends Omit<
-  NumericFormatProps,
-  'value' | 'onValueChange' | 'step'
-> {
+type InputNumberCaretsProps = ComponentProps<'div'> & {
+  rounded?: boolean;
+};
+type InputNumberCaretProps = ComponentProps<'span'> & {
+  rounded?: boolean;
+};
+
+interface InputNumberRootProps
+  extends Omit<NumericFormatProps, 'value' | 'onValueChange' | 'step'> {
   defaultValue?: number;
   value?: number; // Controlled value
   onValueChange?: (value: number | undefined) => void; // Controlled change.
@@ -171,7 +174,6 @@ const InputNumberInput = forwardRef<HTMLInputElement, InputNumberInputProps>(
         data-slot="input-number-input"
         className={cn(
           'peer/input-number-input [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
-          'focus:border-foreground focus:shadow-none focus:outline-none',
           className,
         )}
         min={min}
@@ -189,7 +191,12 @@ const InputNumberInput = forwardRef<HTMLInputElement, InputNumberInputProps>(
   },
 );
 
-function InputNumberCarets({ className, children, ...props }: ComponentProps<'div'>) {
+function InputNumberCarets({
+  className,
+  children,
+  rounded = true,
+  ...props
+}: InputNumberCaretsProps) {
   return (
     <div
       data-slot="input-number-carets"
@@ -201,15 +208,15 @@ function InputNumberCarets({ className, children, ...props }: ComponentProps<'di
     >
       {children ?? (
         <>
-          <InputNumberCaretUp />
-          <InputNumberCaretDown />
+          <InputNumberCaretUp rounded={rounded} />
+          <InputNumberCaretDown rounded={rounded} />
         </>
       )}
     </div>
   );
 }
 
-function InputNumberCaretUp({ className, children, ...props }: ComponentProps<'span'>) {
+function InputNumberCaretUp({ className, children, rounded, ...props }: InputNumberCaretProps) {
   const { handleIncrement } = useInputNumberContext();
 
   return (
@@ -217,7 +224,8 @@ function InputNumberCaretUp({ className, children, ...props }: ComponentProps<'s
       data-slot="input-number-caret-up"
       onClick={handleIncrement}
       className={cn(
-        'text-muted-foreground hover:text-foreground hover:bg-accent inline-flex flex-1 cursor-pointer items-center justify-center rounded-sm rounded-l-none rounded-br-none transition-all select-none',
+        'text-muted-foreground hover:text-accent-foreground hover:bg-accent inline-flex flex-1 cursor-pointer items-center justify-center transition-all select-none',
+        rounded && 'rounded-tr-sm',
         className,
       )}
       {...props}
@@ -227,7 +235,7 @@ function InputNumberCaretUp({ className, children, ...props }: ComponentProps<'s
   );
 }
 
-function InputNumberCaretDown({ className, children, ...props }: ComponentProps<'span'>) {
+function InputNumberCaretDown({ className, children, rounded, ...props }: InputNumberCaretProps) {
   const { handleDecrement } = useInputNumberContext();
 
   return (
@@ -235,7 +243,8 @@ function InputNumberCaretDown({ className, children, ...props }: ComponentProps<
       data-slot="input-number-caret-down"
       onClick={handleDecrement}
       className={cn(
-        'text-muted-foreground hover:text-foreground hover:bg-accent inline-flex flex-1 cursor-pointer items-center justify-center rounded-sm rounded-l-none rounded-tr-none transition-all select-none',
+        'text-muted-foreground hover:text-accent-foreground hover:bg-accent inline-flex flex-1 cursor-pointer items-center justify-center transition-all select-none',
+        rounded && 'rounded-br-sm',
         className,
       )}
       {...props}

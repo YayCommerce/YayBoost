@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yayboost/live-visitor-count",
+  "version": "1.0.0",
+  "title": "Live Visitor Count",
+  "category": "widgets",
+  "icon": "cart",
+  "description": "Display live visitor count currently viewing the current product page",
+  "keywords": ["yayboost", "product", "page"],
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "interactivity": true,
+    "anchor": true,
+    "align": true,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "textdomain": "yayboost",
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "viewScriptModule": "file:./view.js",
+  "render": "file:./render.php"
+}

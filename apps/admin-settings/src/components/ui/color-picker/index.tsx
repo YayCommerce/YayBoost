@@ -8,9 +8,8 @@ import {
   Button as WPButton,
   ColorPicker as WPColorPicker,
 } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
 
-import { cn } from '@/lib/utils';
+import { __, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -158,7 +157,7 @@ export function ColorPicker({
               type="button"
               onClick={handleClear}
             >
-              {__('reset_text')}
+              {__('Reset', 'yayboost')}
             </Button>
           </div>
         </div>

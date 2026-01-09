@@ -8,16 +8,16 @@ import { useMemo, useState } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { AlertCircleIcon, Eye, Gift, Truck } from 'lucide-react';
+import { AlertCircle, Eye, Gift, Truck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { cn } from '@/lib/utils';
 import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ColorPicker } from '@/components/ui/color-picker';
 import {
   Form,
   FormControl,
@@ -28,9 +28,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Slider } from '@/components/ui/slider';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 // Get currency symbol from admin data
@@ -334,7 +338,15 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
   });
 
   const onSubmit = (data: SettingsFormData) => {
-    updateSettings.mutate({ id: featureId, settings: data });
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
   };
 
   // Handle preset color selection
@@ -361,380 +373,355 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
   return (
     <Form {...form}>
       <FeatureLayoutHeader title={feature.name} description={feature.description} />
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Settings Form */}
-          <div className="space-y-6">
-            {/* General Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('General', 'yayboost')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="enabled"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Enable Free Shipping Bar', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value ? 'on' : 'off'}
-                          onValueChange={(value) => {
-                            const newEnabled = value === 'on';
-                            field.onChange(newEnabled);
-                          }}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Settings Form */}
+        <div className="space-y-6">
+          {/* General Section */}
+          <SettingsCard
+            headless
+            title="Configure Free Shipping Bar"
+            onSave={() => {
+              form.handleSubmit(onSubmit)();
+            }}
+            isDirty={form.formState.isDirty}
+            isSaving={updateSettings.isPending}
+            isLoading={isLoading}
+            onReset={() => {
+              form.reset(feature.settings as SettingsFormData);
+            }}
+          >
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Configure basic free shipping bar settings', 'yayboost')}
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="enabled"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Enable Free Shipping Bar', 'yayboost')}</Label>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value ? 'on' : 'off'}
+                      onValueChange={(value) => {
+                        const newEnabled = value === 'on';
+                        field.onChange(newEnabled);
+                      }}
+                      disabled={toggleMutation.isPending}
+                      className="flex items-center gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem
+                          value="on"
+                          id="enabled-on"
                           disabled={toggleMutation.isPending}
-                          className="flex items-center gap-6"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem
-                              value="on"
-                              id="enabled-on"
-                              disabled={toggleMutation.isPending}
-                            />
-                            <label htmlFor="enabled-on" className="cursor-pointer">
-                              {__('On', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem
-                              value="off"
-                              id="enabled-off"
-                              disabled={toggleMutation.isPending}
-                            />
-                            <label htmlFor="enabled-off" className="cursor-pointer">
-                              {__('Off', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Show On', 'yayboost')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="show_on"
-                  render={() => (
-                    <FormItem>
-                      <div className="space-y-2">
-                        {showOnOptions.map((option) => (
-                          <FormField
-                            key={option.id}
-                            control={form.control}
-                            name="show_on"
-                            render={({ field }) => (
-                              <FormItem className="flex items-center space-y-0 space-x-3">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(option.id)}
-                                    onCheckedChange={(checked) => {
-                                      const current = field.value || [];
-                                      if (checked) {
-                                        field.onChange([...current, option.id]);
-                                      } else {
-                                        field.onChange(current.filter((v) => v !== option.id));
-                                      }
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="text-sm font-normal">
-                                  {option.label}
-                                </FormLabel>
-                              </FormItem>
-                            )}
-                          />
-                        ))}
+                        />
+                        <label htmlFor="enabled-on">{__('On', 'yayboost')}</label>
                       </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Style Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Style', 'yayboost')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="display_style"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Display style', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="minimal_text" id="style-minimal" />
-                            <label htmlFor="style-minimal" className="cursor-pointer">
-                              {__('Minimal Text', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="progress_bar" id="style-progress" />
-                            <label htmlFor="style-progress" className="cursor-pointer">
-                              {__('Progress Bar', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="full_detail" id="style-compact" />
-                            <label htmlFor="style-compact" className="cursor-pointer">
-                              {__('Full Detail', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Messages', 'yayboost')}</CardTitle>
-                <CardDescription>
-                  {__('Customize messages for the free shipping bar', 'yayboost')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="message_progress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Progress Message', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        {__('Available:', 'yayboost')} {'{remaining}'}, {'{threshold}'},{' '}
-                        {'{current}'}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="message_achieved"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Achievement Message', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        {__('Shown when customer qualifies for free shipping', 'yayboost')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Appearance', 'yayboost')}</CardTitle>
-                <CardDescription>{__('Customize colors and style', 'yayboost')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Color Presets */}
-                <div>
-                  <FormLabel className="mb-3 block">{__('Color Presets', 'yayboost')}</FormLabel>
-                  <div className="flex flex-wrap gap-5">
-                    {COLOR_PRESETS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => handlePresetClick(preset)}
-                        className={cn(
-                          'hover:border-primary rounded-full border-2 transition-all hover:shadow-sm',
-                          'border-border h-10 w-10 overflow-hidden',
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem
+                          value="off"
+                          id="enabled-off"
+                          disabled={toggleMutation.isPending}
+                        />
+                        <label htmlFor="enabled-off">{__('Off', 'yayboost')}</label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Show On', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Configure where the free shipping bar should be displayed', 'yayboost')}
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="show_on"
+              render={() => (
+                <FormItem>
+                  <div className="space-y-2">
+                    {showOnOptions.map((option) => (
+                      <FormField
+                        key={option.id}
+                        control={form.control}
+                        name="show_on"
+                        render={({ field }) => (
+                          <FormItem className="flex items-center space-y-0 space-x-3">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(option.id)}
+                                onCheckedChange={(checked) => {
+                                  const current = field.value || [];
+                                  if (checked) {
+                                    field.onChange([...current, option.id]);
+                                  } else {
+                                    field.onChange(current.filter((v) => v !== option.id));
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormLabel className="text-sm font-normal">{option.label}</FormLabel>
+                          </FormItem>
                         )}
-                        style={{
-                          backgroundColor: preset.primaryColor,
-                        }}
-                        title={preset.name}
                       />
                     ))}
                   </div>
-                </div>
-
-                {/* Primary Color Input */}
-                <FormField
-                  control={form.control}
-                  name="primary_color"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Primary Color', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-2">
-                          <Input type="color" {...field} className="h-10 w-14 p-1" />
-                          <Input {...field} className="flex-1" />
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        {__('Background will use 20% opacity of this color', 'yayboost')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Behavior Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Behavior', 'yayboost')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="behavior_when_unlocked"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('When free shipping unlocked', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="show_message" id="behavior-show" />
-                            <label htmlFor="behavior-show" className="cursor-pointer">
-                              {__('Show success message', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="hide_bar" id="behavior-hide" />
-                            <label htmlFor="behavior-hide" className="cursor-pointer">
-                              {__('Hide bar completely', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Gutenberg Block Info Section */}
-            <Alert variant="default">
-              <AlertCircleIcon />
-              <AlertDescription>
-                <div className="space-y-1 text-sm">
-                  <p className="text-blue-900 dark:text-blue-100">
-                    Use the <strong className="font-bold">"Free Shipping Bar"</strong> block in
-                    Gutenberg editor to place the bar anywhere on your site.
-                  </p>
-                  <p className="text-blue-700 dark:text-blue-300">
-                    {__(
-                      'Block inherits style settings from above, or override per block.',
-                      'yayboost',
-                    )}
-                  </p>
-                </div>
-              </AlertDescription>
-            </Alert>
-
-            {/* Bottom Save Button */}
-            <div className="flex justify-end">
-              <Button type="submit" disabled={updateSettings.isPending || !form.formState.isDirty}>
-                {updateSettings.isPending
-                  ? __('Saving...', 'yayboost')
-                  : __('Save Settings', 'yayboost')}
-              </Button>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Style', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Customize the style of the free shipping bar', 'yayboost')}
+              </p>
             </div>
-          </div>
+            <FormField
+              control={form.control}
+              name="display_style"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Display style', 'yayboost')}</Label>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="minimal_text" id="style-minimal" />
+                        <label htmlFor="style-minimal">{__('Minimal Text', 'yayboost')}</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="progress_bar" id="style-progress" />
+                        <label htmlFor="style-progress">{__('Progress Bar', 'yayboost')}</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="full_detail" id="style-compact" />
+                        <label htmlFor="style-compact">{__('Full Detail', 'yayboost')}</label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Messages', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Customize messages for the free shipping bar', 'yayboost')}
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="message_progress"
+              render={({ field }) => (
+                <FormItem>
+                  <Label htmlFor="message-progress">{__('Progress Message', 'yayboost')}</Label>
+                  <FormControl>
+                    <Input id="message-progress" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {__('Available:', 'yayboost')} {'{remaining}'}, {'{threshold}'}, {'{current}'}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Preview Panel */}
-          <div className="space-y-6">
-            <Card className="sticky top-6">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
-                </div>
-                <CardDescription>
-                  {__('See how the bar will look on your store', 'yayboost')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Preview controls */}
-                <div>
-                  <label className="text-sm font-medium">
-                    {__('Simulate Cart Value', 'yayboost')} ({currencySymbol})
-                  </label>
-                  <Input
-                    type="range"
-                    min="0"
-                    max={150}
-                    step="1"
-                    value={previewValue}
-                    onChange={(e) => setPreviewValue(parseInt(e.target.value))}
-                    className="mt-2"
+            <FormField
+              control={form.control}
+              name="message_achieved"
+              render={({ field }) => (
+                <FormItem>
+                  <Label htmlFor="message-achieved">{__('Achievement Message', 'yayboost')}</Label>
+                  <FormControl>
+                    <Input id="message-achieved" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {__('Shown when customer qualifies for free shipping', 'yayboost')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Appearance', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Customize colors and style of the free shipping bar', 'yayboost')}
+              </p>
+            </div>
+            {/* Color Presets */}
+            <div>
+              <Label className="mb-3">{__('Color Presets', 'yayboost')}</Label>
+              <div className="flex flex-wrap gap-5">
+                {COLOR_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => handlePresetClick(preset)}
+                    className={cn(
+                      'hover:border-primary rounded-full border-2 transition-all hover:shadow-sm',
+                      'border-border h-10 w-10 overflow-hidden',
+                    )}
+                    style={{
+                      backgroundColor: preset.primaryColor,
+                    }}
+                    title={preset.name}
                   />
-                  <div className="text-muted-foreground mt-1 flex justify-between text-xs">
-                    <span>{currencySymbol}0</span>
-                    <span className="font-medium">
-                      {currencySymbol}
-                      {previewValue.toFixed(2)}
-                    </span>
-                    <span>
-                      {currencySymbol}
-                      {(150).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
+                ))}
+              </div>
+            </div>
 
-                {/* Preview states */}
-                <div className="space-y-4">
-                  <div>
-                    <p className="mb-2 text-sm font-medium">{__('Current State:', 'yayboost')}</p>
-                    <ShippingBarPreview settings={watchedValues} cartValue={previewValue} />
-                  </div>
+            {/* Primary Color Input */}
+            <FormField
+              control={form.control}
+              name="primary_color"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Primary Color', 'yayboost')}</Label>
+                  <FormControl>
+                    <ColorPicker
+                      value={field.value}
+                      defaultColor="#000000"
+                      onChangeColor={field.onChange}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {__('Background will use 20% opacity of this color', 'yayboost')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                  <div>
-                    <p className="mb-2 text-sm font-medium">
-                      {__('Progress State (example):', 'yayboost')}
-                    </p>
-                    <ShippingBarPreview settings={watchedValues} cartValue={60} />
-                  </div>
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
-                    <ShippingBarPreview settings={watchedValues} cartValue={110} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Configure behavior of the free shipping bar', 'yayboost')}
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="behavior_when_unlocked"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('When free shipping unlocked', 'yayboost')}</Label>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex flex-col gap-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="show_message" id="behavior-show" />
+                        <label htmlFor="behavior-show">
+                          {__('Show success message', 'yayboost')}
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="hide_bar" id="behavior-hide" />
+                        <label htmlFor="behavior-hide">
+                          {__('Hide bar completely', 'yayboost')}
+                        </label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </SettingsCard>
+          {/* Gutenberg Block Info Section */}
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-1 text-sm">
+                <p className="text-blue-900 dark:text-blue-100">
+                  Use the <strong className="font-bold">"Free Shipping Bar"</strong> block in
+                  Gutenberg editor to place the bar anywhere on your site.
+                </p>
+                <p className="text-blue-700 dark:text-blue-300">
+                  {__(
+                    'Block inherits style settings from above, or override per block.',
+                    'yayboost',
+                  )}
+                </p>
+              </div>
+            </AlertDescription>
+          </Alert>
         </div>
-      </form>
+
+        {/* Preview Panel */}
+        <div className="space-y-6">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+              </div>
+              <CardDescription>
+                {__('See how the bar will look on your store', 'yayboost')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Preview controls */}
+              <div>
+                <label className="text-sm font-medium">
+                  {__('Simulate Cart Value', 'yayboost')} ({currencySymbol})
+                </label>
+                <Slider
+                  value={[previewValue]}
+                  onValueChange={(value) => setPreviewValue(value[0])}
+                  className="mt-2"
+                />
+                <div className="text-muted-foreground mt-1 flex justify-between text-xs">
+                  <span>{currencySymbol}0</span>
+                  <span className="font-medium">
+                    {currencySymbol}
+                    {previewValue.toFixed(2)}
+                  </span>
+                  <span>
+                    {currencySymbol}
+                    {(150).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Preview states */}
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-sm font-medium">{__('Current State:', 'yayboost')}</p>
+                  <ShippingBarPreview settings={watchedValues} cartValue={previewValue} />
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-medium">
+                    {__('Progress State (example):', 'yayboost')}
+                  </p>
+                  <ShippingBarPreview settings={watchedValues} cartValue={60} />
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
+                  <ShippingBarPreview settings={watchedValues} cartValue={110} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </Form>
   );
 }

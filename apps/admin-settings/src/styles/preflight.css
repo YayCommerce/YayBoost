@@ -29,6 +29,10 @@
   }
 }
 
-.yaycommerce_page_yayboost #wpcontent {
+.yayboost-ui #wpcontent {
   padding-left: 0px !important;
+}
+
+.yayboost-ui #wpbody-content > .wrap {
+  margin: 0;
 }

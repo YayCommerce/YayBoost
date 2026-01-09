@@ -1,42 +1,35 @@
-import { useFeature } from '@/hooks';
+import { useMemo, useState } from 'react';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { WarningCircle } from '@phosphor-icons/react';
+import { AlertCircle } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { __ } from '@/lib/utils';
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ColorPicker } from '@/components/ui/color-picker';
 import {
   Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   useForm,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
 
 import { FeatureComponentProps } from '..';
-
-const categoryOptions = [
-  { label: 'Phones', value: 'phones' },
-  { label: 'Phone Cases', value: 'phone-cases' },
-  { label: 'Screen Protectors', value: 'screen-protectors' },
-  { label: 'Accessories', value: 'accessories' },
-];
-
-const productOptions = [
-  { label: 'iPhone 15 Pro', value: 'iphone-15-pro' },
-  { label: 'Samsung Galaxy S24', value: 'samsung-galaxy-s24' },
-  { label: 'AirPods Pro', value: 'airpods-pro' },
-];
 
 // Settings schema
 const settingsSchema = z.object({
@@ -44,10 +37,9 @@ const settingsSchema = z.object({
   low_stock_threshold: z.number().min(0),
   show_alert_text: z.boolean(),
   show_progress_bar: z.boolean(),
-  default_message: z.string().min(1),
+  default_message: z.string().optional(),
   urgent_threshold: z.number().min(0),
-  urgent_message: z.string().min(1),
-  progress_source: z.enum(['auto', 'fixed']),
+  urgent_message: z.string().optional(),
   fixed_stock_number: z
     .object({
       is_enabled: z.boolean(),
@@ -68,80 +60,90 @@ type SettingsFormData = z.infer<typeof settingsSchema>;
 
 const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">General</CardTitle>
-        <CardDescription>Configure basic stock scarcity settings</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-4">
-          <FormField
-            control={form.control}
-            name="enabled"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm">Enable Stock Scarcity</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    value={field.value.toString()}
-                    className="flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="false" id="off-stock-scarcity" />
-                      <Label htmlFor="off-stock-scarcity" className="cursor-pointer font-normal">
-                        Off
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="true" id="on-stock-scarcity" />
-                      <Label htmlFor="on-stock-scarcity" className="cursor-pointer font-normal">
-                        On
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="low_stock_threshold"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm">Show when stock is at or below</FormLabel>
-                <div className="flex w-fit items-center gap-2">
-                  <FormControl>
-                    <Input type="number" step="1" {...field} />
-                  </FormControl>
-                  <span className="text-[#6A7282]">items</span>
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('Configure general settings for stock scarcity', 'yayboost')}
+        </p>
+      </div>
+      <FormField
+        control={form.control}
+        name="enabled"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="text-sm">Enable Stock Scarcity</Label>
+            <FormControl>
+              <RadioGroup
+                onValueChange={(value) => field.onChange(value === 'true')}
+                value={field.value.toString()}
+                className="flex flex-col gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="false" id="off-stock-scarcity" />
+                  <Label htmlFor="off-stock-scarcity">Off</Label>
                 </div>
-              </FormItem>
-            )}
-          />
-        </div>
-      </CardContent>
-    </Card>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="true" id="on-stock-scarcity" />
+                  <Label htmlFor="on-stock-scarcity">On</Label>
+                </div>
+              </RadioGroup>
+            </FormControl>
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="low_stock_threshold"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="text-sm" htmlFor="low-stock-threshold">
+              Show when stock is at or below
+            </Label>
+            <div className="flex w-fit items-center gap-2">
+              <FormControl>
+                <InputNumber
+                  id="low-stock-threshold"
+                  {...field}
+                  min={1}
+                  onValueChange={(value) => field.onChange(value || 1)}
+                  className="w-24"
+                />
+              </FormControl>
+              <span className="text-[#6A7282]">items</span>
+            </div>
+          </FormItem>
+        )}
+      />
+    </>
   );
 };
 
 const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Display Options</CardTitle>
-        <CardDescription>Choose which elements to show to customers</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-2">
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('Display', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('Configure display settings for stock scarcity', 'yayboost')}
+        </p>
+      </div>
+      <div className="flex flex-col gap-2">
         <FormField
           control={form.control}
           name="show_alert_text"
           render={({ field }) => (
             <FormItem className="flex items-center">
               <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                <Checkbox
+                  id="show-alert-text"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
               </FormControl>
-              <span>Show alert text</span>
+              <Label htmlFor="show-alert-text" className="text-sm font-normal">
+                Show alert text
+              </Label>
             </FormItem>
           )}
         />
@@ -151,81 +153,92 @@ const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
           render={({ field }) => (
             <FormItem className="flex items-center">
               <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                <Checkbox
+                  id="show-progress-bar"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
               </FormControl>
-              <span>Show progress bar</span>
+              <Label htmlFor="show-progress-bar" className="text-sm font-normal">
+                Show progress bar
+              </Label>
             </FormItem>
           )}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </>
   );
 };
 
 const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Alert Text</CardTitle>
-        <CardDescription>Customize the alert messages shown to customers</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <FormField
-          control={form.control}
-          name="default_message"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm">Default message</FormLabel>
-              <FormControl>
-                <Input placeholder="🔥 Only {stock} left in stock!" {...field} />
-              </FormControl>
-              <FormDescription className="text-sm">
-                Use {'{stock}'} to display the current stock count
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('Alert Text', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('Configure alert text for stock scarcity', 'yayboost')}
+        </p>
+      </div>
+      <FormField
+        control={form.control}
+        name="default_message"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="text-sm" htmlFor="default-message">
+              Default message
+            </Label>
+            <FormControl>
+              <Input id="default-message" placeholder="🔥 Only {stock} left in stock!" {...field} />
+            </FormControl>
+            <FormDescription className="text-sm">
+              Use {'{stock}'} to display the current stock count
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <FormField
-          control={form.control}
-          name="urgent_threshold"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm">Urgent threshold</FormLabel>
-              <div className="flex items-center gap-2">
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="1"
-                    min="1"
-                    className="w-28"
-                    {...field}
-                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                  />
-                </FormControl>
-                <span className="text-sm text-[#6A7282]">items or below</span>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="urgent_message"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm">Urgent message</FormLabel>
+      <FormField
+        control={form.control}
+        name="urgent_threshold"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="text-sm" htmlFor="urgent-threshold">
+              Urgent threshold
+            </Label>
+            <div className="flex items-center gap-2">
               <FormControl>
-                <Input placeholder="⚠️ Hurry! Only {stock} left!" {...field} />
+                <InputNumber
+                  id="urgent-threshold"
+                  {...field}
+                  min={1}
+                  onValueChange={(value) => field.onChange(value || 1)}
+                  className="w-24"
+                />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </CardContent>
-    </Card>
+              <span className="text-sm text-[#6A7282]">items or below</span>
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="urgent_message"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="text-sm" htmlFor="urgent-message">
+              Urgent message
+            </Label>
+            <FormControl>
+              <Input id="urgent-message" placeholder="⚠️ Hurry! Only {stock} left!" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
   );
 };
 
@@ -233,427 +246,418 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
   const fixedNumber = form.watch('fixed_stock_number');
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Progress Bar</CardTitle>
-        <CardDescription>Configure the visual stock indicator</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <Label className="font-medium">Bar colors</Label>
-          <div className="flex flex-col gap-4">
-            <FormField
-              control={form.control}
-              name="fill_color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-normal">Fill color</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input type="color" {...field} className="h-10 w-28 p-1" />
-                    </FormControl>
-                    <Label>{field.value ?? '#E53935'}</Label>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="background_color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-normal">Background</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Input type="color" {...field} className="h-10 w-28 p-1" />
-                    </FormControl>
-                    <Label>{field.value ?? '#EEEEEE'}</Label>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('Progress Bar', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('Configure progress bar settings for stock scarcity', 'yayboost')}
+        </p>
+      </div>
+      <FormField
+        control={form.control}
+        name="fill_color"
+        render={({ field }) => (
+          <FormItem>
+            <Label>Fill color</Label>
+            <ColorPicker value={field.value} onChangeColor={field.onChange} />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="background_color"
+        render={({ field }) => (
+          <FormItem>
+            <Label>Background</Label>
+            <ColorPicker value={field.value} onChangeColor={field.onChange} />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <div className="flex flex-col gap-4">
-          <FormField
-            control={form.control}
-            name="fixed_stock_number.is_enabled"
-            render={({ field }) => (
-              <FormItem className="flex flex-col gap-2">
-                <FormControl>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                        }}
-                      />
-                      <Label className="cursor-pointer font-normal">
-                        Calculate percentage from Fixed Number
-                      </Label>
-                    </div>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {fixedNumber?.is_enabled && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <FormField
-                  control={form.control}
-                  name="fixed_stock_number.number"
-                  render={({ field }) => (
-                    <FormItem className="m-0">
-                      <FormControl>
-                        <Input type="number" step="1" min="1" className="w-28" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <span className="text-[#6A7282]">items</span>
-              </div>
-              <div className="flex items-center gap-2 rounded-md border border-blue-200 bg-[#EFF6FF] p-3">
+      <FormField
+        control={form.control}
+        name="fixed_stock_number.is_enabled"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-2">
+            <FormControl>
+              <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <WarningCircle size={24} color="#155DFC" />
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-sm text-[#1C398E]">How fixed number works</p>
-                  <p className="text-sm text-[#193CB8]">
-                    If you set {fixedNumber?.number} items and current stock is 8, the progress bar
-                    will show {(100 - (8 / Math.max(fixedNumber?.number || 0, 1)) * 100).toFixed(0)}
-                    % sold ({fixedNumber?.number - 8} of {fixedNumber?.number}).
-                  </p>
+                  <Checkbox
+                    id="calculate-percentage-from-fixed-number"
+                    checked={field.value}
+                    onCheckedChange={(checked) => {
+                      field.onChange(checked);
+                    }}
+                  />
+                  <Label htmlFor="calculate-percentage-from-fixed-number">
+                    Calculate percentage from "fixed number"
+                  </Label>
                 </div>
               </div>
-            </div>
-          )}
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {fixedNumber?.is_enabled && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <FormField
+              control={form.control}
+              name="fixed_stock_number.number"
+              render={({ field }) => (
+                <FormItem className="m-0">
+                  <FormControl>
+                    <InputNumber
+                      {...field}
+                      min={1}
+                      onValueChange={(value) => field.onChange(value || 1)}
+                      className="w-24"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <span>items</span>
+          </div>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <p>How fixed number works</p>
+              <p>
+                If you set {fixedNumber?.number} items and current stock is 8, the progress bar will
+                show {(100 - (8 / Math.max(fixedNumber?.number || 0, 1)) * 100).toFixed(0)}% sold (
+                {fixedNumber?.number - 8} of {fixedNumber?.number}).
+              </p>
+            </AlertDescription>
+          </Alert>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 };
 
 const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Display Location</CardTitle>
-        <CardDescription>Control where stock scarcity appears</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <Label className="font-medium">Position on product page</Label>
-          <FormField
-            control={form.control}
-            name="position_on_product_page"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    className="flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="below_title" id="below-title" />
-                      <Label htmlFor="below-title" className="cursor-pointer font-normal">
-                        Below product title
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="below_price" id="below-price" />
-                      <Label htmlFor="below-price" className="cursor-pointer font-normal">
-                        Below price
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="below_add_to_cart" id="below-add-to-cart" />
-                      <Label htmlFor="below-add-to-cart" className="cursor-pointer font-normal">
-                        Below add to cart button
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('Display Location', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('Configure display location for stock scarcity', 'yayboost')}
+        </p>
+      </div>
+      <FormField
+        control={form.control}
+        name="position_on_product_page"
+        render={({ field }) => (
+          <FormItem>
+            <Label>Position on product page</Label>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                value={field.value}
+                className="flex flex-col gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="below_title" id="below-title" />
+                  <Label htmlFor="below-title">Below product title</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="below_price" id="below-price" />
+                  <Label htmlFor="below-price">Below price</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="below_add_to_cart" id="below-add-to-cart" />
+                  <Label htmlFor="below-add-to-cart">Below add to cart button</Label>
+                </div>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        <div className="flex flex-col gap-4">
-          <Label className="font-medium">Show on</Label>
-          <FormField
-            control={form.control}
-            name="show_on"
-            render={({ field }) => (
-              <FormItem className="flex flex-col gap-2">
-                <FormControl>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={field.value?.includes('product_page')}
-                        onCheckedChange={(checked) => {
-                          const currentValue = field.value || [];
-                          if (checked) {
-                            field.onChange([...currentValue, 'product_page']);
-                          } else {
-                            field.onChange(currentValue.filter((v) => v !== 'product_page'));
-                          }
-                        }}
-                      />
-                      <Label className="cursor-pointer font-normal">Product page</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={field.value?.includes('shop_category_pages')}
-                        onCheckedChange={(checked) => {
-                          const currentValue = field.value || [];
-                          if (checked) {
-                            field.onChange([...currentValue, 'shop_category_pages']);
-                          } else {
-                            field.onChange(currentValue.filter((v) => v !== 'shop_category_pages'));
-                          }
-                        }}
-                      />
-                      <Label className="cursor-pointer font-normal">Shop / Category pages</Label>
-                    </div>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      <FormField
+        control={form.control}
+        name="show_on"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-2">
+            <Label className="font-medium">Show on</Label>
+            <FormControl>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="product-page"
+                    checked={field.value?.includes('product_page')}
+                    onCheckedChange={(checked) => {
+                      const currentValue = field.value || [];
+                      if (checked) {
+                        field.onChange([...currentValue, 'product_page']);
+                      } else {
+                        field.onChange(currentValue.filter((v) => v !== 'product_page'));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="product-page">Product page</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="shop-category-pages"
+                    checked={field.value?.includes('shop_category_pages')}
+                    onCheckedChange={(checked) => {
+                      const currentValue = field.value || [];
+                      if (checked) {
+                        field.onChange([...currentValue, 'shop_category_pages']);
+                      } else {
+                        field.onChange(currentValue.filter((v) => v !== 'shop_category_pages'));
+                      }
+                    }}
+                  />
+                  <Label htmlFor="shop-category-pages">Shop / Category pages</Label>
+                </div>
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
   );
 };
 
 const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
+  const [selectProductsSearch, setSelectProductsSearch] = useState('');
+  const [excludeProductsSearch, setExcludeProductsSearch] = useState('');
+
+  const { data: categories } = useProductCategories();
+  const { data: selectProducts } = useProducts(selectProductsSearch);
+  const { data: excludeProducts } = useProducts(excludeProductsSearch);
+
+  const onSelectProductsSearch = (search: string) => {
+    setSelectProductsSearch(search);
+  };
+
+  const onExcludeProductsSearch = (search: string) => {
+    setExcludeProductsSearch(search);
+  };
+
   const applyTo = form.watch('apply_to');
   const isCategories = applyTo === 'specific_categories';
   const isProducts = applyTo === 'specific_products';
-  const options = isCategories ? categoryOptions : isProducts ? productOptions : [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Product Targeting</CardTitle>
-        <CardDescription>Select which products show stock scarcity</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-col gap-4">
-          <Label className="font-medium">Apply to</Label>
-          <FormField
-            control={form.control}
-            name="apply_to"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <RadioGroup
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    className="flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="all_products" id="all-products" />
-                      <Label htmlFor="all-products" className="cursor-pointer font-normal">
-                        All products
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="specific_categories" id="specific-categories" />
-                      <Label htmlFor="specific-categories" className="cursor-pointer font-normal">
-                        Specific categories
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="specific_products" id="specific-products" />
-                      <Label htmlFor="specific-products" className="cursor-pointer font-normal">
-                        Specific products
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('Product Targeting', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('Configure product targeting for stock scarcity', 'yayboost')}
+        </p>
+      </div>
+      <FormField
+        control={form.control}
+        name="apply_to"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="font-medium">Apply to</Label>
+            <FormControl>
+              <RadioGroup
+                onValueChange={field.onChange}
+                value={field.value}
+                className="flex flex-col gap-2"
+              >
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="all_products" id="all-products" />
+                  <Label htmlFor="all-products">All products</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="specific_categories" id="specific-categories" />
+                  <Label htmlFor="specific-categories">Specific categories</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="specific_products" id="specific-products" />
+                  <Label htmlFor="specific-products">Specific products</Label>
+                </div>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-          {/* MultiSelect cho categories/products */}
-          {isCategories && (
-            <FormField
-              control={form.control}
-              name={'specific_categories'}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select categories</FormLabel>
-                  <FormControl>
-                    <MultiSelect
-                      options={options}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder={`Search categories...`}
-                      showSearch={true}
-                      emptyText={`No categories found`}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {/* MultiSelect cho categories/products */}
+      {isCategories && (
+        <FormField
+          control={form.control}
+          name={'specific_categories'}
+          render={({ field }) => (
+            <FormItem>
+              <Label>Select categories</Label>
+              <FormControl>
+                <MultiSelect
+                  options={categories ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder={`Search categories...`}
+                  showSearch={true}
+                  emptyText={`No categories found`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
+        />
+      )}
 
-          {isProducts && (
-            <FormField
-              control={form.control}
-              name={'specific_products'}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select products</FormLabel>
-                  <FormControl>
-                    <MultiSelect
-                      options={options}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder={`Search products...`}
-                      showSearch={true}
-                      emptyText={`No products found`}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {isProducts && (
+        <FormField
+          control={form.control}
+          name={'specific_products'}
+          render={({ field }) => (
+            <FormItem>
+              <Label>Select products</Label>
+              <FormControl>
+                <MultiSelect
+                  options={selectProducts ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder={`Search products...`}
+                  showSearch={true}
+                  onSearchChange={onSelectProductsSearch}
+                  emptyText={`No products found`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
+      )}
 
-        <div className="flex flex-col gap-4">
-          <Label className="font-medium">Exclude products</Label>
-          <FormField
-            control={form.control}
-            name="exclude_products"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <MultiSelect
-                    options={productOptions}
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder={`Search products...`}
-                    showSearch={true}
-                    emptyText={`No products found`}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-      </CardContent>
-    </Card>
+      <FormField
+        control={form.control}
+        name="exclude_products"
+        render={({ field }) => (
+          <FormItem>
+            <Label className="font-medium">Exclude products</Label>
+            <FormControl>
+              <MultiSelect
+                key={'exclude_products'}
+                options={excludeProducts ?? []}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={`Search products...`}
+                onSearchChange={onExcludeProductsSearch}
+                showSearch={true}
+                emptyText={`No products found`}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
   );
 };
 
+const SAMPLE_STOCK_LEFT = 8;
+const SAMPLE_MAX_STOCK = 50;
+
 const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => {
-  const sampleStockLeft = 8;
   const watchedValues = form.watch();
 
-  const isUrgent = sampleStockLeft <= watchedValues.urgent_threshold;
-  const message = isUrgent
-    ? watchedValues.urgent_message.replace('{stock}', sampleStockLeft.toString())
-    : watchedValues.default_message.replace('{stock}', sampleStockLeft.toString());
+  const message = useMemo(() => {
+    const isUrgent = SAMPLE_STOCK_LEFT <= watchedValues.urgent_threshold;
+    let message = watchedValues.default_message || '⚠️ Hurry! Only {stock} left!';
+    if (isUrgent) {
+      message = watchedValues.urgent_message || '🔥 Only {stock} left in stock!';
+    }
+    return message.replace('{stock}', SAMPLE_STOCK_LEFT.toString());
+  }, [watchedValues]);
 
-  const maxStock =
-    watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number
-      ? watchedValues.fixed_stock_number.number
-      : 50;
-  const progress = Math.min(100, (sampleStockLeft / maxStock) * 100);
+  const progress = useMemo(() => {
+    let maxStock = SAMPLE_MAX_STOCK;
+
+    if (watchedValues.fixed_stock_number?.is_enabled && watchedValues.fixed_stock_number?.number) {
+      maxStock = watchedValues.fixed_stock_number.number;
+    }
+
+    return Math.min(100, (SAMPLE_STOCK_LEFT / maxStock) * 100);
+  }, [watchedValues]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Preview</CardTitle>
-        <CardDescription>See how your stock scarcity will look</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="w-fit min-w-xs rounded-lg border border-gray-200 bg-white p-4">
-          <div className="flex flex-col gap-3">
-            {/* Alert Text */}
-            {watchedValues.show_alert_text && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium whitespace-nowrap text-gray-900">
-                  {message ? message : '🔥 Only {stock} left in stock!'}
-                </span>
-              </div>
-            )}
+    <>
+      <div className="space-y-1">
+        <h3 className="text-sm font-medium">{__('Preview', 'yayboost')}</h3>
+        <p className="text-muted-foreground text-xs">
+          {__('See how your stock scarcity will look', 'yayboost')}
+        </p>
+      </div>
+      <div className="w-fit min-w-xs rounded-lg border border-gray-200 bg-white p-4">
+        <div className="flex flex-col gap-3">
+          {/* Alert Text */}
+          {watchedValues.show_alert_text && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium whitespace-nowrap text-gray-900">{message}</span>
+            </div>
+          )}
 
-            {/* Progress Bar */}
-            {watchedValues.show_progress_bar && (
-              <div className="flex items-center gap-3">
+          {/* Progress Bar */}
+          {watchedValues.show_progress_bar && (
+            <div className="flex items-center gap-3">
+              <div
+                className="h-2 min-w-[200px] overflow-hidden rounded-full"
+                style={{ backgroundColor: watchedValues.background_color }}
+              >
                 <div
-                  className="h-2 min-w-[200px] overflow-hidden rounded-full"
-                  style={{ backgroundColor: watchedValues.background_color }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${progress}%`,
-                      backgroundColor: watchedValues.fill_color,
-                    }}
-                  />
-                </div>
-                <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
-                  {sampleStockLeft} left
-                </span>
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${progress}%`,
+                    backgroundColor: watchedValues.fill_color,
+                  }}
+                />
               </div>
-            )}
-          </div>
+              <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
+                {SAMPLE_STOCK_LEFT} left
+              </span>
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </>
   );
 };
 
 const StockScarcity = ({ featureId }: FeatureComponentProps) => {
-  const { data: feature } = useFeature(featureId);
+  const { data: feature, isLoading } = useFeature(featureId);
+  const updateSettings = useUpdateFeatureSettings();
 
   const onSubmit = (data: SettingsFormData) => {
-    console.log(data);
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
   };
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: {
-      enabled: false,
-      low_stock_threshold: 10,
-      show_alert_text: true,
-      show_progress_bar: true,
-      default_message: '',
-      urgent_threshold: 5,
-      urgent_message: '',
-      progress_source: 'auto',
-      fixed_stock_number: {
-        is_enabled: false,
-        number: 50,
-      },
-      fill_color: '#E53935',
-      background_color: '#EEEEEE',
-      position_on_product_page: 'below_title',
-      show_on: ['product_page', 'shop_category_pages'],
-      apply_to: 'all_products',
-      specific_categories: [],
-      specific_products: [],
-      exclude_products: [],
-    },
+    defaultValues: feature?.settings,
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -664,26 +668,33 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
         goBackRoute={'/features'}
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4">
-              <GeneralSection form={form} />
-              <DisplaySection form={form} />
-              {form.watch('show_alert_text') && <AlertTextSection form={form} />}
-              {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
-              <DisplayLocationSection form={form} />
-              <ProductTargetingSection form={form} />
-              <PreviewSection form={form} />
-            </div>
-
-            {/* Submit button */}
-            <div className="flex justify-end gap-3">
-              <Button type="submit" className="bg-[#171717] text-white">
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </form>
+        <SettingsCard
+          headless
+          title="Configure Stock Scarcity"
+          onSave={() => {
+            form.handleSubmit(onSubmit)();
+          }}
+          isDirty={form.formState.isDirty}
+          isSaving={updateSettings.isPending}
+          isLoading={isLoading}
+          onReset={() => {
+            form.reset(feature?.settings);
+          }}
+        >
+          <GeneralSection form={form} />
+          <Separator />
+          <DisplaySection form={form} />
+          <Separator />
+          {form.watch('show_alert_text') && <AlertTextSection form={form} />}
+          <Separator />
+          {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
+          <Separator />
+          <PreviewSection form={form} />
+          <Separator />
+          <DisplayLocationSection form={form} />
+          <Separator />
+          <ProductTargetingSection form={form} />
+        </SettingsCard>
       </Form>
     </div>
   );
