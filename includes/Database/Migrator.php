@@ -19,7 +19,7 @@ class Migrator {
 	/**
 	 * Current DB version
 	 */
-	const CURRENT_VERSION = '1.1.0';
+	const CURRENT_VERSION = '1.0.0';
 
 	/**
 	 * Run migrations only if needed
@@ -58,36 +58,11 @@ class Migrator {
 	 * @return void
 	 */
 	protected static function migrate( string $from_version ): void {
-		// Initial installation or upgrade from pre-1.0.0
-		if ( version_compare( $from_version, '1.0.0', '<' ) ) {
-			self::migrate_to_1_0_0();
-		}
-
-		// Add FBT product stats table
-		if ( version_compare( $from_version, '1.1.0', '<' ) ) {
-			self::migrate_to_1_1_0();
-		}
-	}
-
-	/**
-	 * Migration to version 1.0.0
-	 *
-	 * @return void
-	 */
-	protected static function migrate_to_1_0_0(): void {
 		// Create entities table
 		EntityTable::create();
 		LiveVisitorTable::create();
 		// Create FBT relationships table
 		FBTRelationshipTable::create();
-	}
-
-	/**
-	 * Migration to version 1.1.0
-	 *
-	 * @return void
-	 */
-	protected static function migrate_to_1_1_0(): void {
 		// Create FBT product stats table for accurate threshold calculations
 		FBTProductStatsTable::create();
 	}
