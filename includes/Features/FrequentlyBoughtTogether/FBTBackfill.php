@@ -27,6 +27,11 @@ class FBTBackfill {
     const STATUS_OPTION_KEY = 'yayboost_fbt_backfill_status';
 
     /**
+     * Option key for storing product stats backfill status
+     */
+    const STATS_STATUS_OPTION_KEY = 'yayboost_fbt_stats_backfill_status';
+
+    /**
      * Constructor
      *
      * @param FBTCollector $collector FBT Collector instance.
@@ -323,5 +328,209 @@ class FBTBackfill {
      */
     public function reset_status(): void {
         delete_option( self::STATUS_OPTION_KEY );
+    }
+
+    /**
+     * Count completed orders for product stats backfill
+     *
+     * Counts all completed orders (regardless of FBT processed status).
+     *
+     * @return int Number of completed orders
+     */
+    public function count_orders_for_stats(): int {
+        try {
+            global $wpdb;
+
+            if ( $this->is_hpos_enabled() ) {
+                $orders_table = $wpdb->prefix . 'wc_orders';
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $count = $wpdb->get_var(
+                    "SELECT COUNT(id) FROM {$orders_table} WHERE type = 'shop_order' AND status = 'wc-completed'"
+                );
+            } else {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $count = $wpdb->get_var(
+                    "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_type = 'shop_order' AND post_status = 'wc-completed'"
+                );
+            }
+
+            return (int) $count;
+        } catch ( \Exception $e ) {
+            error_log( 'FBT Backfill: Error in count_orders_for_stats: ' . $e->getMessage() );
+            return 0;
+        }
+    }
+
+    /**
+     * Process a batch of orders for product stats only
+     *
+     * Used to backfill product order counts for stores that already have FBT pairs
+     * but are missing the product stats (after upgrading to v1.1.0).
+     *
+     * @param int $batch_size    Number of orders to process per batch.
+     * @param int $last_order_id Last processed order ID (cursor).
+     * @return array Processing result with stats
+     */
+    public function process_stats_batch( int $batch_size, int $last_order_id = 0 ): array {
+        if ( function_exists( 'set_time_limit' ) ) {
+            set_time_limit( 120 );
+        }
+
+        // Get batch of completed orders (all, not just unprocessed)
+        $order_ids = $this->get_completed_order_ids( $batch_size, $last_order_id );
+
+        if ( empty( $order_ids ) ) {
+            return [
+                'processed'     => 0,
+                'last_order_id' => $last_order_id,
+                'remaining'     => 0,
+                'completed'     => true,
+            ];
+        }
+
+        $all_product_ids = [];
+        $processed_count = 0;
+        $new_last_order_id = $last_order_id;
+
+        foreach ( $order_ids as $order_id ) {
+            try {
+                $order = \wc_get_order( $order_id );
+                if ( ! $order ) {
+                    continue;
+                }
+
+                // Extract product IDs from order
+                $product_ids = $this->collector->extract_product_ids( $order );
+                if ( ! empty( $product_ids ) ) {
+                    $all_product_ids = array_merge( $all_product_ids, $product_ids );
+                }
+
+                ++$processed_count;
+            } catch ( \Exception $e ) {
+                error_log( sprintf( 'FBT Stats Backfill: Error processing order #%d: %s', $order_id, $e->getMessage() ) );
+            }
+        }
+
+        // Update cursor
+        if ( ! empty( $order_ids ) ) {
+            $new_last_order_id = max( $order_ids );
+        }
+
+        // Batch increment product order counts
+        if ( ! empty( $all_product_ids ) ) {
+            try {
+                $this->collector->increment_product_order_counts_batch( $all_product_ids );
+            } catch ( \Exception $e ) {
+                error_log( 'FBT Stats Backfill: Error incrementing product counts: ' . $e->getMessage() );
+            }
+        }
+
+        // Update status
+        $status = $this->get_stats_status();
+        $cumulative_processed = ( $status['processed'] ?? 0 ) + $processed_count;
+        $total = $status['total'] ?? 0;
+        $estimated_remaining = max( 0, $total - $cumulative_processed );
+
+        $this->update_stats_status(
+            [
+                'last_order_id' => $new_last_order_id,
+                'processed'     => $cumulative_processed,
+                'remaining'     => $estimated_remaining,
+                'last_run'      => current_time( 'mysql' ),
+            ]
+        );
+
+        $is_completed = count( $order_ids ) < $batch_size || $estimated_remaining === 0;
+
+        return [
+            'processed'     => $processed_count,
+            'last_order_id' => $new_last_order_id,
+            'remaining'     => $estimated_remaining,
+            'completed'     => $is_completed,
+        ];
+    }
+
+    /**
+     * Get completed order IDs using cursor-based pagination
+     *
+     * @param int $limit         Number of orders to fetch.
+     * @param int $last_order_id Last processed order ID (cursor).
+     * @return array Array of order IDs
+     */
+    private function get_completed_order_ids( int $limit, int $last_order_id = 0 ): array {
+        try {
+            global $wpdb;
+
+            if ( $this->is_hpos_enabled() ) {
+                $orders_table = $wpdb->prefix . 'wc_orders';
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $order_ids = $wpdb->get_col(
+                    $wpdb->prepare(
+                        "SELECT id FROM {$orders_table}
+                        WHERE type = 'shop_order' AND status = 'wc-completed' AND id > %d
+                        ORDER BY id ASC LIMIT %d",
+                        $last_order_id,
+                        $limit
+                    )
+                );
+            } else {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $order_ids = $wpdb->get_col(
+                    $wpdb->prepare(
+                        "SELECT ID FROM {$wpdb->posts}
+                        WHERE post_type = 'shop_order' AND post_status = 'wc-completed' AND ID > %d
+                        ORDER BY ID ASC LIMIT %d",
+                        $last_order_id,
+                        $limit
+                    )
+                );
+            }
+
+            return array_map( 'intval', $order_ids );
+        } catch ( \Exception $e ) {
+            error_log( 'FBT Backfill: Error in get_completed_order_ids: ' . $e->getMessage() );
+            return [];
+        }
+    }
+
+    /**
+     * Get product stats backfill status
+     *
+     * @return array Status data
+     */
+    public function get_stats_status(): array {
+        $status = get_option( self::STATS_STATUS_OPTION_KEY, [] );
+
+        $defaults = [
+            'last_order_id' => 0,
+            'processed'     => 0,
+            'remaining'     => 0,
+            'total'         => 0,
+            'last_run'      => null,
+            'is_running'    => false,
+        ];
+
+        return wp_parse_args( $status, $defaults );
+    }
+
+    /**
+     * Update product stats backfill status
+     *
+     * @param array $status Status data to merge.
+     * @return void
+     */
+    public function update_stats_status( array $status ): void {
+        $current = $this->get_stats_status();
+        $updated = array_merge( $current, $status );
+        update_option( self::STATS_STATUS_OPTION_KEY, $updated, false );
+    }
+
+    /**
+     * Reset product stats backfill status
+     *
+     * @return void
+     */
+    public function reset_stats_status(): void {
+        delete_option( self::STATS_STATUS_OPTION_KEY );
     }
 }
