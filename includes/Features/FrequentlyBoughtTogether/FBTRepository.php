@@ -65,8 +65,8 @@ class FBTRepository {
 
         if ( empty( $results ) ) {
             // Cache empty result
-            set_transient( $cache_key, [], FBTCacheManager::CACHE_DURATION );
-            wp_cache_set( $cache_key, [], FBTCacheManager::CACHE_GROUP, FBTCacheManager::CACHE_DURATION );
+            Cache::forget($cache_key);
+            \wp_cache_delete($cache_key, FBTCacheManager::CACHE_GROUP);
             return [];
         }
 
@@ -99,8 +99,8 @@ class FBTRepository {
             },
             $products
         );
-        set_transient( $cache_key, $cached_ids, FBTCacheManager::CACHE_DURATION );
-        wp_cache_set( $cache_key, $cached_ids, FBTCacheManager::CACHE_GROUP, FBTCacheManager::CACHE_DURATION );
+        Cache::set($cache_key, $cached_ids, FBTCacheManager::CACHE_DURATION);
+        \wp_cache_set($cache_key, $cached_ids, FBTCacheManager::CACHE_GROUP, FBTCacheManager::CACHE_DURATION);
 
         return $products;
     }
