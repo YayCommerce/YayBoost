@@ -10,6 +10,7 @@
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\Database\FBTRelationshipTable;
+use YayBoost\Database\FBTProductStatsTable;
 use YayBoost\Utils\Cache;
 
 /**
@@ -21,11 +22,6 @@ class FBTRepository {
 	 * Cache duration for recommendations (1 hour)
 	 */
 	const CACHE_DURATION = HOUR_IN_SECONDS;
-
-	/**
-	 * Cache duration for total orders count (6 hours)
-	 */
-	const TOTAL_ORDERS_CACHE_DURATION = 6 * HOUR_IN_SECONDS;
 
 	/**
 	 * Get recommendations for a product
@@ -88,7 +84,7 @@ class FBTRepository {
 	/**
 	 * Query recommendations and apply threshold filter
 	 *
-	 * Single DB query approach - derives MAX(count) from first result.
+	 * Uses actual product order count for accurate threshold calculation.
 	 *
 	 * @param int   $product_id Product ID.
 	 * @param int   $limit Maximum results.
@@ -99,7 +95,7 @@ class FBTRepository {
 		global $wpdb;
 		$table_name = FBTRelationshipTable::get_table_name();
 
-		// Single query - results sorted by count DESC
+		// Query co-occurrence pairs sorted by count DESC
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$results = $wpdb->get_results(
 			$wpdb->prepare(
@@ -125,17 +121,16 @@ class FBTRepository {
 			return $results ?: [];
 		}
 
-		// MAX(count) = first result's count (since sorted DESC)
-		// This approximates "orders containing current product"
-		$max_count = (int) $results[0]['count'];
+		// Get actual order count for the target product (mathematically accurate)
+		$order_count = $this->get_product_order_count( $product_id );
 
-		if ( $max_count <= 0 ) {
-			return [];
+		if ( $order_count <= 0 ) {
+			return $results; // Return all if no order count tracked yet
 		}
 
 		// Calculate minimum count for threshold
-		// Example: 5% threshold, 100 max_count = need at least 5 co-occurrences
-		$min_count = (int) ceil( ( $threshold / 100 ) * $max_count );
+		// Example: 5% threshold, 1000 orders with product = need at least 50 co-occurrences
+		$min_count = (int) ceil( ( $threshold / 100 ) * $order_count );
 
 		// Filter by threshold (pairs must appear in >= min_count orders together)
 		return array_filter(
@@ -144,6 +139,29 @@ class FBTRepository {
 				return (int) $result['count'] >= $min_count;
 			}
 		);
+	}
+
+	/**
+	 * Get order count for a product
+	 *
+	 * Returns the number of completed orders containing this product.
+	 *
+	 * @param int $product_id Product ID.
+	 * @return int Order count.
+	 */
+	private function get_product_order_count( int $product_id ): int {
+		global $wpdb;
+		$table_name = FBTProductStatsTable::get_table_name();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT order_count FROM {$table_name} WHERE product_id = %d",
+				$product_id
+			)
+		);
+
+		return (int) $count;
 	}
 
 	/**

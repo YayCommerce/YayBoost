@@ -10,6 +10,7 @@
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\Database\FBTRelationshipTable;
+use YayBoost\Database\FBTProductStatsTable;
 
 /**
  * Handles FBT data collection from completed orders
@@ -43,10 +44,6 @@ class FBTCollector {
      * @return void
      */
     public function handle_order_thankyou( int $order_id ): void {
-        // Check if already processed
-        if ( $this->is_order_processed( $order_id ) ) {
-            return;
-        }
 
         // Process order synchronously (user already completed checkout)
         $this->process_order( $order_id );
@@ -79,11 +76,6 @@ class FBTCollector {
      * @return void
      */
     public function handle_background_job( int $order_id ): void {
-        // Double check flag (in case thank you page processed it)
-        if ( $this->is_order_processed( $order_id ) ) {
-            return;
-        }
-
         $this->process_order( $order_id );
     }
 
@@ -107,26 +99,26 @@ class FBTCollector {
 
         // Extract product IDs from order
         $product_ids = $this->extract_product_ids( $order );
-        if ( empty( $product_ids ) || count( $product_ids ) < 2 ) {
-            // Need at least 2 products to form pairs
+        if ( empty( $product_ids ) ) {
             $this->mark_order_processed( $order );
             return;
         }
 
-        // Generate normalized pairs
-        $pairs = $this->generate_pairs( $product_ids );
-        if ( empty( $pairs ) ) {
-            $this->mark_order_processed( $order );
-            return;
-        }
+        // Always increment product order counts (for accurate threshold calculation)
+        $this->increment_product_order_counts_batch( $product_ids );
 
-        // Batch UPSERT pairs into database
-        $this->increment_pairs_batch( $pairs );
+        // Generate and store pairs only if >= 2 products
+        if ( count( $product_ids ) >= 2 ) {
+            $pairs = $this->generate_pairs( $product_ids );
+            if ( ! empty( $pairs ) ) {
+                $this->increment_pairs_batch( $pairs );
+            }
+        }
 
         // Invalidate cache for related products using cache manager
         $this->cache_manager->invalidate_products( $product_ids, false );
 
-        // Mark order as processed (pass order object to reuse)
+        // Mark order as processed
         $this->mark_order_processed( $order );
     }
 
@@ -167,12 +159,16 @@ class FBTCollector {
                 // Extract product IDs.
                 $product_ids = $this->extract_product_ids( $order );
 
-                if ( count( $product_ids ) >= 2 ) {
-                    // Generate pairs.
-                    $pairs = $this->generate_pairs( $product_ids );
-                    if ( ! empty( $pairs ) ) {
-                        $all_pairs       = array_merge( $all_pairs, $pairs );
-                        $all_product_ids = array_merge( $all_product_ids, $product_ids );
+                if ( ! empty( $product_ids ) ) {
+                    // Track all product IDs for order count increment
+                    $all_product_ids = array_merge( $all_product_ids, $product_ids );
+
+                    // Generate pairs only if >= 2 products
+                    if ( count( $product_ids ) >= 2 ) {
+                        $pairs = $this->generate_pairs( $product_ids );
+                        if ( ! empty( $pairs ) ) {
+                            $all_pairs = array_merge( $all_pairs, $pairs );
+                        }
                     }
                 }
 
@@ -189,17 +185,24 @@ class FBTCollector {
                         $e->getMessage()
                     )
                 );
-                // Continue processing other orders.
             }//end try
         }//end foreach
 
-        // Batch insert all pairs at once (with error handling).
+        // Batch increment product order counts
+        if ( ! empty( $all_product_ids ) ) {
+            try {
+                $this->increment_product_order_counts_batch( $all_product_ids );
+            } catch ( \Exception $e ) {
+                error_log( 'FBT Collector: Error incrementing product counts: ' . $e->getMessage() );
+            }
+        }
+
+        // Batch insert all pairs at once
         if ( ! empty( $all_pairs ) ) {
             try {
                 $this->increment_pairs_batch( $all_pairs );
             } catch ( \Exception $e ) {
                 error_log( 'FBT Collector: Error inserting pairs: ' . $e->getMessage() );
-                // Don't fail the entire batch if insert fails.
             }
         }
 
@@ -211,7 +214,6 @@ class FBTCollector {
                 $this->cache_manager->invalidate_products( $unique_product_ids, true );
             } catch ( \Exception $e ) {
                 error_log( 'FBT Collector: Error invalidating cache: ' . $e->getMessage() );
-                // Don't fail the entire batch if cache invalidation fails.
             }
         }
 
@@ -348,6 +350,44 @@ class FBTCollector {
         $sql        = "INSERT INTO {$table_name} (product_a, product_b, count, last_updated) VALUES {$values_str}
             ON DUPLICATE KEY UPDATE 
             count = count + 1,
+            last_updated = NOW()";
+
+        // Execute query
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        $wpdb->query( $sql );
+    }
+
+    /**
+     * Batch increment product order counts
+     *
+     * Tracks how many orders contain each product for accurate threshold calculation.
+     * Uses INSERT ... ON DUPLICATE KEY UPDATE for atomic operations.
+     *
+     * @param array $product_ids Array of product IDs (can contain duplicates from same order).
+     * @return void
+     */
+    public function increment_product_order_counts_batch( array $product_ids ): void {
+        if ( empty( $product_ids ) ) {
+            return;
+        }
+
+        // Dedupe and count occurrences per product in this batch
+        $counts = array_count_values( array_map( 'intval', $product_ids ) );
+
+        global $wpdb;
+        $table_name = FBTProductStatsTable::get_table_name();
+
+        // Build values for batch insert
+        $values = [];
+        foreach ( $counts as $product_id => $count ) {
+            $values[] = $wpdb->prepare( '(%d, %d, NOW())', $product_id, $count );
+        }
+
+        // Build SQL query with UPSERT
+        $values_str = implode( ', ', $values );
+        $sql        = "INSERT INTO {$table_name} (product_id, order_count, last_updated) VALUES {$values_str}
+            ON DUPLICATE KEY UPDATE
+            order_count = order_count + VALUES(order_count),
             last_updated = NOW()";
 
         // Execute query
