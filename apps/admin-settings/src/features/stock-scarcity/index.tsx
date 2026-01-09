@@ -634,7 +634,15 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
   const updateSettings = useUpdateFeatureSettings();
 
   const onSubmit = (data: SettingsFormData) => {
-    updateSettings.mutate({ id: featureId, settings: data });
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
   };
 
   const form = useForm<SettingsFormData>({
