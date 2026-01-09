@@ -261,23 +261,23 @@ class FBTCollector {
     /**
      * Extract product IDs from order
      *
+     * Only extracts parent product IDs (not variations) to create cleaner
+     * FBT relationships. Variations of the same product should not appear
+     * as "bought together" suggestions.
+     *
      * @param \WC_Order $order WooCommerce order object
-     * @return array Array of unique product IDs
+     * @return array Array of unique parent product IDs
      */
     public function extract_product_ids( \WC_Order $order ): array {
         $product_ids = [];
 
         foreach ( $order->get_items() as $item ) {
+            // Always use parent product ID (handles both simple and variable products)
             $product_id = $item->get_product_id();
             if ( $product_id ) {
                 $product_ids[] = $product_id;
             }
 
-            // Also include variation ID if it's a variable product
-            $variation_id = $item->get_variation_id();
-            if ( $variation_id ) {
-                $product_ids[] = $variation_id;
-            }
         }
 
         // Remove duplicates and return
