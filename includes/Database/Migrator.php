@@ -7,6 +7,9 @@
 
 namespace YayBoost\Database;
 
+use YayBoost\Features\FrequentlyBoughtTogether\FBTRelationshipTable;
+use YayBoost\Features\FrequentlyBoughtTogether\FBTProductStatsTable;
+
 /**
  * Handles database migrations on plugin activation/update
  */
@@ -19,7 +22,7 @@ class Migrator {
 	/**
 	 * Current DB version
 	 */
-	const CURRENT_VERSION = '1.0.0';
+	const CURRENT_VERSION = '1.1.0';
 
 	/**
 	 * Run migrations only if needed
@@ -28,9 +31,9 @@ class Migrator {
 	 */
 	public static function run(): void {
 		// Skip if not needed (avoids DB query on every request)
-		if ( ! self::needs_migration() ) {
-			return;
-		}
+		// if ( ! self::needs_migration() ) {
+		// 	return;
+		// }
 
 		$installed_version = get_option( self::DB_VERSION_OPTION, '0.0.0' );
 		self::migrate( $installed_version );
@@ -58,12 +61,12 @@ class Migrator {
 	 * @return void
 	 */
 	protected static function migrate( string $from_version ): void {
-		// Create entities table
+		// Create core tables
 		EntityTable::create();
 		LiveVisitorTable::create();
-		// Create FBT relationships table
+
+		// Create FBT tables (added in 1.1.0)
 		FBTRelationshipTable::create();
-		// Create FBT product stats table for accurate threshold calculations
 		FBTProductStatsTable::create();
 	}
 

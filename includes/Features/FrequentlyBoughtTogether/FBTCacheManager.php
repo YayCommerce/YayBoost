@@ -2,75 +2,131 @@
 /**
  * FBT Cache Manager
  *
- * Handles cache invalidation for FBT feature.
+ * Handles caching of FBT product data using WordPress transients.
+ * Compatible with object caching (Redis, Memcached).
  *
  * @package YayBoost
  */
 
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
-use YayBoost\Utils\Cache;
-
 /**
- * FBT cache invalidation manager
+ * Cache manager for FBT data
  */
 class FBTCacheManager {
+    /**
+     * Cache key prefix
+     */
+    const CACHE_PREFIX = 'yayboost_fbt_';
 
-	/**
-	 * Cache group name for object cache
-	 */
-	const CACHE_GROUP = 'yayboost_fbt';
+    /**
+     * Cache version option name
+     */
+    const VERSION_OPTION = 'yayboost_fbt_cache_version';
 
-	/**
-	 * Invalidate all caches for a product
-	 *
-	 * @param int $product_id Product ID.
-	 * @return void
-	 */
-	public function invalidate_product( int $product_id ): void {
-		global $wpdb;
+    /**
+     * Default cache TTL in seconds (1 hour)
+     */
+    const DEFAULT_TTL = 3600;
 
-		// Delete product-specific transients (pattern: yayboost_fbt_recommendations_{product_id}_*)
-		$pattern = '%yayboost_fbt_recommendations_' . (int) $product_id . '_%';
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query(
-			$wpdb->prepare(
-				"DELETE FROM {$wpdb->options}
-				WHERE option_name LIKE %s
-				AND (option_name LIKE '_transient_%' OR option_name LIKE '_transient_timeout_%')",
-				$pattern
-			)
-		);
+    /**
+     * Get cache version
+     *
+     * @return int
+     */
+    private function get_version(): int {
+        return (int) get_option( self::VERSION_OPTION, 1 );
+    }
 
-		// Also delete from object cache if available
-		wp_cache_delete( "yayboost_fbt_{$product_id}", self::CACHE_GROUP );
-	}
+    /**
+     * Get full cache key with version
+     *
+     * @param int $product_id Product ID
+     * @return string
+     */
+    private function get_versioned_key( int $product_id ): string {
+        return self::CACHE_PREFIX . $this->get_version() . '_' . $product_id;
+    }
 
-	/**
-	 * Invalidate caches for multiple products
-	 *
-	 * @param array $product_ids Array of product IDs.
-	 * @param bool  $skip_transients Skip transient deletion for performance (during backfill).
-	 * @return void
-	 */
-	public function invalidate_products( array $product_ids, bool $skip_transients = false ): void {
-		if ( empty( $product_ids ) ) {
-			return;
-		}
+    /**
+     * Get cached FBT products for a product
+     *
+     * @param int $product_id Product ID
+     * @return array|null Array of product IDs or null if not cached
+     */
+    public function get( int $product_id ): ?array {
+        $cached = get_transient( $this->get_versioned_key( $product_id ) );
+        return $cached !== false ? $cached : null;
+    }
 
-		// Clear object cache group once
-		if ( function_exists( 'wp_cache_flush_group' ) ) {
-			wp_cache_flush_group( self::CACHE_GROUP );
-		}
+    /**
+     * Set FBT products cache for a product
+     *
+     * @param int   $product_id  Product ID
+     * @param array $product_ids Array of related product IDs
+     * @param int   $ttl         Cache TTL in seconds
+     * @return bool
+     */
+    public function set( int $product_id, array $product_ids, int $ttl = self::DEFAULT_TTL ): bool {
+        return set_transient( $this->get_versioned_key( $product_id ), $product_ids, $ttl );
+    }
 
-		// Skip transient deletion during backfill for performance
-		if ( $skip_transients ) {
-			return;
-		}
+    /**
+     * Invalidate cache for a single product
+     *
+     * @param int $product_id Product ID
+     * @return bool
+     */
+    public function invalidate( int $product_id ): bool {
+        return delete_transient( $this->get_versioned_key( $product_id ) );
+    }
 
-		// Delete transients for each product
-		foreach ( array_unique( $product_ids ) as $product_id ) {
-			$this->invalidate_product( (int) $product_id );
-		}
-	}
+    /**
+     * Invalidate ALL FBT cache by bumping version number
+     *
+     * This effectively invalidates all cached FBT data without
+     * needing to delete individual transients.
+     *
+     * @return bool
+     */
+    public function invalidate_all(): bool {
+        $current_version = $this->get_version();
+        return update_option( self::VERSION_OPTION, $current_version + 1 );
+    }
+
+    /**
+     * Invalidate cache for multiple products
+     *
+     * @param array $product_ids Array of product IDs
+     * @return int Number of invalidated caches
+     */
+    public function invalidate_products( array $product_ids ): int {
+        $count = 0;
+        foreach ( $product_ids as $product_id ) {
+            if ( $this->invalidate( (int) $product_id ) ) {
+                ++$count;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Check if cache exists for a product
+     *
+     * @param int $product_id Product ID
+     * @return bool
+     */
+    public function has( int $product_id ): bool {
+        return get_transient( self::CACHE_PREFIX . $product_id ) !== false;
+    }
+
+    /**
+     * Get cache key for a product
+     *
+     * @param int $product_id Product ID
+     * @return string
+     */
+    public function get_cache_key( int $product_id ): string {
+        return self::CACHE_PREFIX . $product_id;
+    }
 }

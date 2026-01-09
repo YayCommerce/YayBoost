@@ -70,27 +70,14 @@ class FBTController extends BaseController {
         try {
             $backfill = $this->get_backfill_instance();
 
-            // Get counts with error handling.
-            $unprocessed = 0;
-            $total       = 0;
-
-            try {
-                $unprocessed = $backfill->count_unprocessed_orders();
-            } catch ( \Exception $e ) {
-                error_log( 'FBT: Error counting unprocessed orders in start: ' . $e->getMessage() );
-            }
-
-            try {
-                $total = wc_orders_count( 'completed' );
-            } catch ( \Exception $e ) {
-                error_log( 'FBT: Error counting total orders in start: ' . $e->getMessage() );
-            }
+            // Get counts
+            $unprocessed = $backfill->count_unprocessed_orders();
+            $total       = wc_orders_count( 'completed' );
 
             // Get batch size from request (default 100)
             $batch_size = $request->get_param( 'batch_size' );
             $batch_size = $batch_size ? absint( $batch_size ) : 100;
-            $batch_size = max( 10, min( 500, $batch_size ) );
-            // Clamp between 10-500
+            $batch_size = max( 10, min( 500, $batch_size ) ); // Clamp between 10-500
 
             // Calculate number of batches
             $batches_count = $unprocessed > 0 ? ceil( $unprocessed / $batch_size ) : 0;
@@ -123,7 +110,7 @@ class FBTController extends BaseController {
                 500,
                 [ 'error' => $e->getMessage() ]
             );
-        }//end try
+        }
     }
 
     /**
@@ -140,9 +127,8 @@ class FBTController extends BaseController {
             $batch_size    = $request->get_param( 'batch_size' );
             $last_order_id = $request->get_param( 'last_order_id' );
 
-            $batch_size = $batch_size ? absint( $batch_size ) : 100;
-            $batch_size = max( 10, min( 500, $batch_size ) );
-            // Clamp between 10-500
+            $batch_size    = $batch_size ? absint( $batch_size ) : 100;
+            $batch_size    = max( 10, min( 500, $batch_size ) ); // Clamp between 10-500
             $last_order_id = $last_order_id ? absint( $last_order_id ) : 0;
 
             // Process batch
@@ -165,7 +151,6 @@ class FBTController extends BaseController {
                     'remaining'     => $result['remaining'],
                     'completed'     => $result['completed'],
                     'errors'        => $result['errors'] ?? 0,
-                // Include error count.
                 ]
             );
         } catch ( \Exception $e ) {
@@ -174,7 +159,7 @@ class FBTController extends BaseController {
                 500,
                 [ 'error' => $e->getMessage() ]
             );
-        }//end try
+        }
     }
 
     /**
@@ -187,25 +172,9 @@ class FBTController extends BaseController {
         try {
             $backfill = $this->get_backfill_instance();
 
-            $status = $backfill->get_status();
-
-            // Use cached values or calculate with error handling.
-            $unprocessed = 0;
-            $total       = 0;
-
-            try {
-                $unprocessed = $backfill->count_unprocessed_orders();
-            } catch ( \Exception $e ) {
-                // Log error but don't fail the request.
-                error_log( 'FBT: Error counting unprocessed orders: ' . $e->getMessage() );
-            }
-
-            try {
-                $total = wc_orders_count( 'completed' );
-            } catch ( \Exception $e ) {
-                // Log error but don't fail the request.
-                error_log( 'FBT: Error counting total orders: ' . $e->getMessage() );
-            }
+            $status      = $backfill->get_status();
+            $unprocessed = $backfill->count_unprocessed_orders();
+            $total       = wc_orders_count( 'completed' );
 
             return $this->success(
                 [
@@ -223,6 +192,6 @@ class FBTController extends BaseController {
                 500,
                 [ 'error' => $e->getMessage() ]
             );
-        }//end try
+        }
     }
 }

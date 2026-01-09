@@ -2,7 +2,7 @@
 /**
  * FBT Renderer
  *
- * Handles rendering of FBT sections on product pages.
+ * Handles frontend display of frequently bought together products.
  *
  * @package YayBoost
  */
@@ -10,268 +10,220 @@
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 /**
- * Handles FBT rendering logic
+ * Renders FBT products on single product page
  */
 class FBTRenderer {
     /**
-     * FBT Repository instance
+     * Cache manager instance
      *
-     * @var FBTRepository
+     * @var FBTCacheManager
      */
-    protected FBTRepository $repository;
+    private $cache_manager;
 
     /**
-     * Flag to track if currently rendering FBT section
+     * Feature settings
      *
-     * @var bool
+     * @var array
      */
-    protected static bool $is_rendering_fbt = false;
+    private $settings;
 
     /**
      * Constructor
      *
-     * @param FBTRepository $repository FBT Repository instance
+     * @param FBTCacheManager $cache_manager Cache manager instance
+     * @param array           $settings      Feature settings
      */
-    public function __construct( FBTRepository $repository ) {
-        $this->repository = $repository;
-    }
-
-     /**
-     * Enqueue frontend assets
-     *
-     * @return void
-     */
-    public function enqueue_assets(): void {
-
-        // Enqueue script
-        wp_enqueue_script(
-            'yayboost-fbt',
-            YAYBOOST_URL . 'assets/js/frequently-bought-together.js',
-            [ 'jquery', 'wc-add-to-cart', 'wc-accounting' ],
-            YAYBOOST_VERSION,
-            true
-        );
-
-        // Enqueue style
-        wp_register_style(
-            'yayboost-fbt',
-            false,
-            [],
-            YAYBOOST_VERSION
-        );
-        wp_enqueue_style( 'yayboost-fbt' );
-        wp_add_inline_style( 'yayboost-fbt', $this->get_inline_style() );
-
-        // Get WooCommerce currency settings
-        $currency_symbol = get_woocommerce_currency_symbol();
-        $currency_pos    = get_option( 'woocommerce_currency_pos', 'left' );
-        $decimal_sep     = wc_get_price_decimal_separator();
-        $thousand_sep    = wc_get_price_thousand_separator();
-        $num_decimals    = wc_get_price_decimals();
-
-        // Convert currency position to accounting.js format
-        // Default left
-        $format = '%s%v';
-        if ( 'right' === $currency_pos ) {
-            $format = '%v%s';
-        } elseif ( 'left_space' === $currency_pos ) {
-            $format = '%s %v';
-        } elseif ( 'right_space' === $currency_pos ) {
-            $format = '%v %s';
-        }
-
-        // Localize script
-        wp_localize_script(
-            'yayboost-fbt',
-            'yayboostFBT',
-            [
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'yayboost_fbt_batch' ),
-                'currency' => [
-                    'symbol'    => $currency_symbol,
-                    'format'    => $format,
-                    'decimal'   => $decimal_sep,
-                    'thousand'  => $thousand_sep,
-                    'precision' => $num_decimals,
-                ],
-                'i18n'     => [
-                    'adding'          => __( 'Adding to cart...', 'yayboost' ),
-                    'added'           => __( 'Added to cart', 'yayboost' ),
-                    'error'           => __( 'Error adding to cart', 'yayboost' ),
-                    'select_products' => __( 'Please select at least one product', 'yayboost' ),
-                    'add_selected'    => __( 'Add Selected to Cart', 'yayboost' ),
-                ],
-            ]
-        );
-    }
-
-    public function get_inline_style(): string {
-        return '
-        .yayboost-fbt-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 16px;
-            margin-top: 24px;
-            border-top: 1px solid #e0e0e0;
-            }
-
-            .yayboost-fbt-total {
-            font-size: 19px;
-            font-weight: 600;
-            }
-
-            .yayboost-fbt-total-price {
-            color: #0073aa;
-            }
-
-            .yayboost-fbt-batch-add {
-            padding: 12px 24px;
-            font-size: 16px;
-            }
-
-            .yayboost-fbt-batch-add:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            }
-
-            /* Notice messages - custom FBT element */
-            .yayboost-fbt-notice {
-            padding: 12px 16px;
-            margin-bottom: 16px;
-            border-radius: 4px;
-            font-size: 14px;
-            }
-
-            .yayboost-fbt-notice-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            }
-
-            .yayboost-fbt-notice-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            }
-
-            /* Responsive */
-            @media (max-width: 768px) {
-            .yayboost-fbt-footer {
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .yayboost-fbt-batch-add {
-                width: 100%;
-            }
-            }
-
-        ';
+    public function __construct( FBTCacheManager $cache_manager, array $settings ) {
+        $this->cache_manager = $cache_manager;
+        $this->settings      = $settings;
     }
 
     /**
-     * Render FBT section for a product
+     * Render FBT products for a product
      *
-     * @param int   $product_id Product ID
-     * @param array $settings Feature settings
+     * @param int $product_id Product ID
      * @return void
      */
-    public function render( int $product_id, array $settings ): void {
-        if ( ! $this->should_display( $product_id ) ) {
+    public function render( int $product_id ): void {
+        // Get FBT product IDs
+        $fbt_product_ids = $this->get_fbt_products( $product_id );
+
+        if ( empty( $fbt_product_ids ) ) {
             return;
         }
 
-        $products = $this->repository->get_recommendations(
-            $product_id,
-            $settings['max_products'] ?? 4,
-            $settings
-        );
+        // Get WC_Product objects
+        $products = $this->get_product_objects( $fbt_product_ids );
 
         if ( empty( $products ) ) {
             return;
         }
 
+        // Filter products based on settings
+        $products = $this->filter_products( $products );
+
+        if ( empty( $products ) ) {
+            return;
+        }
+
+        // Limit to max products
+        $max_products = $this->settings['max_products'] ?? 4;
+        $products     = array_slice( $products, 0, $max_products );
+
+        // Enqueue assets
         $this->enqueue_assets();
 
-        $this->render_template( $product_id, $products, $settings );
+        // Render template
+        $this->render_template( $products, $product_id );
     }
 
     /**
-     * Check if FBT section should be displayed
+     * Get FBT products with caching
+     *
+     * @param int $product_id Product ID
+     * @return array Array of product IDs
+     */
+    private function get_fbt_products( int $product_id ): array {
+        // Check cache first
+        $cached = $this->cache_manager->get( $product_id );
+        if ( $cached !== null ) {
+            return $cached;
+        }
+
+        // Get from database
+        $threshold     = $this->settings['min_order_threshold'] ?? 5;
+        $max_products  = $this->settings['max_products'] ?? 4;
+        $product_orders = FBTProductStatsTable::get_order_count( $product_id );
+
+        $product_ids = FBTRelationshipTable::get_related_products(
+            $product_id,
+            $threshold,
+            $max_products + 5, // Get extra in case some are filtered out
+            $product_orders
+        );
+
+        // Cache result
+        $this->cache_manager->set( $product_id, $product_ids );
+
+        return $product_ids;
+    }
+
+    /**
+     * Get WC_Product objects from IDs
+     *
+     * @param array $product_ids Array of product IDs
+     * @return array Array of WC_Product objects
+     */
+    private function get_product_objects( array $product_ids ): array {
+        if ( empty( $product_ids ) ) {
+            return [];
+        }
+
+        $products = wc_get_products(
+            [
+                'include' => $product_ids,
+                'status'  => 'publish',
+                'limit'   => count( $product_ids ),
+            ]
+        );
+
+        return $products ?: [];
+    }
+
+    /**
+     * Filter products based on settings
+     *
+     * @param array $products Array of WC_Product objects
+     * @return array Filtered products
+     */
+    private function filter_products( array $products ): array {
+        $filtered = [];
+
+        foreach ( $products as $product ) {
+            // Skip out of stock products
+            if ( ! $product->is_in_stock() ) {
+                continue;
+            }
+
+            // Skip if in cart and setting is 'hide'
+            if ( $this->settings['hide_if_in_cart'] === 'hide' && $this->is_product_in_cart( $product->get_id() ) ) {
+                continue;
+            }
+
+            $filtered[] = $product;
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * Check if product is in cart
      *
      * @param int $product_id Product ID
      * @return bool
      */
-    protected function should_display( int $product_id ): bool {
-        $product = wc_get_product( $product_id );
-        if ( ! $product || ! $product->is_purchasable() ) {
+    private function is_product_in_cart( int $product_id ): bool {
+        if ( ! WC()->cart ) {
             return false;
         }
 
-        return true;
-    }
-
-    /**
-     * Render template
-     *
-     * @param int   $current_product_id Current product ID
-     * @param array $fbt_products FBT products
-     * @param array $settings Settings
-     * @return void
-     */
-    protected function render_template( int $current_product_id, array $fbt_products, array $settings ): void {
-        $section_title = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
-        $layout        = $settings['layout'] ?? 'grid';
-        $max_products  = $settings['max_products'] ?? 4;
-
-        $template_path = YAYBOOST_PATH . 'includes/Features/FrequentlyBoughtTogether/templates/fbt-section.php';
-
-        if ( ! file_exists( $template_path ) ) {
-            return;
+        foreach ( WC()->cart->get_cart() as $cart_item ) {
+            if ( $cart_item['product_id'] === $product_id ) {
+                return true;
+            }
         }
 
-        // Set flag to indicate we're rendering FBT section
-        self::$is_rendering_fbt = true;
-
-        include $template_path;
-
-        // Reset flag after rendering
-        self::$is_rendering_fbt = false;
+        return false;
     }
 
     /**
-     * Render FBT checkbox via WooCommerce hook
+     * Enqueue frontend assets
      *
      * @return void
      */
-    public function render_fbt_checkbox(): void {
-        global $product;
+    private function enqueue_assets(): void {
+        wp_enqueue_style(
+            'yayboost-fbt',
+            YAYBOOST_URL . 'assets/css/fbt.css',
+            [],
+            YAYBOOST_VERSION
+        );
 
-        if ( ! $product || ! self::$is_rendering_fbt ) {
-            return;
-        }
+        wp_enqueue_script(
+            'yayboost-fbt',
+            YAYBOOST_URL . 'assets/js/fbt.js',
+            [ 'jquery' ],
+            YAYBOOST_VERSION,
+            true
+        );
 
-        ?>
-        <div>
-            <label class="yayboost-fbt-checkbox-label">
-                <input type="checkbox"
-                        class="yayboost-fbt-selectable"
-                        checked
-                        data-product-id="<?php echo esc_attr( $product->get_id() ); ?>"
-                        data-price="<?php echo esc_attr( $product->get_price() ); ?>">
-                <span><?php echo esc_html( $product->get_name() ); ?></span>
-            </label>
-        </div>
-        <?php
+        wp_localize_script(
+            'yayboost-fbt',
+            'yayboostFBT',
+            [
+                'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+                'nonce'         => wp_create_nonce( 'yayboost_fbt_add_to_cart' ),
+                'currencySymbol' => get_woocommerce_currency_symbol(),
+                'i18n'          => [
+                    'adding'      => __( 'Adding...', 'yayboost' ),
+                    'added'       => __( 'Added!', 'yayboost' ),
+                    'viewCart'    => __( 'View Cart', 'yayboost' ),
+                    'error'       => __( 'Error adding to cart', 'yayboost' ),
+                ],
+            ]
+        );
     }
 
     /**
-     * Check if currently rendering FBT section
+     * Render FBT template
      *
-     * @return bool
+     * @param array $products   Array of WC_Product objects
+     * @param int   $product_id Current product ID
+     * @return void
      */
-    public static function is_rendering(): bool {
-        return self::$is_rendering_fbt;
+    private function render_template( array $products, int $product_id ): void {
+        $settings = $this->settings;
+
+        include YAYBOOST_PATH . 'includes/Features/FrequentlyBoughtTogether/templates/fbt-products.php';
     }
 }
