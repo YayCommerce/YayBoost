@@ -9,6 +9,7 @@ namespace YayBoost\Database;
 
 use YayBoost\Features\FrequentlyBoughtTogether\FBTRelationshipTable;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTProductStatsTable;
+use YayBoost\Features\LiveVisitorCount\LiveVisitorTable;
 
 /**
  * Handles database migrations on plugin activation/update
