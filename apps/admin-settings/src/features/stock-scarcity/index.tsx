@@ -69,31 +69,6 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
       </div>
       <FormField
         control={form.control}
-        name="enabled"
-        render={({ field }) => (
-          <FormItem>
-            <Label className="text-sm">Enable Stock Scarcity</Label>
-            <FormControl>
-              <RadioGroup
-                onValueChange={(value) => field.onChange(value === 'true')}
-                value={field.value.toString()}
-                className="flex flex-col gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="false" id="off-stock-scarcity" />
-                  <Label htmlFor="off-stock-scarcity">Off</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="true" id="on-stock-scarcity" />
-                  <Label htmlFor="on-stock-scarcity">On</Label>
-                </div>
-              </RadioGroup>
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
         name="low_stock_threshold"
         render={({ field }) => (
           <FormItem>

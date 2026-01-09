@@ -59,13 +59,65 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
     protected $priority = 10;
 
     /**
+     * FBT Repository instance
+     *
+     * @var FBTRepository
+     */
+    protected $repository;
+
+    /**
+     * FBT Collector instance
+     *
+     * @var FBTCollector
+     */
+    protected $collector;
+
+    /**
+     * FBT Cache Manager instance
+     *
+     * @var FBTCacheManager
+     */
+    protected $cache_manager;
+
+    /**
+     * FBT Renderer instance
+     *
+     * @var FBTRenderer
+     */
+    protected $renderer;
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
     public function init(): void {
-        // Display frequently bought together products on product page
-        $settings = $this->get_settings();
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
+        // Initialize dependencies
+        $this->cache_manager = new FBTCacheManager();
+        $this->repository    = new FBTRepository();
+        $this->collector     = new FBTCollector( $this->cache_manager );
+        $this->renderer      = new FBTRenderer( $this->repository );
+
+        new FBTCleanup($this);
+
+        // Register data collection hooks (hybrid approach)
+        add_action( 'woocommerce_thankyou', [ $this, 'handle_order_thankyou_with_cache' ], 10 );
+        add_action( 'woocommerce_order_status_completed', [ $this, 'handle_order_completed_with_cache' ], 20 );
+        add_action( 'yayboost_process_fbt_order', [ $this->collector, 'handle_background_job' ] );
+
+        // Register display hooks
+        add_action( 'woocommerce_after_single_product_summary', [ $this, 'render_fbt_section' ], 25 );
+
+        // Register hook to add FBT checkbox via WooCommerce hook
+        add_action( 'woocommerce_after_shop_loop_item', [ $this->renderer, 'render_fbt_checkbox' ], 15 );
+
+        // Register AJAX handler for batch add-to-cart
+        add_action( 'wp_ajax_yayboost_fbt_batch_add', [ $this, 'ajax_add_fbt_batch' ] );
+        add_action( 'wp_ajax_nopriv_yayboost_fbt_batch_add', [ $this, 'ajax_add_fbt_batch' ] );
     }
 
     /**
@@ -80,11 +132,149 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                 'enabled'             => false,
                 'max_products'        => 4,
                 'min_order_threshold' => 5,
-                'show_on'             => [ 'product_page', 'cart_page' ],
                 'layout'              => 'grid',
-                'section_title'       => __( 'Complete Your Purchase', 'yayboost' ),
+                'section_title'       => __( 'Frequently Bought Together', 'yayboost' ),
                 'hide_if_in_cart'     => 'hide',
             ]
         );
+    }
+
+    /**
+     * Render FBT section on product page
+     *
+     * @return void
+     */
+    public function render_fbt_section(): void {
+        global $product;
+
+        if ( ! $product ) {
+            return;
+        }
+
+        $this->renderer->render( $product->get_id(), $this->get_settings() );
+    }
+
+    /**
+     * AJAX handler for batch add to cart
+     *
+     * @return void
+     */
+    public function ajax_add_fbt_batch(): void {
+        check_ajax_referer( 'yayboost_fbt_batch', 'nonce' );
+
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            wp_send_json_error( [ 'message' => __( 'WooCommerce is not available', 'yayboost' ) ] );
+            return;
+        }
+
+        $product_ids        = isset( $_POST['product_ids'] ) ? array_map( 'intval', (array) $_POST['product_ids'] ) : [];
+        $current_product_id = isset( $_POST['current_product_id'] ) ? (int) $_POST['current_product_id'] : 0;
+
+        if ( empty( $product_ids ) ) {
+            wp_send_json_error( [ 'message' => __( 'No products selected', 'yayboost' ) ] );
+            return;
+        }
+
+        // Ensure current product is included
+        if ( $current_product_id && ! in_array( $current_product_id, $product_ids, true ) ) {
+            array_unshift( $product_ids, $current_product_id );
+        }
+
+        $added_products = [];
+        $errors         = [];
+
+        foreach ( $product_ids as $product_id ) {
+            $product = wc_get_product( $product_id );
+
+            if ( ! $product ) {
+                /* translators: %d: Product ID */
+                $errors[] = sprintf( __( 'Product #%d not found', 'yayboost' ), $product_id );
+                continue;
+            }
+
+            if ( ! $product->is_purchasable() ) {
+                /* translators: %s: Product name */
+                $errors[] = sprintf( __( 'Product "%s" is not purchasable', 'yayboost' ), $product->get_name() );
+                continue;
+            }
+
+            if ( ! $product->is_in_stock() ) {
+                /* translators: %s: Product name */
+                $errors[] = sprintf( __( 'Product "%s" is out of stock', 'yayboost' ), $product->get_name() );
+                continue;
+            }
+
+            // Add to cart
+            $cart_item_key = WC()->cart->add_to_cart( $product_id, 1 );
+
+            if ( $cart_item_key ) {
+                $added_products[] = [
+                    'id'   => $product_id,
+                    'name' => $product->get_name(),
+                ];
+            } else {
+                /* translators: %s: Product name */
+                $errors[] = sprintf( __( 'Failed to add "%s" to cart', 'yayboost' ), $product->get_name() );
+            }
+        }//end foreach
+
+        // Get cart fragments
+        $fragments = apply_filters( 'woocommerce_add_to_cart_fragments', [] );
+
+        if ( ! empty( $added_products ) ) {
+            wp_send_json_success(
+                [
+                    /* translators: %d: Number of products */
+                    'message'        => sprintf( __( 'Added %d product(s) to cart.', 'yayboost' ), count( $added_products ) ),
+                    'added_products' => $added_products,
+                    'errors'         => $errors,
+                    'fragments'      => $fragments,
+                    'cart_hash'      => WC()->cart->get_cart_hash(),
+                ]
+            );
+        } else {
+            wp_send_json_error(
+                [
+                    'message' => __( 'Failed to add products to cart', 'yayboost' ),
+                    'errors'  => $errors,
+                ]
+            );
+        }
+    }
+
+    /**
+     * Handle order thank you page with cache invalidation
+     *
+     * Wrapper around collector's handle_order_thankyou that also invalidates
+     * total orders count cache when order is processed.
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    public function handle_order_thankyou_with_cache( int $order_id ): void {
+        // Check if order will be processed (not already processed)
+        if ( ! $this->collector->is_order_processed( $order_id ) ) {
+            // Process order (this will invalidate product caches via cache manager)
+            $this->collector->handle_order_thankyou( $order_id );
+
+        }
+    }
+
+    /**
+     * Handle order completed hook with cache invalidation
+     *
+     * Wrapper around collector's handle_order_completed that also invalidates
+     * total orders count cache when order is processed.
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    public function handle_order_completed_with_cache( int $order_id ): void {
+        // Check if order will be processed (not already processed)
+        if ( ! $this->collector->is_order_processed( $order_id ) ) {
+            // Process order (this will invalidate product caches via cache manager)
+            $this->collector->handle_order_completed( $order_id );
+
+        }
     }
 }

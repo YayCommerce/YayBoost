@@ -391,51 +391,6 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
             }}
           >
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
-              <p className="text-muted-foreground text-xs">
-                {__('Configure basic free shipping bar settings', 'yayboost')}
-              </p>
-            </div>
-            <FormField
-              control={form.control}
-              name="enabled"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{__('Enable Free Shipping Bar', 'yayboost')}</Label>
-                  <FormControl>
-                    <RadioGroup
-                      value={field.value ? 'on' : 'off'}
-                      onValueChange={(value) => {
-                        const newEnabled = value === 'on';
-                        field.onChange(newEnabled);
-                      }}
-                      disabled={toggleMutation.isPending}
-                      className="flex items-center gap-6"
-                    >
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem
-                          value="on"
-                          id="enabled-on"
-                          disabled={toggleMutation.isPending}
-                        />
-                        <label htmlFor="enabled-on">{__('On', 'yayboost')}</label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem
-                          value="off"
-                          id="enabled-off"
-                          disabled={toggleMutation.isPending}
-                        />
-                        <label htmlFor="enabled-off">{__('Off', 'yayboost')}</label>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Separator />
-            <div className="space-y-1">
               <h3 className="text-sm font-medium">{__('Show On', 'yayboost')}</h3>
               <p className="text-muted-foreground text-xs">
                 {__('Configure where the free shipping bar should be displayed', 'yayboost')}

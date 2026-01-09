@@ -189,44 +189,6 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
         isLoading={isLoading || isFetching}
       >
         <div className="space-y-1">
-          <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
-          <p className="text-muted-foreground text-xs">
-            {__('Configure basic live visitor count settings', 'yayboost')}
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="enabled"
-          render={({ field }) => (
-            <FormItem>
-              <Label>{__('Enable Live Visitor Count', 'yayboost')}</Label>
-              <FormControl>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value ? 'on' : 'off'}
-                    onValueChange={(value) => {
-                      const newEnabled = value === 'on';
-                      field.onChange(newEnabled);
-                    }}
-                    className="flex items-center gap-6"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="on" id="enabled-on" />
-                      <Label htmlFor="enabled-on">{__('On', 'yayboost')}</Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="off" id="enabled-off" />
-                      <Label htmlFor="enabled-off">{__('Off', 'yayboost')}</Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Separator />
-        <div className="space-y-1">
           <h3 className="text-sm font-medium">{__('Tracking Mode', 'yayboost')}</h3>
           <p className="text-muted-foreground text-xs">
             {__('Configure how visitor counts are tracked and displayed.', 'yayboost')}

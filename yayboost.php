@@ -97,6 +97,9 @@ function yayboost_activate() {
         );
     }
 
+    // Run database migrations
+    \YayBoost\Database\Migrator::activate();
+
     // Set default options
     add_option( 'yayboost_version', YAYBOOST_VERSION );
     add_option(

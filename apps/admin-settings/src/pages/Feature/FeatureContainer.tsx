@@ -145,7 +145,7 @@ export default function FeatureContainer() {
                 placeholder={__('Search', 'yayboost')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 bg-white"
               />
             </div>
           </div>
