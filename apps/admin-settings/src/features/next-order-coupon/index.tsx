@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -207,13 +208,13 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                           name="discount_value"
                           render={({ field: valueField }) => (
                             <div className="flex items-center gap-1">
-                              <Input
+                              <InputNumber
                                 id="discount_value"
-                                type="number"
                                 className="h-8 w-20"
-                                {...valueField}
-                                value={valueField.value || ''}
-                                onChange={(e) => valueField.onChange(Number(e.target.value))}
+                                value={valueField.value}
+                                onValueChange={(value) => valueField.onChange(value)}
+                                min={0}
+                                max={100}
                               />
                               <span>%</span>
                             </div>
@@ -233,13 +234,12 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                           render={({ field: valueField }) => (
                             <div className="flex items-center gap-1">
                               <span>{currencySymbol}</span>
-                              <Input
+                              <InputNumber
                                 id="discount_value_fixed"
-                                type="number"
                                 className="h-8 w-20"
-                                {...valueField}
-                                value={valueField.value || ''}
-                                onChange={(e) => valueField.onChange(Number(e.target.value))}
+                                value={valueField.value}
+                                onValueChange={(value) => valueField.onChange(value)}
+                                min={0}
                               />
                             </div>
                           )}
@@ -264,7 +264,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               <FormItem>
                 <Label htmlFor="coupon_prefix">{__('Coupon prefix', 'yayboost')}</Label>
                 <FormControl>
-                  <Input id="coupon_prefix" {...field} />
+                  <Input id="coupon_prefix" className="w-64" {...field} />
                 </FormControl>
                 <FormDescription>
                   {__('Preview:', 'yayboost')} {generatePreviewCode(field.value || couponPrefix)}
@@ -327,12 +327,11 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                 <FormControl>
                   <div className="flex items-center gap-2">
                     <span>{currencySymbol}</span>
-                    <Input
+                    <InputNumber
                       id="minimum_order_total"
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                      value={field.value || ''}
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                      min={0}
                     />
                   </div>
                 </FormControl>
@@ -397,12 +396,11 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                 <FormControl>
                   <div className="flex items-center gap-2">
                     <span>{currencySymbol}</span>
-                    <Input
+                    <InputNumber
                       id="minimum_spend_to_use"
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                      value={field.value || ''}
+                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                      min={0}
                     />
                   </div>
                 </FormControl>
