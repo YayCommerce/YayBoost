@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
+import { useState } from 'react';
 import z from 'zod';
 
-import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
-import { useProductCategories, useProducts } from '@/hooks/use-product-data';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
 import { ColorPicker } from '@/components/ui/color-picker';
 import {
   Form,
@@ -31,9 +29,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import FeatureLayoutHeader from '@/components/feature-layout-header';
-import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 
 import { FeatureComponentProps } from '..';
 
