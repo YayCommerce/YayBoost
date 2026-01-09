@@ -10,6 +10,7 @@
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\Database\FBTRelationshipTable;
+use YayBoost\Utils\Cache;
 
 /**
  * Handles FBT data retrieval
@@ -273,35 +274,29 @@ class FBTRepository {
      * @return int Estimated number of orders containing this product (lower bound)
      */
     private function get_orders_count_with_product_from_fbt( int $product_id ): int {
-        $cache_key = $this->cache_manager->get_orders_with_product_cache_key( $product_id, true );
-        $cached    = get_transient( $cache_key );
+        return Cache::remember(
+            "fbt_orders_with_product_fbt_{$product_id}",
+            HOUR_IN_SECONDS,
+            function () use ( $product_id ) {
+                global $wpdb;
+                $table_name = FBTRelationshipTable::get_table_name();
 
-        if ( false !== $cached && ! empty( $cached ) ) {
-            return (int) $cached;
-        }
+                // Get MAX(count) from all pairs containing this product
+                // This represents the minimum number of orders containing the product
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+                $count = $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COALESCE(MAX(count), 0)
+                        FROM {$table_name}
+                        WHERE product_a = %d OR product_b = %d",
+                        $product_id,
+                        $product_id
+                    )
+                );
 
-        global $wpdb;
-        $table_name = FBTRelationshipTable::get_table_name();
-
-        // Get MAX(count) from all pairs containing this product
-        // This represents the minimum number of orders containing the product
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $count = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COALESCE(MAX(count), 0) 
-                FROM {$table_name}
-                WHERE product_a = %d OR product_b = %d",
-                $product_id,
-                $product_id
-            )
+                return (int) max( 0, $count );
+            }
         );
-
-        $count = (int) max( 0, $count );
-
-        // Cache for 1 hour
-        set_transient( $cache_key, $count, HOUR_IN_SECONDS );
-
-        return $count;
     }
 
     /**
@@ -313,20 +308,12 @@ class FBTRepository {
      * @return int Total orders count
      */
     public function get_total_orders_count(): int {
-        $cache_key = FBTCacheManager::TOTAL_ORDERS_CACHE_KEY;
-        $cached    = get_transient( $cache_key );
-
-        if ( false !== $cached ) {
-            return (int) $cached;
-        }
-
-        // Use WooCommerce API - automatically handles HPOS vs legacy
-        $count = wc_orders_count( 'completed' );
-        $count = (int) $count;
-
-        // Cache for 6 hours
-        set_transient( $cache_key, $count, FBTCacheManager::TOTAL_ORDERS_CACHE_DURATION );
-
-        return $count;
+        return Cache::remember(
+            'fbt_total_orders',
+            FBTCacheManager::TOTAL_ORDERS_CACHE_DURATION,
+            function () {
+                return (int) wc_orders_count( 'completed' );
+            }
+        );
     }
 }

@@ -10,6 +10,8 @@
 
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
+use YayBoost\Utils\Cache;
+
 /**
  * Centralized FBT cache management
  */
@@ -23,11 +25,6 @@ class FBTCacheManager {
      * Default cache duration in seconds (1 hour)
      */
     const CACHE_DURATION = HOUR_IN_SECONDS;
-
-    /**
-     * Total orders count cache key
-     */
-    const TOTAL_ORDERS_CACHE_KEY = 'yayboost_fbt_total_orders';
 
     /**
      * Total orders count cache duration (6 hours)
@@ -53,18 +50,6 @@ class FBTCacheManager {
         );
 
         return "yayboost_fbt_{$product_id}_{$limit}_{$settings_hash}";
-    }
-
-    /**
-     * Get cache key for orders count with product
-     *
-     * @param int  $product_id Product ID
-     * @param bool $from_fbt Whether using FBT table method
-     * @return string Cache key
-     */
-    public function get_orders_with_product_cache_key( int $product_id, bool $from_fbt = false ): string {
-        $prefix = $from_fbt ? 'yayboost_fbt_orders_with_product_fbt_' : 'yayboost_fbt_orders_with_product_';
-        return "{$prefix}{$product_id}";
     }
 
     /**
@@ -100,10 +85,7 @@ class FBTCacheManager {
      * @return void
      */
     public function invalidate_total_orders(): void {
-        delete_transient( self::TOTAL_ORDERS_CACHE_KEY );
-        if ( function_exists( 'wp_cache_delete' ) ) {
-            wp_cache_delete( self::TOTAL_ORDERS_CACHE_KEY, self::CACHE_GROUP );
-        }
+        Cache::forget( 'fbt_total_orders' );
     }
 
     /**
