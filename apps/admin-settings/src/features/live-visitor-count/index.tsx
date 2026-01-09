@@ -51,7 +51,6 @@ const settingsSchema = z.object({
   }),
   display: z.object({
     text: z.string().min(1),
-    icon: z.enum(['eye', 'person', 'fire', 'lightning', 'none']),
     position: z.enum([
       'below_product_title',
       'above_add_to_cart_button',

@@ -1,5 +1,5 @@
 /**
- * Free Shipping Bar Block - Editor Registration
+ * Live Visitor Count Block - Editor Registration
  */
 
 import { registerBlockType } from "@wordpress/blocks";

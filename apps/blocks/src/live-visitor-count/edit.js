@@ -28,7 +28,6 @@ function getPreviewContent(config) {
   const backgroundColor = settings.style?.background_color || "#fff3f3";
   const text =
     settings.display?.text || "👁️ {count} visitors are viewing this page";
-  const icon = settings.display?.icon || "eye";
   const minimumCountDisplay =
     parseInt(settings.real_tracking?.minimum_count_display) || 1;
 
@@ -50,7 +49,7 @@ function getPreviewContent(config) {
   }
 
   if (style === "style_3") {
-    return `<div class="yayboost-lvc yayboost-lvc-style-3"><div class="yayboost-lvc-text" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-lvc-icon">${iconHtml} <span id="yayboost-lvc-number">${count}</span></div></div>`;
+    return `<div class="yayboost-lvc yayboost-lvc-style-3"><div class="yayboost-lvc-text" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-lvc-icon"><span id="yayboost-lvc-number">${count}</span></div></div>`;
   }
   
   return `<div class="yayboost-lvc yayboost-lvc-style-1" style="color: ${textColor};">${textWithCount}</div>`;

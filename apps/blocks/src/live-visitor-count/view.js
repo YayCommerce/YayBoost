@@ -129,11 +129,10 @@
         if (isBubble) {
           const textEl = el.querySelector(".yayboost-lvc-text");
           const iconEl = el.querySelector(".yayboost-lvc-icon");
-          iconEl.innerHTML =
-            icon + " <span id='yayboost-lvc-number'>" + count + "</span>";
+          iconEl.innerHTML = "<span id='yayboost-lvc-number'>" + count + "</span>";
           textEl.innerHTML = updateText;
         } else {
-          el.innerHTML = icon + updateText;
+          el.innerHTML = updateText;
         }
         el.setAttribute("data-count", count);
       }
