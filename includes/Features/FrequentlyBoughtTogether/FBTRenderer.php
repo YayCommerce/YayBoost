@@ -53,12 +53,14 @@ class FBTRenderer {
         );
 
         // Enqueue style
-        wp_enqueue_style(
+        wp_register_style(
             'yayboost-fbt',
-            YAYBOOST_URL . 'assets/css/frequently-bought-together.css',
+            false,
             [],
             YAYBOOST_VERSION
         );
+        wp_enqueue_style( 'yayboost-fbt' );
+        wp_add_inline_style( 'yayboost-fbt', $this->get_inline_style() );
 
         // Get WooCommerce currency settings
         $currency_symbol = get_woocommerce_currency_symbol();
@@ -101,6 +103,71 @@ class FBTRenderer {
                 ],
             ]
         );
+    }
+
+    public function get_inline_style(): string {
+        return '
+        .yayboost-fbt-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 16px;
+            margin-top: 24px;
+            border-top: 1px solid #e0e0e0;
+            }
+
+            .yayboost-fbt-total {
+            font-size: 19px;
+            font-weight: 600;
+            }
+
+            .yayboost-fbt-total-price {
+            color: #0073aa;
+            }
+
+            .yayboost-fbt-batch-add {
+            padding: 12px 24px;
+            font-size: 16px;
+            }
+
+            .yayboost-fbt-batch-add:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            }
+
+            /* Notice messages - custom FBT element */
+            .yayboost-fbt-notice {
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            }
+
+            .yayboost-fbt-notice-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            }
+
+            .yayboost-fbt-notice-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+            .yayboost-fbt-footer {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .yayboost-fbt-batch-add {
+                width: 100%;
+            }
+            }
+
+        ';
     }
 
     /**
@@ -158,7 +225,7 @@ class FBTRenderer {
         $layout        = $settings['layout'] ?? 'grid';
         $max_products  = $settings['max_products'] ?? 4;
 
-        $template_path = YAYBOOST_PATH . 'includes/views/features/frequently-bought-together/template.php';
+        $template_path = YAYBOOST_PATH . 'includes/Features/FrequentlyBoughtTogether/templates/fbt-section.php';
 
         if ( ! file_exists( $template_path ) ) {
             return;
