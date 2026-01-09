@@ -33,12 +33,16 @@ export const featureComponents: Record<
 
   // Frequently Bought Together
   frequently_bought_together: lazy(() => import('./frequently-bought-together')),
+
   smart_recommendations: lazy(() => import('./smart-recommendations')),
 
   stock_scarcity: lazy(() => import('./stock-scarcity')),
 
   // Next Order Coupon
   next_order_coupon: lazy(() => import('./next-order-coupon')),
+
+  // Live Visitor Count
+  live_visitor_count: lazy(() => import('./live-visitor-count')),
 };
 
 /**

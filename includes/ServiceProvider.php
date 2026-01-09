@@ -16,6 +16,7 @@ use YayBoost\Features\FrequentlyBoughtTogether\FrequentlyBoughtTogetherFeature;
 use YayBoost\Features\SmartRecommendations\SmartRecommendationsFeature;
 use YayBoost\Features\StockScarcity\StockScarcityFeature;
 use YayBoost\Features\NextOrderCoupon\NextOrderCouponFeature;
+use YayBoost\Features\LiveVisitorCount\LiveVisitorCountFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -35,7 +36,7 @@ class ServiceProvider implements ServiceProviderInterface {
      * @param Container $container
      * @return void
      */
-    public function register(Container $container): void {
+    public function register( Container $container ): void {
         // Register features
         $this->register_features( $container );
 
@@ -49,14 +50,14 @@ class ServiceProvider implements ServiceProviderInterface {
      * @param Container $container
      * @return void
      */
-    public function boot(Container $container): void {
+    public function boot( Container $container ): void {
         // Get registry and fire addon hook
         $registry = $container->resolve( 'feature.registry' );
         $registry->fire_addon_hook();
 
         // Initialize all enabled features
-        foreach ($registry->get_all() as $feature) {
-            if ($feature->is_enabled()) {
+        foreach ( $registry->get_all() as $feature ) {
+            if ( $feature->is_enabled() ) {
                 $feature->init();
             }
         }
@@ -68,11 +69,11 @@ class ServiceProvider implements ServiceProviderInterface {
      * @param Container $container
      * @return void
      */
-    protected function register_features(Container $container): void {
+    protected function register_features( Container $container ): void {
         // Register Sample Boost Feature (Recently Viewed Products)
         $container->register(
             'feature.sample_boost',
-            function ($c) {
+            function ( $c ) {
                 return new SampleBoostFeature( $c );
             }
         );
@@ -81,7 +82,7 @@ class ServiceProvider implements ServiceProviderInterface {
         // Register Free Shipping Bar Feature
         $container->register(
             'feature.free_shipping_bar',
-            function ($c) {
+            function ( $c ) {
                 return new FreeShippingBarFeature( $c );
             }
         );
@@ -90,7 +91,7 @@ class ServiceProvider implements ServiceProviderInterface {
         // Register Order Bump Feature
         $container->register(
             'feature.order_bump',
-            function ($c) {
+            function ( $c ) {
                 return new OrderBumpFeature( $c );
             }
         );
@@ -99,7 +100,7 @@ class ServiceProvider implements ServiceProviderInterface {
         // Register Frequently Bought Together Feature
         $container->register(
             'feature.frequently_bought_together',
-            function ($c) {
+            function ( $c ) {
                 return new FrequentlyBoughtTogetherFeature( $c );
             }
         );
@@ -108,7 +109,7 @@ class ServiceProvider implements ServiceProviderInterface {
         // Register Smart Recommendations Feature
         $container->register(
             'feature.smart_recommendations',
-            function ($c) {
+            function ( $c ) {
                 return new SmartRecommendationsFeature( $c );
             }
         );
@@ -117,7 +118,7 @@ class ServiceProvider implements ServiceProviderInterface {
         // Register Stock Scarcity Feature
         $container->register(
             'feature.stock_scarcity',
-            function ($c) {
+            function ( $c ) {
                 return new StockScarcityFeature( $c );
             }
         );
@@ -126,20 +127,28 @@ class ServiceProvider implements ServiceProviderInterface {
         // Register Next Order Coupon Feature
         $container->register(
             'feature.next_order_coupon',
-            function ($c) {
+            function ( $c ) {
                 return new NextOrderCouponFeature( $c );
             }
         );
         $this->features[] = 'feature.next_order_coupon';
 
+        // Register Live Visitor Count Feature
+        $container->register(
+            'feature.live_visitor_count',
+            function ( $c ) {
+                return new LiveVisitorCountFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.live_visitor_count';
+
         // Register feature registry
         $container->register(
             'feature.registry',
-            function ($c) {
+            function ( $c ) {
                 $registry = new FeatureRegistry();
-
                 // Register core features
-                foreach ($this->features as $featureKey) {
+                foreach ( $this->features as $featureKey ) {
                     $feature = $c->resolve( $featureKey );
                     $registry->register( $feature );
                 }
@@ -155,11 +164,11 @@ class ServiceProvider implements ServiceProviderInterface {
      * @param Container $container
      * @return void
      */
-    protected function register_utilities(Container $container): void {
+    protected function register_utilities( Container $container ): void {
         // Register settings manager
         $container->register(
             'settings',
-            function ($c) {
+            function ( $c ) {
                 return new Utils\Settings();
             }
         );
