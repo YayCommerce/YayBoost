@@ -17,20 +17,6 @@ function getConfig() {
 }
 
 /**
- * Get icon HTML based on icon name
- */
-function getIconHtml(icon) {
-  const icons = {
-    eye: "👁️",
-    person: "👤",
-    fire: "🔥",
-    lightning: "⚡",
-    none: "",
-  };
-  return icons[icon] || "";
-}
-
-/**
  * Generate preview content similar to PHP get_content() method
  * Uses count = 1 for editor preview
  */
@@ -41,7 +27,7 @@ function getPreviewContent(config) {
   const textColor = settings.style?.text_color || "#a74c3c";
   const backgroundColor = settings.style?.background_color || "#fff3f3";
   const text =
-    settings.display?.text || "{count} visitors are viewing this page";
+    settings.display?.text || "👁️ {count} visitors are viewing this page";
   const icon = settings.display?.icon || "eye";
   const minimumCountDisplay =
     parseInt(settings.real_tracking?.minimum_count_display) || 1;
@@ -54,7 +40,6 @@ function getPreviewContent(config) {
     return "";
   }
 
-  const iconHtml = getIconHtml(icon);
   const textWithCount = text.replace(
     "{count}",
     `<span id="yayboost-lvc-number">${count}</span>`
@@ -62,9 +47,9 @@ function getPreviewContent(config) {
 
   let content = "";
   if (style === "style_1") {
-    content = `<div class="yayboost-lvc yayboost-lvc-style-1" style="color: ${textColor};">${iconHtml}${textWithCount}</div>`;
+    content = `<div class="yayboost-lvc yayboost-lvc-style-1" style="color: ${textColor};">${textWithCount}</div>`;
   } else if (style === "style_2") {
-    content = `<div class="yayboost-lvc yayboost-lvc-style-2" style="color: ${textColor}; background-color: ${backgroundColor};">${iconHtml}${textWithCount}</div>`;
+    content = `<div class="yayboost-lvc yayboost-lvc-style-2" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div>`;
   } else if (style === "style_3") {
     content = `<div class="yayboost-lvc yayboost-lvc-style-3"><div class="yayboost-lvc-text" style="color: ${textColor}; background-color: ${backgroundColor};">${textWithCount}</div><div class="yayboost-lvc-icon">${iconHtml} <span id="yayboost-lvc-number">${count}</span></div></div>`;
   }

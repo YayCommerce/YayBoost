@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { ChevronDownIcon } from 'lucide-react';
 import z from 'zod';
 
-import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ColorPicker } from '@/components/ui/color-picker';
 import {
   Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   useForm,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { InputNumber } from '@/components/ui/input-number';
+import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -30,6 +32,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
@@ -64,28 +67,12 @@ const settingsSchema = z.object({
   }),
   apply_on: z.object({
     apply: z.enum(['all', 'specific_categories', 'specific_products']),
-    categories: z.array(z.union([z.string(), z.number()])).optional(),
-    products: z.array(z.union([z.string(), z.number()])).optional(),
+    categories: z.array(z.string()).optional(),
+    products: z.array(z.string()).optional(),
   }),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
-
-// Helper function to get icon HTML
-function getIconHtml(icon: string): string {
-  switch (icon) {
-    case 'eye':
-      return '👁️';
-    case 'person':
-      return '👤';
-    case 'fire':
-      return '🔥';
-    case 'lightning':
-      return '⚡';
-    default:
-      return '';
-  }
-}
 
 // Style Preview Component
 function StylePreview({
@@ -93,15 +80,12 @@ function StylePreview({
   textColor,
   backgroundColor,
   displayText,
-  displayIcon,
 }: {
   style: string;
   textColor: string;
   backgroundColor: string;
   displayText: string;
-  displayIcon: string;
 }) {
-  const iconHtml = getIconHtml(displayIcon);
   const previewCount = 12;
   const text = displayText.replace('{count}', previewCount.toString());
 
@@ -111,7 +95,6 @@ function StylePreview({
         className="yayboost-lvc yayboost-lvc-style-1 inline-flex items-center gap-1.5 text-sm"
         style={{ color: textColor }}
       >
-        {iconHtml && <span>{iconHtml}</span>}
         <span>{text}</span>
       </div>
     );
@@ -123,7 +106,6 @@ function StylePreview({
         className="yayboost-lvc yayboost-lvc-style-2 inline-flex items-center gap-1.5 rounded-md px-1.5 py-1.5 text-sm"
         style={{ color: textColor, backgroundColor: backgroundColor }}
       >
-        {iconHtml && <span>{iconHtml}</span>}
         <span>{text}</span>
       </div>
     );
@@ -138,8 +120,7 @@ function StylePreview({
         >
           {text}
         </div>
-        <div className="yayboost-lvc-icon flex cursor-pointer items-center justify-center">
-          {iconHtml && <span>{iconHtml}</span>}
+        <div className="yayboost-lvc-icon flex items-center justify-center">
           <span>{previewCount}</span>
         </div>
       </div>
@@ -152,9 +133,14 @@ function StylePreview({
 export default function LiveVisitorCountFeature({ featureId }: FeatureComponentProps) {
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
-  const toggleMutation = useToggleFeature();
-  const [realTrackingExpanded, setRealTrackingExpanded] = useState(true);
-  const [simulatedExpanded, setSimulatedExpanded] = useState(true);
+  const [productSearch, setProductSearch] = useState('');
+
+  const { data: categories } = useProductCategories();
+  const { data: products } = useProducts(productSearch);
+
+  const onProductSearch = (search: string) => {
+    setProductSearch(search);
+  };
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -171,18 +157,6 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
   const textColor = form.watch('style.text_color');
   const backgroundColor = form.watch('style.background_color');
   const displayText = form.watch('display.text');
-  const displayIcon = form.watch('display.icon');
-
-  // Update expanded state based on tracking mode
-  useEffect(() => {
-    if (trackingMode === 'real-tracking') {
-      setRealTrackingExpanded(true);
-      setSimulatedExpanded(false);
-    } else {
-      setRealTrackingExpanded(false);
-      setSimulatedExpanded(true);
-    }
-  }, [trackingMode]);
 
   if (isLoading || isFetching) {
     return (
@@ -201,268 +175,122 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
   return (
     <Form {...form}>
       <FeatureLayoutHeader title={feature.name} description={feature.description} />
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Live Visitor Count', 'yayboost')}</CardTitle>
-              <CardDescription>
-                {__('Configure how visitor counts are tracked and displayed.', 'yayboost')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+      <SettingsCard
+        headless
+        onSave={() => {
+          form.handleSubmit(onSubmit)();
+        }}
+        onReset={() => {
+          form.reset(feature?.settings as SettingsFormData);
+        }}
+        isSaving={updateSettings.isPending}
+        isDirty={form.formState.isDirty}
+        isLoading={isLoading || isFetching}
+      >
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
+          <p className="text-muted-foreground text-xs">
+            {__('Configure basic live visitor count settings', 'yayboost')}
+          </p>
+        </div>
+        <FormField
+          control={form.control}
+          name="enabled"
+          render={({ field }) => (
+            <FormItem>
+              <Label>{__('Enable Live Visitor Count', 'yayboost')}</Label>
+              <FormControl>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value ? 'on' : 'off'}
+                    onValueChange={(value) => {
+                      const newEnabled = value === 'on';
+                      field.onChange(newEnabled);
+                    }}
+                    className="flex items-center gap-6"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="on" id="enabled-on" />
+                      <Label htmlFor="enabled-on">{__('On', 'yayboost')}</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="off" id="enabled-off" />
+                      <Label htmlFor="enabled-off">{__('Off', 'yayboost')}</Label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Separator />
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">{__('Tracking Mode', 'yayboost')}</h3>
+          <p className="text-muted-foreground text-xs">
+            {__('Configure how visitor counts are tracked and displayed.', 'yayboost')}
+          </p>
+        </div>
+        <FormField
+          control={form.control}
+          name="tracking_mode"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange}>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="real-tracking" id="real-tracking" />
+                    <div className="space-y-1">
+                      <Label htmlFor="real-tracking">{__('Real Tracking', 'yayboost')}</Label>
+                      <FormDescription>
+                        {__('Track actual visitors viewing the product.', 'yayboost')}
+                      </FormDescription>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="simulated" id="simulated" />
+                    <div className="space-y-1">
+                      <Label htmlFor="simulated">{__('Simulated', 'yayboost')}</Label>
+                      <FormDescription>
+                        {__('Display randomized visitor counts.', 'yayboost')}
+                      </FormDescription>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {/* Real Tracking Settings */}
+        {trackingMode === 'real-tracking' && (
+          <div className="space-y-4">
+            <Label>{__('Real Tracking Settings', 'yayboost')}</Label>
+            <div className="space-y-4 pt-2">
               <FormField
                 control={form.control}
-                name="enabled"
+                name="real_tracking.active_window"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{__('Enable Live Visitor Count', 'yayboost')}</FormLabel>
-                    <FormControl>
+                    <Label>{__('Active Window (minutes)', 'yayboost')}</Label>
+                    <Select
+                      value={field.value?.toString() ?? '5'}
+                      onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                    >
                       <FormControl>
-                        <RadioGroup
-                          value={field.value ? 'on' : 'off'}
-                          onValueChange={(value) => {
-                            const newEnabled = value === 'on';
-                            field.onChange(newEnabled);
-                          }}
-                          className="flex items-center gap-6"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="on" id="enabled-on" />
-                            <label htmlFor="enabled-on" className="cursor-pointer">
-                              {__('On', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="off" id="enabled-off" />
-                            <label htmlFor="enabled-off" className="cursor-pointer">
-                              {__('Off', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder={__('Select active window', 'yayboost')} />
+                        </SelectTrigger>
                       </FormControl>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Separator className="my-4" />
-              {/* Tracking Mode */}
-              <div className="space-y-4">
-                <FormLabel>{__('Tracking Mode', 'yayboost')}</FormLabel>
-                <FormField
-                  control={form.control}
-                  name="tracking_mode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex flex-col gap-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="real-tracking" id="real-tracking" />
-                            <div className="space-y-1">
-                              <label htmlFor="real-tracking" className="cursor-pointer">
-                                {__('Real Tracking', 'yayboost')}
-                              </label>
-                              <FormDescription>
-                                {__('Track actual visitors viewing the product.', 'yayboost')}
-                              </FormDescription>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="simulated" id="simulated" />
-                            <div className="space-y-1">
-                              <label htmlFor="simulated" className="cursor-pointer">
-                                {__('Simulated', 'yayboost')}
-                              </label>
-                              <FormDescription>
-                                {__('Display randomized visitor counts.', 'yayboost')}
-                              </FormDescription>
-                            </div>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <Separator className="my-4" />
-              {/* Real Tracking Settings */}
-              {trackingMode === 'real-tracking' && (
-                <div className="space-y-4">
-                  <button
-                    type="button"
-                    onClick={() => setRealTrackingExpanded(!realTrackingExpanded)}
-                    className="flex w-full cursor-pointer items-center gap-2 text-left"
-                  >
-                    <ChevronDownIcon
-                      className={`h-4 w-4 transition-transform ${realTrackingExpanded ? 'rotate-180' : ''}`}
-                    />
-                    <label className="!mb-0">{__('Real Tracking Settings', 'yayboost')}</label>
-                  </button>
-
-                  {realTrackingExpanded && (
-                    <div className="space-y-4 pt-2">
-                      <FormField
-                        control={form.control}
-                        name="real_tracking.active_window"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{__('Active Window (minutes)', 'yayboost')}</FormLabel>
-                            <Select
-                              value={field.value?.toString() ?? '5'}
-                              onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="w-full">
-                                  <SelectValue
-                                    placeholder={__('Select active window', 'yayboost')}
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="2">2</SelectItem>
-                                <SelectItem value="5">5</SelectItem>
-                                <SelectItem value="10">10</SelectItem>
-                                <SelectItem value="15">15</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              {__('Count visitors active within this time period', 'yayboost')}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="real_tracking.minimum_count_display"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{__('Minimum Count to Display', 'yayboost')}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                value={field.value ?? 0}
-                                onChange={(e) => {
-                                  const value = parseInt(e.target.value, 10) || 0;
-                                  field.onChange(value);
-                                }}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {__(
-                                'Hide counter if visitors below this number (0 = always show)',
-                                'yayboost',
-                              )}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Simulated Settings */}
-              {trackingMode === 'simulated' && (
-                <div className="space-y-4">
-                  <button
-                    type="button"
-                    onClick={() => setSimulatedExpanded(!simulatedExpanded)}
-                    className="flex w-full cursor-pointer items-center gap-2 text-left"
-                  >
-                    <ChevronDownIcon
-                      className={`h-4 w-4 transition-transform ${simulatedExpanded ? 'rotate-180' : ''}`}
-                    />
-                    <label className="!mb-0">{__('Simulated Settings', 'yayboost')}</label>
-                  </button>
-
-                  {simulatedExpanded && (
-                    <div className="space-y-4 pt-2">
-                      <FormField
-                        control={form.control}
-                        name="simulated.min"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{__('Minimum Count', 'yayboost')}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                value={field.value ?? 10}
-                                onChange={(e) => {
-                                  const value = parseInt(e.target.value, 10) || 0;
-                                  field.onChange(value);
-                                }}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="simulated.max"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>{__('Maximum Count', 'yayboost')}</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                value={field.value ?? 50}
-                                onChange={(e) => {
-                                  const value = parseInt(e.target.value, 10) || 0;
-                                  field.onChange(value);
-                                }}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {__('Random count will be between min and max', 'yayboost')}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Display Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Display Settings', 'yayboost')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="display.text"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{__('Display Text', 'yayboost')}</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="{count} people are viewing this right now" />
-                    </FormControl>
+                      <SelectContent>
+                        <SelectItem value="2">2</SelectItem>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="15">15</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormDescription>
-                      {__('Use {count} as placeholder for the number of visitors', 'yayboost')}
+                      {__('Count visitors active within this time period', 'yayboost')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -471,281 +299,337 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
 
               <FormField
                 control={form.control}
-                name="display.icon"
+                name="real_tracking.minimum_count_display"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{__('Icon', 'yayboost')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={__('Select icon', 'yayboost')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="eye">👁️ {__('Eye', 'yayboost')}</SelectItem>
-                        <SelectItem value="person">👤 {__('Person', 'yayboost')}</SelectItem>
-                        <SelectItem value="fire">🔥 {__('Fire', 'yayboost')}</SelectItem>
-                        <SelectItem value="lightning">⚡ {__('Lightning', 'yayboost')}</SelectItem>
-                        <SelectItem value="none"> {__('None', 'yayboost')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="display.position"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{__('Position on Product Page', 'yayboost')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={__('Select position', 'yayboost')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="below_product_title">
-                          {__('Below product title', 'yayboost')}
-                        </SelectItem>
-                        <SelectItem value="above_add_to_cart_button">
-                          {__('Above add to cart button', 'yayboost')}
-                        </SelectItem>
-                        <SelectItem value="below_add_to_cart_button">
-                          {__('Below add to cart button', 'yayboost')}
-                        </SelectItem>
-                        <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
-                        <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {field.value === 'use_block' && (
-                      <FormDescription>
-                        {__(
-                          'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
-                          'yayboost',
-                        )}
-                      </FormDescription>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Style Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Style', 'yayboost')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {/* Left Column: Settings */}
-                <div className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="style.style"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{__('Choose Style', 'yayboost')}</FormLabel>
-                        <FormControl>
-                          <RadioGroup
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="flex items-center gap-6"
-                          >
-                            <div className="flex items-center gap-2">
-                              <RadioGroupItem value="style_1" id="style-1" />
-                              <div className="space-y-1">
-                                <label htmlFor="style-1" className="cursor-pointer">
-                                  {__('Text only', 'yayboost')}
-                                </label>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <RadioGroupItem value="style_2" id="style-2" />
-                              <div className="space-y-1">
-                                <label htmlFor="style-2" className="cursor-pointer">
-                                  {__('Badge style', 'yayboost')}
-                                </label>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <RadioGroupItem value="style_3" id="style-3" />
-                              <div className="space-y-1">
-                                <label htmlFor="style-3" className="cursor-pointer">
-                                  {__('Bubble style', 'yayboost')}
-                                </label>
-                              </div>
-                            </div>
-                          </RadioGroup>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="style.text_color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{__('Text Color', 'yayboost')}</FormLabel>
-                        <FormControl>
-                          <div className="flex gap-2">
-                            <Input type="color" {...field} className="h-10 w-14 p-1" />
-                            <Input {...field} className="flex-1" />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {style !== 'style_1' && (
-                    <FormField
-                      control={form.control}
-                      name="style.background_color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {__('Background Color (for Badge/Bubble styles)', 'yayboost')}
-                          </FormLabel>
-                          <FormControl>
-                            <div className="flex gap-2">
-                              <Input type="color" {...field} className="h-10 w-14 p-1" />
-                              <Input {...field} className="flex-1" />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-
-                {/* Right Column: Preview */}
-                <div className="space-y-4">
-                  <div>
-                    <FormLabel>{__('Preview', 'yayboost')}</FormLabel>
-                    <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-8">
-                      <div className="flex items-center justify-center">
-                        <StylePreview
-                          style={style || 'style_1'}
-                          textColor={textColor || '#a74c3c'}
-                          backgroundColor={backgroundColor || '#fff3f3'}
-                          displayText={displayText || '{count} people are viewing this right now'}
-                          displayIcon={displayIcon || 'eye'}
+                    <Label htmlFor="minimum-count-display">
+                      {__('Minimum Count to Display', 'yayboost')}
+                    </Label>
+                    <FormControl>
+                      <div className="w-fit">
+                        <InputNumber
+                          {...field}
+                          id="minimum-count-display"
+                          min={0}
+                          onValueChange={(value) => field.onChange(value || 0)}
+                          value={parseInt(field.value?.toString() ?? '0', 10)}
+                          className="w-24"
                         />
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Apply To Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{__('Apply To', 'yayboost')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="apply_on.apply"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{__('Show On', 'yayboost')}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={__('Select apply on', 'yayboost')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="all">{__('All Products', 'yayboost')}</SelectItem>
-                        <SelectItem value="specific_categories">
-                          {__('Specific Categories', 'yayboost')}
-                        </SelectItem>
-                        <SelectItem value="specific_products">
-                          {__('Specific Products', 'yayboost')}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    </FormControl>
+                    <FormDescription>
+                      {__(
+                        'Hide counter if visitors below this number (0 = always show)',
+                        'yayboost',
+                      )}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              {applyOn === 'specific_categories' && (
-                <FormField
-                  control={form.control}
-                  name="apply_on.categories"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Specific Categories', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <MultiSelect
-                          options={
-                            window.yayboostData?.product_categories.map((category) => ({
-                              label: category.name,
-                              value: category.id.toString(),
-                            })) ?? []
-                          }
-                          value={
-                            field.value
-                              ? field.value.map((v) => (typeof v === 'number' ? v.toString() : v))
-                              : []
-                          }
-                          onChange={(value) => field.onChange(value.map((v) => parseInt(v, 10)))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-              {applyOn === 'specific_products' && (
-                <FormField
-                  control={form.control}
-                  name="apply_on.products"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Specific Products', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <MultiSelect
-                          options={
-                            window.yayboostData?.products.map((product) => ({
-                              label: product.name,
-                              value: product.id.toString(),
-                            })) ?? []
-                          }
-                          value={
-                            field.value
-                              ? field.value.map((v) => (typeof v === 'number' ? v.toString() : v))
-                              : []
-                          }
-                          onChange={(value) => field.onChange(value.map((v) => parseInt(v, 10)))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+        )}
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={updateSettings.isPending}>
-              {updateSettings.isPending
-                ? __('Saving...', 'yayboost')
-                : __('Save Settings', 'yayboost')}
-            </Button>
+        {/* Simulated Settings */}
+        {trackingMode === 'simulated' && (
+          <div className="space-y-4">
+            <Label>{__('Simulated Settings', 'yayboost')}</Label>
+            <div className="space-y-4 pt-2">
+              <FormField
+                control={form.control}
+                name="simulated.min"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label htmlFor="minimum-count">{__('Minimum Count', 'yayboost')}</Label>
+                    <FormControl>
+                      <div className="w-fit">
+                        <InputNumber
+                          {...field}
+                          id="minimum-count"
+                          min={1}
+                          onValueChange={(value) => field.onChange(value || 1)}
+                          value={parseInt(field.value?.toString() ?? '10', 10)}
+                          className="w-24"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="simulated.max"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label htmlFor="maximum-count">{__('Maximum Count', 'yayboost')}</Label>
+                    <FormControl>
+                      <div className="w-fit">
+                        <InputNumber
+                          {...field}
+                          id="maximum-count"
+                          min={1}
+                          onValueChange={(value) => field.onChange(value || 1)}
+                          value={parseInt(field.value?.toString() ?? '50', 10)}
+                          className="w-24"
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      {__('Random count will be between min and max', 'yayboost')}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        )}
+        <Separator />
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
+          <p className="text-muted-foreground text-xs">
+            {__('Configure how the visitor count is displayed.', 'yayboost')}
+          </p>
+        </div>
+        <FormField
+          control={form.control}
+          name="display.text"
+          render={({ field }) => (
+            <FormItem>
+              <Label htmlFor="display-text">{__('Display Text', 'yayboost')}</Label>
+              <FormControl>
+                <Input
+                  {...field}
+                  id="display-text"
+                  placeholder="{count} people are viewing this right now"
+                  className="max-w-100"
+                />
+              </FormControl>
+              <FormDescription>
+                {__('Use {count} as placeholder for the number of visitors', 'yayboost')}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="display.position"
+          render={({ field }) => (
+            <FormItem>
+              <Label>{__('Position on Product Page', 'yayboost')}</Label>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder={__('Select position', 'yayboost')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="below_product_title">
+                    {__('Below product title', 'yayboost')}
+                  </SelectItem>
+                  <SelectItem value="above_add_to_cart_button">
+                    {__('Above add to cart button', 'yayboost')}
+                  </SelectItem>
+                  <SelectItem value="below_add_to_cart_button">
+                    {__('Below add to cart button', 'yayboost')}
+                  </SelectItem>
+                  <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
+                  <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
+                </SelectContent>
+              </Select>
+              {field.value === 'use_block' && (
+                <FormDescription>
+                  {__(
+                    'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
+                    'yayboost',
+                  )}
+                </FormDescription>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Separator />
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">{__('Style Settings', 'yayboost')}</h3>
+          <p className="text-muted-foreground text-xs">
+            {__('Configure the style of the visitor count.', 'yayboost')}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Left Column: Settings */}
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="style.style"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Choose Style', 'yayboost')}</Label>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex items-center gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="style_1" id="style-1" />
+                        <div className="space-y-1">
+                          <label htmlFor="style-1">{__('Text only', 'yayboost')}</label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="style_2" id="style-2" />
+                        <div className="space-y-1">
+                          <label htmlFor="style-2">{__('Badge style', 'yayboost')}</label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="style_3" id="style-3" />
+                        <div className="space-y-1">
+                          <label htmlFor="style-3">{__('Bubble style', 'yayboost')}</label>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="style.text_color"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Text Color', 'yayboost')}</Label>
+                  <FormControl>
+                    <ColorPicker {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {style !== 'style_1' && (
+              <FormField
+                control={form.control}
+                name="style.background_color"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{__('Background Color', 'yayboost')}</Label>
+                    <FormControl>
+                      <ColorPicker {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
+
+          {/* Right Column: Preview */}
+          <div className="space-y-4">
+            <div>
+              <Label>{__('Preview', 'yayboost')}</Label>
+              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-8">
+                <div className="flex items-center justify-center">
+                  <StylePreview
+                    style={style || 'style_1'}
+                    textColor={textColor || '#a74c3c'}
+                    backgroundColor={backgroundColor || '#fff3f3'}
+                    displayText={displayText || '{count} people are viewing this right now'}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </form>
+        <Separator />
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">{__('Product targeting', 'yayboost')}</h3>
+          <p className="text-muted-foreground text-xs">
+            {__(
+              'Configure which products and categories the visitor count should be displayed on.',
+              'yayboost',
+            )}
+          </p>
+        </div>
+        <FormField
+          control={form.control}
+          name="apply_on.apply"
+          render={({ field }) => (
+            <FormItem>
+              <Label>{__('Show On', 'yayboost')}</Label>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <FormControl>
+                  <SelectTrigger className="w-46">
+                    <SelectValue placeholder={__('Select apply on', 'yayboost')} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="all">{__('All Products', 'yayboost')}</SelectItem>
+                  <SelectItem value="specific_categories">
+                    {__('Specific Categories', 'yayboost')}
+                  </SelectItem>
+                  <SelectItem value="specific_products">
+                    {__('Specific Products', 'yayboost')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {applyOn === 'specific_categories' && (
+          <FormField
+            control={form.control}
+            name="apply_on.categories"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{__('Specific Categories', 'yayboost')}</Label>
+                <FormControl>
+                  <MultiSelect
+                    options={categories ?? []}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder={`Search categories...`}
+                    showSearch={true}
+                    emptyText={`No categories found`}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {applyOn === 'specific_products' && (
+          <FormField
+            control={form.control}
+            name="apply_on.products"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{__('Specific Products', 'yayboost')}</Label>
+                <FormControl>
+                  <MultiSelect
+                    options={products ?? []}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder={`Search products...`}
+                    showSearch={true}
+                    onSearchChange={onProductSearch}
+                    emptyText={`No products found`}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+      </SettingsCard>
     </Form>
   );
 }

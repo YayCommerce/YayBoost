@@ -188,8 +188,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 					'max' => 50,
 				),
 				'display'       => array(
-					'text'     => '{count} visitors are viewing this page',
-					'icon'     => 'eye',
+					'text'     => '👁️ {count} visitors are viewing this page',
 					'position' => 'below_product_title',
 				),
 				'style'         => array(
@@ -259,7 +258,6 @@ class LiveVisitorCountFeature extends AbstractFeature {
 						'pageId'              => $page_id,
 						'activeWindow'        => $this->get( 'real_tracking.active_window' ), // in minutes (2, 5, or 10)
 						'minimumCountDisplay' => $this->get( 'real_tracking.minimum_count_display' ),
-						'icon'                => $this->get( 'display.icon' ),
 					)
 				);
 			}
@@ -282,10 +280,7 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$style                 = $this->get( 'style.style' ) ?? 'style_1';
 		$text_color            = $this->get( 'style.text_color' ) ?? '#a74c3c';
 		$background_color      = $this->get( 'style.background_color' ) ?? '#fff3f3';
-		$display_text          = $this->get( 'display.text' ) ?? '{count} visitors are viewing this page';
-		$icon                  = $this->get( 'display.icon' ) ?? 'eye';
-
-		$icon_html = $this->get_icon_html( $icon );
+		$display_text          = $this->get( 'display.text' ) ?? '👁️ {count} visitors are viewing this page';
 		$count     = $this->get_visitor_count();
 
 		$is_hidden = 'real-tracking' === $tracking_mode && $count < $minimum_count_display;
@@ -293,29 +288,13 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		$text    = str_replace( '{count}', $count, $display_text );
 		$content = '';
 		if ( 'style_1' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $icon_html . $text ) . '</div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-1 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div>';
 		} elseif ( 'style_2' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $icon_html . $text ) . '</div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-2 ' . ( $is_hidden ? 'hidden' : '' ) . '" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '">' . wp_kses_post( $text ) . '</div>';
 		} elseif ( 'style_3' === $style ) {
-			$content = '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><div class="yayboost-lvc-icon">' . wp_kses_post( $icon_html ) . '<span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div></div>';
+			$content = '<div class="yayboost-lvc yayboost-lvc-style-3 ' . ( $is_hidden ? 'hidden' : '' ) . '" data-text="' . esc_html( $display_text ) . '" data-count="' . esc_html( $count ) . '"><div class="yayboost-lvc-text" style="color: ' . esc_attr( $text_color ) . '; background-color: ' . esc_attr( $background_color ) . ';">' . wp_kses_post( $text ) . '</div><span id="yayboost-lvc-number">' . esc_html( $count ) . '</span></div>';
 		}
 		return $content;
-	}
-
-	public function get_icon_html( $icon ): string {
-		if ( 'eye' === $icon ) {
-			return '👁️';
-		} elseif ( 'person' === $icon ) {
-			return '👤';
-		} elseif ( 'fire' === $icon ) {
-			return '🔥';
-		} elseif ( 'lightning' === $icon ) {
-			return '⚡';
-		} elseif ( 'none' === $icon ) {
-			return '';
-		}
-
-		return '';
 	}
 
 	public function ajax_ping(): void {

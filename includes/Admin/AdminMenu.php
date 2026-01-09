@@ -49,36 +49,11 @@ class AdminMenu {
 			return;
 		}
 
-		$categories = get_terms(
-			array(
-				'taxonomy'   => 'product_cat',
-				'hide_empty' => false,
-			)
-		);
-		$categories = array_map(
-			function ( $category ) {
-				return array(
-					'id'   => $category->term_id,
-					'name' => $category->name,
-				);
-			},
-			$categories
-		);
-		$products   = get_posts(
-			array(
-				'post_type'      => 'product',
-				'posts_per_page' => -1,
-			)
-		);
-		$products   = array_map(
-			function ( $product ) {
-				return array(
-					'id'   => $product->ID,
-					'name' => $product->post_title,
-				);
-			},
-			$products
-		);
+		// Enqueue CSS
+		wp_enqueue_style( ScriptName::STYLE_SETTINGS );
+
+		// Enqueue JS
+		wp_enqueue_script( ScriptName::ADMIN_SETTINGS );
 
         // Localize script with API data
         wp_localize_script(

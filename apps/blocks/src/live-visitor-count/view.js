@@ -125,7 +125,6 @@
         } else {
           el.classList.remove("hidden");
         }
-        const icon = getIconHtml(yayboostLiveVisitorCount.icon);
         const updateText = getUpdateText(text, count);
         if (isBubble) {
           const textEl = el.querySelector(".yayboost-lvc-text");
@@ -138,21 +137,6 @@
         }
         el.setAttribute("data-count", count);
       }
-    }
-  }
-
-  function getIconHtml(icon) {
-    switch (icon) {
-      case "eye":
-        return "👁️";
-      case "person":
-        return "👤";
-      case "fire":
-        return "🔥";
-      case "lightning":
-        return "⚡";
-      default:
-        return "";
     }
   }
 
