@@ -83,7 +83,15 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
   });
 
   const onSubmit = (data: SettingsFormData) => {
-    updateSettings.mutate({ id: featureId, settings: data });
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
   };
 
   const watchedValues = form.watch();
@@ -200,6 +208,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                           render={({ field: valueField }) => (
                             <div className="flex items-center gap-1">
                               <Input
+                                id="discount_value"
                                 type="number"
                                 className="h-8 w-20"
                                 {...valueField}
@@ -225,6 +234,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                             <div className="flex items-center gap-1">
                               <span>{currencySymbol}</span>
                               <Input
+                                id="discount_value_fixed"
                                 type="number"
                                 className="h-8 w-20"
                                 {...valueField}
@@ -252,9 +262,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="coupon_prefix"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Coupon prefix', 'yayboost')}</Label>
+                <Label htmlFor="coupon_prefix">{__('Coupon prefix', 'yayboost')}</Label>
                 <FormControl>
-                  <Input {...field} />
+                  <Input id="coupon_prefix" {...field} />
                 </FormControl>
                 <FormDescription>
                   {__('Preview:', 'yayboost')} {generatePreviewCode(field.value || couponPrefix)}
@@ -269,14 +279,14 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="expires_after"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Expires after', 'yayboost')}</Label>
+                <Label htmlFor="expires_after">{__('Expires after', 'yayboost')}</Label>
                 <FormControl>
                   <div className="flex items-center gap-2">
                     <Select
                       value={field.value?.toString()}
                       onValueChange={(value) => field.onChange(Number(value))}
                     >
-                      <SelectTrigger className="w-24">
+                      <SelectTrigger id="expires_after" className="w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -310,12 +320,15 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="minimum_order_total"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Only generate coupon when:', 'yayboost')}</Label>
+                <Label htmlFor="minimum_order_total">
+                  {__('Only generate coupon when:', 'yayboost')}
+                </Label>
                 <FormDescription>{__('Order total is at least:', 'yayboost')}</FormDescription>
                 <FormControl>
                   <div className="flex items-center gap-2">
                     <span>{currencySymbol}</span>
                     <Input
+                      id="minimum_order_total"
                       type="number"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
@@ -378,11 +391,14 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="minimum_spend_to_use"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Minimum next order spend to use coupon:', 'yayboost')}</Label>
+                <Label htmlFor="minimum_spend_to_use">
+                  {__('Minimum next order spend to use coupon:', 'yayboost')}
+                </Label>
                 <FormControl>
                   <div className="flex items-center gap-2">
                     <span>{currencySymbol}</span>
                     <Input
+                      id="minimum_spend_to_use"
                       type="number"
                       {...field}
                       onChange={(e) => field.onChange(Number(e.target.value))}
@@ -483,9 +499,13 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="thank_you_headline"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Headline', 'yayboost')}</Label>
+                <Label htmlFor="thank_you_headline">{__('Headline', 'yayboost')}</Label>
                 <FormControl>
-                  <Input {...field} placeholder="🎁 Here's a gift for your next order!" />
+                  <Input
+                    id="thank_you_headline"
+                    {...field}
+                    placeholder="🎁 Here's a gift for your next order!"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -497,9 +517,10 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="thank_you_message"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Message', 'yayboost')}</Label>
+                <Label htmlFor="thank_you_message">{__('Message', 'yayboost')}</Label>
                 <FormControl>
                   <Textarea
+                    id="thank_you_message"
                     {...field}
                     placeholder="Use code {coupon_code} to get {discount} off your next purchase. Expires {expiry}."
                     rows={3}
@@ -529,9 +550,10 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             name="email_content"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Section text', 'yayboost')}</Label>
+                <Label htmlFor="email_content">{__('Section text', 'yayboost')}</Label>
                 <FormControl>
                   <Textarea
+                    id="email_content"
                     {...field}
                     placeholder="As a thank you, here's {discount} off your next order!"
                     rows={3}

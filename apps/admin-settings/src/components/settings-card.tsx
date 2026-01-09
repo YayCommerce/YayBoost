@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/sonner';
 
 interface SettingsCardProps {
   title?: string;
@@ -28,6 +30,17 @@ export function SettingsCard({
   isDirty = false,
   headless = false,
 }: SettingsCardProps) {
+  const prevIsSavingRef = useRef(isSaving);
+  useEffect(() => {
+    const prevIsSaving = prevIsSavingRef.current;
+
+    if (prevIsSaving && !isSaving) {
+      toast.success('Settings saved successfully');
+    }
+
+    prevIsSavingRef.current = isSaving;
+  }, [isSaving]);
+
   if (isLoading) {
     return (
       <Card>
