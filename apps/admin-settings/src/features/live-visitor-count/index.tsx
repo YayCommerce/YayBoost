@@ -141,7 +141,15 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
   });
 
   const onSubmit = (data: SettingsFormData) => {
-    updateSettings.mutate({ id: featureId, settings: data });
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
   };
 
   const trackingMode = form.watch('tracking_mode');
