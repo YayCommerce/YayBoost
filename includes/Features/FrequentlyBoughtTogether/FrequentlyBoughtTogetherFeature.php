@@ -102,6 +102,8 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         $this->collector     = new FBTCollector( $this->cache_manager );
         $this->renderer      = new FBTRenderer( $this->repository );
 
+        new FBTCleanup($this);
+
         // Register data collection hooks (hybrid approach)
         add_action( 'woocommerce_thankyou', [ $this, 'handle_order_thankyou_with_cache' ], 10 );
         add_action( 'woocommerce_order_status_completed', [ $this, 'handle_order_completed_with_cache' ], 20 );
@@ -121,12 +123,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         // Register AJAX handler for batch add-to-cart
         add_action( 'wp_ajax_yayboost_fbt_batch_add', [ $this, 'ajax_add_fbt_batch' ] );
         add_action( 'wp_ajax_nopriv_yayboost_fbt_batch_add', [ $this, 'ajax_add_fbt_batch' ] );
-
-        // Register cleanup cron job
-        if ( ! wp_next_scheduled( 'yayboost_fbt_weekly_cleanup' ) ) {
-            wp_schedule_event( time(), 'weekly', 'yayboost_fbt_weekly_cleanup' );
-        }
-        add_action( 'yayboost_fbt_weekly_cleanup', [ $this, 'run_cleanup' ] );
     }
 
     /**
@@ -319,22 +315,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                     'errors'  => $errors,
                 ]
             );
-        }
-    }
-
-    /**
-     * Run cleanup cron job
-     *
-     * @return void
-     */
-    public function run_cleanup(): void {
-        $cleanup  = new FBTCleanup( $this->repository );
-        $settings = $this->get_settings();
-        $stats    = $cleanup->run_cleanup( $settings );
-
-        // Log cleanup stats (only in debug mode)
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( sprintf( 'YayBoost FBT Cleanup: %d low count deleted, %d orphaned deleted, %d old deleted', $stats['low_count_deleted'], $stats['orphaned_deleted'], $stats['old_deleted'] ) );
         }
     }
 

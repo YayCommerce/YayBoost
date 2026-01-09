@@ -16,33 +16,40 @@ use YayBoost\Database\FBTRelationshipTable;
  */
 class FBTCleanup {
     /**
+     * Feature instance
+     *
+     * @var FrequentlyBoughtTogetherFeature
+     */
+    protected $feature;
+
+    /**
      * Batch size for cleanup operations
      */
     const BATCH_SIZE = 1000;
 
-    /**
-     * FBT Repository instance
-     *
-     * @var FBTRepository
-     */
-    protected FBTRepository $repository;
+    public function __construct( FrequentlyBoughtTogetherFeature $feature ) {
+        $this->feature = $feature;
 
-    /**
-     * Constructor
-     *
-     * @param FBTRepository $repository FBT Repository instance
-     */
-    public function __construct( FBTRepository $repository ) {
-        $this->repository = $repository;
+        // Register cleanup cron job
+        if ( ! wp_next_scheduled( 'yayboost_fbt_weekly_cleanup' ) ) {
+            wp_schedule_event( time(), 'weekly', 'yayboost_fbt_weekly_cleanup' );
+        }
+        add_action( 'yayboost_fbt_weekly_cleanup', [ $this, 'run_cleanup' ] );
     }
 
     /**
      * Run cleanup tasks
      *
-     * @param array $settings Feature settings
-     * @return array Cleanup statistics
+     * @return void
      */
-    public function run_cleanup( array $settings = [] ): array {
+    public function run_cleanup(): void {
+
+        if ( ! $this->feature->is_enabled() ) {
+            return;
+        }
+
+        $settings = $this->feature->get_settings();
+
         $stats = [
             'low_count_deleted' => 0,
             'orphaned_deleted'  => 0,
@@ -62,36 +69,32 @@ class FBTCleanup {
         // Optimize table
         $this->optimize_table();
 
-        return $stats;
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( sprintf( 'YayBoost FBT Cleanup: %d low count deleted, %d orphaned deleted, %d old deleted', $stats['low_count_deleted'], $stats['orphaned_deleted'], $stats['old_deleted'] ) );
+        }
     }
 
     /**
-     * Delete pairs with count below threshold
+     * Delete pairs with very low count (noise removal)
      *
-     * @param float $threshold Minimum threshold percentage
+     * Uses absolute minimum count instead of percentage-based threshold.
+     * Percentage-based filtering is handled dynamically by FBTRepository
+     * at query time, which correctly applies threshold per-product.
+     *
+     * @param float $threshold Unused - kept for API compatibility.
      * @return int Number of deleted rows
      */
     protected function delete_low_count_pairs( float $threshold ): int {
-        if ( $threshold <= 0 ) {
-            return 0;
-        }
-
         global $wpdb;
         $table_name = FBTRelationshipTable::get_table_name();
 
-        // Get total orders count using injected repository
-        $total_orders = $this->repository->get_total_orders_count();
-
-        if ( $total_orders <= 0 ) {
-            return 0;
-        }
-
-        // Calculate minimum count
-        $min_count = ceil( ( $threshold / 100 ) * $total_orders );
+        // Use absolute minimum count (pairs bought together only once are noise)
+        $min_count = 2;
 
         // Delete in batches
         $deleted = 0;
         do {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             $result   = $wpdb->query(
                 $wpdb->prepare(
                     "DELETE FROM {$table_name} WHERE count < %d LIMIT %d",
