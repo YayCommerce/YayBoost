@@ -96,9 +96,9 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             return;
         }
 
-        // Initialize dependencies with dependency injection
+        // Initialize dependencies
         $this->cache_manager = new FBTCacheManager();
-        $this->repository    = new FBTRepository( $this->cache_manager );
+        $this->repository    = new FBTRepository();
         $this->collector     = new FBTCollector( $this->cache_manager );
         $this->renderer      = new FBTRenderer( $this->repository );
 

@@ -2,8 +2,7 @@
 /**
  * FBT Cache Manager
  *
- * Centralized cache management for FBT feature.
- * Handles all cache operations including invalidation and key generation.
+ * Handles cache invalidation for FBT feature.
  *
  * @package YayBoost
  */
@@ -13,107 +12,74 @@ namespace YayBoost\Features\FrequentlyBoughtTogether;
 use YayBoost\Utils\Cache;
 
 /**
- * Centralized FBT cache management
+ * FBT cache invalidation manager
  */
 class FBTCacheManager {
-    /**
-     * Cache group name
-     */
-    const CACHE_GROUP = 'yayboost_fbt';
 
-    /**
-     * Default cache duration in seconds (1 hour)
-     */
-    const CACHE_DURATION = HOUR_IN_SECONDS;
+	/**
+	 * Cache group name for object cache
+	 */
+	const CACHE_GROUP = 'yayboost_fbt';
 
-    /**
-     * Total orders count cache duration (6 hours)
-     */
-    const TOTAL_ORDERS_CACHE_DURATION = 6 * HOUR_IN_SECONDS;
+	/**
+	 * Invalidate all caches for a product
+	 *
+	 * @param int $product_id Product ID.
+	 * @return void
+	 */
+	public function invalidate_product( int $product_id ): void {
+		global $wpdb;
 
-    /**
-     * Get cache key for product recommendations
-     *
-     * @param int   $product_id Product ID
-     * @param int   $limit Maximum number of recommendations
-     * @param array $settings Feature settings
-     * @return string Cache key
-     */
-    public function get_recommendations_cache_key( int $product_id, int $limit, array $settings ): string {
-        $settings_hash = md5(
-            serialize(
-                [
-                    'min_order_threshold' => $settings['min_order_threshold'] ?? 5,
-                    'hide_if_in_cart'     => $settings['hide_if_in_cart'] ?? 'hide',
-                ]
-            )
-        );
+		// Delete product-specific transients (pattern: yayboost_fbt_recommendations_{product_id}_*)
+		$pattern = '%yayboost_fbt_recommendations_' . (int) $product_id . '_%';
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options}
+				WHERE option_name LIKE %s
+				AND (option_name LIKE '_transient_%' OR option_name LIKE '_transient_timeout_%')",
+				$pattern
+			)
+		);
 
-        return "yayboost_fbt_{$product_id}_{$limit}_{$settings_hash}";
-    }
+		// Also delete from object cache if available
+		wp_cache_delete( "yayboost_fbt_{$product_id}", self::CACHE_GROUP );
+	}
 
-    /**
-     * Invalidate all caches for a product
-     *
-     * Deletes product-specific transients. Group cache flush is handled
-     * by invalidate_products() to avoid redundant flushes.
-     *
-     * @param int $product_id Product ID
-     * @return void
-     */
-    public function invalidate_product( int $product_id ): void {
-        // Delete product-specific transients
-        global $wpdb;
-        $pattern = '%yayboost_fbt_' . (int) $product_id . '_%';
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-        $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM {$wpdb->options}
-                WHERE option_name LIKE %s
-                AND (option_name LIKE '_transient_%' OR option_name LIKE '_transient_timeout_%')",
-                $pattern
-            )
-        );
+	/**
+	 * Invalidate total orders count cache
+	 *
+	 * @return void
+	 */
+	public function invalidate_total_orders(): void {
+		Cache::forget( 'fbt_total_orders' );
+	}
 
-        // Also delete from object cache if available
-        wp_cache_delete( "yayboost_fbt_{$product_id}", self::CACHE_GROUP );
-    }
+	/**
+	 * Invalidate caches for multiple products
+	 *
+	 * @param array $product_ids Array of product IDs.
+	 * @param bool  $skip_transients Skip transient deletion for performance (during backfill).
+	 * @return void
+	 */
+	public function invalidate_products( array $product_ids, bool $skip_transients = false ): void {
+		if ( empty( $product_ids ) ) {
+			return;
+		}
 
-    /**
-     * Invalidate total orders count cache
-     *
-     * @return void
-     */
-    public function invalidate_total_orders(): void {
-        Cache::forget( 'fbt_total_orders' );
-    }
+		// Clear object cache group once
+		if ( function_exists( 'wp_cache_flush_group' ) ) {
+			wp_cache_flush_group( self::CACHE_GROUP );
+		}
 
-    /**
-     * Invalidate multiple products (optimized for batch operations)
-     *
-     * @param array $product_ids Array of product IDs
-     * @param bool  $skip_transients Whether to skip transient deletion (for performance)
-     * @return void
-     */
-    public function invalidate_products( array $product_ids, bool $skip_transients = false ): void {
-        if ( empty( $product_ids ) ) {
-            return;
-        }
+		// Skip transient deletion during backfill for performance
+		if ( $skip_transients ) {
+			return;
+		}
 
-        // Clear object cache group once (not per product)
-        if ( function_exists( 'wp_cache_flush_group' ) ) {
-            wp_cache_flush_group( self::CACHE_GROUP );
-        }
-
-        // Skip transient deletion during backfill for performance
-        // Transients will expire naturally or be rebuilt on next access
-        if ( $skip_transients ) {
-            return;
-        }
-
-        // Delete transients for each product
-        foreach ( array_unique( $product_ids ) as $product_id ) {
-            $this->invalidate_product( $product_id );
-        }
-    }
+		// Delete transients for each product
+		foreach ( array_unique( $product_ids ) as $product_id ) {
+			$this->invalidate_product( (int) $product_id );
+		}
+	}
 }

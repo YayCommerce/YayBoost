@@ -16,304 +16,213 @@ use YayBoost\Utils\Cache;
  * Handles FBT data retrieval
  */
 class FBTRepository {
-    /**
-     * Cache manager instance
-     *
-     * @var FBTCacheManager
-     */
-    protected FBTCacheManager $cache_manager;
 
-    /**
-     * Constructor
-     *
-     * @param FBTCacheManager $cache_manager Cache manager instance
-     */
-    public function __construct( FBTCacheManager $cache_manager ) {
-        $this->cache_manager = $cache_manager;
-    }
+	/**
+	 * Cache duration for recommendations (1 hour)
+	 */
+	const CACHE_DURATION = HOUR_IN_SECONDS;
 
-    /**
-     * Get recommendations for a product
-     *
-     * @param int   $product_id Product ID
-     * @param int   $limit Maximum number of recommendations
-     * @param array $settings Feature settings
-     * @return array Array of WC_Product objects
-     */
-    public function get_recommendations( int $product_id, int $limit, array $settings ): array {
-        // Generate cache key using cache manager
-        $cache_key = $this->cache_manager->get_recommendations_cache_key( $product_id, $limit, $settings );
+	/**
+	 * Cache duration for total orders count (6 hours)
+	 */
+	const TOTAL_ORDERS_CACHE_DURATION = 6 * HOUR_IN_SECONDS;
 
-        // Try to get from cache
-        $cached = get_transient( $cache_key );
-        if ( false !== $cached && ! empty( $cached ) ) {
-            // Load products from cached IDs
-            return $this->load_products_from_ids( $cached );
-        }
+	/**
+	 * Get recommendations for a product
+	 *
+	 * @param int   $product_id Product ID.
+	 * @param int   $limit Maximum number of recommendations.
+	 * @param array $settings Feature settings.
+	 * @return array Array of WC_Product objects.
+	 */
+	public function get_recommendations( int $product_id, int $limit, array $settings ): array {
+		$threshold = (float) ( $settings['min_order_threshold'] ?? 5 );
 
-        // Try object cache
-        $cached = wp_cache_get( $cache_key, FBTCacheManager::CACHE_GROUP );
-        if ( false !== $cached && ! empty( $cached ) ) {
-            // Update transient with object cache data
-            set_transient( $cache_key, $cached, FBTCacheManager::CACHE_DURATION );
-            return $this->load_products_from_ids( $cached );
-        }
+		// Get raw recommendations from cache or DB (cached at DB level, not filtered)
+		$results = $this->get_raw_recommendations( $product_id, $limit * 2, $threshold );
 
-        // Query database
-        $results = $this->query_recommendations( $product_id, $limit * 2 );
-        // Get more to account for filtering
+		if ( empty( $results ) ) {
+			return [];
+		}
 
-        if ( empty( $results ) ) {
-            // Cache empty result
-            Cache::forget($cache_key);
-            \wp_cache_delete($cache_key, FBTCacheManager::CACHE_GROUP);
-            return [];
-        }
+		// Load products from IDs
+		$product_ids = array_column( $results, 'product_id' );
+		$products    = $this->load_products( $product_ids );
 
-        // Filter by threshold
-        $threshold = isset( $settings['min_order_threshold'] ) ? (float) $settings['min_order_threshold'] : 5;
-        $results   = $this->filter_by_threshold( $results, $threshold, $product_id );
+		// Filter out of stock (always applied, even on cache hit)
+		$products = $this->filter_out_of_stock( $products );
 
-        // Extract product IDs
-        $product_ids = array_column( $results, 'product_id' );
+		// Filter in cart if needed (always applied, even on cache hit)
+		$hide_if_in_cart = $settings['hide_if_in_cart'] ?? 'hide';
+		if ( 'hide' === $hide_if_in_cart ) {
+			$products = $this->filter_in_cart( $products );
+		}
 
-        // Load products
-        $products = $this->load_products( $product_ids );
+		// Limit to requested number
+		return array_slice( $products, 0, $limit );
+	}
 
-        // Filter out of stock
-        $products = $this->filter_out_of_stock( $products );
+	/**
+	 * Get raw recommendations from cache or DB
+	 *
+	 * Caches DB query results before dynamic filtering.
+	 * Threshold filtering is applied here since it's based on static FBT data.
+	 *
+	 * @param int   $product_id Product ID.
+	 * @param int   $limit Maximum results to fetch.
+	 * @param float $threshold Minimum threshold percentage.
+	 * @return array Array of results with product_id and count.
+	 */
+	private function get_raw_recommendations( int $product_id, int $limit, float $threshold ): array {
+		$cache_key = "fbt_recommendations_{$product_id}_{$limit}_{$threshold}";
 
-        // Filter in cart if needed
-        $hide_if_in_cart = $settings['hide_if_in_cart'] ?? 'hide';
-        if ( 'hide' === $hide_if_in_cart ) {
-            $products = $this->filter_in_cart( $products );
-        }
+		return Cache::remember(
+			$cache_key,
+			self::CACHE_DURATION,
+			function () use ( $product_id, $limit, $threshold ) {
+				return $this->query_and_filter( $product_id, $limit, $threshold );
+			}
+		);
+	}
 
-        // Limit to requested number
-        $products = array_slice( $products, 0, $limit );
+	/**
+	 * Query recommendations and apply threshold filter
+	 *
+	 * Single DB query approach - derives MAX(count) from first result.
+	 *
+	 * @param int   $product_id Product ID.
+	 * @param int   $limit Maximum results.
+	 * @param float $threshold Minimum threshold percentage.
+	 * @return array Filtered results.
+	 */
+	private function query_and_filter( int $product_id, int $limit, float $threshold ): array {
+		global $wpdb;
+		$table_name = FBTRelationshipTable::get_table_name();
 
-        // Cache product IDs
-        $cached_ids = array_map(
-            function ( $product ) {
-                return $product->get_id();
-            },
-            $products
-        );
-        Cache::set($cache_key, $cached_ids, FBTCacheManager::CACHE_DURATION);
-        \wp_cache_set($cache_key, $cached_ids, FBTCacheManager::CACHE_GROUP, FBTCacheManager::CACHE_DURATION);
+		// Single query - results sorted by count DESC
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT
+					CASE
+						WHEN product_a = %d THEN product_b
+						ELSE product_a
+					END as product_id,
+					count
+				FROM {$table_name}
+				WHERE product_a = %d OR product_b = %d
+				ORDER BY count DESC
+				LIMIT %d",
+				$product_id,
+				$product_id,
+				$product_id,
+				$limit
+			),
+			ARRAY_A
+		);
 
-        return $products;
-    }
+		if ( empty( $results ) || $threshold <= 0 ) {
+			return $results ?: [];
+		}
 
-    /**
-     * Query recommendations from database
-     *
-     * @param int $product_id Product ID
-     * @param int $limit Maximum number of results
-     * @return array Array of results with product_id and count
-     */
-    public function query_recommendations( int $product_id, int $limit ): array {
-        global $wpdb;
-        $table_name = FBTRelationshipTable::get_table_name();
+		// MAX(count) = first result's count (since sorted DESC)
+		// This approximates "orders containing current product"
+		$max_count = (int) $results[0]['count'];
 
-        // Query both directions (product_a = X OR product_b = X)
-        // Use CASE to normalize the result (always return the "other" product)
-        $sql = $wpdb->prepare(
-            "SELECT 
-                CASE 
-                    WHEN product_a = %d THEN product_b 
-                    ELSE product_a 
-                END as product_id,
-                count
-            FROM {$table_name}
-            WHERE product_a = %d OR product_b = %d
-            ORDER BY count DESC
-            LIMIT %d",
-            $product_id,
-            $product_id,
-            $product_id,
-            $limit
-        );
+		if ( $max_count <= 0 ) {
+			return [];
+		}
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->get_results( $sql, ARRAY_A );
-    }
+		// Calculate minimum count for threshold
+		// Example: 5% threshold, 100 max_count = need at least 5 co-occurrences
+		$min_count = (int) ceil( ( $threshold / 100 ) * $max_count );
 
-    /**
-     * Filter results by threshold
-     *
-     * New logic: Threshold is based on orders containing the current product,
-     * not total orders. Example: "In 10 orders with Product A,
-     * Product B appears in at least 50% (5 orders)"
-     *
-     * Uses FBT table to calculate threshold (fast, approximate).
-     * Logic: MAX(count) from FBT table = lower bound of orders containing the product.
-     *
-     * @param array $results Query results
-     * @param float $threshold Minimum threshold percentage
-     * @param int   $current_product_id Current product ID (for calculating base)
-     * @return array Filtered results
-     */
-    public function filter_by_threshold( array $results, float $threshold, int $current_product_id ): array {
-        if ( empty( $results ) || $threshold <= 0 ) {
-            return $results;
-        }
+		// Filter by threshold (pairs must appear in >= min_count orders together)
+		return array_filter(
+			$results,
+			function ( $result ) use ( $min_count ) {
+				return (int) $result['count'] >= $min_count;
+			}
+		);
+	}
 
-        // Get count of orders containing current product from FBT table (fast, approximate)
-        $orders_with_product = $this->get_orders_count_with_product_from_fbt( $current_product_id );
+	/**
+	 * Load products from IDs
+	 *
+	 * @param array $product_ids Array of product IDs.
+	 * @return array Array of WC_Product objects.
+	 */
+	public function load_products( array $product_ids ): array {
+		if ( empty( $product_ids ) ) {
+			return [];
+		}
 
-        if ( $orders_with_product <= 0 ) {
-            // No orders with this product, return empty
-            return [];
-        }
+		$products = wc_get_products(
+			[
+				'include' => $product_ids,
+				'limit'   => -1,
+			]
+		);
 
-        // Calculate minimum count based on orders containing current product
-        // Example: 50% of 10 orders = 5 orders minimum
-        $min_count = ceil( ( $threshold / 100 ) * $orders_with_product );
+		return array_filter( $products );
+	}
 
-        // Filter results: pair count must be >= min_count
-        // This means: product X appears in at least min_count orders together with current product
-        return array_filter(
-            $results,
-            function ( $result ) use ( $min_count ) {
-                return isset( $result['count'] ) && (int) $result['count'] >= $min_count;
-            }
-        );
-    }
+	/**
+	 * Filter out of stock products
+	 *
+	 * @param array $products Array of WC_Product objects.
+	 * @return array Filtered products.
+	 */
+	public function filter_out_of_stock( array $products ): array {
+		return array_filter(
+			$products,
+			function ( $product ) {
+				return $product && $product->is_in_stock() && $product->is_purchasable();
+			}
+		);
+	}
 
-    /**
-     * Load products from IDs
-     *
-     * @param array $product_ids Array of product IDs
-     * @return array Array of WC_Product objects
-     */
-    public function load_products( array $product_ids ): array {
-        if ( empty( $product_ids ) ) {
-            return [];
-        }
+	/**
+	 * Filter products already in cart
+	 *
+	 * @param array $products Array of WC_Product objects.
+	 * @return array Filtered products.
+	 */
+	public function filter_in_cart( array $products ): array {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+			return $products;
+		}
 
-        // Batch load products
-        $products = wc_get_products(
-            [
-                'include' => $product_ids,
-                'limit'   => -1,
-            ]
-        );
+		$cart_ids = [];
+		foreach ( WC()->cart->get_cart() as $cart_item ) {
+			$cart_ids[] = $cart_item['product_id'];
+			if ( ! empty( $cart_item['variation_id'] ) ) {
+				$cart_ids[] = $cart_item['variation_id'];
+			}
+		}
 
-        return array_filter( $products );
-    }
+		return array_filter(
+			$products,
+			function ( $product ) use ( $cart_ids ) {
+				return ! in_array( $product->get_id(), $cart_ids, true );
+			}
+		);
+	}
 
-    /**
-     * Load products from cached IDs
-     *
-     * @param array $product_ids Array of product IDs
-     * @return array Array of WC_Product objects
-     */
-    protected function load_products_from_ids( array $product_ids ): array {
-        if ( empty( $product_ids ) ) {
-            return [];
-        }
-
-        return $this->load_products( $product_ids );
-    }
-
-    /**
-     * Filter out of stock products
-     *
-     * @param array $products Array of WC_Product objects
-     * @return array Filtered products
-     */
-    public function filter_out_of_stock( array $products ): array {
-        return array_filter(
-            $products,
-            function ( $product ) {
-                return $product && $product->is_in_stock() && $product->is_purchasable();
-            }
-        );
-    }
-
-    /**
-     * Filter products already in cart
-     *
-     * @param array $products Array of WC_Product objects
-     * @return array Filtered products
-     */
-    public function filter_in_cart( array $products ): array {
-        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-            return $products;
-        }
-
-        $cart_items = WC()->cart->get_cart();
-        $cart_ids   = [];
-
-        foreach ( $cart_items as $cart_item ) {
-            $cart_ids[] = $cart_item['product_id'];
-            if ( isset( $cart_item['variation_id'] ) && $cart_item['variation_id'] ) {
-                $cart_ids[] = $cart_item['variation_id'];
-            }
-        }
-
-        return array_filter(
-            $products,
-            function ( $product ) use ( $cart_ids ) {
-                return ! in_array( $product->get_id(), $cart_ids, true );
-            }
-        );
-    }
-
-    /**
-     * Get count of orders containing a specific product from FBT table (fast approximation)
-     *
-     * Uses MAX(count) from FBT table as a lower bound estimate.
-     * Logic: If product A appears with product X in 7 orders, and with product Y in 10 orders,
-     * then at least 10 orders contain product A.
-     *
-     * This is faster than querying WooCommerce orders directly and works well for threshold calculation.
-     *
-     * @param int $product_id Product ID
-     * @return int Estimated number of orders containing this product (lower bound)
-     */
-    private function get_orders_count_with_product_from_fbt( int $product_id ): int {
-        return Cache::remember(
-            "fbt_orders_with_product_fbt_{$product_id}",
-            HOUR_IN_SECONDS,
-            function () use ( $product_id ) {
-                global $wpdb;
-                $table_name = FBTRelationshipTable::get_table_name();
-
-                // Get MAX(count) from all pairs containing this product
-                // This represents the minimum number of orders containing the product
-                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-                $count = $wpdb->get_var(
-                    $wpdb->prepare(
-                        "SELECT COALESCE(MAX(count), 0)
-                        FROM {$table_name}
-                        WHERE product_a = %d OR product_b = %d",
-                        $product_id,
-                        $product_id
-                    )
-                );
-
-                return (int) max( 0, $count );
-            }
-        );
-    }
-
-    /**
-     * Get total orders count (cached)
-     *
-     * Uses WooCommerce API which automatically handles HPOS compatibility.
-     * This function works with both legacy wp_posts and HPOS custom tables.
-     *
-     * @return int Total orders count
-     */
-    public function get_total_orders_count(): int {
-        return Cache::remember(
-            'fbt_total_orders',
-            FBTCacheManager::TOTAL_ORDERS_CACHE_DURATION,
-            function () {
-                return (int) wc_orders_count( 'completed' );
-            }
-        );
-    }
+	/**
+	 * Get total orders count (cached)
+	 *
+	 * Used by FBTCleanup for threshold calculations.
+	 *
+	 * @return int Total completed orders count.
+	 */
+	public function get_total_orders_count(): int {
+		return Cache::remember(
+			'fbt_total_orders',
+			self::TOTAL_ORDERS_CACHE_DURATION,
+			function () {
+				return (int) wc_orders_count( 'completed' );
+			}
+		);
+	}
 }
