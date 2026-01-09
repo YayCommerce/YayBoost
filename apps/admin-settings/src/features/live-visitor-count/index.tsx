@@ -457,52 +457,69 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             {__('Configure the style of the visitor count.', 'yayboost')}
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Left Column: Settings */}
-          <div className="space-y-6">
+        <div className="space-y-6">
+          <FormField
+            control={form.control}
+            name="style.style"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{__('Choose Style', 'yayboost')}</Label>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="flex items-center gap-6"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="style_1" id="style-1" />
+                      <div className="space-y-1">
+                        <label htmlFor="style-1">{__('Text only', 'yayboost')}</label>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="style_2" id="style-2" />
+                      <div className="space-y-1">
+                        <label htmlFor="style-2">{__('Badge style', 'yayboost')}</label>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="style_3" id="style-3" />
+                      <div className="space-y-1">
+                        <label htmlFor="style-3">{__('Bubble style', 'yayboost')}</label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <StylePreview
+            style={style || 'style_1'}
+            textColor={textColor || '#a74c3c'}
+            backgroundColor={backgroundColor || '#fff3f3'}
+            displayText={displayText || '{count} people are viewing this right now'}
+          />
+          <FormField
+            control={form.control}
+            name="style.text_color"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{__('Text Color', 'yayboost')}</Label>
+                <FormControl>
+                  <ColorPicker {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {style !== 'style_1' && (
             <FormField
               control={form.control}
-              name="style.style"
+              name="style.background_color"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Choose Style', 'yayboost')}</Label>
-                  <FormControl>
-                    <RadioGroup
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      className="flex items-center gap-6"
-                    >
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="style_1" id="style-1" />
-                        <div className="space-y-1">
-                          <label htmlFor="style-1">{__('Text only', 'yayboost')}</label>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="style_2" id="style-2" />
-                        <div className="space-y-1">
-                          <label htmlFor="style-2">{__('Badge style', 'yayboost')}</label>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <RadioGroupItem value="style_3" id="style-3" />
-                        <div className="space-y-1">
-                          <label htmlFor="style-3">{__('Bubble style', 'yayboost')}</label>
-                        </div>
-                      </div>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="style.text_color"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{__('Text Color', 'yayboost')}</Label>
+                  <Label>{__('Background Color', 'yayboost')}</Label>
                   <FormControl>
                     <ColorPicker {...field} />
                   </FormControl>
@@ -510,39 +527,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                 </FormItem>
               )}
             />
-            {style !== 'style_1' && (
-              <FormField
-                control={form.control}
-                name="style.background_color"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>{__('Background Color', 'yayboost')}</Label>
-                    <FormControl>
-                      <ColorPicker {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-          </div>
-
-          {/* Right Column: Preview */}
-          <div className="space-y-4">
-            <div>
-              <Label>{__('Preview', 'yayboost')}</Label>
-              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-8">
-                <div className="flex items-center justify-center">
-                  <StylePreview
-                    style={style || 'style_1'}
-                    textColor={textColor || '#a74c3c'}
-                    backgroundColor={backgroundColor || '#fff3f3'}
-                    displayText={displayText || '{count} people are viewing this right now'}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
         <Separator />
         <div className="space-y-1">
