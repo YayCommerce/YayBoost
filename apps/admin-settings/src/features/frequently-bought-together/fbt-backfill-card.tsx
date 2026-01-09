@@ -60,35 +60,31 @@ export function FBTBackfillCard() {
       <CardContent className="space-y-6">
         {/* Status Info */}
         {statusData && !state.isRunning && !state.isPaused && (
-          <div className="rounded-lg bg-gray-50 p-4 text-sm">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-gray-500">{__('Total orders:', 'yayboost')}</span>{' '}
-                <strong>{statusData.total.toLocaleString()}</strong>
-              </div>
-              <div>
-                <span className="text-gray-500">{__('Already processed:', 'yayboost')}</span>{' '}
-                <strong>{statusData.already_processed.toLocaleString()}</strong>
-              </div>
-              <div>
-                <span className="text-gray-500">{__('Pending:', 'yayboost')}</span>{' '}
-                <strong className="text-orange-600">
-                  {statusData.unprocessed.toLocaleString()}
-                </strong>
-              </div>
-              {state.errors > 0 && (
-                <div>
-                  <span className="text-gray-500">{__('Errors:', 'yayboost')}</span>{' '}
-                  <strong className="text-red-600">{state.errors.toLocaleString()}</strong>
-                </div>
-              )}
+          <div>
+            <div>
+              <span className="text-gray-500">{__('Total orders:', 'yayboost')}</span>{' '}
+              <strong>{statusData.total.toLocaleString()}</strong>
             </div>
+            <div>
+              <span className="text-gray-500">{__('Already processed:', 'yayboost')}</span>{' '}
+              <strong>{statusData.already_processed.toLocaleString()}</strong>
+            </div>
+            <div>
+              <span className="text-gray-500">{__('Pending:', 'yayboost')}</span>{' '}
+              <strong className="text-orange-600">{statusData.unprocessed.toLocaleString()}</strong>
+            </div>
+            {state.errors > 0 && (
+              <div>
+                <span className="text-gray-500">{__('Errors:', 'yayboost')}</span>{' '}
+                <strong className="text-red-600">{state.errors.toLocaleString()}</strong>
+              </div>
+            )}
           </div>
         )}
 
         {/* Batch Size Input */}
         {!state.isRunning && !state.isPaused && (
-          <div className="flex items-center gap-4">
+          <div className="space-y-2">
             <div className="w-40">
               <label className="mb-1 block text-sm font-medium">
                 {__('Batch size', 'yayboost')}
@@ -101,7 +97,7 @@ export function FBTBackfillCard() {
                 step={10}
               />
             </div>
-            <p className="mt-5 text-xs text-gray-500">
+            <p className="text-muted-foreground">
               {__(
                 'Orders processed per request. Higher = faster but uses more server resources.',
                 'yayboost',

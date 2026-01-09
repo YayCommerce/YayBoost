@@ -12,7 +12,6 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
@@ -20,11 +19,11 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
@@ -33,8 +32,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FBTBackfillCard } from './fbt-backfill-card';
@@ -114,7 +115,11 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
             >
               {/* Product Image Placeholder */}
               <div className="relative flex justify-center">
-                <img src={window.yayboostData?.urls?.wcPlaceholderImage} alt="WooCommerce Placeholder" className="aspect-square w-full max-w-[200px]" />
+                <img
+                  src={window.yayboostData?.urls?.wcPlaceholderImage}
+                  alt="WooCommerce Placeholder"
+                  className="aspect-square w-full max-w-[200px]"
+                />
               </div>
 
               <h1 className="pb-2 text-center text-lg font-medium">{product.name}</h1>
@@ -200,235 +205,177 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
   return (
     <Form {...form}>
       <FeatureLayoutHeader title={feature?.name ?? ''} description={feature?.description ?? ''} />
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Settings Form */}
-          <div className="space-y-6">
-            {/* General Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('General', 'yayboost')}</CardTitle>
-                <CardDescription>
-                  {__('Enable or disable the Frequently Bought Together feature', 'yayboost')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="enabled"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Enable Frequently Bought Together', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value ? 'on' : 'off'}
-                          onValueChange={(value) => field.onChange(value === 'on')}
-                          className="flex gap-6"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="on" id="enabled-on" />
-                            <label htmlFor="enabled-on" className="cursor-pointer">
-                              {__('On', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="off" id="enabled-off" />
-                            <label htmlFor="enabled-off" className="cursor-pointer">
-                              {__('Off', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Recommend Products Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Recommend products', 'yayboost')}</CardTitle>
-                <CardDescription>
-                  {__('Configure product recommendation settings', 'yayboost')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="max_products"
-                  render={({ field }) => (
-                    <FormItem className="w-60">
-                      <FormLabel>{__('Maximum products to show', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <InputNumber
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          min={1}
-                          max={20}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="min_order_threshold"
-                  render={({ field }) => (
-                    <FormItem className="w-60">
-                      <FormLabel>{__('Minimum Order Threshold', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <InputNumber
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          min={0}
-                          max={100}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {__('Recommend products appear in at least', 'yayboost')}{' '}
-                        <strong>{field.value}%</strong> {__('of orders', 'yayboost')}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Display Settings Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Display Settings', 'yayboost')}</CardTitle>
-                <CardDescription>
-                  {__(
-                    'Configure where and how to display frequently bought together products',
-                    'yayboost',
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="layout"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{__('Layout', 'yayboost')}</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={__('Select layout', 'yayboost')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {layoutOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="section_title"
-                  render={({ field }) => (
-                    <FormItem className="w-60">
-                      <FormLabel>{__('Section title', 'yayboost')}</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder={__('Frequently Bought Together', 'yayboost')} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Behavior Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{__('Behavior', 'yayboost')}</CardTitle>
-                <CardDescription>
-                  {__(
-                    'Configure how to handle suggested products that are already in cart',
-                    'yayboost',
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <FormField
-                  control={form.control}
-                  name="hide_if_in_cart"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {__('If suggested product is already in cart:', 'yayboost')}
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          className="flex gap-6"
-                        >
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="hide" id="hide-if-in-cart" />
-                            <label htmlFor="hide-if-in-cart" className="cursor-pointer">
-                              {__('Hide it', 'yayboost')}
-                            </label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <RadioGroupItem value="show" id="show-if-in-cart" />
-                            <label htmlFor="show-if-in-cart" className="cursor-pointer">
-                              {__('Still show it', 'yayboost')}
-                            </label>
-                          </div>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Backfill Section */}
-            <FBTBackfillCard />
-
-            {/* Save Button - Bottom Right */}
-            <div className="flex justify-end">
-              <Button type="submit" disabled={updateSettings.isPending || !isDirty}>
-                {updateSettings.isPending ? 'Saving...' : 'Save Settings'}
-              </Button>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
+          <SettingsCard
+            headless
+            title="Configure Frequently Bought Together"
+            onSave={() => {
+              form.handleSubmit(onSubmit)();
+            }}
+            isDirty={form.formState.isDirty}
+            isSaving={updateSettings.isPending}
+            isLoading={isLoading}
+            onReset={() => {
+              form.reset(feature?.settings as SettingsFormData);
+            }}
+          >
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Recommend products', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__('Configure product recommendation settings', 'yayboost')}
+              </p>
             </div>
-          </div>
+            <FormField
+              control={form.control}
+              name="max_products"
+              render={({ field }) => (
+                <FormItem className="w-60">
+                  <Label>{__('Maximum products to show', 'yayboost')}</Label>
+                  <FormControl>
+                    <InputNumber
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      min={1}
+                      max={20}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Preview Panel */}
-          <div className="space-y-6">
-            <Card className="sticky top-6">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
-                </div>
-                <CardDescription>
-                  {__('See how the section will look on your store', 'yayboost')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <FBTPreview settings={watchedValues} />
-              </CardContent>
-            </Card>
-          </div>
+            <FormField
+              control={form.control}
+              name="min_order_threshold"
+              render={({ field }) => (
+                <FormItem className="w-60">
+                  <Label>{__('Minimum Order Threshold', 'yayboost')}</Label>
+                  <FormControl>
+                    <InputNumber
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      min={0}
+                      max={100}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {__('Recommend products appear in at least', 'yayboost')}{' '}
+                    <strong>{field.value}%</strong> {__('of orders', 'yayboost')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__(
+                  'Configure where and how to display frequently bought together products',
+                  'yayboost',
+                )}
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="layout"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Layout', 'yayboost')}</Label>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={__('Select layout', 'yayboost')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {layoutOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="section_title"
+              render={({ field }) => (
+                <FormItem className="w-60">
+                  <Label>{__('Section title', 'yayboost')}</Label>
+                  <FormControl>
+                    <Input {...field} placeholder={__('Frequently Bought Together', 'yayboost')} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Separator />
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+              <p className="text-muted-foreground text-xs">
+                {__(
+                  'Configure how to handle suggested products that are already in cart',
+                  'yayboost',
+                )}
+              </p>
+            </div>
+            <FormField
+              control={form.control}
+              name="hide_if_in_cart"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('If suggested product is already in cart:', 'yayboost')}</Label>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="hide" id="hide-if-in-cart" />
+                        <label htmlFor="hide-if-in-cart" className="cursor-pointer">
+                          {__('Hide it', 'yayboost')}
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="show" id="show-if-in-cart" />
+                        <label htmlFor="show-if-in-cart" className="cursor-pointer">
+                          {__('Still show it', 'yayboost')}
+                        </label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </SettingsCard>
+          <FBTBackfillCard />
         </div>
-      </form>
+        {/* Preview Panel */}
+        <div className="space-y-6">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+              </div>
+              <CardDescription>
+                {__('See how the section will look on your store', 'yayboost')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FBTPreview settings={watchedValues} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </Form>
   );
 }
