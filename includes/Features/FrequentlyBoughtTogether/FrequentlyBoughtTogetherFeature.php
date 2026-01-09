@@ -333,8 +333,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             // Process order (this will invalidate product caches via cache manager)
             $this->collector->handle_order_thankyou( $order_id );
 
-            // Invalidate total orders count cache using cache manager
-            $this->cache_manager->invalidate_total_orders();
         }
     }
 
@@ -353,10 +351,6 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
             // Process order (this will invalidate product caches via cache manager)
             $this->collector->handle_order_completed( $order_id );
 
-            // Invalidate total orders count cache using cache manager
-            // Note: This runs before background job, so we invalidate immediately
-            // The background job will process the order and invalidate product caches
-            $this->cache_manager->invalidate_total_orders();
         }
     }
 }

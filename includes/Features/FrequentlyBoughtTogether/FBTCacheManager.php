@@ -47,15 +47,6 @@ class FBTCacheManager {
 	}
 
 	/**
-	 * Invalidate total orders count cache
-	 *
-	 * @return void
-	 */
-	public function invalidate_total_orders(): void {
-		Cache::forget( 'fbt_total_orders' );
-	}
-
-	/**
 	 * Invalidate caches for multiple products
 	 *
 	 * @param array $product_ids Array of product IDs.

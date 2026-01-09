@@ -208,21 +208,4 @@ class FBTRepository {
 			}
 		);
 	}
-
-	/**
-	 * Get total orders count (cached)
-	 *
-	 * Used by FBTCleanup for threshold calculations.
-	 *
-	 * @return int Total completed orders count.
-	 */
-	public function get_total_orders_count(): int {
-		return Cache::remember(
-			'fbt_total_orders',
-			self::TOTAL_ORDERS_CACHE_DURATION,
-			function () {
-				return (int) wc_orders_count( 'completed' );
-			}
-		);
-	}
 }
