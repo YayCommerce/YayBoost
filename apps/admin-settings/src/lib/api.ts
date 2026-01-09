@@ -36,6 +36,8 @@ export interface ApiError {
 }
 
 // Feature types
+export type FeatureStatus = 'available' | 'coming_soon' | 'new' | 'beta';
+
 export interface Feature {
   id: string;
   name: string;
@@ -43,6 +45,7 @@ export interface Feature {
   category: string;
   icon: string;
   priority: number;
+  status: FeatureStatus;
   enabled: boolean;
   settings: Record<string, unknown>;
 }

@@ -64,6 +64,13 @@ abstract class AbstractFeature implements FeatureInterface {
     protected $priority = 10;
 
     /**
+     * Feature status (available, coming_soon, new, beta)
+     *
+     * @var string
+     */
+    protected $status = 'available';
+
+    /**
      * Settings option name
      *
      * @var string
@@ -132,6 +139,15 @@ abstract class AbstractFeature implements FeatureInterface {
      */
     public function get_priority(): int {
         return $this->priority;
+    }
+
+    /**
+     * Get feature status
+     *
+     * @return string
+     */
+    public function get_status(): string {
+        return $this->status;
     }
 
     /**
@@ -263,6 +279,7 @@ abstract class AbstractFeature implements FeatureInterface {
             'category'    => $this->get_category(),
             'icon'        => $this->get_icon(),
             'priority'    => $this->get_priority(),
+            'status'      => $this->get_status(),
             'enabled'     => $this->is_enabled(),
             'settings'    => $this->get_settings(),
         ];
