@@ -22,9 +22,6 @@ export const featureComponents: Record<
   string,
   React.LazyExoticComponent<ComponentType<FeatureComponentProps>>
 > = {
-  // Sample boost feature (Recently Viewed Products)
-  sample_boost: lazy(() => import('./sample-boost')),
-
   // Free Shipping Bar (simple, settings-only)
   free_shipping_bar: lazy(() => import('./free-shipping-bar')),
 

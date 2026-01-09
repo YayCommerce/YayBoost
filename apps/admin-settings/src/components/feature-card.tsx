@@ -44,7 +44,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
   const FeatureStatusBadge = useMemo(() => {
     switch (feature.status) {
       case 'coming_soon':
-        return () => <Badge variant="secondary">{__('Coming Soon', 'yayboost')}</Badge>;
+        return () => <Badge variant="primary-soft">{__('Coming Soon', 'yayboost')}</Badge>;
       case 'new':
         return () => <Badge variant="default">{__('New', 'yayboost')}</Badge>;
       case 'beta':

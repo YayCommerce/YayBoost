@@ -51,11 +51,14 @@ export function DashboardLayout() {
         <div className="bg-background relative flex h-[54px] items-center gap-2 pr-2.5 sm:gap-5 sm:pr-6">
           {/* Logo */}
           <div className="border-input hidden h-full items-center bg-[#FFF5DB] px-[3px] pt-[3px] sm:flex">
-            <img
+            {/* <img
               className="h-[30px] w-[30px] sm:h-[50px] sm:w-[50px]"
               src={getImageUrl('yayrev-logo.png')}
               alt="YayReviews Logo"
-            />
+            /> */}
+            <div className='flex items-center justify-center w-[50px]'>
+              <PackageIcon className="h-6 w-6" />
+            </div>
           </div>
 
           {/* Tab Navigation */}
