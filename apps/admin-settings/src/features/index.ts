@@ -36,6 +36,9 @@ export const featureComponents: Record<
   smart_recommendations: lazy(() => import('./smart-recommendations')),
 
   stock_scarcity: lazy(() => import('./stock-scarcity')),
+
+  // Next Order Coupon
+  next_order_coupon: lazy(() => import('./next-order-coupon')),
 };
 
 /**

@@ -15,6 +15,7 @@ use YayBoost\Features\OrderBump\OrderBumpFeature;
 use YayBoost\Features\FrequentlyBoughtTogether\FrequentlyBoughtTogetherFeature;
 use YayBoost\Features\SmartRecommendations\SmartRecommendationsFeature;
 use YayBoost\Features\StockScarcity\StockScarcityFeature;
+use YayBoost\Features\NextOrderCoupon\NextOrderCouponFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -121,6 +122,15 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.stock_scarcity';
+
+        // Register Next Order Coupon Feature
+        $container->register(
+            'feature.next_order_coupon',
+            function ($c) {
+                return new NextOrderCouponFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.next_order_coupon';
 
         // Register feature registry
         $container->register(
