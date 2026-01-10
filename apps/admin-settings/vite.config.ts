@@ -82,27 +82,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'src/main.tsx'),
-        'blocks/free-shipping-bar/block': path.resolve(
-          __dirname,
-          'src/blocks/free-shipping-bar/index.tsx',
-        ),
       },
       output: {
         entryFileNames: '[name].js',
-        assetFileNames: (assetInfo) => {
-          // Keep CSS files in the same structure
-          if (assetInfo.name?.endsWith('.css')) {
-            const name = assetInfo.name;
-            if (name.includes('editor.css')) {
-              return 'blocks/free-shipping-bar/editor.css';
-            }
-            if (name.includes('style.css')) {
-              return 'blocks/free-shipping-bar/style.css';
-            }
-            return name;
-          }
-          return '[name].[ext]';
-        },
+        assetFileNames: '[name].[ext]',
       },
       plugins: [
         // analyze({ summaryOnly: true, limit:10 }),

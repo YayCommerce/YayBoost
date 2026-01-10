@@ -93,23 +93,43 @@ print_message "${GREEN}" "✓ PHP dependencies installed"
 print_message "${YELLOW}" "Installing JavaScript dependencies..."
 cd apps/admin-settings
 pnpm install --frozen-lockfile
-print_message "${GREEN}" "✓ JavaScript dependencies installed"
+print_message "${GREEN}" "✓ Admin settings dependencies installed"
 cd ../..
+
+print_message "${YELLOW}" "Installing blocks dependencies..."
+cd apps/blocks
+pnpm install --frozen-lockfile
+cd slots
+pnpm install --frozen-lockfile 2>/dev/null || pnpm install --force
+cd ../../..
+print_message "${GREEN}" "✓ Blocks dependencies installed"
 
 # Step 4: Build frontend assets
 print_header "⚡ Building Frontend Assets"
 
-print_message "${YELLOW}" "Building production assets with Vite..."
+print_message "${YELLOW}" "Building admin settings with Vite..."
 cd apps/admin-settings
 pnpm build
 
-if [ ! -d "../../assets/dist" ] || [ -z "$(ls -A ../../assets/dist 2>/dev/null)" ]; then
-    print_message "${RED}" "❌ Error: Build failed - assets/dist directory is empty or doesn't exist"
+if [ ! -f "../../assets/dist/main.js" ]; then
+    print_message "${RED}" "❌ Error: Admin build failed - main.js not found"
     cd ../..
     exit 1
 fi
+print_message "${GREEN}" "✓ Admin settings built successfully"
+cd ../..
 
-print_message "${GREEN}" "✓ Frontend assets built successfully"
+print_message "${YELLOW}" "Building Gutenberg blocks..."
+cd apps/blocks
+pnpm install --frozen-lockfile
+pnpm build:all
+
+if [ ! -d "../../assets/dist/blocks" ]; then
+    print_message "${RED}" "❌ Error: Blocks build failed - blocks directory not found"
+    cd ../..
+    exit 1
+fi
+print_message "${GREEN}" "✓ Gutenberg blocks built successfully"
 cd ../..
 
 # Step 5: Copy plugin files
@@ -186,6 +206,13 @@ print_message "${GREEN}" "✓ Zip file created successfully (${ZIP_SIZE})"
 
 # Step 8: Generate checksum
 print_header "🔐 Generating Checksum"
+
+CHECKSUM=$(shasum -a 256 "$ZIP_FILE" | cut -d ' ' -f 1)
+print_message "${GREEN}" "✓ SHA256: ${CHECKSUM}"
+
+# Save checksum to file
+echo "${CHECKSUM}  $(basename $ZIP_FILE)" > "${BUILD_DIR}/${PLUGIN_SLUG}-${PLUGIN_VERSION}.sha256"
+print_message "${GREEN}" "✓ Checksum saved to ${BUILD_DIR}/${PLUGIN_SLUG}-${PLUGIN_VERSION}.sha256"
 
 # Step 9: Reinstall dev dependencies
 print_header "🔄 Restoring Development Environment"
