@@ -7,11 +7,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
-import { TrendingUp, ShoppingCart, Eye, MousePointer, DollarSign } from 'lucide-react';
+import { DollarSign, Eye, MousePointer, ShoppingCart, TrendingUp } from 'lucide-react';
 
 import { analyticsApi, AnalyticsDashboardResponse } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -19,6 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from './ui/empty';
 
 const PERIOD_OPTIONS = [
   { value: '7d', label: __('Last 7 days', 'yayboost') },
@@ -97,11 +99,8 @@ export function DashboardStats() {
   };
 
   // Check if there's any data
-  const hasData = data && (
-    data.totals.impressions > 0 ||
-    data.totals.purchases > 0 ||
-    data.totals.revenue > 0
-  );
+  const hasData =
+    data && (data.totals.impressions > 0 || data.totals.purchases > 0 || data.totals.revenue > 0);
 
   // Get active features with data
   const activeFeatures = data?.features
@@ -136,7 +135,9 @@ export function DashboardStats() {
       {error ? (
         <Card>
           <CardContent className="py-6 text-center">
-            <p className="text-muted-foreground">{__('Failed to load analytics data', 'yayboost')}</p>
+            <p className="text-muted-foreground">
+              {__('Failed to load analytics data', 'yayboost')}
+            </p>
           </CardContent>
         </Card>
       ) : isLoading ? (
@@ -149,11 +150,20 @@ export function DashboardStats() {
       ) : !hasData ? (
         <Card>
           <CardContent className="py-8 text-center">
-            <Eye className="text-muted-foreground mx-auto mb-3 h-12 w-12 opacity-50" />
-            <h3 className="mb-1 font-medium">{__('No analytics data yet', 'yayboost')}</h3>
-            <p className="text-muted-foreground text-sm">
-              {__('Enable features and wait for customer interactions to see stats here.', 'yayboost')}
-            </p>
+            <Empty className="md:p-0">
+              <EmptyHeader className="md:p-0">
+                <EmptyMedia variant="icon">
+                  <Eye />
+                </EmptyMedia>
+                <EmptyTitle>{__('No analytics data yet', 'yayboost')}</EmptyTitle>
+                <EmptyDescription>
+                  {__(
+                    'Enable features and wait for customer interactions to see stats here.',
+                    'yayboost',
+                  )}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           </CardContent>
         </Card>
       ) : (
@@ -203,9 +213,7 @@ export function DashboardStats() {
                       className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0"
                     >
                       <div>
-                        <p className="font-medium">
-                          {FEATURE_NAMES[featureId] || featureId}
-                        </p>
+                        <p className="font-medium">{FEATURE_NAMES[featureId] || featureId}</p>
                         <p className="text-muted-foreground text-sm">
                           {formatNumber(stats.impressions)} {__('impressions', 'yayboost')}
                         </p>

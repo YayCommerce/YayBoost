@@ -116,19 +116,19 @@ export function OnboardingChecklist() {
               key={step.id}
               className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
                 step.completed
-                  ? 'border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30'
+                  ? 'border-[#A5D6A7] bg-[#E8F5E9] dark:border-[#1B5E20] dark:bg-[#1B5E20]/30'
                   : 'bg-background border-border'
               }`}
             >
               {/* Status icon */}
               <div className="flex-shrink-0">
                 {step.completed ? (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
-                    <Check className="h-4 w-4 text-white" />
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#279727]">
+                    <Check className="h-3 w-3 text-white" />
                   </div>
                 ) : (
-                  <div className="border-muted-foreground/30 flex h-6 w-6 items-center justify-center rounded-full border-2">
-                    <Circle className="text-muted-foreground/30 h-3 w-3" />
+                  <div className="border-muted-foreground/30 flex h-5 w-5 items-center justify-center rounded-full border">
+                    <Circle className="text-muted-foreground/30 bg-muted-foreground/30 rounded-full h-2 w-2" />
                   </div>
                 )}
               </div>

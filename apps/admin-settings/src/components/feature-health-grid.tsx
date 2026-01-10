@@ -38,17 +38,17 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
 // Health indicator colors and labels
 const HEALTH_CONFIG = {
   green: {
-    color: 'bg-green-500',
+    color: 'bg-[#279727]',
     label: __('Active', 'yayboost'),
     description: __('Receiving impressions', 'yayboost'),
   },
   yellow: {
-    color: 'bg-yellow-500',
+    color: 'bg-[#F9BD09]',
     label: __('No Data', 'yayboost'),
     description: __('Enabled but no impressions yet', 'yayboost'),
   },
   gray: {
-    color: 'bg-gray-400',
+    color: 'bg-[#c9c9c9]',
     label: __('Disabled', 'yayboost'),
     description: __('Feature is turned off', 'yayboost'),
   },
@@ -139,7 +139,7 @@ export function FeatureHealthGrid() {
                     <p className="truncate text-sm font-medium">{feature.name}</p>
                     <div className="flex items-center gap-1.5">
                       <Badge
-                        variant={feature.enabled ? 'default' : 'secondary'}
+                        variant={feature.enabled ? 'success' : 'muted'}
                         className="h-5 px-1.5 text-xs"
                       >
                         {feature.enabled ? __('On', 'yayboost') : __('Off', 'yayboost')}
