@@ -234,11 +234,11 @@ class DashboardController extends BaseController {
      * @return bool
      */
     private function has_enabled_feature(): bool {
-        $settings = get_option( 'yayboost_settings', [] );
-        $features = $settings['features'] ?? [];
+        $registry = $this->container->resolve( 'feature.registry' );
+        $features = $registry->get_all();
 
-        foreach ( $features as $feature_settings ) {
-            if ( ! empty( $feature_settings['enabled'] ) ) {
+        foreach ( $features as $feature ) {
+            if ( $feature->is_enabled() ) {
                 return true;
             }
         }
@@ -252,11 +252,11 @@ class DashboardController extends BaseController {
      * @return bool
      */
     private function is_free_shipping_configured(): bool {
-        $settings = get_option( 'yayboost_settings', [] );
-        $fsb      = $settings['features']['free_shipping_bar'] ?? [];
+        $registry = $this->container->resolve( 'feature.registry' );
+        $feature  = $registry->get( 'free_shipping_bar' );
 
         // Consider configured if enabled
-        return ! empty( $fsb['enabled'] );
+        return $feature && $feature->is_enabled();
     }
 
     /**
