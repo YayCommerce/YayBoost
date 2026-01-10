@@ -835,6 +835,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
+                'enabled'           => true,
                 'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
                 'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
                 'message_coupon'    => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),

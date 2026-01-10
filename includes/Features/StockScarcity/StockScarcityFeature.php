@@ -219,6 +219,7 @@ class StockScarcityFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
+                'enabled' => true,
                 'low_stock_threshold' => 10,
                 'show_alert_text' => true,
                 'show_progress_bar' => true,
