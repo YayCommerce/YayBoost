@@ -1,6 +1,7 @@
 import { __ } from "@wordpress/i18n";
 
 import { DashboardStats } from "@/components/dashboard-stats";
+import { FeatureHealthGrid } from "@/components/feature-health-grid";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
 
 export default function Dashboard() {
@@ -13,6 +14,9 @@ export default function Dashboard() {
 
       {/* Onboarding Checklist (shown for new users) */}
       <OnboardingChecklist />
+
+      {/* Feature Health Grid */}
+      <FeatureHealthGrid />
 
       {/* Analytics Overview */}
       <DashboardStats />

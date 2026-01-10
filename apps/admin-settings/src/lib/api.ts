@@ -379,6 +379,25 @@ export interface OnboardingStatusResponse {
   steps: OnboardingStep[];
 }
 
+// Feature health types
+export interface FeatureHealth {
+  id: string;
+  name: string;
+  icon: string;
+  enabled: boolean;
+  health: 'green' | 'yellow' | 'gray';
+  impressions: number;
+  path: string;
+}
+
+export interface FeatureHealthResponse {
+  features: FeatureHealth[];
+  date_range: {
+    start: string;
+    end: string;
+  };
+}
+
 // Dashboard API
 export const dashboardApi = {
   /**
@@ -396,6 +415,14 @@ export const dashboardApi = {
     const { data } = await api.post<ApiResponse<{ dismissed: boolean; message: string }>>(
       '/dashboard/onboarding/dismiss',
     );
+    return data.data;
+  },
+
+  /**
+   * Get feature health status
+   */
+  getFeatureHealth: async (): Promise<FeatureHealthResponse> => {
+    const { data } = await api.get<ApiResponse<FeatureHealthResponse>>('/dashboard/health');
     return data.data;
   },
 };

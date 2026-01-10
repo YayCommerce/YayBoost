@@ -46,6 +46,82 @@ class DashboardController extends BaseController {
             WP_REST_Server::CREATABLE,
             [ $this, 'dismiss_onboarding' ]
         );
+
+        // Get feature health status
+        $this->register_route(
+            '/dashboard/health',
+            WP_REST_Server::READABLE,
+            [ $this, 'get_feature_health' ]
+        );
+    }
+
+    /**
+     * Get feature health status for all features
+     *
+     * Health indicators:
+     * - green: Enabled + has impressions in last 7 days
+     * - yellow: Enabled but no impressions in 7 days
+     * - gray: Disabled
+     *
+     * @param WP_REST_Request $request Request object.
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function get_feature_health( WP_REST_Request $request ) {
+        $registry = $this->container->resolve( 'feature.registry' );
+        $features = $registry->get_all_sorted();
+
+        // Get analytics for last 7 days
+        $end_date   = gmdate( 'Y-m-d' );
+        $start_date = gmdate( 'Y-m-d', strtotime( '-6 days' ) );
+        $analytics  = AnalyticsDailyTable::get_all_features_totals( $start_date, $end_date );
+
+        // Map feature IDs to analytics keys
+        $feature_analytics_map = [
+            'frequently_bought_together' => 'fbt',
+            'free_shipping_bar'          => 'free_shipping_bar',
+            'stock_scarcity'             => 'stock_scarcity',
+            'next_order_coupon'          => 'next_order_coupon',
+            'smart_recommendations'      => 'smart_recommendations',
+            'order_bump'                 => 'order_bump',
+        ];
+
+        $health_data = [];
+
+        foreach ( $features as $feature ) {
+            $feature_id   = $feature->get_id();
+            $is_enabled   = $feature->is_enabled();
+            $analytics_id = $feature_analytics_map[ $feature_id ] ?? $feature_id;
+
+            // Get impressions for this feature
+            $impressions = 0;
+            if ( isset( $analytics[ $analytics_id ] ) ) {
+                $impressions = (int) ( $analytics[ $analytics_id ]['total_impressions'] ?? 0 );
+            }
+
+            // Determine health status
+            $health = 'gray'; // Default: disabled
+            if ( $is_enabled ) {
+                $health = $impressions > 0 ? 'green' : 'yellow';
+            }
+
+            $health_data[] = [
+                'id'          => $feature_id,
+                'name'        => $feature->get_name(),
+                'icon'        => $feature->get_icon(),
+                'enabled'     => $is_enabled,
+                'health'      => $health,
+                'impressions' => $impressions,
+                'path'        => '/features/' . $feature_id,
+            ];
+        }
+
+        return $this->success( [
+            'features'   => $health_data,
+            'date_range' => [
+                'start' => $start_date,
+                'end'   => $end_date,
+            ],
+        ] );
     }
 
     /**
