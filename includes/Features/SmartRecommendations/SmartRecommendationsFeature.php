@@ -152,19 +152,14 @@ class SmartRecommendationsFeature extends AbstractFeature {
             return;
         }
 
-        foreach ( $matching_rules as $rule ) {
-            $settings = $rule['settings'] ?? [];
-            
-            // Check if rule is active
-            if ( ($rule['status'] ?? 'active' ) !== 'active' ) {
-                continue;
-            }
+        $rule = $matching_rules[0];// Get the first rule
 
-            $recommended_products = $this->get_recommended_products( $rule, $current_product );
+        $settings = $rule['settings'] ?? [];
 
-            if ( ! empty( $recommended_products )) {
-                $this->render_recommendation_section( $rule, $recommended_products );
-            }
+        $recommended_products = $this->get_recommended_products( $rule, $current_product );
+
+        if ( ! empty( $recommended_products )) {
+            $this->render_recommendation_section( $rule, $recommended_products );
         }
     }
 

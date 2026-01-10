@@ -7,9 +7,10 @@ import { connection as icon } from '@wordpress/icons';
 import metadata from './block.json';
 import Edit from './edit';
 import './style.scss';
+import Save from './save';
 
 registerBlockType(metadata.name, {
   icon,
   edit: Edit,
-  save: () => null, // Dynamic block - rendered via render.php
+  save: Save,
 });

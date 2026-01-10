@@ -8,7 +8,18 @@
     "icon": "star-filled",
     "description": "Display smart recommendations based on customer behavior",
     "keywords": ["yayboost", "smart", "recommendations", "products"],
-    "attributes": {},
+    "attributes": {
+      "queryId": {
+        "type": "number"
+      },
+      "query": {
+        "type": "object"
+      }
+    },
+    "providesContext": {
+      "queryId": "queryId",
+      "query": "query"
+    },
     "supports": {
       "html": false,
       "anchor": true,
@@ -20,6 +31,5 @@
     },
     "textdomain": "yayboost",
     "editorScript": "file:./index.js",
-    "style": "file:./style-index.css",
-    "render": "file:./render.php"
+    "style": "file:./style-index.css"
 }
