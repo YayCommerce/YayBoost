@@ -55,7 +55,7 @@ class NextOrderCouponFeature extends AbstractFeature {
      *
      * @var int
      */
-    protected $priority = 2;
+    protected $priority = 100;
 
     /**
      * Initialize the feature

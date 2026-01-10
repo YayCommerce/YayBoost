@@ -70,6 +70,8 @@ export default function FeatureContainer() {
       filteredFeatures = grouped[categoryId] || [];
     }
 
+    filteredFeatures.sort((a, b) => a.priority - b.priority);
+
     // Apply search filter
     if (!searchQuery.trim()) {
       return filteredFeatures;

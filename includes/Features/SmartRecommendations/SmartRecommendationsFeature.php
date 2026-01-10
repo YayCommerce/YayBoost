@@ -55,7 +55,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
      *
      * @var int
      */
-    protected $priority = 1;
+    protected $priority = 100;
 
     /**
      * Initialize the feature
