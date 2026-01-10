@@ -1,6 +1,7 @@
 import { __ } from "@wordpress/i18n";
 
 import { DashboardStats } from "@/components/dashboard-stats";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 
 export default function Dashboard() {
   return (
@@ -9,6 +10,9 @@ export default function Dashboard() {
         <h1 className="text-2xl font-semibold">{__('Welcome to YayBoost', 'yayboost')}</h1>
         <p className="text-muted-foreground">{__('Encourage more sales with our suite of features', 'yayboost')}</p>
       </div>
+
+      {/* Onboarding Checklist (shown for new users) */}
+      <OnboardingChecklist />
 
       {/* Analytics Overview */}
       <DashboardStats />

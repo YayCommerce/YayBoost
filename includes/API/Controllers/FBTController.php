@@ -142,6 +142,9 @@ class FBTController extends BaseController {
                         'completed_at' => current_time( 'mysql' ),
                     ]
                 );
+
+                // Mark backfill as completed for onboarding checklist
+                update_option( DashboardController::FBT_BACKFILL_OPTION, true );
             }
 
             return $this->success(

@@ -361,4 +361,43 @@ export const fbtApi = {
   },
 };
 
+// Onboarding types
+export interface OnboardingStep {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  action: {
+    label: string;
+    path: string;
+  } | null;
+}
+
+export interface OnboardingStatusResponse {
+  dismissed: boolean;
+  all_complete?: boolean;
+  steps: OnboardingStep[];
+}
+
+// Dashboard API
+export const dashboardApi = {
+  /**
+   * Get onboarding status
+   */
+  getOnboardingStatus: async (): Promise<OnboardingStatusResponse> => {
+    const { data } = await api.get<ApiResponse<OnboardingStatusResponse>>('/dashboard/onboarding');
+    return data.data;
+  },
+
+  /**
+   * Dismiss onboarding checklist
+   */
+  dismissOnboarding: async (): Promise<{ dismissed: boolean; message: string }> => {
+    const { data } = await api.post<ApiResponse<{ dismissed: boolean; message: string }>>(
+      '/dashboard/onboarding/dismiss',
+    );
+    return data.data;
+  },
+};
+
 export default api;
