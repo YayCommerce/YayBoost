@@ -105,6 +105,9 @@
                 .addClass('is-loading')
                 .text(yayboostFBT.i18n.adding);
 
+            // Get source product ID from container
+            const sourceProductId = this.container.data('product-id') || 0;
+
             // AJAX request
             $.ajax({
                 url: yayboostFBT.ajaxUrl,
@@ -113,6 +116,7 @@
                     action: 'yayboost_fbt_add_to_cart',
                     nonce: yayboostFBT.nonce,
                     product_ids: productIds,
+                    source_product_id: sourceProductId,
                 },
                 success: function (response) {
                     if (response.success) {

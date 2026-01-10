@@ -66,6 +66,9 @@ class Router {
     
         // Register Product Data routes
         $this->register_controller( new Controllers\ProductDataController( $this->container ) );
+
+        // Register Analytics routes
+        $this->register_controller( new Controllers\AnalyticsController( $this->container ) );
     }
 
     /**

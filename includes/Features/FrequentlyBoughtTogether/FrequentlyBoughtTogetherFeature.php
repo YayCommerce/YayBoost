@@ -105,6 +105,10 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         // AJAX handler registration
         $ajax_handler = new FBTAjaxHandler();
         $ajax_handler->register();
+
+        // Purchase tracker for analytics
+        $purchase_tracker = new FBTPurchaseTracker();
+        $purchase_tracker->register();
     }
 
     /**
@@ -176,7 +180,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'             => false,
+                'enabled'             => true,
                 'max_products'        => 4,
                 'min_order_threshold' => 5,
                 'layout'              => 'grid',

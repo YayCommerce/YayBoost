@@ -217,6 +217,86 @@ export const entityApi = {
   },
 };
 
+// Analytics types
+export interface AnalyticsFeatureStats {
+  impressions: number;
+  clicks: number;
+  add_to_carts: number;
+  purchases: number;
+  revenue: number;
+  conversion_rate?: number;
+}
+
+export interface AnalyticsDashboardResponse {
+  period: string;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  totals: AnalyticsFeatureStats;
+  conversion_rate: number;
+  features: Record<string, AnalyticsFeatureStats>;
+}
+
+export interface AnalyticsFeatureResponse {
+  feature_id: string;
+  period: string;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  totals: AnalyticsFeatureStats;
+  conversion_rate: number;
+  daily: Array<{
+    stat_date: string;
+    impressions: number;
+    clicks: number;
+    add_to_carts: number;
+    purchases: number;
+    revenue: number;
+  }>;
+}
+
+// Analytics API
+export const analyticsApi = {
+  /**
+   * Get dashboard stats overview
+   */
+  getDashboard: async (period: string = '7d'): Promise<AnalyticsDashboardResponse> => {
+    const { data } = await api.get<ApiResponse<AnalyticsDashboardResponse>>('/analytics/dashboard', {
+      params: { period },
+    });
+    return data.data;
+  },
+
+  /**
+   * Get stats for a specific feature
+   */
+  getFeatureStats: async (featureId: string, period: string = '7d'): Promise<AnalyticsFeatureResponse> => {
+    const { data } = await api.get<ApiResponse<AnalyticsFeatureResponse>>(
+      `/analytics/features/${featureId}`,
+      { params: { period } },
+    );
+    return data.data;
+  },
+
+  /**
+   * Get all features stats summary
+   */
+  getAllFeaturesStats: async (period: string = '7d'): Promise<{
+    period: string;
+    date_range: { start: string; end: string };
+    features: Record<string, AnalyticsFeatureStats>;
+  }> => {
+    const { data } = await api.get<ApiResponse<{
+      period: string;
+      date_range: { start: string; end: string };
+      features: Record<string, AnalyticsFeatureStats>;
+    }>>('/analytics/features', { params: { period } });
+    return data.data;
+  },
+};
+
 // FBT Backfill types
 export interface FBTBackfillStartResponse {
   total: number;

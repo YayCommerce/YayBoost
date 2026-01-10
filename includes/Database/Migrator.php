@@ -10,6 +10,8 @@ namespace YayBoost\Database;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTRelationshipTable;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTProductStatsTable;
 use YayBoost\Features\LiveVisitorCount\LiveVisitorTable;
+use YayBoost\Analytics\AnalyticsEventsTable;
+use YayBoost\Analytics\AnalyticsDailyTable;
 
 /**
  * Handles database migrations on plugin activation/update
@@ -23,7 +25,7 @@ class Migrator {
 	/**
 	 * Current DB version
 	 */
-	const CURRENT_VERSION = '1.1.0';
+	const CURRENT_VERSION = '1.2.0';
 
 	/**
 	 * Run migrations only if needed
@@ -69,6 +71,10 @@ class Migrator {
 		// Create FBT tables (added in 1.1.0)
 		FBTRelationshipTable::create();
 		FBTProductStatsTable::create();
+
+		// Create Analytics tables (added in 1.2.0)
+		AnalyticsEventsTable::create();
+		AnalyticsDailyTable::create();
 	}
 
 	/**
@@ -113,6 +119,8 @@ class Migrator {
 		LiveVisitorTable::drop();
 		FBTRelationshipTable::drop();
 		FBTProductStatsTable::drop();
+		AnalyticsEventsTable::drop();
+		AnalyticsDailyTable::drop();
 		delete_option( self::DB_VERSION_OPTION );
 		delete_transient( 'yayboost_migration_check' );
 	}

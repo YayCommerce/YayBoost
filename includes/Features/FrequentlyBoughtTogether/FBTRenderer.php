@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
+use YayBoost\Analytics\AnalyticsTracker;
+
 /**
  * Renders FBT products on single product page
  */
@@ -75,6 +77,14 @@ class FBTRenderer {
 
         // Render template
         $this->render_template( $products, $product_id );
+
+        // Track impression
+        $shown_product_ids = array_map( fn( $p ) => $p->get_id(), $products );
+        AnalyticsTracker::impression(
+            AnalyticsTracker::FEATURE_FBT,
+            $product_id,
+            [ 'shown_products' => $shown_product_ids ]
+        );
     }
 
     /**

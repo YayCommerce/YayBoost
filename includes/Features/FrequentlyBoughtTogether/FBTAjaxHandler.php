@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\FrequentlyBoughtTogether;
 
+use YayBoost\Analytics\AnalyticsTracker;
+
 /**
  * Handles FBT AJAX actions
  */
@@ -96,14 +98,35 @@ class FBTAjaxHandler {
                 continue;
             }
 
-            // Add to cart
-            $cart_item_key = $cart->add_to_cart( $product_id );
+            // Get source product ID for tracking
+            $source_product_id = isset( $_POST['source_product_id'] ) ? absint( $_POST['source_product_id'] ) : 0;
+
+            // Add FBT metadata to cart item for purchase tracking
+            $cart_item_data = [
+                '_yayboost_fbt' => [
+                    'source_product_id' => $source_product_id,
+                    'added_at'          => time(),
+                ],
+            ];
+
+            // Add to cart with FBT metadata
+            $cart_item_key = $cart->add_to_cart( $product_id, 1, 0, [], $cart_item_data );
 
             if ( $cart_item_key ) {
                 $added[] = [
-                    'id'   => $product_id,
-                    'name' => $product->get_name(),
+                    'id'    => $product_id,
+                    'name'  => $product->get_name(),
+                    'price' => (float) $product->get_price(),
                 ];
+
+                // Track add to cart event
+                AnalyticsTracker::add_to_cart(
+                    AnalyticsTracker::FEATURE_FBT,
+                    $source_product_id,
+                    $product_id,
+                    1,
+                    (float) $product->get_price()
+                );
             } else {
                 $errors[] = sprintf(
                     /* translators: %s: product name */

@@ -109,6 +109,9 @@ function yayboost_activate() {
         ]
     );
 
+    // Schedule analytics cron jobs
+    \YayBoost\Analytics\AnalyticsAggregator::schedule();
+
     // Flush rewrite rules
     flush_rewrite_rules();
 }
@@ -118,6 +121,9 @@ register_activation_hook( __FILE__, 'yayboost_activate' );
  * Plugin deactivation hook
  */
 function yayboost_deactivate() {
+    // Unschedule analytics cron jobs
+    \YayBoost\Analytics\AnalyticsAggregator::unschedule();
+
     flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'yayboost_deactivate' );
