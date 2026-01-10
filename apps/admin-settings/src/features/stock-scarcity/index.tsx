@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Eye } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
 import { __ } from '@/lib/utils';
 import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ColorPicker } from '@/components/ui/color-picker';
 import {
@@ -562,45 +563,60 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   }, [watchedValues]);
 
   return (
-    <>
-      <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('Preview', 'yayboost')}</h3>
-        <p className="text-muted-foreground text-xs">
-          {__('See how your stock scarcity will look', 'yayboost')}
-        </p>
-      </div>
-      <div className="w-fit min-w-xs rounded-lg border border-gray-200 bg-white p-4">
-        <div className="flex flex-col gap-3">
-          {/* Alert Text */}
-          {watchedValues.show_alert_text && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium whitespace-nowrap text-gray-900">{message}</span>
-            </div>
-          )}
+    <div className="sticky top-6 h-fit space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+          </div>
+          <CardDescription>
+            {__('See how the section will look on your store', 'yayboost')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="w-fit min-w-xs rounded-lg border border-gray-200 bg-white p-4">
+            <div className="flex flex-col gap-3">
+              {/* Alert Text */}
+              {watchedValues.show_alert_text && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium whitespace-nowrap text-gray-900">
+                    {message}
+                  </span>
+                </div>
+              )}
 
-          {/* Progress Bar */}
-          {watchedValues.show_progress_bar && (
-            <div className="flex items-center gap-3">
-              <div
-                className="h-2 min-w-[200px] overflow-hidden rounded-full"
-                style={{ backgroundColor: watchedValues.background_color }}
-              >
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{
-                    width: `${progress}%`,
-                    backgroundColor: watchedValues.fill_color,
-                  }}
-                />
-              </div>
-              <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
-                {SAMPLE_STOCK_LEFT} left
-              </span>
+              {/* Progress Bar */}
+              {watchedValues.show_progress_bar && (
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-2 min-w-[200px] overflow-hidden rounded-full"
+                    style={{ backgroundColor: watchedValues.background_color }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${progress}%`,
+                        backgroundColor: watchedValues.fill_color,
+                      }}
+                    />
+                  </div>
+                  <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
+                    {SAMPLE_STOCK_LEFT} left
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
-    </>
+          </div>
+        </CardContent>
+      </Card>
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {__('Gutenberg block "Stock Scarcity" is not supported in this version.', 'yayboost')}
+        </AlertDescription>
+      </Alert>
+    </div>
   );
 };
 
@@ -642,35 +658,37 @@ const StockScarcity = ({ featureId }: FeatureComponentProps) => {
         description={feature?.description ?? ''}
         goBackRoute={'/features'}
       />
-      <Form {...form}>
-        <SettingsCard
-          headless
-          title="Configure Stock Scarcity"
-          onSave={() => {
-            form.handleSubmit(onSubmit)();
-          }}
-          isDirty={form.formState.isDirty}
-          isSaving={updateSettings.isPending}
-          isLoading={isLoading}
-          onReset={() => {
-            form.reset(feature?.settings);
-          }}
-        >
-          <GeneralSection form={form} />
-          <Separator />
-          <DisplaySection form={form} />
-          <Separator />
-          {form.watch('show_alert_text') && <AlertTextSection form={form} />}
-          <Separator />
-          {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
-          <Separator />
-          <PreviewSection form={form} />
-          <Separator />
-          <DisplayLocationSection form={form} />
-          <Separator />
-          <ProductTargetingSection form={form} />
-        </SettingsCard>
-      </Form>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Form {...form}>
+          <SettingsCard
+            headless
+            title="Configure Stock Scarcity"
+            onSave={() => {
+              form.handleSubmit(onSubmit)();
+            }}
+            isDirty={form.formState.isDirty}
+            isSaving={updateSettings.isPending}
+            isLoading={isLoading}
+            onReset={() => {
+              form.reset(feature?.settings);
+            }}
+          >
+            <GeneralSection form={form} />
+            <Separator />
+            <DisplaySection form={form} />
+            <Separator />
+            {form.watch('show_alert_text') && <AlertTextSection form={form} />}
+            <Separator />
+            {form.watch('show_progress_bar') && <ProgressBarSection form={form} />}
+            <Separator />
+            <DisplayLocationSection form={form} />
+            <Separator />
+            <ProductTargetingSection form={form} />
+          </SettingsCard>
+        </Form>
+        {/* Preview Panel */}
+        <PreviewSection form={form} />
+      </div>
     </div>
   );
 };

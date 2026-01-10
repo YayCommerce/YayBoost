@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { useState } from 'react';
+import { AlertCircle, Eye } from 'lucide-react';
 import z from 'zod';
 
-import FeatureLayoutHeader from '@/components/feature-layout-header';
-import { SettingsCard } from '@/components/settings-card';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ColorPicker } from '@/components/ui/color-picker';
 import {
   Form,
@@ -29,9 +32,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
-import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
-import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 
 import { FeatureComponentProps } from '..';
 
@@ -176,283 +179,48 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
   return (
     <Form {...form}>
       <FeatureLayoutHeader title={feature.name} description={feature.description} />
-      <SettingsCard
-        headless
-        onSave={() => {
-          form.handleSubmit(onSubmit)();
-        }}
-        onReset={() => {
-          form.reset(feature?.settings as SettingsFormData);
-        }}
-        isSaving={updateSettings.isPending}
-        isDirty={form.formState.isDirty}
-        isLoading={isLoading || isFetching}
-      >
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium">{__('Tracking Mode', 'yayboost')}</h3>
-          <p className="text-muted-foreground text-xs">
-            {__('Configure how visitor counts are tracked and displayed.', 'yayboost')}
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="tracking_mode"
-          render={({ field }) => (
-            <FormItem>
-              <FormControl>
-                <RadioGroup value={field.value} onValueChange={field.onChange}>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="real-tracking" id="real-tracking" />
-                    <div className="space-y-1">
-                      <Label htmlFor="real-tracking">{__('Real Tracking', 'yayboost')}</Label>
-                      <FormDescription>
-                        {__('Track actual visitors viewing the product.', 'yayboost')}
-                      </FormDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="simulated" id="simulated" />
-                    <div className="space-y-1">
-                      <Label htmlFor="simulated">{__('Simulated', 'yayboost')}</Label>
-                      <FormDescription>
-                        {__('Display randomized visitor counts.', 'yayboost')}
-                      </FormDescription>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* Real Tracking Settings */}
-        {trackingMode === 'real-tracking' && (
-          <div className="space-y-4">
-            <Label>{__('Real Tracking Settings', 'yayboost')}</Label>
-            <div className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="real_tracking.active_window"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>{__('Active Window (minutes)', 'yayboost')}</Label>
-                    <Select
-                      value={field.value?.toString() ?? '5'}
-                      onValueChange={(value) => field.onChange(parseInt(value, 10))}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-24">
-                          <SelectValue placeholder={__('Select active window', 'yayboost')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="15">15</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      {__('Count visitors active within this time period', 'yayboost')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="real_tracking.minimum_count_display"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="minimum-count-display">
-                      {__('Minimum Count to Display', 'yayboost')}
-                    </Label>
-                    <FormControl>
-                      <div className="w-fit">
-                        <InputNumber
-                          {...field}
-                          id="minimum-count-display"
-                          min={0}
-                          onValueChange={(value) => field.onChange(value || 0)}
-                          value={parseInt(field.value?.toString() ?? '0', 10)}
-                          className="w-24"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      {__(
-                        'Hide counter if visitors below this number (0 = always show)',
-                        'yayboost',
-                      )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SettingsCard
+          headless
+          onSave={() => {
+            form.handleSubmit(onSubmit)();
+          }}
+          onReset={() => {
+            form.reset(feature?.settings as SettingsFormData);
+          }}
+          isSaving={updateSettings.isPending}
+          isDirty={form.formState.isDirty}
+          isLoading={isLoading || isFetching}
+        >
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Tracking Mode', 'yayboost')}</h3>
+            <p className="text-muted-foreground text-xs">
+              {__('Configure how visitor counts are tracked and displayed.', 'yayboost')}
+            </p>
           </div>
-        )}
-
-        {/* Simulated Settings */}
-        {trackingMode === 'simulated' && (
-          <div className="space-y-4">
-            <Label>{__('Simulated Settings', 'yayboost')}</Label>
-            <div className="space-y-4 pt-2">
-              <FormField
-                control={form.control}
-                name="simulated.min"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="minimum-count">{__('Minimum Count', 'yayboost')}</Label>
-                    <FormControl>
-                      <div className="w-fit">
-                        <InputNumber
-                          {...field}
-                          id="minimum-count"
-                          min={1}
-                          onValueChange={(value) => field.onChange(value || 1)}
-                          value={parseInt(field.value?.toString() ?? '10', 10)}
-                          className="w-24"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="simulated.max"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="maximum-count">{__('Maximum Count', 'yayboost')}</Label>
-                    <FormControl>
-                      <div className="w-fit">
-                        <InputNumber
-                          {...field}
-                          id="maximum-count"
-                          min={1}
-                          onValueChange={(value) => field.onChange(value || 1)}
-                          value={parseInt(field.value?.toString() ?? '50', 10)}
-                          className="w-24"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      {__('Random count will be between min and max', 'yayboost')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        )}
-        <Separator />
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
-          <p className="text-muted-foreground text-xs">
-            {__('Configure how the visitor count is displayed.', 'yayboost')}
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="display.text"
-          render={({ field }) => (
-            <FormItem>
-              <Label htmlFor="display-text">{__('Display Text', 'yayboost')}</Label>
-              <FormControl>
-                <Input
-                  {...field}
-                  id="display-text"
-                  placeholder="{count} people are viewing this right now"
-                  className="max-w-100"
-                />
-              </FormControl>
-              <FormDescription>
-                {__('Use {count} as placeholder for the number of visitors', 'yayboost')}
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="display.position"
-          render={({ field }) => (
-            <FormItem>
-              <Label>{__('Position on Product Page', 'yayboost')}</Label>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder={__('Select position', 'yayboost')} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="below_product_title">
-                    {__('Below product title', 'yayboost')}
-                  </SelectItem>
-                  <SelectItem value="above_add_to_cart_button">
-                    {__('Above add to cart button', 'yayboost')}
-                  </SelectItem>
-                  <SelectItem value="below_add_to_cart_button">
-                    {__('Below add to cart button', 'yayboost')}
-                  </SelectItem>
-                  <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
-                  <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
-                </SelectContent>
-              </Select>
-              {field.value === 'use_block' && (
-                <FormDescription>
-                  {__(
-                    'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
-                    'yayboost',
-                  )}
-                </FormDescription>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Separator />
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium">{__('Style Settings', 'yayboost')}</h3>
-          <p className="text-muted-foreground text-xs">
-            {__('Configure the style of the visitor count.', 'yayboost')}
-          </p>
-        </div>
-        <div className="space-y-6">
           <FormField
             control={form.control}
-            name="style.style"
+            name="tracking_mode"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Choose Style', 'yayboost')}</Label>
                 <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="flex items-center gap-6"
-                  >
+                  <RadioGroup value={field.value} onValueChange={field.onChange}>
                     <div className="flex items-center gap-2">
-                      <RadioGroupItem value="style_1" id="style-1" />
+                      <RadioGroupItem value="real-tracking" id="real-tracking" />
                       <div className="space-y-1">
-                        <label htmlFor="style-1">{__('Text only', 'yayboost')}</label>
+                        <Label htmlFor="real-tracking">{__('Real Tracking', 'yayboost')}</Label>
+                        <FormDescription>
+                          {__('Track actual visitors viewing the product.', 'yayboost')}
+                        </FormDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <RadioGroupItem value="style_2" id="style-2" />
+                      <RadioGroupItem value="simulated" id="simulated" />
                       <div className="space-y-1">
-                        <label htmlFor="style-2">{__('Badge style', 'yayboost')}</label>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="style_3" id="style-3" />
-                      <div className="space-y-1">
-                        <label htmlFor="style-3">{__('Bubble style', 'yayboost')}</label>
+                        <Label htmlFor="simulated">{__('Simulated', 'yayboost')}</Label>
+                        <FormDescription>
+                          {__('Display randomized visitor counts.', 'yayboost')}
+                        </FormDescription>
                       </div>
                     </div>
                   </RadioGroup>
@@ -461,32 +229,249 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               </FormItem>
             )}
           />
-          <StylePreview
-            style={style || 'style_1'}
-            textColor={textColor || '#a74c3c'}
-            backgroundColor={backgroundColor || '#fff3f3'}
-            displayText={displayText || '{count} people are viewing this right now'}
-          />
+          {/* Real Tracking Settings */}
+          {trackingMode === 'real-tracking' && (
+            <div className="space-y-4">
+              <Label>{__('Real Tracking Settings', 'yayboost')}</Label>
+              <div className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="real_tracking.active_window"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label>{__('Active Window (minutes)', 'yayboost')}</Label>
+                      <Select
+                        value={field.value?.toString() ?? '5'}
+                        onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder={__('Select active window', 'yayboost')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="2">2</SelectItem>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="15">15</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {__('Count visitors active within this time period', 'yayboost')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="real_tracking.minimum_count_display"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="minimum-count-display">
+                        {__('Minimum Count to Display', 'yayboost')}
+                      </Label>
+                      <FormControl>
+                        <div className="w-fit">
+                          <InputNumber
+                            {...field}
+                            id="minimum-count-display"
+                            min={0}
+                            onValueChange={(value) => field.onChange(value || 0)}
+                            value={parseInt(field.value?.toString() ?? '0', 10)}
+                            className="w-24"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        {__(
+                          'Hide counter if visitors below this number (0 = always show)',
+                          'yayboost',
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Simulated Settings */}
+          {trackingMode === 'simulated' && (
+            <div className="space-y-4">
+              <Label>{__('Simulated Settings', 'yayboost')}</Label>
+              <div className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="simulated.min"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="minimum-count">{__('Minimum Count', 'yayboost')}</Label>
+                      <FormControl>
+                        <div className="w-fit">
+                          <InputNumber
+                            {...field}
+                            id="minimum-count"
+                            min={1}
+                            onValueChange={(value) => field.onChange(value || 1)}
+                            value={parseInt(field.value?.toString() ?? '10', 10)}
+                            className="w-24"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="simulated.max"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="maximum-count">{__('Maximum Count', 'yayboost')}</Label>
+                      <FormControl>
+                        <div className="w-fit">
+                          <InputNumber
+                            {...field}
+                            id="maximum-count"
+                            min={1}
+                            onValueChange={(value) => field.onChange(value || 1)}
+                            value={parseInt(field.value?.toString() ?? '50', 10)}
+                            className="w-24"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        {__('Random count will be between min and max', 'yayboost')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          )}
+          <Separator />
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
+            <p className="text-muted-foreground text-xs">
+              {__('Configure how the visitor count is displayed.', 'yayboost')}
+            </p>
+          </div>
           <FormField
             control={form.control}
-            name="style.text_color"
+            name="display.text"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Text Color', 'yayboost')}</Label>
+                <Label htmlFor="display-text">{__('Display Text', 'yayboost')}</Label>
                 <FormControl>
-                  <ColorPicker {...field} />
+                  <Input
+                    {...field}
+                    id="display-text"
+                    placeholder="{count} people are viewing this right now"
+                    className="max-w-100"
+                  />
                 </FormControl>
+                <FormDescription>
+                  {__('Use {count} as placeholder for the number of visitors', 'yayboost')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          {style !== 'style_1' && (
+
+          <FormField
+            control={form.control}
+            name="display.position"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{__('Position on Product Page', 'yayboost')}</Label>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder={__('Select position', 'yayboost')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="below_product_title">
+                      {__('Below product title', 'yayboost')}
+                    </SelectItem>
+                    <SelectItem value="above_add_to_cart_button">
+                      {__('Above add to cart button', 'yayboost')}
+                    </SelectItem>
+                    <SelectItem value="below_add_to_cart_button">
+                      {__('Below add to cart button', 'yayboost')}
+                    </SelectItem>
+                    <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
+                    <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {field.value === 'use_block' && (
+                  <FormDescription>
+                    {__(
+                      'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
+                      'yayboost',
+                    )}
+                  </FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Separator />
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Style Settings', 'yayboost')}</h3>
+            <p className="text-muted-foreground text-xs">
+              {__('Configure the style of the visitor count.', 'yayboost')}
+            </p>
+          </div>
+          <div className="space-y-6">
             <FormField
               control={form.control}
-              name="style.background_color"
+              name="style.style"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Background Color', 'yayboost')}</Label>
+                  <Label>{__('Choose Style', 'yayboost')}</Label>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="flex items-center gap-6"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="style_1" id="style-1" />
+                        <div className="space-y-1">
+                          <label htmlFor="style-1">{__('Text only', 'yayboost')}</label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="style_2" id="style-2" />
+                        <div className="space-y-1">
+                          <label htmlFor="style-2">{__('Badge style', 'yayboost')}</label>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="style_3" id="style-3" />
+                        <div className="space-y-1">
+                          <label htmlFor="style-3">{__('Bubble style', 'yayboost')}</label>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="style.text_color"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Text Color', 'yayboost')}</Label>
                   <FormControl>
                     <ColorPicker {...field} />
                   </FormControl>
@@ -494,90 +479,135 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                 </FormItem>
               )}
             />
-          )}
-        </div>
-        <Separator />
-        <div className="space-y-1">
-          <h3 className="text-sm font-medium">{__('Product targeting', 'yayboost')}</h3>
-          <p className="text-muted-foreground text-xs">
-            {__(
-              'Configure which products and categories the visitor count should be displayed on.',
-              'yayboost',
+            {style !== 'style_1' && (
+              <FormField
+                control={form.control}
+                name="style.background_color"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>{__('Background Color', 'yayboost')}</Label>
+                    <FormControl>
+                      <ColorPicker {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          </p>
-        </div>
-        <FormField
-          control={form.control}
-          name="apply_on.apply"
-          render={({ field }) => (
-            <FormItem>
-              <Label>{__('Show On', 'yayboost')}</Label>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="w-46">
-                    <SelectValue placeholder={__('Select apply on', 'yayboost')} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="all">{__('All Products', 'yayboost')}</SelectItem>
-                  <SelectItem value="specific_categories">
-                    {__('Specific Categories', 'yayboost')}
-                  </SelectItem>
-                  <SelectItem value="specific_products">
-                    {__('Specific Products', 'yayboost')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {applyOn === 'specific_categories' && (
+          </div>
+          <Separator />
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Product targeting', 'yayboost')}</h3>
+            <p className="text-muted-foreground text-xs">
+              {__(
+                'Configure which products and categories the visitor count should be displayed on.',
+                'yayboost',
+              )}
+            </p>
+          </div>
           <FormField
             control={form.control}
-            name="apply_on.categories"
+            name="apply_on.apply"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Specific Categories', 'yayboost')}</Label>
-                <FormControl>
-                  <MultiSelect
-                    options={categories ?? []}
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder={`Search categories...`}
-                    showSearch={true}
-                    emptyText={`No categories found`}
-                  />
-                </FormControl>
+                <Label>{__('Show On', 'yayboost')}</Label>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <FormControl>
+                    <SelectTrigger className="w-46">
+                      <SelectValue placeholder={__('Select apply on', 'yayboost')} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="all">{__('All Products', 'yayboost')}</SelectItem>
+                    <SelectItem value="specific_categories">
+                      {__('Specific Categories', 'yayboost')}
+                    </SelectItem>
+                    <SelectItem value="specific_products">
+                      {__('Specific Products', 'yayboost')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
-        )}
-        {applyOn === 'specific_products' && (
-          <FormField
-            control={form.control}
-            name="apply_on.products"
-            render={({ field }) => (
-              <FormItem>
-                <Label>{__('Specific Products', 'yayboost')}</Label>
-                <FormControl>
-                  <MultiSelect
-                    options={products ?? []}
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder={`Search products...`}
-                    showSearch={true}
-                    onSearchChange={onProductSearch}
-                    emptyText={`No products found`}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-      </SettingsCard>
+          {applyOn === 'specific_categories' && (
+            <FormField
+              control={form.control}
+              name="apply_on.categories"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Specific Categories', 'yayboost')}</Label>
+                  <FormControl>
+                    <MultiSelect
+                      options={categories ?? []}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={`Search categories...`}
+                      showSearch={true}
+                      emptyText={`No categories found`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          {applyOn === 'specific_products' && (
+            <FormField
+              control={form.control}
+              name="apply_on.products"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>{__('Specific Products', 'yayboost')}</Label>
+                  <FormControl>
+                    <MultiSelect
+                      options={products ?? []}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder={`Search products...`}
+                      showSearch={true}
+                      onSearchChange={onProductSearch}
+                      emptyText={`No products found`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </SettingsCard>
+        <div className="sticky top-6 h-fit space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+              </div>
+              <CardDescription>
+                {__('See how the section will look on your store', 'yayboost')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <StylePreview
+                style={style || 'style_1'}
+                textColor={textColor || '#a74c3c'}
+                backgroundColor={backgroundColor || '#fff3f3'}
+                displayText={displayText || '{count} people are viewing this right now'}
+              />
+            </CardContent>
+          </Card>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {__(
+                'Gutenberg block "Live Visitor Count" is not supported in this version.',
+                'yayboost',
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
     </Form>
   );
 }
