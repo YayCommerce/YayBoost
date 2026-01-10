@@ -203,4 +203,44 @@ class AnalyticsEventsTable {
     public static function get_version(): string {
         return '1.0.0';
     }
+
+    /**
+     * Get recent activity events for dashboard feed
+     *
+     * Returns recent significant events (purchases, threshold_reached, add_to_cart)
+     *
+     * @param int $limit Max number of events to return
+     * @return array
+     */
+    public static function get_recent_activity( int $limit = 10 ): array {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        // Event types we want to show in activity feed
+        $event_types = [ 'purchase', 'threshold_reached', 'add_to_cart' ];
+        $placeholders = implode( ',', array_fill( 0, count( $event_types ), '%s' ) );
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $results = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT
+                    id,
+                    feature_id,
+                    event_type,
+                    product_id,
+                    order_id,
+                    quantity,
+                    revenue,
+                    created_at
+                 FROM {$table_name}
+                 WHERE event_type IN ({$placeholders})
+                 ORDER BY created_at DESC
+                 LIMIT %d",
+                ...array_merge( $event_types, [ $limit ] )
+            ),
+            ARRAY_A
+        );
+
+        return $results ?: [];
+    }
 }

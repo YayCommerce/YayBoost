@@ -398,6 +398,26 @@ export interface FeatureHealthResponse {
   };
 }
 
+// Activity feed types
+export interface ActivityItem {
+  id: number;
+  feature_id: string;
+  feature_name: string;
+  event_type: 'purchase' | 'add_to_cart' | 'threshold_reached';
+  event_label: string;
+  product_id: number | null;
+  product_name: string | null;
+  order_id: number | null;
+  quantity: number;
+  revenue: number;
+  created_at: string;
+}
+
+export interface ActivityFeedResponse {
+  activities: ActivityItem[];
+  count: number;
+}
+
 // Dashboard API
 export const dashboardApi = {
   /**
@@ -423,6 +443,16 @@ export const dashboardApi = {
    */
   getFeatureHealth: async (): Promise<FeatureHealthResponse> => {
     const { data } = await api.get<ApiResponse<FeatureHealthResponse>>('/dashboard/health');
+    return data.data;
+  },
+
+  /**
+   * Get recent activity feed
+   */
+  getRecentActivity: async (limit: number = 10): Promise<ActivityFeedResponse> => {
+    const { data } = await api.get<ApiResponse<ActivityFeedResponse>>('/dashboard/activity', {
+      params: { limit },
+    });
     return data.data;
   },
 };

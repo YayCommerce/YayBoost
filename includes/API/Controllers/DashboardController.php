@@ -12,6 +12,7 @@ namespace YayBoost\API\Controllers;
 use WP_REST_Request;
 use WP_REST_Server;
 use YayBoost\Analytics\AnalyticsDailyTable;
+use YayBoost\Analytics\AnalyticsEventsTable;
 
 /**
  * Handles dashboard API endpoints
@@ -52,6 +53,13 @@ class DashboardController extends BaseController {
             '/dashboard/health',
             WP_REST_Server::READABLE,
             [ $this, 'get_feature_health' ]
+        );
+
+        // Get recent activity feed
+        $this->register_route(
+            '/dashboard/activity',
+            WP_REST_Server::READABLE,
+            [ $this, 'get_recent_activity' ]
         );
     }
 
@@ -279,5 +287,64 @@ class DashboardController extends BaseController {
         }
 
         return false;
+    }
+
+    /**
+     * Get recent activity feed
+     *
+     * Returns recent significant events for the dashboard activity feed.
+     *
+     * @param WP_REST_Request $request Request object.
+     * @return \WP_REST_Response|\WP_Error
+     */
+    public function get_recent_activity( WP_REST_Request $request ) {
+        $limit  = $request->get_param( 'limit' ) ?? 10;
+        $limit  = min( max( (int) $limit, 1 ), 50 ); // Clamp 1-50
+        $events = AnalyticsEventsTable::get_recent_activity( $limit );
+
+        // Map feature IDs for display
+        $feature_names = [
+            'fbt'               => __( 'Frequently Bought Together', 'yayboost' ),
+            'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost' ),
+            'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost' ),
+            'next_order_coupon' => __( 'Next Order Coupon', 'yayboost' ),
+        ];
+
+        // Event type labels
+        $event_labels = [
+            'purchase'          => __( 'Purchase', 'yayboost' ),
+            'add_to_cart'       => __( 'Added to cart', 'yayboost' ),
+            'threshold_reached' => __( 'Free shipping unlocked', 'yayboost' ),
+        ];
+
+        $activities = [];
+        foreach ( $events as $event ) {
+            $product_name = null;
+            if ( ! empty( $event['product_id'] ) ) {
+                $product = wc_get_product( $event['product_id'] );
+                if ( $product ) {
+                    $product_name = $product->get_name();
+                }
+            }
+
+            $activities[] = [
+                'id'           => (int) $event['id'],
+                'feature_id'   => $event['feature_id'],
+                'feature_name' => $feature_names[ $event['feature_id'] ] ?? $event['feature_id'],
+                'event_type'   => $event['event_type'],
+                'event_label'  => $event_labels[ $event['event_type'] ] ?? $event['event_type'],
+                'product_id'   => $event['product_id'] ? (int) $event['product_id'] : null,
+                'product_name' => $product_name,
+                'order_id'     => $event['order_id'] ? (int) $event['order_id'] : null,
+                'quantity'     => (int) $event['quantity'],
+                'revenue'      => (float) $event['revenue'],
+                'created_at'   => $event['created_at'],
+            ];
+        }
+
+        return $this->success( [
+            'activities' => $activities,
+            'count'      => count( $activities ),
+        ] );
     }
 }

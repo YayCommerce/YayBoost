@@ -3,6 +3,7 @@ import { __ } from "@wordpress/i18n";
 import { DashboardStats } from "@/components/dashboard-stats";
 import { FeatureHealthGrid } from "@/components/feature-health-grid";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import { RecentActivityFeed } from "@/components/recent-activity-feed";
 
 export default function Dashboard() {
   return (
@@ -15,8 +16,11 @@ export default function Dashboard() {
       {/* Onboarding Checklist (shown for new users) */}
       <OnboardingChecklist />
 
-      {/* Feature Health Grid */}
-      <FeatureHealthGrid />
+      {/* Feature Health + Recent Activity */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <FeatureHealthGrid />
+        <RecentActivityFeed />
+      </div>
 
       {/* Analytics Overview */}
       <DashboardStats />
