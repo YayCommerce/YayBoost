@@ -403,7 +403,6 @@ function DisplaySettingsSection({ control }: FormSectionProps) {
   const layoutOptions = [
     { label: 'Grid', value: 'grid' },
     { label: 'List', value: 'list' },
-    { label: 'Slider', value: 'slider' },
   ];
 
   return (

@@ -5,14 +5,13 @@
 
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { __ } from '@wordpress/i18n';
-import { BookIcon, HeadsetIcon, HouseIcon, PackageIcon, SettingsIcon } from 'lucide-react';
+import { BookIcon, HeadsetIcon, HouseIcon, PackageIcon, Rocket, SettingsIcon } from 'lucide-react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
-import { getImageUrl } from '@/lib/utils';
+import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Footer } from '@/components/layout/Footer';
 
 const navigation = [
   { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: HouseIcon },
@@ -57,7 +56,7 @@ export function DashboardLayout() {
               alt="YayReviews Logo"
             /> */}
             <div className='flex items-center justify-center w-[50px]'>
-              <PackageIcon className="h-6 w-6" />
+              <Rocket className="h-6 w-6" />
             </div>
           </div>
 

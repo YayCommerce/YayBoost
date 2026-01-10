@@ -14,8 +14,6 @@
 
 .yayboost-fbt__title {
     margin: 0 0 1.5rem;
-    font-size: 1.25rem;
-    font-weight: 600;
     text-align: center;
 }
 
@@ -36,26 +34,13 @@
 .yayboost-fbt__products--list .yayboost-fbt__product {
     flex-direction: row;
     align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .yayboost-fbt__products--list .yayboost-fbt__image {
     width: 80px;
     flex-shrink: 0;
-}
-
-/* Slider Layout */
-.yayboost-fbt__products--slider {
-    display: flex;
-    overflow-x: auto;
-    gap: 1rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 0.5rem;
-}
-
-.yayboost-fbt__products--slider .yayboost-fbt__product {
-    flex: 0 0 200px;
-    scroll-snap-align: start;
 }
 
 /* Product Card */
@@ -118,12 +103,6 @@
     flex-grow: 1;
 }
 
-.yayboost-fbt__name {
-    font-weight: 500;
-    font-size: 0.9rem;
-    line-height: 1.3;
-}
-
 .yayboost-fbt__name a {
     color: inherit;
     text-decoration: none;
@@ -176,9 +155,6 @@
 
 /* Add Button */
 .yayboost-fbt__add-btn {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 500;
     cursor: pointer;
     transition: opacity 0.2s;
 }

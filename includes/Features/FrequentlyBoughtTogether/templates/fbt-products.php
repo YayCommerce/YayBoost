@@ -29,7 +29,7 @@ $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yaybo
             $product_image = $product->get_image( 'woocommerce_thumbnail' );
             $product_link  = $product->get_permalink();
             ?>
-            <div class="yayboost-fbt__product" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-price="<?php echo esc_attr( $product_price ); ?>">
+            <label for="fbt-product-<?php echo esc_attr( $product_id ); ?>" class="yayboost-fbt__product" data-product-id="<?php echo esc_attr( $product_id ); ?>" data-price="<?php echo esc_attr( $product_price ); ?>">
                 <div class="yayboost-fbt__checkbox">
                     <input
                         type="checkbox"
@@ -47,16 +47,16 @@ $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yaybo
                 </div>
 
                 <div class="yayboost-fbt__info">
-                    <label for="fbt-product-<?php echo esc_attr( $product_id ); ?>" class="yayboost-fbt__name">
+                    <h3 class="yayboost-fbt__name">
                         <a href="<?php echo esc_url( $product_link ); ?>">
                             <?php echo esc_html( $product_name ); ?>
                         </a>
-                    </label>
+                    </h3>
                     <span class="yayboost-fbt__price">
                         <?php echo wp_kses_post( $product->get_price_html() ); ?>
                     </span>
                 </div>
-            </div>
+            </label>
         <?php endforeach; ?>
     </div>
 
@@ -65,7 +65,7 @@ $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yaybo
             <span class="yayboost-fbt__total-label"><?php esc_html_e( 'Total:', 'yayboost' ); ?></span>
             <span class="yayboost-fbt__total-price"></span>
         </div>
-        <button type="button" class="yayboost-fbt__add-btn button alt">
+        <button type="button" class="yayboost-fbt__add-btn button alt wp-block-button__link wp-element-button">
             <?php esc_html_e( 'Add Selected to Cart', 'yayboost' ); ?>
         </button>
     </div>

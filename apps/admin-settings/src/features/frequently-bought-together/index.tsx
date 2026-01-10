@@ -11,6 +11,7 @@ import { Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { cn } from '@/lib/utils';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -55,7 +56,7 @@ const settingsSchema = z.object({
   enabled: z.boolean(),
   max_products: z.number().min(1).max(20),
   min_order_threshold: z.number().min(0).max(100), // percentage
-  layout: z.enum(['grid', 'list', 'slider']),
+  layout: z.enum(['grid', 'list']),
   section_title: z.string().min(1),
   hide_if_in_cart: z.enum(['hide', 'show']), // 'hide' = hide it, 'show' = still show it
 });
@@ -65,7 +66,6 @@ type SettingsFormData = z.infer<typeof settingsSchema>;
 const layoutOptions = [
   { value: 'grid', label: __('Grid', 'yayboost') },
   { value: 'list', label: __('List', 'yayboost') },
-  { value: 'slider', label: __('Slider', 'yayboost') },
 ];
 
 // Preview component
@@ -105,13 +105,20 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
         {settings.section_title || __('Frequently Bought Together', 'yayboost')}
       </h2>
 
-      <div className="grid grid-cols-3 gap-5">
+      <div
+        className={cn(
+          settings.layout === 'grid' ? 'grid grid-cols-3 gap-5' : 'flex flex-col gap-5',
+        )}
+      >
         {displayProducts.map((product) => {
           const isSelected = selectedProducts.has(product.id);
           return (
             <div
               key={product.id}
-              className="relative space-y-2 rounded-md border border-gray-200 p-4"
+              className={cn(
+                'relative space-y-2 rounded-md border border-gray-200 p-4',
+                settings.layout === 'grid' ? '' : 'flex gap-5',
+              )}
             >
               {/* Product Image Placeholder */}
               <div className="relative flex justify-center">
@@ -339,15 +346,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="hide" id="hide-if-in-cart" />
-                        <label htmlFor="hide-if-in-cart">
-                          {__('Hide it', 'yayboost')}
-                        </label>
+                        <label htmlFor="hide-if-in-cart">{__('Hide it', 'yayboost')}</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="show" id="show-if-in-cart" />
-                        <label htmlFor="show-if-in-cart">
-                          {__('Still show it', 'yayboost')}
-                        </label>
+                        <label htmlFor="show-if-in-cart">{__('Still show it', 'yayboost')}</label>
                       </div>
                     </RadioGroup>
                   </FormControl>

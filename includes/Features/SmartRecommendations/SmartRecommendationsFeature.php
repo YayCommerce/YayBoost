@@ -57,6 +57,13 @@ class SmartRecommendationsFeature extends AbstractFeature {
      */
     protected $priority = 100;
 
+     /**
+     * Feature status
+     *
+     * @var string
+     */
+    protected $status = 'coming_soon';
+
     /**
      * Initialize the feature
      *
