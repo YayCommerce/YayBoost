@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { getFeatureComponent, hasFeatureComponent } from '@/features';
 import { FeatureLayout } from '@/layouts/feature-layout';
 import { __ } from '@wordpress/i18n';
-import { useParams } from 'react-router-dom';
+import { useParams } from '@tanstack/react-router';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,7 +42,7 @@ function DefaultFeatureContent({ featureId }: { featureId: string }) {
 }
 
 export default function FeaturePage() {
-  const { featureId } = useParams<{ featureId: string }>();
+  const { featureId } = useParams({ strict: false });
 
   if (!featureId) {
     return (

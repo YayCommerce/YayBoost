@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { SettingsFormData } from '@/lib/schema';
-
 type ButtonValue = string;
 type DisplayOn = string;
 interface ButtonItem {
@@ -82,7 +80,7 @@ const VariantButton: React.FC<VariantButtonProps> = ({
   displayOn = null,
   onSelect,
 }) => {
-  const { watch } = useFormContext<SettingsFormData>();
+  const { watch } = useFormContext<any>();
   const buttonCustomize = watch('button_customize_settings');
   const soldoutCustomize = watch('sold_out_customize_settings');
   const collecttionCustomize = watch('collection_customize_settings');

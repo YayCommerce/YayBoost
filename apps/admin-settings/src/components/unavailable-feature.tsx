@@ -1,5 +1,5 @@
 import { ArrowUpRightIcon, FolderLockIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 
 import { Button } from './ui/button';
 import {
@@ -26,7 +26,7 @@ export default function UnavailableFeature() {
       </EmptyHeader>
       <EmptyContent>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/features')}>
+          <Button variant="outline" onClick={() => navigate({ to: '/features' })}>
             Back to features
           </Button>
         </div>

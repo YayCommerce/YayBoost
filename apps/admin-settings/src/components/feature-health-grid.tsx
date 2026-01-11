@@ -6,23 +6,23 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
-import { useNavigate } from 'react-router-dom';
 import {
-  Truck,
-  ShoppingCart,
-  Timer,
-  Ticket,
-  Sparkles,
-  Zap,
-  Users,
   Activity,
+  ShoppingCart,
+  Sparkles,
+  Ticket,
+  Timer,
+  Truck,
+  Users,
+  Zap,
 } from 'lucide-react';
 
-import { dashboardApi, FeatureHealthResponse } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { dashboardApi, FeatureHealthResponse } from '@/lib/api';
 
 // Icon mapping for features
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
@@ -120,7 +120,7 @@ export function FeatureHealthGrid() {
               return (
                 <button
                   key={feature.id}
-                  onClick={() => navigate(feature.path)}
+                  onClick={() => navigate({ to: feature.path })}
                   className="hover:bg-muted/50 flex items-center gap-3 rounded-lg border p-3 text-left transition-colors"
                 >
                   {/* Icon */}

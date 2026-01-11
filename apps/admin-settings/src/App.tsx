@@ -1,10 +1,13 @@
+import { RouterProvider } from '@tanstack/react-router';
+
 import { Toaster } from '@/components/ui/sonner';
-import { Router } from '@/router';
+
+import { router } from '@/router';
 
 function App() {
   return (
     <>
-      <Router />
+      <RouterProvider router={router} />
       <Toaster />
     </>
   );

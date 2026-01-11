@@ -4,7 +4,7 @@
 
 import { SpinnerIcon } from '@phosphor-icons/react';
 import { ArrowUpRightIcon, FolderLockIcon } from 'lucide-react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 
 import { useFeature, useToggleFeature } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
@@ -76,7 +76,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
               <Button disabled={isPending} onClick={() => handleEnableFeature(feature.id)}>
                 Enable Feature {isPending && <SpinnerIcon className="size-4 animate-spin" />}
               </Button>
-              <Button variant="outline" onClick={() => navigate('/features')}>
+              <Button variant="outline" onClick={() => navigate({ to: '/features' })}>
                 Back to features
               </Button>
             </div>

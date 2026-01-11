@@ -8,7 +8,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
 import { X, Check, Circle, ArrowRight, Rocket } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from '@tanstack/react-router';
 
 import { dashboardApi, OnboardingStatusResponse } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +72,7 @@ export function OnboardingChecklist() {
   }
 
   const handleAction = (path: string) => {
-    navigate(path);
+    navigate({ to: path });
   };
 
   const handleDismiss = () => {

@@ -2,24 +2,15 @@
  * Order Bump Feature - Main Entry Point
  *
  * Complex feature with entity CRUD (multiple bump offers).
- * Uses sub-routing for list/create/edit views.
+ * Sub-routes will be handled in routes.tsx when implemented.
  */
-
-import { Route, Routes } from 'react-router-dom';
-
 import { FeatureComponentProps } from '@/features';
 
-import { BumpList } from './bump-list';
-import { BumpEditor } from './bump-editor';
-import { BumpSettings } from './bump-settings';
-
 export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
+  // Placeholder - sub-routes will be added to routes.tsx when implemented
   return (
-    <Routes>
-      <Route index element={<BumpList featureId={featureId} />} />
-      <Route path="new" element={<BumpEditor featureId={featureId} />} />
-      <Route path=":bumpId" element={<BumpEditor featureId={featureId} />} />
-      <Route path="settings" element={<BumpSettings featureId={featureId} />} />
-    </Routes>
+    <div className="text-muted-foreground py-12 text-center">
+      <p>Order Bump feature is under development.</p>
+    </div>
   );
 }

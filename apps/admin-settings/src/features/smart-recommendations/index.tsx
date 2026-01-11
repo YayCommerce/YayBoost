@@ -1,16 +1,14 @@
-import { Route, Routes } from "react-router-dom";
+/**
+ * Smart Recommendations Feature
+ * Sub-routes are handled in routes.tsx (not here)
+ */
 import { FeatureComponentProps } from '@/features';
-import RecommendationsList from "./recommendations-list";
-import RecommendationsEditor from "./recommendations-editor";
+import RecommendationsList from './recommendations-list';
 
 const SmartRecommendationsFeature = ({ featureId }: FeatureComponentProps) => {
-  return (
-    <Routes>
-        <Route index element={<RecommendationsList featureId={featureId} />}/>
-        <Route path="new" element={<RecommendationsEditor featureId={featureId} />}/>
-        <Route path=":recommendationId" element={<RecommendationsEditor featureId={featureId} />}/>
-    </Routes>
-  );
+  // Sub-routes (/new, /:entityId) are defined in routes.tsx
+  // This component just renders the list view
+  return <RecommendationsList featureId={featureId} />;
 };
 
 export default SmartRecommendationsFeature;

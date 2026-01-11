@@ -6,7 +6,7 @@
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { __ } from '@wordpress/i18n';
 import { BookIcon, HeadsetIcon, HouseIcon, PackageIcon, Rocket, SettingsIcon } from 'lucide-react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 
 import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ export function DashboardLayout() {
   const handleTabChange = (value: string) => {
     const menu = navigation.find((m) => m.key === value);
     if (menu) {
-      navigate(menu.path);
+      navigate({ to: menu.path });
     }
   };
 
@@ -116,3 +116,5 @@ export function DashboardLayout() {
     </div>
   );
 }
+
+export default DashboardLayout;

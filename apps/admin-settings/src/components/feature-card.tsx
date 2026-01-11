@@ -2,19 +2,19 @@
  * Feature Card - Displays a single feature with toggle
  */
 
-import { useMemo } from 'react';
 import { hasFeatureComponent } from '@/features';
 import * as PhosphorIcons from '@phosphor-icons/react';
+import { Link } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
-import { Link } from 'react-router-dom';
+import { useMemo } from 'react';
 
-import { Feature } from '@/lib/api';
-import { cn } from '@/lib/utils';
-import { useToggleFeature } from '@/hooks/use-features';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { useToggleFeature } from '@/hooks/use-features';
+import { Feature } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface FeatureCardProps {
   feature: Feature;
@@ -46,7 +46,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
       case 'coming_soon':
         return () => <Badge variant="primary-soft">{__('Coming Soon', 'yayboost')}</Badge>;
       case 'new':
-        return () => <Badge variant="default">{__('New', 'yayboost')}</Badge>;
+        return () => <Badge>{__('New', 'yayboost')}</Badge>;
       case 'beta':
         return () => <Badge variant="outline">{__('Beta', 'yayboost')}</Badge>;
       default:
@@ -97,15 +97,22 @@ export function FeatureCard({ feature }: FeatureCardProps) {
         {isComingSoon ? (
           <span className="text-sm text-muted-foreground">{__('Stay tuned!', 'yayboost')}</span>
         ) : hasComponent ? (
-          <Link
-            to={feature.enabled ? `/features/${feature.id}` : '#'}
-            onClick={(e) => e.stopPropagation()}
-            className={cn('text-foreground cursor-auto', !feature.enabled && 'opacity-50')}
-          >
-            <Button variant="outline" size="sm" className="rounded-[8px]">
+          feature.enabled ? (
+            <Link
+              to="/features/$featureId"
+              params={{ featureId: feature.id }}
+              onClick={(e) => e.stopPropagation()}
+              className="text-foreground cursor-auto"
+            >
+              <Button variant="outline" size="sm" className="rounded-[8px]">
+                {__('Settings', 'yayboost')}
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="outline" size="sm" className="rounded-[8px] opacity-50" disabled>
               {__('Settings', 'yayboost')}
             </Button>
-          </Link>
+          )
         ) : (
           <Button variant="primary" size="sm">
             {__('Buy Now', 'yayboost')}

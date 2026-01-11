@@ -1,17 +1,10 @@
 /**
- * Router configuration for YayBoost Admin
+ * TanStack Router Configuration
  * Uses hash-based routing for WordPress admin compatibility
  */
 
-import { lazy, Suspense } from 'react';
-import { DashboardLayout } from '@/layouts/dashboard-layout';
-import { HashRouter, Route, Routes } from 'react-router-dom';
-
-// Lazy load pages
-const Dashboard = lazy(() => import('@/pages/dashboard'));
-const FeatureContainer = lazy(() => import('@/pages/Feature/FeatureContainer'));
-const FeaturePage = lazy(() => import('@/pages/Feature'));
-const GlobalSettings = lazy(() => import('@/pages/settings'));
+import { createHashHistory, createRouter } from '@tanstack/react-router';
+import { routeTree } from './routeTree.gen';
 
 // Loading component
 function PageLoading() {
@@ -22,45 +15,20 @@ function PageLoading() {
   );
 }
 
-export function Router() {
-  return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<DashboardLayout />}>
-          <Route
-            index
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <Dashboard />
-              </Suspense>
-            }
-          />
-          <Route
-            path="features"
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <FeatureContainer />
-              </Suspense>
-            }
-          />
-          <Route
-            path="features/:featureId/*"
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <FeaturePage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <GlobalSettings />
-              </Suspense>
-            }
-          />
-        </Route>
-      </Routes>
-    </HashRouter>
-  );
+// Create hash history for WordPress admin compatibility
+const hashHistory = createHashHistory();
+
+// Create and export router
+export const router = createRouter({
+  routeTree,
+  history: hashHistory,
+  defaultPreload: 'intent',
+  defaultPendingComponent: PageLoading,
+});
+
+// Type-safe router declaration
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
 }

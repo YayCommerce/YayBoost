@@ -25,7 +25,7 @@ class Migrator {
 	/**
 	 * Current DB version
 	 */
-	const CURRENT_VERSION = '1.2.0';
+	const CURRENT_VERSION = '1.0.0';
 
 	/**
 	 * Run migrations only if needed
@@ -67,12 +67,8 @@ class Migrator {
 		// Create core tables
 		EntityTable::create();
 		LiveVisitorTable::create();
-
-		// Create FBT tables (added in 1.1.0)
 		FBTRelationshipTable::create();
 		FBTProductStatsTable::create();
-
-		// Create Analytics tables (added in 1.2.0)
 		AnalyticsEventsTable::create();
 		AnalyticsDailyTable::create();
 	}
