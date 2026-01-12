@@ -3,18 +3,20 @@
  *
  * Displays a checklist of steps for new users to get started.
  * Dismissable and auto-hides when all steps are complete.
+ *
+ * Design: Clean card with semantic color tokens (shadcn/ui aligned)
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
-import { X, Check, Circle, ArrowRight, Rocket } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Circle, Rocket, X } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 
-import { dashboardApi, OnboardingStatusResponse } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { dashboardApi, OnboardingStatusResponse } from '@/lib/api';
 
 export function OnboardingChecklist() {
   const navigate = useNavigate();
@@ -46,15 +48,15 @@ export function OnboardingChecklist() {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-4">
           <Skeleton className="h-6 w-48" />
         </CardHeader>
-        <CardContent>
-          <Skeleton className="mb-4 h-2 w-full" />
+        <CardContent className="space-y-4">
+          <Skeleton className="h-2 w-full" />
           <div className="space-y-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-14 w-full" />
           </div>
         </CardContent>
       </Card>
@@ -80,16 +82,18 @@ export function OnboardingChecklist() {
   };
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-      <CardHeader className="flex flex-row items-start justify-between pb-3">
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between pb-4">
         <div className="flex items-center gap-2">
-          <Rocket className="text-primary h-5 w-5" />
-          <CardTitle className="text-base">{__('Get Started with YayBoost', 'yayboost')}</CardTitle>
+          <Rocket className="h-5 w-5 text-primary" />
+          <CardTitle className="text-base font-medium">
+            {__('Get Started with YayBoost', 'yayboost')}
+          </CardTitle>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:text-foreground -mt-1 -mr-2 h-8 w-8"
+          className="-mr-2 -mt-1 h-8 w-8 text-muted-foreground hover:text-foreground"
           onClick={handleDismiss}
           disabled={dismissMutation.isPending}
         >
@@ -97,51 +101,50 @@ export function OnboardingChecklist() {
           <span className="sr-only">{__('Dismiss', 'yayboost')}</span>
         </Button>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {/* Progress bar */}
-        <div className="space-y-1">
-          <div className="text-muted-foreground flex justify-between text-sm">
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-muted-foreground">
             <span>
               {completedCount} {__('of', 'yayboost')} {totalSteps} {__('completed', 'yayboost')}
             </span>
             <span>{Math.round(progressPercent)}%</span>
           </div>
-          <Progress value={progressPercent} className="h-2" />
+          <Progress value={progressPercent} className="h-2 [&>div]:bg-success" />
         </div>
 
         {/* Steps list */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {steps.map((step) => (
             <div
               key={step.id}
               className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
                 step.completed
-                  ? 'border-[#A5D6A7] bg-[#E8F5E9] dark:border-[#1B5E20] dark:bg-[#1B5E20]/30'
-                  : 'bg-background border-border'
+                  ? 'border-success/20 bg-success/5'
+                  : 'border-border bg-card'
               }`}
             >
               {/* Status icon */}
               <div className="flex-shrink-0">
                 {step.completed ? (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#279727]">
-                    <Check className="h-3 w-3 text-white" />
-                  </div>
+                  <CheckCircle2 className="h-5 w-5 text-success" />
                 ) : (
-                  <div className="border-muted-foreground/30 flex h-5 w-5 items-center justify-center rounded-full border">
-                    <Circle className="text-muted-foreground/30 bg-muted-foreground/30 rounded-full h-2 w-2" />
-                  </div>
+                  <Circle className="h-5 w-5 text-muted-foreground/40" />
                 )}
               </div>
 
               {/* Content */}
               <div className="min-w-0 flex-1">
                 <p
-                  className={`text-sm font-medium ${step.completed ? 'text-muted-foreground line-through' : ''}`}
+                  className={`text-sm font-medium ${
+                    step.completed ? 'text-muted-foreground line-through' : 'text-foreground'
+                  }`}
                 >
                   {step.title}
                 </p>
-                {!step.completed && (
-                  <p className="text-muted-foreground text-xs">{step.description}</p>
+                {!step.completed && step.description && (
+                  <p className="text-xs text-muted-foreground">{step.description}</p>
                 )}
               </div>
 

@@ -99,7 +99,7 @@ export function FeatureHealthGrid() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <FeatureCardSkeleton />
             <FeatureCardSkeleton />
             <FeatureCardSkeleton />
@@ -112,7 +112,7 @@ export function FeatureHealthGrid() {
             {__('No features available', 'yayboost')}
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {features.map((feature) => {
               const healthConfig = HEALTH_CONFIG[feature.health];
               const icon = FEATURE_ICONS[feature.id] || <Sparkles className="h-5 w-5" />;
