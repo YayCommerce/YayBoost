@@ -1,24 +1,4 @@
-.yayboost-recommendations-block__grid{
-    > * {
-        display: grid !important;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
-        gap: 1.5rem !important;
-        align-items: stretch !important;
-        justify-items: stretch !important;
-        width: 100% !important;
-        
-        li{
-            margin-top: 0 !important;
-            overflow: hidden !important;
-            transition: all 0.3s ease !important;
-            display: flex !important;
-            flex-direction: column !important;
-            height: 100% !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            &:hover {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-            }
-        }
-    }
+.yayboost-recommendations-block{
+    margin: 0 auto !important;
+    max-width: var(--wp--style--global--wide-size, 100%) !important;
 }

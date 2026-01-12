@@ -24,7 +24,12 @@ const DEFAULT_QUERY = {
 };
 
 const DEFAULT_ATTRIBUTES = {
-  query: DEFAULT_QUERY
+  query: DEFAULT_QUERY,
+  displayLayout: {
+    type: "flex",
+    columns: 4,
+    shrinkColumns: true,
+  },
 };
 
 const INNER_BLOCKS_PRODUCT_TEMPLATE = [
@@ -83,6 +88,8 @@ const Edit = (props) => {
     template: INNER_BLOCKS_TEMPLATE,
   });
 
+  blockProps.className = blockProps.className + ' yayboost-recommendations-block';
+
   const instanceId = useInstanceId(Edit);
 
   useEffect(() => {
@@ -103,7 +110,6 @@ const Edit = (props) => {
 
   return (
     <div {...blockProps}>
-		<div className="yayboost-recommendations__title" style={{fontSize: 12, marginBottom: 10}}>Related products</div>
       <div {...innerBlocksProps} />
     </div>
   );

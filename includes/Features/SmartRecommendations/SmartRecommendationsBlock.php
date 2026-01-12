@@ -182,24 +182,16 @@ class SmartRecommendationsBlock {
 			return $block_content;
 		}
 
-		$first_rule = $matching_rules[0];
-		$layout = 'list' === $first_rule['settings']['layout'] ? '__list' : '__grid';
-		$section_title = $first_rule['settings']['section_title'] ?? 'Test';
-
 		$tags = new \WP_HTML_Tag_Processor( $block_content );
 
 		if ( $tags->next_tag() ) {
 			$existing_class = $tags->get_attribute( 'class' );
-			$new_class = $existing_class . ' yayboost-recommendations-block' . $layout;
+			$new_class = $existing_class . ' yayboost-recommendations-block';
 
 			$tags->set_attribute( 'class', $new_class );
 		}
 
 		$block_content = $tags->get_updated_html();
-
-		$h3_html = '<h3 class="yayboost-recommendations__title">' . esc_html( $section_title ) . '</h3>';
-
-		$block_content = $h3_html . $block_content;
 
 		return $block_content;
 	}

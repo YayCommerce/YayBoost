@@ -14,11 +14,20 @@
       },
       "query": {
         "type": "object"
+      },
+      "displayLayout": {
+        "type": "object",
+        "default": {
+          "type": "flex",
+          "columns": 4,
+          "shrinkColumns": true
+        }
       }
     },
     "providesContext": {
       "queryId": "queryId",
-      "query": "query"
+      "query": "query",
+      "displayLayout": "displayLayout"
     },
     "supports": {
       "html": false,
@@ -31,5 +40,6 @@
     },
     "textdomain": "yayboost",
     "editorScript": "file:./index.js",
-    "style": "file:./style-index.css"
+    "style": "file:./style-index.css",
+    "editorStyle": "file:./style-index.css"
 }
