@@ -84,14 +84,14 @@ class NextOrderCouponFeature extends AbstractFeature {
      * @return void
      */
     public function generate_coupon_for_order(int $order_id): void {
-        // Check if coupon already generated for this order
-        $existing_coupon = get_post_meta( $order_id, '_yayboost_next_order_coupon', true );
-        if ( ! empty( $existing_coupon )) {
+        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+        if ( ! $order) {
             return;
         }
 
-        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-        if ( ! $order) {
+        // Check if coupon already generated for this order
+        $existing_coupon = $order->get_meta( '_yayboost_next_order_coupon' );
+        if ( ! empty( $existing_coupon )) {
             return;
         }
 
@@ -165,12 +165,10 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        // Store coupon meta: source order ID
-        update_post_meta( $coupon_id, '_yayboost_source_order_id', $order_id );
-
-        // Store coupon code in order meta
-        update_post_meta( $order_id, '_yayboost_next_order_coupon', $coupon_code );
-        update_post_meta( $order_id, '_yayboost_next_order_coupon_id', $coupon_id );
+        // Store coupon code in order meta using WooCommerce object methods
+        $order->update_meta_data( '_yayboost_next_order_coupon', $coupon_code );
+        $order->update_meta_data( '_yayboost_next_order_coupon_id', $coupon_id );
+        $order->save();
     }
 
     /**
@@ -208,15 +206,21 @@ class NextOrderCouponFeature extends AbstractFeature {
         }
 
         // Check customer type
-        $customer_type = $settings['customer_type'] ?? 'all';
-        $customer_id   = $order->get_customer_id();
+        $customer_type_setting = $settings['customer_type'] ?? 'all';
+        // Skip customer type check if 'all'
+        if ($customer_type_setting === 'all') {
+            return true;
+        }
 
-        if ($customer_type === 'first_time') {
-            if ( ! $this->is_first_time_customer( $customer_id, $order->get_id() )) {
+        // Get customer type (with user meta caching)
+        $customer_type = $this->get_customer_type( $order );
+
+        if ($customer_type_setting === 'first_time') {
+            if ($customer_type !== 'first_time') {
                 return false;
             }
-        } elseif ($customer_type === 'returning') {
-            if ( ! $this->is_returning_customer( $customer_id, $order->get_id() )) {
+        } elseif ($customer_type_setting === 'returning') {
+            if ($customer_type !== 'returning') {
                 return false;
             }
         }
@@ -225,57 +229,82 @@ class NextOrderCouponFeature extends AbstractFeature {
     }
 
     /**
-     * Check if customer is first-time customer
+     * Get customer type (first_time or returning) based on email order history
      *
-     * @param int $customer_id Customer ID.
-     * @param int $current_order_id Current order ID to exclude.
-     * @return bool
+     * All customers (including guests) are treated the same - checked by email
+     * Uses dual cache: transient (email-based) + user meta (customer_id-based)
+     *
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
+     * @return string 'first_time' or 'returning'
      */
-    protected function is_first_time_customer(int $customer_id, int $current_order_id): bool {
-        if ($customer_id === 0) {
-            // Guest checkout - can't determine, default to false
-            return false;
+    protected function get_customer_type(\WC_Order $order): string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+        $billing_email = $order->get_billing_email();
+
+        // No email = cannot determine, default to first_time
+        if (empty( $billing_email )) {
+            return 'first_time';
         }
 
-        // Query completed/processing orders BEFORE current order (exclude current order)
-        $orders = \wc_get_orders( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-            [
-                'customer_id' => $customer_id,
-                'status'      => [ 'wc-completed', 'wc-processing' ],
-                'exclude'     => [ $current_order_id ],
-                'limit'       => 1,
-                'return'      => 'ids',
-            ]
-        );
+        // Check transient cache by email (works for both guest and logged-in)
+        $cache_key   = 'yayboost_customer_type_' . md5( $billing_email );
+        $cached_type = get_transient( $cache_key );
+        if ($cached_type !== false && in_array( $cached_type, [ 'first_time', 'returning' ], true )) {
+            return $cached_type;
+        }
 
-        // First-time if no previous orders
-        return count( $orders ) === 0;
+        // Also check user meta cache if logged-in customer (faster lookup)
+        $customer_id = $order->get_customer_id();
+        if ($customer_id > 0) {
+            $user_cached_type = get_user_meta( $customer_id, '_yayboost_customer_type', true );
+            if ( ! empty( $user_cached_type ) && in_array( $user_cached_type, [ 'first_time', 'returning' ], true )) {
+                // Sync to transient cache for consistency
+                set_transient( $cache_key, $user_cached_type, DAY_IN_SECONDS );
+                return $user_cached_type;
+            }
+        }
+
+        // Calculate using email-based query (limit 1 stops at first match)
+        $has_previous  = $this->has_previous_orders_by_email( $billing_email, $order->get_id() );
+        $customer_type = $has_previous ? 'returning' : 'first_time';
+
+        // Cache result in transient (24 hours) - works for both guest and logged-in
+        set_transient( $cache_key, $customer_type, DAY_IN_SECONDS );
+
+        // Also cache in user meta if logged-in customer (for faster future lookup)
+        if ($customer_id > 0) {
+            update_user_meta( $customer_id, '_yayboost_customer_type', $customer_type );
+        }
+
+        return $customer_type;
     }
 
     /**
-     * Check if customer is returning customer
+     * Check if email has previous orders (simple and fast)
      *
-     * @param int $customer_id Customer ID.
-     * @param int $current_order_id Current order ID to exclude.
+     * Uses wc_get_orders with billing_email - works for both guest and logged-in customers
+     * WooCommerce handles HPOS compatibility automatically
+     *
+     * @param string $email Email address to check.
+     * @param int    $current_order_id Current order ID to exclude.
      * @return bool
      */
-    protected function is_returning_customer(int $customer_id, int $current_order_id): bool {
-        if ($customer_id === 0) {
+    protected function has_previous_orders_by_email(string $email, int $current_order_id): bool {
+        if (empty( $email )) {
             return false;
         }
 
-        // Query completed/processing orders BEFORE current order (exclude current order)
+        // WooCommerce automatically handles HPOS vs legacy tables
+        // Limit 1 stops as soon as finds one match (fast)
         $orders = \wc_get_orders( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
             [
-                'customer_id' => $customer_id,
-                'status'      => [ 'wc-completed', 'wc-processing' ],
-                'exclude'     => [ $current_order_id ],
-                'limit'       => 1,
-                'return'      => 'ids',
+                'billing_email' => $email,
+                'status'        => [ 'wc-completed', 'wc-processing' ],
+                'exclude'       => [ $current_order_id ],
+                'limit'         => 1,
+                'return'        => 'ids',
             ]
         );
 
-        // Returning if has previous orders
         return count( $orders ) > 0;
     }
 
@@ -294,8 +323,17 @@ class NextOrderCouponFeature extends AbstractFeature {
             $allowed_emails[] = $billing_email;
         }
 
-        // Also add user_email if logged-in customer (for WooCommerce coupon validation)
+        // Get customer ID (from order or from email if guest checkout)
         $customer_id = $order->get_customer_id();
+        if ($customer_id === 0 && ! empty( $billing_email )) {
+            // Guest checkout - check if email has account
+            $existing_user_id = email_exists( $billing_email );
+            if ($existing_user_id) {
+                $customer_id = $existing_user_id;
+            }
+        }
+
+        // Add user_email if customer has account (for WooCommerce coupon validation)
         if ($customer_id > 0) {
             $user = get_userdata( $customer_id );
             if ($user && ! empty( $user->user_email )) {
@@ -328,6 +366,9 @@ class NextOrderCouponFeature extends AbstractFeature {
             // Fallback: append timestamp if somehow duplicate exists
             $code = $prefix . $order_id . '-' . time();
         }
+
+        // Allow modification of generated code before returning
+        $code = apply_filters( 'yayboost_coupon_code_generated', $code, $prefix, $order_id, $this );
 
         return $code;
     }
@@ -369,7 +410,12 @@ class NextOrderCouponFeature extends AbstractFeature {
      * @return string|null
      */
     protected function get_coupon_from_order(int $order_id): ?string {
-        $coupon_code = get_post_meta( $order_id, '_yayboost_next_order_coupon', true );
+        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+        if ( ! $order) {
+            return null;
+        }
+
+        $coupon_code = $order->get_meta( '_yayboost_next_order_coupon' );
         return ! empty( $coupon_code ) ? $coupon_code : null;
     }
 
@@ -516,16 +562,8 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        // Unified HTML structure
-        $container_style = 'margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;';
-
-        // Adjust padding for my_account context
-        if ($context === 'my_account') {
-            $container_style = 'margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef;';
-        }
-
         ?>
-        <div class="yayboost-next-order-coupon" style="<?php echo esc_attr( $container_style ); ?>">
+        <div class="yayboost-next-order-coupon" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 6px;">
             <?php if ( ! empty( $headline ) && $context === 'thank_you_page' ) : ?>
                 <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
                     <?php echo esc_html( $headline ); ?>
