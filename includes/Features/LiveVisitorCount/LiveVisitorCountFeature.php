@@ -142,10 +142,10 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 */
 	private function get_position_hook( string $position ): string {
 		$hooks = array(
-			'below_product_title'       => 'woocommerce_single_product_summary',
-			'above_add_to_cart_button'  => 'woocommerce_before_add_to_cart_button',
-			'below_add_to_cart_button'  => 'woocommerce_after_add_to_cart_button',
-			'below_price'               => 'woocommerce_single_product_summary',
+			'below_product_title'      => 'woocommerce_single_product_summary',
+			'above_add_to_cart_button' => 'woocommerce_before_add_to_cart_form	',
+			'below_add_to_cart_button' => 'woocommerce_after_add_to_cart_form',
+			'below_price'              => 'woocommerce_single_product_summary',
 		);
 
 		return $hooks[ $position ] ?? 'woocommerce_single_product_summary';
@@ -159,10 +159,10 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	 */
 	private function get_position_priority( string $position ): int {
 		$priorities = array(
-			'below_product_title'       => 6,
-			'above_add_to_cart_button'  => 10,
-			'below_add_to_cart_button'  => 10,
-			'below_price'               => 11,
+			'below_product_title'      => 6,
+			'above_add_to_cart_button' => 10,
+			'below_add_to_cart_button' => 10,
+			'below_price'              => 11,
 		);
 
 		return $priorities[ $position ] ?? 6;
