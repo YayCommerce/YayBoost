@@ -95,7 +95,16 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Edit size={16} onClick={() => navigate({ to: invoice.rule })} />
+                  <Edit
+                    size={16}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      navigate({
+                        to: '/features/$featureId/$entityId',
+                        params: { featureId, entityId: invoice.rule },
+                      })
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ))}

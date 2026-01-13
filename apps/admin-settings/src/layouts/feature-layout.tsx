@@ -4,7 +4,7 @@
 
 import { SpinnerIcon } from '@phosphor-icons/react';
 import { ArrowUpRightIcon, FolderLockIcon } from 'lucide-react';
-import { Link, Outlet, useNavigate } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 
 import { useFeature, useToggleFeature } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
@@ -59,7 +59,7 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
     <div className="space-y-6">
       {/* Feature content */}
       {feature.enabled ? (
-        children || <Outlet />
+        children
       ) : (
         <Empty>
           <EmptyHeader>
