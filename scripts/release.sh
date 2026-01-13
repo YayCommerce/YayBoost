@@ -25,6 +25,7 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin-settings"
+BLOCKS_DIR="$PLUGIN_DIR/apps/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
 PLUGIN_SLUG="yayboost"
 RELEASE_SLUG="yayboost"  # Folder name in ZIP package
@@ -140,6 +141,31 @@ build_admin() {
     print_success "Admin dashboard built"
 }
 
+# Build blocks (Gutenberg blocks + WooCommerce slots)
+build_blocks() {
+    print_step "Building blocks..."
+    check_pnpm
+
+    cd "$BLOCKS_DIR"
+
+    # Install deps if needed
+    if [ ! -d "node_modules" ]; then
+        print_step "Installing blocks dependencies..."
+        pnpm install
+    fi
+
+    # Install slots deps if needed
+    if [ ! -d "slots/node_modules" ]; then
+        print_step "Installing slots dependencies..."
+        cd slots && pnpm install && cd ..
+    fi
+
+    # Build all blocks (blocks + slots)
+    pnpm build:all
+
+    print_success "Blocks built"
+}
+
 # Create release package
 cmd_package() {
     local version=${1:-$(get_version)}
@@ -158,6 +184,9 @@ cmd_package() {
 
     # Build admin
     build_admin
+
+    # Build blocks
+    build_blocks
 
     # Create temp directory for package (uses RELEASE_SLUG for folder name)
     local temp_dir="$RELEASE_DIR/$RELEASE_SLUG"
