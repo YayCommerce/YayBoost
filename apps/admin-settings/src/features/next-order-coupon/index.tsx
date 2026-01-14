@@ -558,7 +558,8 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                   />
                 </FormControl>
                 <FormDescription>
-                  {__('Available placeholders:', 'yayboost')} {'{discount}'}
+                  {__('Available placeholders:', 'yayboost')} {'{coupon_code}'}, {'{discount}'},{' '}
+                  {'{expiry}'}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

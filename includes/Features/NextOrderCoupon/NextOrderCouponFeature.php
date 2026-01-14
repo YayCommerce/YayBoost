@@ -509,11 +509,18 @@ class NextOrderCouponFeature extends AbstractFeature {
             $settings['discount_value'] ?? 0
         );
 
+        $expires_after  = $settings['expires_after'] ?? 30;
+        $completed_date = $order->get_date_completed();
+        $expiry_date    = '';
+        if ($completed_date) {
+            $expiry_date = date_i18n( get_option( 'date_format' ), $completed_date->getTimestamp() + ( $expires_after * DAY_IN_SECONDS ) );
+        }
+
         $email_content = $this->format_coupon_message(
             $settings['email_content'] ?? __( "As a thank you, here's {discount} off your next order!", 'yayboost' ),
             $coupon_code,
             $discount_display,
-            ''
+            $expiry_date
         );
 
         $this->render_coupon_display( $coupon_code, $email_content, 'email', '', $plain_text );
