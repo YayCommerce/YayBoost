@@ -3,7 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 // import analyze from "rollup-plugin-analyzer"
-// import { visualizer } from 'rollup-plugin-visualizer';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
 import pluginExternal, { Options } from 'vite-plugin-external';
 
@@ -31,15 +31,22 @@ const externalOptions = {
     externals: {
       '@wordpress/hooks': 'wp.hooks',
       '@wordpress/i18n': 'wp.i18n',
+      '@wordpress/components': 'wp.components',
+      '@wordpress/element': 'wp.element',
     },
   },
 
   production: {
     externals: {
-      // Note: React/ReactDOM NOT externalized - TanStack Router needs bundled versions
-      // to avoid context mismatch with flushSync
+      // React externalized - using WordPress's bundled React
+      // This requires WordPress 6.4+ which bundles React 18.2.0
+      'react': 'React',
+      'react-dom': 'ReactDOM',
+      'react-dom/client': 'ReactDOM',
       '@wordpress/hooks': 'wp.hooks',
       '@wordpress/i18n': 'wp.i18n',
+      '@wordpress/components': 'wp.components',
+      '@wordpress/element': 'wp.element',
     },
   },
 };
@@ -68,6 +75,7 @@ export default defineConfig({
   },
   build: {
     minify: 'terser',
+    sourcemap: false,
     terserOptions: terserOptions,
     manifest: false,
     emptyOutDir: true,
@@ -81,9 +89,29 @@ export default defineConfig({
       output: {
         entryFileNames: '[name].js',
         assetFileNames: '[name].[ext]',
+        chunkFileNames: 'chunks/[name]-[hash].js',
+        manualChunks(id) {
+          // React core - externalized to WordPress's React
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'vendor-react';
+          }
+          // TanStack libraries (router + query)
+          if (id.includes('node_modules/@tanstack')) {
+            return 'vendor-tanstack';
+          }
+          // Radix UI primitives
+          if (id.includes('node_modules/@radix-ui')) {
+            return 'vendor-radix';
+          }
+          // Form libraries (react-hook-form + zod)
+          if (id.includes('node_modules/react-hook-form') || id.includes('node_modules/zod') || id.includes('node_modules/@hookform')) {
+            return 'vendor-forms';
+          }
+        },
       },
       plugins: [
-        // analyze({ summaryOnly: true, limit:10 }),
+        // Uncomment for bundle analysis:
+        // visualizer({ filename: 'bundle-stats.html', gzipSize: true, brotliSize: true }),
       ],
     },
   },
