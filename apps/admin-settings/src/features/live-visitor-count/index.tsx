@@ -30,6 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DisplayPositionSelect,
+  isUseBlockPosition,
+  PAGE_PRODUCT,
+  getPositionValues,
+} from '@/lib/display-position';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
@@ -37,6 +43,19 @@ import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
+
+// Allowed positions for this feature
+const ALLOWED_POSITIONS = [
+  'below_product_title',
+  'above_add_to_cart_button',
+  'below_add_to_cart_button',
+];
+
+// Get valid position values for schema (includes use_block)
+const validPositions = getPositionValues(PAGE_PRODUCT, ALLOWED_POSITIONS, true) as [
+  string,
+  ...string[],
+];
 
 // Settings schema
 const settingsSchema = z.object({
@@ -52,13 +71,7 @@ const settingsSchema = z.object({
   }),
   display: z.object({
     text: z.string().min(1),
-    position: z.enum([
-      'below_product_title',
-      'above_add_to_cart_button',
-      'below_add_to_cart_button',
-      'below_price',
-      'use_block',
-    ]),
+    position: z.enum(validPositions),
   }),
   style: z.object({
     style: z.enum(['style_1', 'style_2', 'style_3']),
@@ -389,27 +402,16 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             render={({ field }) => (
               <FormItem>
                 <Label>{__('Position on Product Page', 'yayboost')}</Label>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder={__('Select position', 'yayboost')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="below_product_title">
-                      {__('Below product title', 'yayboost')}
-                    </SelectItem>
-                    <SelectItem value="above_add_to_cart_button">
-                      {__('Above add to cart button', 'yayboost')}
-                    </SelectItem>
-                    <SelectItem value="below_add_to_cart_button">
-                      {__('Below add to cart button', 'yayboost')}
-                    </SelectItem>
-                    <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
-                    <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                {field.value === 'use_block' && (
+                <FormControl>
+                  <DisplayPositionSelect
+                    pageType={PAGE_PRODUCT}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    allowedPositions={ALLOWED_POSITIONS}
+                    includeUseBlock
+                  />
+                </FormControl>
+                {isUseBlockPosition(field.value) && (
                   <FormDescription>
                     {__(
                       'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',

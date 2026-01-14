@@ -6,6 +6,11 @@ import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
 import { __ } from '@/lib/utils';
+import {
+  DisplayPositionSelect,
+  PAGE_PRODUCT,
+  getPositionValues,
+} from '@/lib/display-position';
 import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +37,18 @@ import { SettingsCard } from '@/components/settings-card';
 
 import { FeatureComponentProps } from '..';
 
+// Allowed positions for this feature on product page
+const ALLOWED_PRODUCT_POSITIONS = [
+  'below_product_title',
+  'below_add_to_cart_button',
+];
+
+// Get valid position values for schema
+const validProductPositions = getPositionValues(PAGE_PRODUCT, ALLOWED_PRODUCT_POSITIONS) as [
+  string,
+  ...string[],
+];
+
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
@@ -49,7 +66,7 @@ const settingsSchema = z.object({
     .optional(),
   fill_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   background_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  position_on_product_page: z.enum(['below_title', 'below_price', 'below_add_to_cart']),
+  position_on_product_page: z.enum(validProductPositions),
   show_on: z.array(z.string()),
   apply_to: z.enum(['all_products', 'specific_categories', 'specific_products']),
   specific_categories: z.array(z.string()),
@@ -332,24 +349,12 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
           <FormItem>
             <Label>Position on product page</Label>
             <FormControl>
-              <RadioGroup
-                onValueChange={field.onChange}
+              <DisplayPositionSelect
+                pageType={PAGE_PRODUCT}
                 value={field.value}
-                className="flex flex-col gap-2"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="below_title" id="below-title" />
-                  <Label htmlFor="below-title">Below product title</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="below_price" id="below-price" />
-                  <Label htmlFor="below-price">Below price</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="below_add_to_cart" id="below-add-to-cart" />
-                  <Label htmlFor="below-add-to-cart">Below add to cart button</Label>
-                </div>
-              </RadioGroup>
+                onValueChange={field.onChange}
+                allowedPositions={ALLOWED_PRODUCT_POSITIONS}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
