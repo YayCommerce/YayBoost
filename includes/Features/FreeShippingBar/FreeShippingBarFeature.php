@@ -11,6 +11,7 @@
 namespace YayBoost\Features\FreeShippingBar;
 
 use YayBoost\Features\AbstractFeature;
+use YayBoost\Analytics\AnalyticsTracker;
 
 /**
  * Free Shipping Bar feature implementation
@@ -72,6 +73,13 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @var int
      */
     protected $priority = 1;
+
+    /**
+     * Track if impression already logged this request
+     *
+     * @var bool
+     */
+    private static $impression_logged = false;
 
     /**
      * Initialize the feature
@@ -159,7 +167,46 @@ class FreeShippingBarFeature extends AbstractFeature {
             );
         }
 
-        echo $this->get_bar_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        $bar_html = $this->get_bar_html();
+
+        if ( ! empty( $bar_html ) ) {
+            // Track impression (once per request)
+            $this->track_impression();
+
+            echo $bar_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
+    }
+
+    /**
+     * Track impression for analytics
+     *
+     * @return void
+     */
+    private function track_impression(): void {
+        // Prevent duplicate tracking within same request
+        if ( self::$impression_logged ) {
+            return;
+        }
+
+        // Don't track in admin or AJAX requests (fragments)
+        if ( is_admin() || wp_doing_ajax() ) {
+            return;
+        }
+
+        self::$impression_logged = true;
+
+        $bar_data = $this->get_bar_data();
+        $metadata = [
+            'threshold' => $bar_data['threshold'] ?? 0,
+            'current'   => $bar_data['current'] ?? 0,
+            'state'     => $bar_data['achieved'] ? 'achieved' : 'in_progress',
+        ];
+
+        AnalyticsTracker::impression(
+            AnalyticsTracker::FEATURE_FREE_SHIPPING,
+            0, // No specific product for this feature
+            $metadata
+        );
     }
 
     /**
@@ -704,6 +751,11 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @return array Bar data array
      */
     protected function build_bar_response(float $threshold, float $cart_total, array $progress_data, string $message, string $state): array {
+        // Track threshold reached (once per session when state becomes achieved)
+        if ( $state === self::STATE_ACHIEVED ) {
+            $this->track_threshold_reached( $threshold, $cart_total );
+        }
+
         return [
             'threshold'           => $threshold,
             'current'             => $cart_total,
@@ -713,6 +765,48 @@ class FreeShippingBarFeature extends AbstractFeature {
             'message'             => $message,
             'show_coupon_message' => $state === self::STATE_NEED_COUPON,
         ];
+    }
+
+    /**
+     * Track when user reaches free shipping threshold
+     *
+     * Uses transient to prevent duplicate tracking within same session.
+     *
+     * @param float $threshold Threshold amount.
+     * @param float $cart_total Cart total.
+     * @return void
+     */
+    private function track_threshold_reached( float $threshold, float $cart_total ): void {
+        // Don't track in admin or AJAX (let page load track it)
+        if ( is_admin() || wp_doing_ajax() ) {
+            return;
+        }
+
+        // Use session-based tracking to prevent duplicates
+        $session_key = 'yayboost_fsb_achieved_' . md5( WC()->session->get_customer_id() . '_' . $threshold );
+        $already_tracked = get_transient( $session_key );
+
+        if ( $already_tracked ) {
+            return;
+        }
+
+        // Mark as tracked for 1 hour (typical session length)
+        set_transient( $session_key, time(), HOUR_IN_SECONDS );
+
+        // Log the conversion event
+        AnalyticsTracker::log(
+            AnalyticsTracker::FEATURE_FREE_SHIPPING,
+            'threshold_reached',
+            [
+                'product_id' => 0,
+                'revenue'    => $cart_total,
+                'metadata'   => [
+                    'threshold'  => $threshold,
+                    'cart_total' => $cart_total,
+                    'exceeded'   => $cart_total - $threshold,
+                ],
+            ]
+        );
     }
 
     /**
@@ -835,6 +929,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
+                'enabled'           => true,
                 'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
                 'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
                 'message_coupon'    => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),

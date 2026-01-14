@@ -9,7 +9,6 @@ namespace YayBoost;
 
 use YayBoost\Container\Container;
 use YayBoost\Interfaces\ServiceProviderInterface;
-use YayBoost\Features\SampleBoost\SampleBoostFeature;
 use YayBoost\Features\FreeShippingBar\FreeShippingBarFeature;
 use YayBoost\Features\OrderBump\OrderBumpFeature;
 use YayBoost\Features\FrequentlyBoughtTogether\FrequentlyBoughtTogetherFeature;
@@ -70,14 +69,6 @@ class ServiceProvider implements ServiceProviderInterface {
      * @return void
      */
     protected function register_features( Container $container ): void {
-        // Register Sample Boost Feature (Recently Viewed Products)
-        $container->register(
-            'feature.sample_boost',
-            function ( $c ) {
-                return new SampleBoostFeature( $c );
-            }
-        );
-        $this->features[] = 'feature.sample_boost';
 
         // Register Free Shipping Bar Feature
         $container->register(

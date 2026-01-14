@@ -89,7 +89,7 @@ Ensure you have the following installed:
    
    Create a `wp-config.php` constant or ensure `vite.config.ts` exists in `apps/admin-settings/`:
    ```php
-   define('YAYBOOST_DEV', true);
+   define('YAYBOOST_IS_DEVELOPMENT', true);
    ```
 
 5. **Start development server**

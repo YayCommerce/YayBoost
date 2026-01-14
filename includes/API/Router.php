@@ -60,9 +60,18 @@ class Router {
 
         // Register settings routes
         $this->register_controller( new Controllers\SettingsController( $this->container ) );
+
+        // Register FBT routes
+        $this->register_controller( new Controllers\FBTController( $this->container ) );
     
         // Register Product Data routes
         $this->register_controller( new Controllers\ProductDataController( $this->container ) );
+
+        // Register Analytics routes
+        $this->register_controller( new Controllers\AnalyticsController( $this->container ) );
+
+        // Register Dashboard routes (onboarding, activity, etc.)
+        $this->register_controller( new Controllers\DashboardController( $this->container ) );
     }
 
     /**

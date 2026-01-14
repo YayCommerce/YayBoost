@@ -5,14 +5,13 @@
 
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { __ } from '@wordpress/i18n';
-import { BookIcon, HeadsetIcon, HouseIcon, PackageIcon, SettingsIcon } from 'lucide-react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { BookIcon, HeadsetIcon, HouseIcon, PackageIcon, Rocket, SettingsIcon } from 'lucide-react';
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 
-import { getImageUrl } from '@/lib/utils';
+import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { HeaderNavMenuItem, HeaderNavMenuList } from '@/components/ui/navmenu-header';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Footer } from '@/components/layout/Footer';
 
 const navigation = [
   { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: HouseIcon },
@@ -40,7 +39,7 @@ export function DashboardLayout() {
   const handleTabChange = (value: string) => {
     const menu = navigation.find((m) => m.key === value);
     if (menu) {
-      navigate(menu.path);
+      navigate({ to: menu.path });
     }
   };
 
@@ -51,11 +50,14 @@ export function DashboardLayout() {
         <div className="bg-background relative flex h-[54px] items-center gap-2 pr-2.5 sm:gap-5 sm:pr-6">
           {/* Logo */}
           <div className="border-input hidden h-full items-center bg-[#FFF5DB] px-[3px] pt-[3px] sm:flex">
-            <img
+            {/* <img
               className="h-[30px] w-[30px] sm:h-[50px] sm:w-[50px]"
               src={getImageUrl('yayrev-logo.png')}
               alt="YayReviews Logo"
-            />
+            /> */}
+            <div className='flex items-center justify-center w-[50px]'>
+              <Rocket className="h-6 w-6" />
+            </div>
           </div>
 
           {/* Tab Navigation */}
@@ -114,3 +116,5 @@ export function DashboardLayout() {
     </div>
   );
 }
+
+export default DashboardLayout;

@@ -1,6 +1,7 @@
 import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 // import analyze from "rollup-plugin-analyzer"
 // import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig, loadEnv } from 'vite';
@@ -8,11 +9,11 @@ import pluginExternal, { Options } from 'vite-plugin-external';
 
 process.env = {
   ...process.env,
-  ...loadEnv(process.env.mode || 'development', process.cwd()), 
+  ...loadEnv(process.env.mode || 'development', process.cwd()),
 };
 
 const terserOptions = {
-  output: {
+  format: {
     comments: /translators:/i,
   },
   compress: {
@@ -23,34 +24,22 @@ const terserOptions = {
   },
 };
 
-const externalOptions: Options = {
-  /** @type 'auto' */
+const externalOptions = {
   interop: 'auto',
 
   development: {
     externals: {
       '@wordpress/hooks': 'wp.hooks',
       '@wordpress/i18n': 'wp.i18n',
-      '@wordpress/blocks': 'wp.blocks',
-      '@wordpress/block-editor': 'wp.blockEditor',
-      '@wordpress/element': 'wp.element',
-      '@wordpress/editor': 'wp.editor',
-      '@wordpress/components': 'wp.components',
     },
   },
 
   production: {
     externals: {
+      // Note: React/ReactDOM NOT externalized - TanStack Router needs bundled versions
+      // to avoid context mismatch with flushSync
       '@wordpress/hooks': 'wp.hooks',
       '@wordpress/i18n': 'wp.i18n',
-      react: 'React',
-      'react-dom': 'ReactDOM',
-      'react-dom/client': 'ReactDOM',
-      '@wordpress/components': 'wp.components',
-      '@wordpress/blocks': 'wp.blocks',
-      '@wordpress/block-editor': 'wp.blockEditor',
-      '@wordpress/element': 'wp.element',
-      '@wordpress/editor': 'wp.editor',
     },
   },
 };
@@ -60,6 +49,12 @@ export default defineConfig({
   root: './src',
 
   plugins: [
+    TanStackRouterVite({
+      routesDirectory: './routes',
+      generatedRouteTree: './routeTree.gen.ts',
+      routeFileIgnorePrefix: '-',
+      quoteStyle: 'single',
+    }),
     react({ jsxRuntime: 'classic' }),
     tailwindcss(),
     pluginExternal(externalOptions),
@@ -82,27 +77,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'src/main.tsx'),
-        'blocks/free-shipping-bar/block': path.resolve(
-          __dirname,
-          'src/blocks/free-shipping-bar/index.tsx',
-        ),
       },
       output: {
         entryFileNames: '[name].js',
-        assetFileNames: (assetInfo) => {
-          // Keep CSS files in the same structure
-          if (assetInfo.name?.endsWith('.css')) {
-            const name = assetInfo.name;
-            if (name.includes('editor.css')) {
-              return 'blocks/free-shipping-bar/editor.css';
-            }
-            if (name.includes('style.css')) {
-              return 'blocks/free-shipping-bar/style.css';
-            }
-            return name;
-          }
-          return '[name].[ext]';
-        },
+        assetFileNames: '[name].[ext]',
       },
       plugins: [
         // analyze({ summaryOnly: true, limit:10 }),

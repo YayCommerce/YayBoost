@@ -54,7 +54,7 @@ class FeatureCategory {
 			self::OTHERS            => array(
 				'name'        => __( 'Others', 'yayboost' ),
 				'description' => __( 'Features not included in the above categories.', 'yayboost' ),
-				'icon'        => 'dots-three-vertical',
+				'icon'        => 'more-horizontal',
 				'priority'    => 50,
 			),
 		);

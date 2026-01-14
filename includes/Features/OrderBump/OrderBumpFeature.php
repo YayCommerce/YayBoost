@@ -56,7 +56,14 @@ class OrderBumpFeature extends AbstractFeature {
      *
      * @var int
      */
-    protected $priority = 1;
+    protected $priority = 100;
+
+    /**
+     * Feature status
+     *
+     * @var string
+     */
+    protected $status = 'coming_soon';
 
     /**
      * Bump repository

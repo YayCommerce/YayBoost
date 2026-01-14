@@ -3,7 +3,7 @@ import { useCreateEntity, useUpdateEntity } from '@/hooks';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { z } from 'zod';
 
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-import { FeatureComponentProps } from '..';
+// featureId is obtained from route params
 
 // ==================== Schema & Types ====================
 const recommendationRuleSchema = z.object({
@@ -403,7 +403,6 @@ function DisplaySettingsSection({ control }: FormSectionProps) {
   const layoutOptions = [
     { label: 'Grid', value: 'grid' },
     { label: 'List', value: 'list' },
-    { label: 'Slider', value: 'slider' },
   ];
 
   return (
@@ -475,9 +474,10 @@ function StatusSection({ control }: FormSectionProps) {
 }
 
 // ==================== Main Component ====================
-const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
+const RecommendationsEditor = () => {
   const navigate = useNavigate();
-  const { recommendationId } = useParams<{ recommendationId: string }>();
+  const { featureId, entityId } = useParams({ strict: false });
+  const recommendationId = entityId; // Alias for clarity
   const isEditing = !!recommendationId;
 
   const form = useForm<RecommendationRuleFormData>({
@@ -500,8 +500,8 @@ const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
     },
   });
 
-  const createEntity = useCreateEntity(featureId);
-  const updateEntity = useUpdateEntity(featureId);
+  const createEntity = useCreateEntity(featureId || '');
+  const updateEntity = useUpdateEntity(featureId || '');
 
   const isPending = createEntity.isPending || updateEntity.isPending;
 
@@ -533,7 +533,8 @@ const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link
-            to={`/features/${featureId}`}
+            to="/features/$featureId"
+            params={{ featureId: featureId || '' }}
             className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-md border"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -565,7 +566,7 @@ const RecommendationsEditor = ({ featureId }: FeatureComponentProps) => {
       </div>
       {/* Submit button */}
       <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+        <Button type="button" variant="outline" onClick={() => window.history.back()}>
           Cancel
         </Button>
         <Button type="submit" className="bg-[#171717] text-white" disabled={isPending}>

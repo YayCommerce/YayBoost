@@ -1,17 +1,10 @@
 /**
- * Router configuration for YayBoost Admin
+ * TanStack Router Configuration
  * Uses hash-based routing for WordPress admin compatibility
  */
 
-import { lazy, Suspense } from 'react';
-import { DashboardLayout } from '@/layouts/dashboard-layout';
-import { HashRouter, Route, Routes } from 'react-router-dom';
-
-// Lazy load pages
-const Dashboard = lazy(() => import('@/pages/dashboard'));
-const FeatureContainer = lazy(() => import('@/pages/Feature/FeatureContainer'));
-const FeaturePage = lazy(() => import('@/pages/Feature'));
-const GlobalSettings = lazy(() => import('@/pages/settings'));
+import { createHashHistory, createRouter } from '@tanstack/react-router';
+import { routeTree } from './routeTree.gen';
 
 // Loading component
 function PageLoading() {
@@ -22,45 +15,36 @@ function PageLoading() {
   );
 }
 
-export function Router() {
+// Default error component for router-level errors
+function RouterErrorComponent({ error }: { error: Error }) {
+  console.error('=== ROUTER ERROR ===', error);
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<DashboardLayout />}>
-          <Route
-            index
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <Dashboard />
-              </Suspense>
-            }
-          />
-          <Route
-            path="features"
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <FeatureContainer />
-              </Suspense>
-            }
-          />
-          <Route
-            path="features/:featureId/*"
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <FeaturePage />
-              </Suspense>
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <Suspense fallback={<PageLoading />}>
-                <GlobalSettings />
-              </Suspense>
-            }
-          />
-        </Route>
-      </Routes>
-    </HashRouter>
+    <div className="p-6 bg-red-50 border border-red-200 rounded-lg m-4">
+      <h2 className="text-red-800 font-bold text-lg mb-2">Router Error</h2>
+      <pre className="bg-red-100 p-4 rounded overflow-auto text-xs whitespace-pre-wrap">
+        {error.message}
+        {'\n\n'}
+        {error.stack}
+      </pre>
+    </div>
   );
+}
+
+// Create hash history for WordPress admin compatibility
+const hashHistory = createHashHistory();
+
+// Create and export router
+export const router = createRouter({
+  routeTree,
+  history: hashHistory,
+  defaultPreload: 'intent',
+  defaultPendingComponent: PageLoading,
+  defaultErrorComponent: RouterErrorComponent,
+});
+
+// Type-safe router declaration
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
 }

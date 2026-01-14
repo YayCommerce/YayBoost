@@ -1,0 +1,196 @@
+/**
+ * FBT Styles
+ *
+ * Styles for Frequently Bought Together section on product pages.
+ */
+
+.yayboost-fbt {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+}
+
+.yayboost-fbt__title {
+    margin: 0 0 1.5rem;
+    text-align: center;
+}
+
+/* Grid Layout */
+.yayboost-fbt__products--grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+/* List Layout */
+.yayboost-fbt__products--list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.yayboost-fbt__products--list .yayboost-fbt__product {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.yayboost-fbt__products--list .yayboost-fbt__image {
+    width: 80px;
+    flex-shrink: 0;
+}
+
+/* Product Card */
+.yayboost-fbt__product {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.yayboost-fbt__product:hover {
+    border-color: #ddd;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.yayboost-fbt__product.is-unchecked {
+    opacity: 0.6;
+}
+
+/* Checkbox */
+.yayboost-fbt__checkbox {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 10;
+}
+
+.yayboost-fbt__checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+}
+
+/* Image */
+.yayboost-fbt__image {
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.yayboost-fbt__image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.yayboost-fbt__image a {
+    display: block;
+}
+
+/* Info */
+.yayboost-fbt__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-grow: 1;
+}
+
+.yayboost-fbt__name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.yayboost-fbt__name a:hover {
+    color: #0073aa;
+}
+
+.yayboost-fbt__price {
+    font-weight: 600;
+    color: #333;
+}
+
+.yayboost-fbt__price del {
+    color: #999;
+    font-weight: 400;
+    margin-right: 0.5rem;
+}
+
+.yayboost-fbt__price ins {
+    text-decoration: none;
+}
+
+/* Footer */
+.yayboost-fbt__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.yayboost-fbt__total {
+    font-size: 1.1rem;
+}
+
+.yayboost-fbt__total-label {
+    color: #666;
+    margin-right: 0.5rem;
+}
+
+.yayboost-fbt__total-price {
+    font-weight: 600;
+    color: #0073aa;
+}
+
+/* Add Button */
+.yayboost-fbt__add-btn {
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.yayboost-fbt__add-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.yayboost-fbt__add-btn.is-loading {
+    pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .yayboost-fbt {
+        padding: 1rem;
+    }
+
+    .yayboost-fbt__products--grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .yayboost-fbt__footer {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .yayboost-fbt__add-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .yayboost-fbt__products--grid {
+        grid-template-columns: 1fr;
+    }
+}

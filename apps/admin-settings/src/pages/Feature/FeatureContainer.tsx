@@ -70,6 +70,8 @@ export default function FeatureContainer() {
       filteredFeatures = grouped[categoryId] || [];
     }
 
+    filteredFeatures.sort((a, b) => a.priority - b.priority);
+
     // Apply search filter
     if (!searchQuery.trim()) {
       return filteredFeatures;
@@ -145,7 +147,7 @@ export default function FeatureContainer() {
                 placeholder={__('Search', 'yayboost')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 bg-white"
               />
             </div>
           </div>

@@ -5,7 +5,7 @@
  * @package YayBoost
  */
 
-namespace YayBoost\Database;
+namespace YayBoost\Features\LiveVisitorCount;
 
 /**
  * Handles live visitor table creation and management

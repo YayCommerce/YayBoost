@@ -10,6 +10,7 @@
 namespace YayBoost\Features\StockScarcity;
 
 use YayBoost\Features\AbstractFeature;
+use YayBoost\Analytics\AnalyticsTracker;
 
 /**
  * Free Shipping Bar feature implementation
@@ -206,8 +207,37 @@ class StockScarcityFeature extends AbstractFeature {
         $path = YAYBOOST_PATH . 'includes/Features/StockScarcity/templates/stock-scarcity.php';
 
         if (file_exists($path)) {
+            // Track impression
+            $this->track_impression( $current_product );
+
             include $path;
         }
+    }
+
+    /**
+     * Track impression for analytics
+     *
+     * @param \WC_Product $product Product being displayed.
+     * @return void
+     */
+    private function track_impression( $product ): void {
+        // Don't track in admin
+        if ( is_admin() && ! wp_doing_ajax() ) {
+            return;
+        }
+
+        $stock_quantity = $product->get_stock_quantity();
+        $settings       = $this->get_settings();
+
+        AnalyticsTracker::impression(
+            AnalyticsTracker::FEATURE_STOCK_SCARCITY,
+            $product->get_id(),
+            [
+                'stock_quantity'      => $stock_quantity,
+                'low_stock_threshold' => $settings['low_stock_threshold'] ?? 10,
+                'is_urgent'           => $stock_quantity <= ( $settings['urgent_threshold'] ?? 5 ),
+            ]
+        );
     }
 
     /**
@@ -219,6 +249,7 @@ class StockScarcityFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
+                'enabled' => true,
                 'low_stock_threshold' => 10,
                 'show_alert_text' => true,
                 'show_progress_bar' => true,

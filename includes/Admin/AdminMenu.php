@@ -37,7 +37,7 @@ class AdminMenu {
 			'capability'  => 'manage_woocommerce',
 			'menu_slug'   => 'yayboost',
 			'function'    => array( $this, 'render_page' ),
-			'position'    => 55,
+			'position'    => 0,
 		);
 		add_submenu_page( $menu_args['parent_slug'], $menu_args['page_title'], $menu_args['menu_title'], $menu_args['capability'], $menu_args['menu_slug'], $menu_args['function'], $menu_args['position'] );
 	}

@@ -1,6 +1,6 @@
 import { useFeature } from '@/hooks';
 import { Edit, Plus } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from '@tanstack/react-router';
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -61,7 +61,7 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
         description={feature?.description ?? ''}
         goBackRoute={'/features'}
         actions={[
-          <Link to={'new'}>
+          <Link to="/features/$featureId/new" params={{ featureId }}>
             <Button size="sm" className="bg-[#171717] text-[16px] text-white">
               <Plus className="mr-2 h-4 w-4" />
               Add New Rule
@@ -95,7 +95,16 @@ const RecommendationsList = ({ featureId }: FeatureComponentProps) => {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  <Edit size={16} onClick={() => navigate(`${invoice.rule}`)} />
+                  <Edit
+                    size={16}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      navigate({
+                        to: '/features/$featureId/$entityId',
+                        params: { featureId, entityId: invoice.rule },
+                      })
+                    }
+                  />
                 </TableCell>
               </TableRow>
             ))}

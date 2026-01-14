@@ -17,7 +17,7 @@ class RegisterFacade {
         add_filter( 'script_loader_tag', [ $this, 'add_entry_as_module' ], 10, 3 );
         add_action( 'init', [ $this, 'register_all_assets' ] );
 
-        $is_prod = ! defined( 'YAYBOOST_DEV' ) || YAYBOOST_DEV !== true;
+        $is_prod = ! defined( 'YAYBOOST_IS_DEVELOPMENT' ) || YAYBOOST_IS_DEVELOPMENT !== true;
         if ( $is_prod && class_exists( '\YayBoost\Register\RegisterProd' ) ) {
             \YayBoost\Register\RegisterProd::get_instance();
         } elseif ( ! $is_prod && class_exists( '\YayBoost\Register\RegisterDev' ) ) {

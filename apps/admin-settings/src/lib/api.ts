@@ -36,6 +36,8 @@ export interface ApiError {
 }
 
 // Feature types
+export type FeatureStatus = 'available' | 'coming_soon' | 'new' | 'beta';
+
 export interface Feature {
   id: string;
   name: string;
@@ -43,6 +45,7 @@ export interface Feature {
   category: string;
   icon: string;
   priority: number;
+  status: FeatureStatus;
   enabled: boolean;
   settings: Record<string, unknown>;
 }
@@ -211,6 +214,246 @@ export const entityApi = {
       order,
       entity_type: entityType,
     });
+  },
+};
+
+// Analytics types
+export interface AnalyticsFeatureStats {
+  impressions: number;
+  clicks: number;
+  add_to_carts: number;
+  purchases: number;
+  revenue: number;
+  conversion_rate?: number;
+}
+
+export interface AnalyticsDashboardResponse {
+  period: string;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  totals: AnalyticsFeatureStats;
+  conversion_rate: number;
+  features: Record<string, AnalyticsFeatureStats>;
+}
+
+export interface AnalyticsFeatureResponse {
+  feature_id: string;
+  period: string;
+  date_range: {
+    start: string;
+    end: string;
+  };
+  totals: AnalyticsFeatureStats;
+  conversion_rate: number;
+  daily: Array<{
+    stat_date: string;
+    impressions: number;
+    clicks: number;
+    add_to_carts: number;
+    purchases: number;
+    revenue: number;
+  }>;
+}
+
+// Analytics API
+export const analyticsApi = {
+  /**
+   * Get dashboard stats overview
+   */
+  getDashboard: async (period: string = '7d'): Promise<AnalyticsDashboardResponse> => {
+    const { data } = await api.get<ApiResponse<AnalyticsDashboardResponse>>('/analytics/dashboard', {
+      params: { period },
+    });
+    return data.data;
+  },
+
+  /**
+   * Get stats for a specific feature
+   */
+  getFeatureStats: async (featureId: string, period: string = '7d'): Promise<AnalyticsFeatureResponse> => {
+    const { data } = await api.get<ApiResponse<AnalyticsFeatureResponse>>(
+      `/analytics/features/${featureId}`,
+      { params: { period } },
+    );
+    return data.data;
+  },
+
+  /**
+   * Get all features stats summary
+   */
+  getAllFeaturesStats: async (period: string = '7d'): Promise<{
+    period: string;
+    date_range: { start: string; end: string };
+    features: Record<string, AnalyticsFeatureStats>;
+  }> => {
+    const { data } = await api.get<ApiResponse<{
+      period: string;
+      date_range: { start: string; end: string };
+      features: Record<string, AnalyticsFeatureStats>;
+    }>>('/analytics/features', { params: { period } });
+    return data.data;
+  },
+};
+
+// FBT Backfill types
+export interface FBTBackfillStartResponse {
+  total: number;
+  total_orders: number;
+  already_processed: number;
+  batch_size: number;
+  batches_count: number;
+}
+
+export interface FBTBackfillBatchResponse {
+  processed: number;
+  last_order_id: number;
+  remaining: number;
+  completed: boolean;
+  errors: number;
+}
+
+export interface FBTBackfillStatusResponse {
+  total: number;
+  unprocessed: number;
+  already_processed: number;
+  last_order_id: number;
+  is_running: boolean;
+  last_run: string | null;
+}
+
+// FBT API
+export const fbtApi = {
+  /**
+   * Start backfill process
+   */
+  startBackfill: async (batchSize: number): Promise<FBTBackfillStartResponse> => {
+    const { data } = await api.post<ApiResponse<FBTBackfillStartResponse>>('/fbt/backfill/start', {
+      batch_size: batchSize,
+    });
+    return data.data;
+  },
+
+  /**
+   * Process a batch of orders
+   */
+  processBatch: async (
+    batchSize: number,
+    lastOrderId: number,
+  ): Promise<FBTBackfillBatchResponse> => {
+    const { data } = await api.post<ApiResponse<FBTBackfillBatchResponse>>(
+      '/fbt/backfill/process',
+      {
+        batch_size: batchSize,
+        last_order_id: lastOrderId,
+      },
+    );
+    return data.data;
+  },
+
+  /**
+   * Get current backfill status
+   */
+  getStatus: async (): Promise<FBTBackfillStatusResponse> => {
+    const { data } = await api.get<ApiResponse<FBTBackfillStatusResponse>>('/fbt/backfill/status');
+    return data.data;
+  },
+};
+
+// Onboarding types
+export interface OnboardingStep {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  action: {
+    label: string;
+    path: string;
+  } | null;
+}
+
+export interface OnboardingStatusResponse {
+  dismissed: boolean;
+  all_complete?: boolean;
+  steps: OnboardingStep[];
+}
+
+// Feature health types
+export interface FeatureHealth {
+  id: string;
+  name: string;
+  icon: string;
+  enabled: boolean;
+  health: 'green' | 'yellow' | 'gray';
+  impressions: number;
+  path: string;
+}
+
+export interface FeatureHealthResponse {
+  features: FeatureHealth[];
+  date_range: {
+    start: string;
+    end: string;
+  };
+}
+
+// Activity feed types
+export interface ActivityItem {
+  id: number;
+  feature_id: string;
+  feature_name: string;
+  event_type: 'purchase' | 'add_to_cart' | 'threshold_reached';
+  event_label: string;
+  product_id: number | null;
+  product_name: string | null;
+  order_id: number | null;
+  quantity: number;
+  revenue: number;
+  created_at: string;
+}
+
+export interface ActivityFeedResponse {
+  activities: ActivityItem[];
+  count: number;
+}
+
+// Dashboard API
+export const dashboardApi = {
+  /**
+   * Get onboarding status
+   */
+  getOnboardingStatus: async (): Promise<OnboardingStatusResponse> => {
+    const { data } = await api.get<ApiResponse<OnboardingStatusResponse>>('/dashboard/onboarding');
+    return data.data;
+  },
+
+  /**
+   * Dismiss onboarding checklist
+   */
+  dismissOnboarding: async (): Promise<{ dismissed: boolean; message: string }> => {
+    const { data } = await api.post<ApiResponse<{ dismissed: boolean; message: string }>>(
+      '/dashboard/onboarding/dismiss',
+    );
+    return data.data;
+  },
+
+  /**
+   * Get feature health status
+   */
+  getFeatureHealth: async (): Promise<FeatureHealthResponse> => {
+    const { data } = await api.get<ApiResponse<FeatureHealthResponse>>('/dashboard/health');
+    return data.data;
+  },
+
+  /**
+   * Get recent activity feed
+   */
+  getRecentActivity: async (limit: number = 10): Promise<ActivityFeedResponse> => {
+    const { data } = await api.get<ApiResponse<ActivityFeedResponse>>('/dashboard/activity', {
+      params: { limit },
+    });
+    return data.data;
   },
 };
 

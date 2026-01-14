@@ -15,10 +15,20 @@
 Thumbs.db
 desktop.ini
 
+# AI/Dev Tools
+/.claude/
+/.opencode/
+repomix-output.xml
+.repomixignore
+CLAUDE.md
+
 # Development Files
 /apps/
 /release/
 /tools/
+/docs/
+/plans/
+/Sites/
 node_modules/
 *.log
 log.xml
@@ -42,7 +52,7 @@ yarn.lock
 composer.json
 composer.lock
 
-# Documentation (keep only essential ones)
+# Documentation (keep README.md only)
 RELEASE.md
 CONTRIBUTING.md
 QUICK_START.md

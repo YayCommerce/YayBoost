@@ -103,6 +103,9 @@ class Bootstrap {
         // REST API initialization
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
 
+        // Register analytics cron hooks
+        Analytics\AnalyticsAggregator::register();
+
         // Plugin loaded hook
         do_action( 'yayboost_loaded', $this->container );
 

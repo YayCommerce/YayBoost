@@ -24,11 +24,7 @@ define( 'YAYBOOST_FILE', __FILE__ );
 define( 'YAYBOOST_PATH', plugin_dir_path( __FILE__ ) );
 define( 'YAYBOOST_URL', plugin_dir_url( __FILE__ ) );
 define( 'YAYBOOST_BASENAME', plugin_basename( __FILE__ ) );
-
-// Development mode detection
-if ( ! defined( 'YAYBOOST_DEV' )) {
-    define( 'YAYBOOST_DEV', file_exists( YAYBOOST_PATH . 'apps/admin-settings/vite.config.ts' ) );
-}
+define( 'YAYBOOST_IS_DEVELOPMENT', true );
 
 // Composer autoloader
 if (file_exists( YAYBOOST_PATH . 'vendor/autoload.php' )) {
@@ -97,6 +93,9 @@ function yayboost_activate() {
         );
     }
 
+    // Run database migrations
+    \YayBoost\Database\Migrator::activate();
+
     // Set default options
     add_option( 'yayboost_version', YAYBOOST_VERSION );
     add_option(
@@ -105,6 +104,9 @@ function yayboost_activate() {
             'features' => [],
         ]
     );
+
+    // Schedule analytics cron jobs
+    \YayBoost\Analytics\AnalyticsAggregator::schedule();
 
     // Flush rewrite rules
     flush_rewrite_rules();
@@ -115,6 +117,9 @@ register_activation_hook( __FILE__, 'yayboost_activate' );
  * Plugin deactivation hook
  */
 function yayboost_deactivate() {
+    // Unschedule analytics cron jobs
+    \YayBoost\Analytics\AnalyticsAggregator::unschedule();
+
     flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'yayboost_deactivate' );
