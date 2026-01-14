@@ -122,3 +122,116 @@ export function getPositionValues(
 ): string[] {
   return getPositionOptions(pageType, filter, includeUseBlock).map((p) => p.value);
 }
+
+/** Page type labels for UI */
+export const PAGE_TYPE_LABELS: Record<PageType, string> = {
+  [PAGE_PRODUCT]: __('Product Page', 'yayboost'),
+  [PAGE_SHOP]: __('Shop / Category Pages', 'yayboost'),
+  [PAGE_CART]: __('Cart Page', 'yayboost'),
+  [PAGE_CHECKOUT]: __('Checkout Page', 'yayboost'),
+};
+
+/** Grouped option structure for multi-select */
+export interface GroupedPositionOptions {
+  label: string;
+  options: PositionOption[];
+}
+
+/** Positions by page type (for multi-page selection) */
+export type PositionsByPage = Partial<Record<PageType, string[]>>;
+
+/** Filters by page type */
+export type FiltersByPage = Partial<Record<PageType, string[] | null>>;
+
+/**
+ * Get grouped options for multi-select UI across multiple page types
+ *
+ * @param pageTypes - Page types to include
+ * @param filters - Optional filters per page type
+ * @returns Grouped options by page type
+ */
+export function getGroupedOptions(
+  pageTypes: PageType[],
+  filters?: FiltersByPage | null,
+): Record<PageType, GroupedPositionOptions> {
+  const grouped: Partial<Record<PageType, GroupedPositionOptions>> = {};
+
+  for (const pageType of pageTypes) {
+    const filter = filters?.[pageType] ?? null;
+    const options = getPositionOptions(pageType, filter);
+
+    if (options.length === 0) continue;
+
+    grouped[pageType] = {
+      label: PAGE_TYPE_LABELS[pageType] || pageType,
+      options,
+    };
+  }
+
+  return grouped as Record<PageType, GroupedPositionOptions>;
+}
+
+/**
+ * Flatten grouped positions to prefixed array
+ * Input: { product: ['pos1'], shop: ['pos2'] }
+ * Output: ['product:pos1', 'shop:pos2']
+ */
+export function flattenPositions(positionsByPage: PositionsByPage): string[] {
+  const flat: string[] = [];
+
+  for (const [pageType, positions] of Object.entries(positionsByPage)) {
+    if (!positions) continue;
+    for (const position of positions) {
+      flat.push(`${pageType}:${position}`);
+    }
+  }
+
+  return flat;
+}
+
+/**
+ * Expand prefixed array to grouped positions
+ * Input: ['product:pos1', 'shop:pos2']
+ * Output: { product: ['pos1'], shop: ['pos2'] }
+ */
+export function expandPositions(flatPositions: string[]): PositionsByPage {
+  const grouped: PositionsByPage = {};
+
+  for (const prefixed of flatPositions) {
+    const [pageType, position] = prefixed.split(':', 2);
+    if (!pageType || !position) continue;
+
+    const key = pageType as PageType;
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key]!.push(position);
+  }
+
+  return grouped;
+}
+
+/**
+ * Check if any positions are selected for a page type
+ */
+export function hasPositionsForPage(positionsByPage: PositionsByPage, pageType: PageType): boolean {
+  const positions = positionsByPage[pageType];
+  return Array.isArray(positions) && positions.length > 0;
+}
+
+/**
+ * Get all position values across multiple page types (for Zod schema)
+ */
+export function getAllPositionValues(
+  pageTypes: PageType[],
+  filters?: FiltersByPage | null,
+): string[] {
+  const values: string[] = [];
+
+  for (const pageType of pageTypes) {
+    const filter = filters?.[pageType] ?? null;
+    values.push(...getPositionValues(pageType, filter));
+  }
+
+  return values;
+}

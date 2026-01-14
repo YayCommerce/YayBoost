@@ -236,4 +236,138 @@ class DisplayPositionService {
 
 		return $this->register_hook( $to_page_type, $mapped_position, $callback );
 	}
+
+	/**
+	 * Get grouped options for multi-select UI across multiple page types
+	 *
+	 * Returns options organized by page type for grouped multi-select components.
+	 *
+	 * @param array      $page_types Page types to include.
+	 * @param array|null $filters    Optional filters per page type. ['product' => ['pos1', 'pos2'], 'shop' => null]
+	 * @return array Grouped options: ['product' => ['label' => 'Product Page', 'options' => [...]], ...]
+	 */
+	public function get_grouped_options( array $page_types, ?array $filters = null ): array {
+		$page_labels = [
+			self::PAGE_PRODUCT  => __( 'Product Page', 'yayboost' ),
+			self::PAGE_SHOP     => __( 'Shop / Category Pages', 'yayboost' ),
+			self::PAGE_CART     => __( 'Cart Page', 'yayboost' ),
+			self::PAGE_CHECKOUT => __( 'Checkout Page', 'yayboost' ),
+		];
+
+		$grouped = [];
+
+		foreach ( $page_types as $page_type ) {
+			$filter  = $filters[ $page_type ] ?? null;
+			$options = $this->get_options_for_select( $page_type, $filter );
+
+			if ( empty( $options ) ) {
+				continue;
+			}
+
+			$grouped[ $page_type ] = [
+				'label'   => $page_labels[ $page_type ] ?? ucfirst( $page_type ),
+				'options' => $options,
+			];
+		}
+
+		return $grouped;
+	}
+
+	/**
+	 * Register hooks for multiple pages from grouped position settings
+	 *
+	 * Used when admin selects positions across multiple page types.
+	 * Settings format: ['product' => ['pos1', 'pos2'], 'shop' => ['pos1'], ...]
+	 *
+	 * @param array    $positions_by_page Positions grouped by page type.
+	 * @param callable $callback          Callback function to execute for all hooks.
+	 * @return array<string, int> Count of registered hooks per page type.
+	 */
+	public function register_multi_page_hooks( array $positions_by_page, callable $callback ): array {
+		$registered = [];
+
+		foreach ( $positions_by_page as $page_type => $positions ) {
+			if ( ! is_array( $positions ) || empty( $positions ) ) {
+				continue;
+			}
+
+			$count = 0;
+			foreach ( $positions as $position ) {
+				if ( $this->register_hook( $page_type, $position, $callback ) ) {
+					++$count;
+				}
+			}
+
+			$registered[ $page_type ] = $count;
+		}
+
+		return $registered;
+	}
+
+	/**
+	 * Check if any positions are selected for a specific page type
+	 *
+	 * @param array  $positions_by_page Positions grouped by page type.
+	 * @param string $page_type         Page type to check.
+	 * @return bool True if page type has positions selected.
+	 */
+	public function has_positions_for_page( array $positions_by_page, string $page_type ): bool {
+		return ! empty( $positions_by_page[ $page_type ] ) && is_array( $positions_by_page[ $page_type ] );
+	}
+
+	/**
+	 * Get flat list of all selected positions with page type prefix
+	 *
+	 * Useful for validation or display purposes.
+	 * Returns: ['product:below_title', 'shop:after_loop_item', ...]
+	 *
+	 * @param array $positions_by_page Positions grouped by page type.
+	 * @return array Flat list of prefixed positions.
+	 */
+	public function flatten_positions( array $positions_by_page ): array {
+		$flat = [];
+
+		foreach ( $positions_by_page as $page_type => $positions ) {
+			if ( ! is_array( $positions ) ) {
+				continue;
+			}
+
+			foreach ( $positions as $position ) {
+				$flat[] = "{$page_type}:{$position}";
+			}
+		}
+
+		return $flat;
+	}
+
+	/**
+	 * Expand flat position list to grouped format
+	 *
+	 * Reverse of flatten_positions().
+	 * Input: ['product:below_title', 'shop:after_loop_item']
+	 * Output: ['product' => ['below_title'], 'shop' => ['after_loop_item']]
+	 *
+	 * @param array $flat_positions Flat list of prefixed positions.
+	 * @return array Positions grouped by page type.
+	 */
+	public function expand_positions( array $flat_positions ): array {
+		$grouped = [];
+
+		foreach ( $flat_positions as $prefixed ) {
+			$parts = explode( ':', $prefixed, 2 );
+			if ( count( $parts ) !== 2 ) {
+				continue;
+			}
+
+			[ $page_type, $position ] = $parts;
+
+			if ( ! isset( $grouped[ $page_type ] ) ) {
+				$grouped[ $page_type ] = [];
+			}
+
+			$grouped[ $page_type ][] = $position;
+		}
+
+		return $grouped;
+	}
 }

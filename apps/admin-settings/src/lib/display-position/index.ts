@@ -16,15 +16,31 @@ export {
   CART_PAGE_POSITIONS,
   CHECKOUT_PAGE_POSITIONS,
   USE_BLOCK_OPTION,
+  PAGE_TYPE_LABELS,
   getPositionOptions,
   getPositionValues,
+  getGroupedOptions,
+  flattenPositions,
+  expandPositions,
+  hasPositionsForPage,
+  getAllPositionValues,
   type PageType,
   type PositionOption,
+  type GroupedPositionOptions,
+  type PositionsByPage,
+  type FiltersByPage,
 } from './constants';
 
-// Components
+// Single-select component
 export {
   DisplayPositionSelect,
   isUseBlockPosition,
   type DisplayPositionSelectProps,
 } from './display-position-select';
+
+// Multi-select component
+export {
+  DisplayPositionMultiSelect,
+  getSelectedCount,
+  type DisplayPositionMultiSelectProps,
+} from './display-position-multi-select';

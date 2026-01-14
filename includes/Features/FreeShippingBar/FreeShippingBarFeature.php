@@ -12,6 +12,7 @@ namespace YayBoost\Features\FreeShippingBar;
 
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Analytics\AnalyticsTracker;
+use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
 /**
  * Free Shipping Bar feature implementation
@@ -82,33 +83,40 @@ class FreeShippingBarFeature extends AbstractFeature {
     private static $impression_logged = false;
 
     /**
+     * Display position service
+     *
+     * @var DisplayPositionService
+     */
+    private DisplayPositionService $position_service;
+
+    /**
+     * Allowed positions for cart page
+     *
+     * @var array
+     */
+    protected array $cart_positions = [
+        'before_cart_table',
+        'after_cart_table',
+    ];
+
+    /**
+     * Allowed positions for checkout page
+     *
+     * @var array
+     */
+    protected array $checkout_positions = [
+        'before_checkout_form',
+        'after_checkout_form',
+    ];
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
     public function init(): void {
-        // Hook into appropriate locations based on show_on setting
-        $show_on  = $this->get('show_on');
-
-        // Map show_on values to WooCommerce hooks
-        $hook_map = [
-            'top_cart'        => 'woocommerce_before_cart_table',
-            'bottom_cart'     => 'woocommerce_after_cart_table',
-            'top_checkout'    => 'woocommerce_before_checkout_form',
-            'bottom_checkout' => 'woocommerce_after_checkout_form',
-        ];
-
-        foreach ($show_on as $location) {
-            if (isset( $hook_map[ $location ] )) {
-                add_action( $hook_map[ $location ], [ $this, 'render_bar' ] );
-            }
-        }
-
-        // Mini cart: Support both widget (hook) and block (JavaScript)
-        if (in_array( 'mini_cart', $show_on, true )) {
-            // Method 1: Hook for widget-based mini cart
-            add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
-        }
+        $this->position_service = new DisplayPositionService();
+        $this->register_display_hooks();
 
         // Add cart fragments filter for Classic Cart/Mini Cart updates
         add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_shipping_bar_fragment' ] );
@@ -117,6 +125,54 @@ class FreeShippingBarFeature extends AbstractFeature {
             new FreeShippingBarBlock( $this );
             new FreeShippingBarSlotFill( $this );
         }
+    }
+
+    /**
+     * Register display hooks based on settings
+     *
+     * @return void
+     */
+    protected function register_display_hooks(): void {
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
+        $display_positions = $this->get( 'display_positions', [] );
+
+        // Register cart and checkout page hooks via DisplayPositionService
+        $this->position_service->register_multi_page_hooks(
+            $display_positions,
+            [ $this, 'render_bar' ]
+        );
+
+        // Mini cart: Support both widget (hook) and block (JavaScript)
+        if ( $this->get( 'show_on_mini_cart', false ) ) {
+            add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
+        }
+    }
+
+    /**
+     * Get position options for cart page admin UI
+     *
+     * @return array Options array with value/label pairs.
+     */
+    public function get_cart_position_options(): array {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_CART,
+            $this->cart_positions
+        );
+    }
+
+    /**
+     * Get position options for checkout page admin UI
+     *
+     * @return array Options array with value/label pairs.
+     */
+    public function get_checkout_position_options(): array {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_CHECKOUT,
+            $this->checkout_positions
+        );
     }
 
     /**
@@ -929,14 +985,18 @@ class FreeShippingBarFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'           => true,
-                'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
-                'message_coupon'    => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
-                'primary_color'     => '#4CAF50',
-                'show_on'           => [ 'top_cart', 'top_checkout' ],
-                'show_progress_bar' => true,
-                'display_style'     => 'minimal_text',
+                'enabled'            => true,
+                'message_progress'   => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
+                'message_achieved'   => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
+                'message_coupon'     => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
+                'primary_color'      => '#4CAF50',
+                'display_positions'  => [
+                    'cart'     => [ 'before_cart_table' ],
+                    'checkout' => [ 'before_checkout_form' ],
+                ],
+                'show_on_mini_cart'  => false,
+                'show_progress_bar'  => true,
+                'display_style'      => 'minimal_text',
             ]
         );
     }
