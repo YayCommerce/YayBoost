@@ -137,25 +137,20 @@ class StockScarcityFeature extends AbstractFeature {
     /**
      * Register shop/category page position hook
      *
+     * Uses position mapping to convert product page position to shop page equivalent.
+     *
      * @return void
      */
     protected function register_shop_page_hook(): void
     {
-
         $position = $this->get('position_on_product_page');
 
-        $mapped_positions = array(
-            'below_product_title' => 'after_shop_loop_item_title',
-            'below_add_to_cart_button' => 'after_shop_loop_item',
-        );
-
-        $position = $mapped_positions[$position] ?? 'after_shop_loop_item';
-
-
-        $this->position_service->register_hook(
-            DisplayPositionService::PAGE_SHOP,
+        $this->position_service->register_mapped_hook(
             $position,
-            [$this, 'render_stock_scarcity_template']
+            DisplayPositionService::PAGE_PRODUCT,
+            DisplayPositionService::PAGE_SHOP,
+            [$this, 'render_stock_scarcity_template'],
+            'after_shop_loop_item' // fallback
         );
     }
 

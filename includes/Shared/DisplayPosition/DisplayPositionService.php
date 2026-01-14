@@ -140,4 +140,100 @@ class DisplayPositionService {
 	public function get_page_types(): array {
 		return array_keys( $this->providers );
 	}
+
+	/**
+	 * Map a position from one page type to another
+	 *
+	 * Useful when a feature displays on multiple pages but user only selects
+	 * one position. Maps the selected position to equivalent position on other page.
+	 *
+	 * @param string $position       Position key from source page.
+	 * @param string $from_page_type Source page type constant.
+	 * @param string $to_page_type   Target page type constant.
+	 * @param string $fallback       Fallback position if no mapping found.
+	 * @return string Mapped position key for target page.
+	 */
+	public function map_position( string $position, string $from_page_type, string $to_page_type, string $fallback = '' ): string {
+		$mappings = $this->get_position_mappings();
+
+		$map_key = "{$from_page_type}_to_{$to_page_type}";
+
+		if ( ! isset( $mappings[ $map_key ] ) ) {
+			return $fallback;
+		}
+
+		return $mappings[ $map_key ][ $position ] ?? $fallback;
+	}
+
+	/**
+	 * Get cross-page position mappings
+	 *
+	 * Defines how positions on one page type correspond to positions on another.
+	 * Format: 'sourcePage_to_targetPage' => ['source_position' => 'target_position']
+	 *
+	 * @return array<string, array<string, string>> Position mappings.
+	 */
+	protected function get_position_mappings(): array {
+		return [
+			// Product page → Shop page mappings
+			'product_to_shop' => [
+				'below_product_title'      => 'after_shop_loop_item_title',
+				'below_product_price'      => 'after_shop_loop_item_title',
+				'above_add_to_cart_button' => 'after_shop_loop_item',
+				'below_add_to_cart_button' => 'after_shop_loop_item',
+				'below_short_description'  => 'after_shop_loop_item',
+				'below_meta'               => 'after_shop_loop_item_late',
+			],
+
+			// Shop page → Product page mappings (reverse)
+			'shop_to_product' => [
+				'before_shop_loop_item'       => 'below_product_title',
+				'before_shop_loop_item_title' => 'below_product_title',
+				'after_shop_loop_item_title'  => 'below_product_title',
+				'after_shop_loop_item'        => 'below_add_to_cart_button',
+				'after_shop_loop_item_late'   => 'below_meta',
+			],
+
+			// Product page → Cart page mappings
+			'product_to_cart' => [
+				'below_product_title'      => 'before_cart_table',
+				'below_add_to_cart_button' => 'after_cart_table',
+			],
+
+			// Product page → Checkout page mappings
+			'product_to_checkout' => [
+				'below_product_title'      => 'before_checkout_form',
+				'below_add_to_cart_button' => 'review_order_before_payment',
+			],
+		];
+	}
+
+	/**
+	 * Register hook with automatic position mapping for another page type
+	 *
+	 * Registers a hook on a target page using a position mapped from the source page.
+	 * Useful for features that show on multiple pages with one position setting.
+	 *
+	 * @param string   $position        Position key (from source page).
+	 * @param string   $from_page_type  Source page type where position was selected.
+	 * @param string   $to_page_type    Target page type to register hook on.
+	 * @param callable $callback        Callback function to execute.
+	 * @param string   $fallback        Fallback position if mapping not found.
+	 * @return bool True if hook registered, false otherwise.
+	 */
+	public function register_mapped_hook(
+		string $position,
+		string $from_page_type,
+		string $to_page_type,
+		callable $callback,
+		string $fallback = ''
+	): bool {
+		$mapped_position = $this->map_position( $position, $from_page_type, $to_page_type, $fallback );
+
+		if ( empty( $mapped_position ) ) {
+			return false;
+		}
+
+		return $this->register_hook( $to_page_type, $mapped_position, $callback );
+	}
 }
