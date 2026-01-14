@@ -148,6 +148,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         // Mini cart: Support both widget (hook) and block (JavaScript)
         if ( $this->get( 'show_on_mini_cart', false ) ) {
             add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
+            add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ] );
         }
     }
 
@@ -202,6 +203,17 @@ class FreeShippingBarFeature extends AbstractFeature {
         ];
     }
 
+    public function enqueue_styles(): void {
+        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
+            wp_enqueue_style(
+                'yayboost-free-shipping-bar',
+                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
+                [],
+                YAYBOOST_VERSION
+            );
+        }
+    }
+
     /**
      * Render the shipping bar
      *
@@ -214,14 +226,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
 
         // Enqueue CSS file, make sure style from block not enqueued
-        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
-            wp_enqueue_style(
-                'yayboost-free-shipping-bar',
-                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
-                [],
-                YAYBOOST_VERSION
-            );
-        }
+        $this->enqueue_styles();
 
         $bar_html = $this->get_bar_html();
 
