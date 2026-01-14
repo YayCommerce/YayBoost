@@ -222,15 +222,31 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		if ( empty( $specific_categories ) ) {
 			return false;
 		}
+		$categories = array();
+		// $specific_categories = array_map( 'intval', $specific_categories );
+		foreach ( $specific_categories as $category ) {
+			$category = get_term_by( 'slug', $category, 'product_cat' );
+			if ( $category ) {
+				$categories[] = $category->term_id;
+				//if category has children, add them to the categories array
+				$children = get_term_children( $category->term_id, 'product_cat' );
+				if ( ! empty( $children ) ) {
+					$categories = array_merge( $categories, $children );
+				}
+			}
+		}
 
-		$specific_categories = array_map( 'intval', $specific_categories );
-		$product_categories  = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		if ( empty( $categories ) ) {
+			return false;
+		}
+
+		$product_categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
 
 		if ( is_wp_error( $product_categories ) ) {
 			return false;
 		}
 
-		return ! empty( array_intersect( array_map( 'intval', $product_categories ), $specific_categories ) );
+		return ! empty( array_intersect( array_map( 'intval', $product_categories ), $categories ) );
 	}
 
 	/**
