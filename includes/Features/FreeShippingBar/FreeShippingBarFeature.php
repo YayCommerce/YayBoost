@@ -950,16 +950,24 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @param float  $opacity Opacity value (0.0 to 1.0).
      * @return string RGBA color string
      */
-    public function apply_opacity(string $hex, float $opacity = 0.2): string {
-        // Remove # if present
+    public function apply_opacity(string $hex, float $opacity = 0.75): string {
         $hex = ltrim( $hex, '#' );
-
-        // Convert hex to RGB
+    
+        // Handle shorthand hex (#fff)
+        if ( strlen( $hex ) === 3 ) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
         $r = hexdec( substr( $hex, 0, 2 ) );
         $g = hexdec( substr( $hex, 2, 2 ) );
         $b = hexdec( substr( $hex, 4, 2 ) );
-
-        return sprintf( 'rgba(%d, %d, %d, %.2f)', $r, $g, $b, $opacity );
+        
+        // Blend with white
+        $r = round( $r + ( 255 - $r ) * $opacity );
+        $g = round( $g + ( 255 - $g ) * $opacity );
+        $b = round( $b + ( 255 - $b ) * $opacity );
+        
+        return sprintf( '#%02x%02x%02x', $r, $g, $b );
     }
 
     /**

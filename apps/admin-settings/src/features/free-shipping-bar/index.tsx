@@ -76,10 +76,11 @@ const CHECKOUT_POSITIONS = ['before_checkout_form', 'after_checkout_form'];
 
 // Helper function to convert hex color to rgba with opacity
 function applyOpacity(hex: string, opacity: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.floor((num >> 16) + (255 - (num >> 16)) * opacity));
+  const g = Math.min(255, Math.floor(((num >> 8) & 0x00FF) + (255 - ((num >> 8) & 0x00FF)) * opacity));
+  const b = Math.min(255, Math.floor((num & 0x0000FF) + (255 - (num & 0x0000FF)) * opacity));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 function getBlockColors(
@@ -92,7 +93,7 @@ function getBlockColors(
 } {
   return {
     primaryColor: primaryColor,
-    backgroundColor: achieved ? primaryColor : applyOpacity(primaryColor, 0.2),
+    backgroundColor: achieved ? primaryColor : applyOpacity(primaryColor, 0.75),
     textColor: achieved ? '#ffffff' : primaryColor,
   };
 }

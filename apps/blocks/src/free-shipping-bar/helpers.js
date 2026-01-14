@@ -15,13 +15,11 @@ export const STATE_IN_PROGRESS = "in_progress";
  * @return {string} RGBA color string
  */
 export function applyOpacity(hex, opacity) {
-  // Remove # if present
-  hex = hex.replace("#", "");
-  // Convert hex to RGB
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  return "rgba(" + r + ", " + g + ", " + b + ", " + opacity + ")";
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.floor((num >> 16) + (255 - (num >> 16)) * opacity));
+  const g = Math.min(255, Math.floor(((num >> 8) & 0x00FF) + (255 - ((num >> 8) & 0x00FF)) * opacity));
+  const b = Math.min(255, Math.floor((num & 0x0000FF) + (255 - (num & 0x0000FF)) * opacity));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 /**
@@ -291,7 +289,7 @@ export function buildMinimalTextHtml(data, config = {}) {
   const templates = config.templates || {};
   const achieved = data.achieved && !data.show_coupon_message;
   const primaryColor = settings.primaryColor || "#4caf50";
-  const bgColor = achieved ? primaryColor : applyOpacity(primaryColor, 0.2);
+  const bgColor = achieved ? primaryColor : applyOpacity(primaryColor, 0.75);
   const textColor = achieved ? "#ffffff" : primaryColor;
 
   const template = templates.minimal_text;
@@ -319,7 +317,7 @@ export function buildProgressBarHtml(data, config = {}) {
   const templates = config.templates || {};
   const primaryColor = settings.primaryColor || "#4caf50";
   const barColor = primaryColor;
-  const backgroundColor = applyOpacity(primaryColor, 0.2);
+  const backgroundColor = applyOpacity(primaryColor, 0.75);
   const textColor = primaryColor;
 
   const template = templates.progress_bar;
@@ -349,7 +347,7 @@ export function buildFullDetailHtml(data, config = {}) {
   const achieved = data.achieved && !data.show_coupon_message;
   const primaryColor = settings.primaryColor || "#4caf50";
   const barColor = primaryColor;
-  const backgroundColor = applyOpacity(primaryColor, 0.2);
+  const backgroundColor = applyOpacity(primaryColor, 0.75);
   const bgColor = achieved ? primaryColor : backgroundColor;
   const progressIconBg = achieved ? primaryColor : backgroundColor;
   const textColor = primaryColor;
