@@ -662,7 +662,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   </span>
                   <span>
                     {currencySymbol}
-                    {(150).toFixed(2)}
+                    {(MOCK_THRESHOLD).toFixed(2)}
                   </span>
                 </div>
               </div>
