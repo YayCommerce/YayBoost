@@ -3,27 +3,16 @@
  */
 
 import { useState } from 'react';
-import { MagnifyingGlass } from '@phosphor-icons/react';
-import * as PhosphorIcons from '@phosphor-icons/react';
 import { __ } from '@wordpress/i18n';
 
-import { Feature, FeatureCategory } from '@/lib/api';
-import { useFeaturesByCategory } from '@/hooks/use-features';
+import { FeatureCard } from '@/components/feature-card';
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty';
 import { Input, InputPrefix } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FeatureCard } from '@/components/feature-card';
-
-// Get Phosphor icon by name
-function getIcon(iconName: string) {
-  const pascalCase = iconName
-    .split(/[-_]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
-  const Icon = (PhosphorIcons as unknown as Record<string, PhosphorIcons.Icon>)[pascalCase];
-  return Icon || PhosphorIcons.Lightning;
-}
+import { useFeaturesByCategory } from '@/hooks/use-features';
+import { Feature, FeatureCategory } from '@/lib/api';
+import { getIcon, MagnifyingGlass } from '@/lib/feature-icons';
 
 // Header Component
 function FeatureHeader() {
