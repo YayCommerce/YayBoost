@@ -27,9 +27,9 @@ export interface PositionOption {
 export const PRODUCT_PAGE_POSITIONS: PositionOption[] = [
   { value: 'below_product_title', label: __('Below product title', 'yayboost') },
   { value: 'below_price', label: __('Below price', 'yayboost') },
+  { value: 'below_short_description', label: __('Below short description', 'yayboost') },
   { value: 'above_add_to_cart_button', label: __('Above Add to Cart button', 'yayboost') },
   { value: 'below_add_to_cart_button', label: __('Below Add to Cart button', 'yayboost') },
-  { value: 'below_short_description', label: __('Below short description', 'yayboost') },
   { value: 'below_meta', label: __('Below product meta', 'yayboost') },
 ];
 

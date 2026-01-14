@@ -40,6 +40,7 @@ import { FeatureComponentProps } from '..';
 // Allowed positions for this feature on product page
 const ALLOWED_PRODUCT_POSITIONS = [
   'below_product_title',
+  'below_short_description',
   'below_add_to_cart_button',
 ];
 
