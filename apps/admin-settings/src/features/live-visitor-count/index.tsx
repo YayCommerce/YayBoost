@@ -4,6 +4,12 @@ import { __ } from '@wordpress/i18n';
 import { AlertCircle, Eye } from 'lucide-react';
 import z from 'zod';
 
+import {
+  DisplayPositionSelect,
+  getPositionValues,
+  isUseBlockPosition,
+  PAGE_PRODUCT,
+} from '@/lib/display-position';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -30,12 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  DisplayPositionSelect,
-  isUseBlockPosition,
-  PAGE_PRODUCT,
-  getPositionValues,
-} from '@/lib/display-position';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
@@ -476,7 +476,11 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                 <FormItem>
                   <Label>{__('Text Color', 'yayboost')}</Label>
                   <FormControl>
-                    <ColorPicker {...field} />
+                    <ColorPicker
+                      value={field.value}
+                      defaultColor="#000000"
+                      onChangeColor={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -490,7 +494,11 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                   <FormItem>
                     <Label>{__('Background Color', 'yayboost')}</Label>
                     <FormControl>
-                      <ColorPicker {...field} />
+                      <ColorPicker
+                        value={field.value}
+                        defaultColor="#efefef"
+                        onChangeColor={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
