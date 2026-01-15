@@ -31,6 +31,8 @@ const externalOptions = {
     externals: {
       '@wordpress/hooks': 'wp.hooks',
       '@wordpress/i18n': 'wp.i18n',
+      '@wordpress/components': 'wp.components',
+      '@wordpress/element': 'wp.element',
     },
   },
 
@@ -43,6 +45,8 @@ const externalOptions = {
       'react-dom/client': 'ReactDOM',
       '@wordpress/hooks': 'wp.hooks',
       '@wordpress/i18n': 'wp.i18n',
+      '@wordpress/components': 'wp.components',
+      '@wordpress/element': 'wp.element',
     },
   },
 };
