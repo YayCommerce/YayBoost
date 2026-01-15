@@ -2,6 +2,7 @@ import { store } from "@wordpress/interactivity";
 import {
   calculateBarData,
   getCartTotalFromStore,
+  calculateCartTotalForShipping,
   updateShippingBarDOM,
 } from "./helpers";
 
@@ -29,6 +30,7 @@ const { state, actions } = store("yayboost/free-shipping-bar", {
     settings: {},
     thresholdInfo: {},
     templates: {},
+    appliedCoupons: {},
   },
   actions: {
     /**
@@ -41,6 +43,7 @@ const { state, actions } = store("yayboost/free-shipping-bar", {
         settings: state.settings,
         thresholdInfo: state.thresholdInfo,
         templates: state.templates,
+        appliedCoupons: state.appliedCoupons,
       };
 
       // Calculate bar data with config
@@ -65,10 +68,11 @@ const { state, actions } = store("yayboost/free-shipping-bar", {
       }
 
       // Subscribe to changes in wp.data store
-      let previousCartTotal = getCartTotalFromStore();
+      // Use thresholdInfo from state for correct cart total calculation
+      let previousCartTotal = getCartTotalFromStore(state.thresholdInfo);
 
       subscribe(() => {
-        const currentCartTotal = getCartTotalFromStore();
+        const currentCartTotal = getCartTotalFromStore(state.thresholdInfo);
 
         if (!currentCartTotal) return;
 
@@ -84,15 +88,21 @@ const { state, actions } = store("yayboost/free-shipping-bar", {
      * Watch for Mini Cart updates via WooCommerce Interactivity store
      */
     watchCartUpdates() {
-      // For Mini Cart: watch WooCommerce store cart total
-      const cartTotal = wcState?.cart?.totals?.total_price;
+      // For Mini Cart: calculate cart total the same way as PHP
+      // Get cart data from WooCommerce Interactivity store
+      const cartData = wcState?.cart;
+      
+      // Use helper function (same as PHP approach)
+      const cartTotal = calculateCartTotalForShipping(cartData, state.thresholdInfo);
 
-      if (cartTotal !== undefined) {
+      if (cartTotal !== undefined && cartTotal !== null) {
         // Build config from store state
         const config = {
           settings: state.settings,
           thresholdInfo: state.thresholdInfo,
           templates: state.templates,
+          appliedCoupons: state.appliedCoupons,
+          cartData: cartData,
         };
 
         const barData = calculateBarData(cartTotal, config);

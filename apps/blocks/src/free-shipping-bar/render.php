@@ -45,6 +45,7 @@ wp_interactivity_state(
 		'settings'      => $localization_data['settings'] ?? [],
 		'thresholdInfo' => $localization_data['thresholdInfo'] ?? [],
 		'templates'     => $localization_data['templates'] ?? [],
+		'appliedCoupons' => $localization_data['appliedCoupons'] ?? [],
 	]
 );
 

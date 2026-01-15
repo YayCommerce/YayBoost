@@ -31,9 +31,10 @@ class FreeShippingBarBlock {
     public function __construct( FreeShippingBarFeature $feature ) {
         $this->feature = $feature;
 
-		add_action( 'init', [ $this, 'register_block' ] );
-		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
-	}
+        add_action( 'init', [ $this, 'register_block' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
+        add_filter( 'render_block_yayboost/free-shipping-bar', [ $this, 'enqueue_frontend_scripts' ], 10, 2 );
+    }
 
     /**
      * Get feature instance
@@ -80,5 +81,25 @@ class FreeShippingBarBlock {
             'yayboostShippingBar',
             $this->feature->get_localization_data()
         );
+    }
+
+    /**
+     * Enqueue scripts when block is rendered on frontend
+     * Ensures wc-settings is available for formatPrice utility in view.js
+     *
+     * @param string $block_content The block content about to be rendered.
+     * @param array  $block         The full block, including name and attributes.
+     * @return string The block content (unchanged).
+     */
+    public function enqueue_frontend_scripts( $block_content, $block ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+        // Only enqueue on frontend, not in admin
+        if ( is_admin() ) {
+            return $block_content;
+        }
+
+        // Enqueue wc-settings for frontend (needed for formatPrice utility)
+        wp_enqueue_script( 'wc-settings' );
+
+        return $block_content;
     }
 }
