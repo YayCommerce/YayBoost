@@ -70,6 +70,12 @@ class NextOrderCouponFeature extends AbstractFeature {
         // Generate coupon when order is completed
         add_action( 'woocommerce_order_status_completed', [ $this, 'generate_coupon_for_order' ], 10, 1 );
 
+        // Handle cancelled orders
+        add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 1 );
+
+        // Handle refunded orders
+        add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 1 );
+
         // Display coupon before order table (works for both thank you page and my account)
         add_action( 'woocommerce_order_details_before_order_table', [ $this, 'display_before_order_table' ], 10, 1 );
 
@@ -169,6 +175,96 @@ class NextOrderCouponFeature extends AbstractFeature {
         $order->update_meta_data( '_yayboost_next_order_coupon', $coupon_code );
         $order->update_meta_data( '_yayboost_next_order_coupon_id', $coupon_id );
         $order->save();
+
+        // Mark customer as ordered (for logged-in customers)
+        $customer_id = $order->get_customer_id();
+        if ($customer_id > 0) {
+            $this->mark_customer_as_ordered( $customer_id );
+        }
+    }
+
+    /**
+     * Handle order cancelled or refunded
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    public function handle_order_cancelled_or_refunded(int $order_id): void {
+        $settings = $this->get_settings();
+        $action   = $settings['on_cancel_refund_action'] ?? 'keep_and_count';
+
+        if ($action === 'delete_and_reset') {
+            $this->delete_coupon_for_order( $order_id );
+            $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+            if ($order) {
+                $customer_id = $order->get_customer_id();
+                if ($customer_id > 0) {
+                    $this->reset_customer_order_status( $customer_id );
+                }
+            }
+        }
+        // If 'keep_and_count', do nothing - keep coupon and user_meta
+    }
+
+    /**
+     * Delete coupon for order
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    protected function delete_coupon_for_order(int $order_id): void {
+        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+        if ( ! $order) {
+            return;
+        }
+
+        $coupon_id = $order->get_meta( '_yayboost_next_order_coupon_id' );
+        if ( ! empty( $coupon_id )) {
+            // Delete coupon object (force delete)
+            $coupon = new \WC_Coupon( $coupon_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+            if ($coupon->get_id() > 0) {
+                $coupon->delete( true );
+            }
+        }
+
+        // Delete order meta
+        $order->delete_meta_data( '_yayboost_next_order_coupon' );
+        $order->delete_meta_data( '_yayboost_next_order_coupon_id' );
+        $order->save();
+    }
+
+    /**
+     * Reset customer order status (delete user_meta)
+     *
+     * Only reset if this is the last completed/processing order for the customer
+     *
+     * @param int $customer_id Customer ID.
+     * @return void
+     */
+    protected function reset_customer_order_status(int $customer_id): void {
+        if ($customer_id <= 0) {
+            return;
+        }
+
+        // Check if customer has any other completed/processing orders
+        $user = get_userdata( $customer_id );
+        if ( ! $user || empty( $user->user_email )) {
+            return;
+        }
+
+        $orders = \wc_get_orders( // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+            [
+                'billing_email' => $user->user_email,
+                'status'        => [ 'wc-completed', 'wc-processing' ],
+                'limit'         => 1,
+                'return'        => 'ids',
+            ]
+        );
+
+        // Only reset if no other completed/processing orders exist
+        if (count( $orders ) === 0) {
+            delete_user_meta( $customer_id, '_yayboost_has_ordered' );
+        }
     }
 
     /**
@@ -212,7 +308,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             return true;
         }
 
-        // Get customer type (with user meta caching)
+        // Get customer type (direct query, no cache)
         $customer_type = $this->get_customer_type( $order );
 
         if ($customer_type_setting === 'first_time') {
@@ -232,7 +328,7 @@ class NextOrderCouponFeature extends AbstractFeature {
      * Get customer type (first_time or returning) based on email order history
      *
      * All customers (including guests) are treated the same - checked by email
-     * Uses dual cache: transient (email-based) + user meta (customer_id-based)
+     * Uses user_meta cache for logged-in customers to reduce database queries
      *
      * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
      * @return string 'first_time' or 'returning'
@@ -245,34 +341,23 @@ class NextOrderCouponFeature extends AbstractFeature {
             return 'first_time';
         }
 
-        // Check transient cache by email (works for both guest and logged-in)
-        $cache_key   = 'yayboost_customer_type_' . md5( $billing_email );
-        $cached_type = get_transient( $cache_key );
-        if ($cached_type !== false && in_array( $cached_type, [ 'first_time', 'returning' ], true )) {
-            return $cached_type;
-        }
-
-        // Also check user meta cache if logged-in customer (faster lookup)
+        // Check user_meta cache for logged-in customers (faster lookup)
         $customer_id = $order->get_customer_id();
         if ($customer_id > 0) {
-            $user_cached_type = get_user_meta( $customer_id, '_yayboost_customer_type', true );
-            if ( ! empty( $user_cached_type ) && in_array( $user_cached_type, [ 'first_time', 'returning' ], true )) {
-                // Sync to transient cache for consistency
-                set_transient( $cache_key, $user_cached_type, DAY_IN_SECONDS );
-                return $user_cached_type;
+            $has_ordered = get_user_meta( $customer_id, '_yayboost_has_ordered', true );
+            if ($has_ordered) {
+                return 'returning';
             }
         }
 
-        // Calculate using email-based query (limit 1 stops at first match)
+        // Query database (cache miss or guest customer)
+        // Query is optimized with limit 1 and only runs on order completion
         $has_previous  = $this->has_previous_orders_by_email( $billing_email, $order->get_id() );
         $customer_type = $has_previous ? 'returning' : 'first_time';
 
-        // Cache result in transient (24 hours) - works for both guest and logged-in
-        set_transient( $cache_key, $customer_type, DAY_IN_SECONDS );
-
-        // Also cache in user meta if logged-in customer (for faster future lookup)
-        if ($customer_id > 0) {
-            update_user_meta( $customer_id, '_yayboost_customer_type', $customer_type );
+        // Cache result in user_meta if logged-in customer (for faster future lookup)
+        if ($customer_id > 0 && $has_previous) {
+            update_user_meta( $customer_id, '_yayboost_has_ordered', true );
         }
 
         return $customer_type;
@@ -306,6 +391,18 @@ class NextOrderCouponFeature extends AbstractFeature {
         );
 
         return count( $orders ) > 0;
+    }
+
+    /**
+     * Mark customer as ordered (save to user_meta for logged-in customers)
+     *
+     * @param int $customer_id Customer ID.
+     * @return void
+     */
+    protected function mark_customer_as_ordered(int $customer_id): void {
+        if ($customer_id > 0) {
+            update_user_meta( $customer_id, '_yayboost_has_ordered', true );
+        }
     }
 
     /**
@@ -404,19 +501,35 @@ class NextOrderCouponFeature extends AbstractFeature {
     }
 
     /**
-     * Get coupon code from order
+     * Get coupon info from order
      *
      * @param int $order_id Order ID.
-     * @return string|null
+     * @return array{code: string, coupon: \WC_Coupon|null}|null
      */
-    protected function get_coupon_from_order(int $order_id): ?string {
+    protected function get_coupon_from_order(int $order_id): ?array {
         $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
         if ( ! $order) {
             return null;
         }
 
         $coupon_code = $order->get_meta( '_yayboost_next_order_coupon' );
-        return ! empty( $coupon_code ) ? $coupon_code : null;
+        if (empty( $coupon_code )) {
+            return null;
+        }
+
+        $coupon_id = $order->get_meta( '_yayboost_next_order_coupon_id' );
+        $coupon    = null;
+        if ( ! empty( $coupon_id )) {
+            $coupon = new \WC_Coupon( $coupon_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+            if ($coupon->get_id() === 0) {
+                $coupon = null;
+            }
+        }
+
+        return [
+            'code'   => $coupon_code,
+            'coupon' => $coupon,
+        ];
     }
 
     /**
@@ -439,21 +552,26 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $coupon_code = $this->get_coupon_from_order( $order->get_id() );
-        if ( ! $coupon_code) {
+        $coupon_info = $this->get_coupon_from_order( $order->get_id() );
+        if ( ! $coupon_info) {
             return;
         }
+
+        $coupon_code = $coupon_info['code'];
+        $coupon      = $coupon_info['coupon'];
 
         $discount_display = $this->format_discount_display(
             $settings['discount_type'] ?? 'percentage',
             $settings['discount_value'] ?? 0
         );
 
-        $expires_after  = $settings['expires_after'] ?? 30;
-        $completed_date = $order->get_date_completed();
-        $expiry_date    = '';
-        if ($completed_date) {
-            $expiry_date = date_i18n( get_option( 'date_format' ), $completed_date->getTimestamp() + ( $expires_after * DAY_IN_SECONDS ) );
+        // Get expiry date from coupon object
+        $expiry_date = '';
+        if ($coupon) {
+            $date_expires = $coupon->get_date_expires();
+            if ($date_expires) {
+                $expiry_date = date_i18n( get_option( 'date_format' ), $date_expires->getTimestamp() );
+            }
         }
 
         // Use headline only for thank you page
@@ -499,21 +617,26 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $coupon_code = $this->get_coupon_from_order( $order->get_id() );
-        if ( ! $coupon_code) {
+        $coupon_info = $this->get_coupon_from_order( $order->get_id() );
+        if ( ! $coupon_info) {
             return;
         }
+
+        $coupon_code = $coupon_info['code'];
+        $coupon      = $coupon_info['coupon'];
 
         $discount_display = $this->format_discount_display(
             $settings['discount_type'] ?? 'percentage',
             $settings['discount_value'] ?? 0
         );
 
-        $expires_after  = $settings['expires_after'] ?? 30;
-        $completed_date = $order->get_date_completed();
-        $expiry_date    = '';
-        if ($completed_date) {
-            $expiry_date = date_i18n( get_option( 'date_format' ), $completed_date->getTimestamp() + ( $expires_after * DAY_IN_SECONDS ) );
+        // Get expiry date from coupon object
+        $expiry_date = '';
+        if ($coupon) {
+            $date_expires = $coupon->get_date_expires();
+            if ($date_expires) {
+                $expiry_date = date_i18n( get_option( 'date_format' ), $date_expires->getTimestamp() );
+            }
         }
 
         $email_content = $this->format_coupon_message(
@@ -624,19 +747,20 @@ class NextOrderCouponFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'              => false,
-                'discount_type'        => 'percentage',
-                'discount_value'       => 20,
-                'coupon_prefix'        => 'THANKS-',
-                'expires_after'        => 30,
-                'minimum_order_total'  => 0,
-                'customer_type'        => 'all',
-                'minimum_spend_to_use' => 0,
-                'exclude_sale_items'   => false,
-                'display_locations'    => [ 'thank_you_page', 'order_email', 'my_account' ],
-                'thank_you_headline'   => __( "🎁 Here's a gift for your next order!", 'yayboost' ),
-                'thank_you_message'    => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires {expiry}.', 'yayboost' ),
-                'email_content'        => __( "As a thank you, here's {discount} off your next order!", 'yayboost' ),
+                'enabled'                => false,
+                'discount_type'           => 'percentage',
+                'discount_value'          => 20,
+                'coupon_prefix'           => 'THANKS-',
+                'expires_after'           => 30,
+                'minimum_order_total'     => 0,
+                'customer_type'           => 'all',
+                'on_cancel_refund_action' => 'keep_and_count',
+                'minimum_spend_to_use'    => 0,
+                'exclude_sale_items'      => false,
+                'display_locations'       => [ 'thank_you_page', 'order_email', 'my_account' ],
+                'thank_you_headline'      => __( "🎁 Here's a gift for your next order!", 'yayboost' ),
+                'thank_you_message'       => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires {expiry}.', 'yayboost' ),
+                'email_content'           => __( "As a thank you, here's {discount} off your next order!", 'yayboost' ),
             ]
         );
     }

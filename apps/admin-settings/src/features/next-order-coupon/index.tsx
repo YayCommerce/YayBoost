@@ -51,6 +51,7 @@ const settingsSchema = z.object({
   expires_after: z.number().min(1),
   minimum_order_total: z.number().min(0).optional(),
   customer_type: z.enum(['all', 'first_time', 'returning']),
+  on_cancel_refund_action: z.enum(['delete_and_reset', 'keep_and_count']),
   minimum_spend_to_use: z.number().min(0),
   exclude_sale_items: z.boolean(),
   display_locations: z.array(z.string()),
@@ -129,53 +130,6 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             form.reset(feature.settings as SettingsFormData);
           }}
         >
-          {/* General Section */}
-          <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
-            <p className="text-muted-foreground text-xs">
-              {__('Enable or disable the Next Order Coupon feature', 'yayboost')}
-            </p>
-          </div>
-          <FormField
-            control={form.control}
-            name="enabled"
-            render={({ field }) => (
-              <FormItem>
-                <Label>{__('Enable Next Order Coupon', 'yayboost')}</Label>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value ? 'on' : 'off'}
-                    onValueChange={(value) => {
-                      const newEnabled = value === 'on';
-                      field.onChange(newEnabled);
-                    }}
-                    disabled={toggleMutation.isPending}
-                    className="flex items-center gap-6"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value="on"
-                        id="enabled-on"
-                        disabled={toggleMutation.isPending}
-                      />
-                      <label htmlFor="enabled-on">{__('On', 'yayboost')}</label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem
-                        value="off"
-                        id="enabled-off"
-                        disabled={toggleMutation.isPending}
-                      />
-                      <label htmlFor="enabled-off">{__('Off', 'yayboost')}</label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Separator />
 
           {/* Coupon Settings Section */}
           <div className="space-y-1">
@@ -366,6 +320,37 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                       <RadioGroupItem value="returning" id="customer-returning" />
                       <label htmlFor="customer-returning">
                         {__('Returning customers only', 'yayboost')}
+                      </label>
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="on_cancel_refund_action"
+            render={({ field }) => (
+              <FormItem>
+                <Label>{__('When order is cancelled or refunded:', 'yayboost')}</Label>
+                <FormControl>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="delete_and_reset" id="cancel-delete" />
+                      <label htmlFor="cancel-delete">
+                        {__('Delete coupon and reset order count', 'yayboost')}
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RadioGroupItem value="keep_and_count" id="cancel-keep" />
+                      <label htmlFor="cancel-keep">
+                        {__('Keep coupon and count as ordered', 'yayboost')}
                       </label>
                     </div>
                   </RadioGroup>
