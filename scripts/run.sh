@@ -24,18 +24,18 @@ function help {
 
 function dev-init {
 	echo -e "${YELLOW}Installing dependencies...${NC}"
-	composer install && cd apps/admin-settings && pnpm install
+	cd .. && composer install && cd apps/admin-settings && pnpm install
 	echo -e "${GREEN}✓ Dependencies installed${NC}"
 }
 
 function dev {
 	echo -e "${YELLOW}Starting development server...${NC}"
-	cd apps/admin-settings && pnpm dev
+	cd .. && cd apps/admin-settings && pnpm dev
 }
 
 function build {
 	echo -e "${YELLOW}Building production assets...${NC}"
-	cd apps/admin-settings && pnpm build
+	cd .. && cd apps/admin-settings && pnpm build
 	echo -e "${GREEN}✓ Build complete${NC}"
 }
 
@@ -46,7 +46,7 @@ function release {
 
 function test {
 	echo -e "${YELLOW}Running PHPUnit tests...${NC}"
-	./vendor/bin/phpunit
+	cd .. && ./vendor/bin/phpunit
 }
 
 TIMEFORMAT=$'\nTask completed in %3lR'

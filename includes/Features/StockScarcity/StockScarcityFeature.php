@@ -11,6 +11,7 @@ namespace YayBoost\Features\StockScarcity;
 
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Analytics\AnalyticsTracker;
+use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
 /**
  * Free Shipping Bar feature implementation
@@ -59,55 +60,124 @@ class StockScarcityFeature extends AbstractFeature {
     protected $priority = 1;
 
     /**
+     * Display position service
+     *
+     * @var DisplayPositionService
+     */
+    private DisplayPositionService $position_service;
+
+    /**
+     * Allowed positions for product page
+     *
+     * @var array
+     */
+    protected array $product_positions = [
+        'below_price',
+        'below_add_to_cart_button',
+    ];
+
+    /**
+     * Allowed positions for shop page
+     *
+     * @var array
+     */
+    protected array $shop_positions = [
+        'after_shop_loop_item',
+    ];
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
     public function init(): void
     {
-        $this->render_stock_scarcity();
+        $this->position_service = new DisplayPositionService();
+        $this->register_display_hooks();
     }
 
-    public function render_stock_scarcity(): void
+    /**
+     * Register display hooks based on settings
+     *
+     * @return void
+     */
+    protected function register_display_hooks(): void
     {
-
         if (! $this->is_enabled()) {
             return;
         }
 
         $show_on = $this->get('show_on', []);
 
-        // Hook for product page based on position
-        if (in_array('product_page', $show_on)) {
-            $this->render_stock_scarcity_product_page();
+        if (in_array('product_page', $show_on, true)) {
+            $this->register_product_page_hook();
         }
 
-        // Hook for shop/category pages
-        if (in_array('shop_category_pages', $show_on)) {
-            $this->render_stock_scarcity_shop_category_pages();
+        if (in_array('shop_category_pages', $show_on, true)) {
+            $this->register_shop_page_hook();
         }
     }
 
-    protected function render_stock_scarcity_product_page(): void
+    /**
+     * Register product page position hook
+     *
+     * @return void
+     */
+    protected function register_product_page_hook(): void
     {
         $position = $this->get('position_on_product_page');
 
-        switch ($position) {
-            case 'below_title':
-                add_action('woocommerce_single_product_summary', [$this, 'render_stock_scarcity_template'], 6);
-                break;
-            case 'below_price':
-                add_action('woocommerce_single_product_summary', [$this, 'render_stock_scarcity_template'], 11);
-                break;
-            default:
-                add_action('woocommerce_after_add_to_cart_button', [$this, 'render_stock_scarcity_template']);
-                break;
-        }
+        $this->position_service->register_hook(
+            DisplayPositionService::PAGE_PRODUCT,
+            $position,
+            [$this, 'render_stock_scarcity_template']
+        );
     }
 
-    protected function render_stock_scarcity_shop_category_pages(): void
+    /**
+     * Register shop/category page position hook
+     *
+     * Uses position mapping to convert product page position to shop page equivalent.
+     *
+     * @return void
+     */
+    protected function register_shop_page_hook(): void
     {
-        add_action('woocommerce_after_shop_loop_item', [$this, 'render_stock_scarcity_template'], 11);
+        $position = $this->get('position_on_product_page');
+
+        $this->position_service->register_mapped_hook(
+            $position,
+            DisplayPositionService::PAGE_PRODUCT,
+            DisplayPositionService::PAGE_SHOP,
+            [$this, 'render_stock_scarcity_template'],
+            'after_shop_loop_item' // fallback
+        );
+    }
+
+    /**
+     * Get position options for product page admin UI
+     *
+     * @return array Options array with value/label pairs.
+     */
+    public function get_product_position_options(): array
+    {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_PRODUCT,
+            $this->product_positions
+        );
+    }
+
+    /**
+     * Get position options for shop page admin UI
+     *
+     * @return array Options array with value/label pairs.
+     */
+    public function get_shop_position_options(): array
+    {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_SHOP,
+            $this->shop_positions
+        );
     }
 
     /**
@@ -262,7 +332,7 @@ class StockScarcityFeature extends AbstractFeature {
                 ],
                 'fill_color' => '#E53935',
                 'background_color' => '#EEEEEE',
-                'position_on_product_page' => 'below_title',
+                'position_on_product_page' => 'below_product_title',
                 'show_on' => ['product_page', 'shop_category_pages'],
                 'apply_to' => 'all_products',
                 'specific_categories' => [],

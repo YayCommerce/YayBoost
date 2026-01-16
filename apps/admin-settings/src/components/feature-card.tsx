@@ -3,7 +3,6 @@
  */
 
 import { hasFeatureComponent } from '@/features';
-import * as PhosphorIcons from '@phosphor-icons/react';
 import { Link } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
 import { useMemo } from 'react';
@@ -14,21 +13,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { useToggleFeature } from '@/hooks/use-features';
 import { Feature } from '@/lib/api';
+import { getIcon } from '@/lib/feature-icons';
 import { cn } from '@/lib/utils';
 
 interface FeatureCardProps {
   feature: Feature;
-}
-
-// TODO: change this to use PHP declaration. SVG get from phosphor website
-// Get Phosphor icon by name
-function getIcon(iconName: string) {
-  const pascalCase = iconName
-    .split(/[-_]/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join('');
-  const Icon = (PhosphorIcons as unknown as Record<string, PhosphorIcons.Icon>)[pascalCase];
-  return Icon || PhosphorIcons.Lightning;
 }
 
 export function FeatureCard({ feature }: FeatureCardProps) {

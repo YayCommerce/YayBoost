@@ -4,6 +4,12 @@ import { __ } from '@wordpress/i18n';
 import { AlertCircle, Eye } from 'lucide-react';
 import z from 'zod';
 
+import {
+  DisplayPositionSelect,
+  getPositionValues,
+  isUseBlockPosition,
+  PAGE_PRODUCT,
+} from '@/lib/display-position';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -38,6 +44,20 @@ import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
 
+// Allowed positions for this feature
+const ALLOWED_POSITIONS = [
+  'below_product_title',
+  'below_short_description',
+  'above_add_to_cart_button',
+  'below_add_to_cart_button',
+];
+
+// Get valid position values for schema (includes use_block)
+const validPositions = getPositionValues(PAGE_PRODUCT, ALLOWED_POSITIONS, true) as [
+  string,
+  ...string[],
+];
+
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
@@ -52,13 +72,7 @@ const settingsSchema = z.object({
   }),
   display: z.object({
     text: z.string().min(1),
-    position: z.enum([
-      'below_product_title',
-      'above_add_to_cart_button',
-      'below_add_to_cart_button',
-      'below_price',
-      'use_block',
-    ]),
+    position: z.enum(validPositions),
   }),
   style: z.object({
     style: z.enum(['style_1', 'style_2', 'style_3']),
@@ -389,27 +403,16 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             render={({ field }) => (
               <FormItem>
                 <Label>{__('Position on Product Page', 'yayboost')}</Label>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder={__('Select position', 'yayboost')} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="below_product_title">
-                      {__('Below product title', 'yayboost')}
-                    </SelectItem>
-                    <SelectItem value="above_add_to_cart_button">
-                      {__('Above add to cart button', 'yayboost')}
-                    </SelectItem>
-                    <SelectItem value="below_add_to_cart_button">
-                      {__('Below add to cart button', 'yayboost')}
-                    </SelectItem>
-                    <SelectItem value="below_price">{__('Below price', 'yayboost')}</SelectItem>
-                    <SelectItem value="use_block">{__('Use block', 'yayboost')}</SelectItem>
-                  </SelectContent>
-                </Select>
-                {field.value === 'use_block' && (
+                <FormControl>
+                  <DisplayPositionSelect
+                    pageType={PAGE_PRODUCT}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    allowedPositions={ALLOWED_POSITIONS}
+                    includeUseBlock
+                  />
+                </FormControl>
+                {isUseBlockPosition(field.value) && (
                   <FormDescription>
                     {__(
                       'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
@@ -473,7 +476,11 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                 <FormItem>
                   <Label>{__('Text Color', 'yayboost')}</Label>
                   <FormControl>
-                    <ColorPicker {...field} />
+                    <ColorPicker
+                      value={field.value}
+                      defaultColor="#000000"
+                      onChangeColor={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -487,7 +494,11 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                   <FormItem>
                     <Label>{__('Background Color', 'yayboost')}</Label>
                     <FormControl>
-                      <ColorPicker {...field} />
+                      <ColorPicker
+                        value={field.value}
+                        defaultColor="#efefef"
+                        onChangeColor={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

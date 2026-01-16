@@ -4,7 +4,15 @@
  * Base styles for the free shipping bar component.
  * Dynamic colors (bar_color, background_color, text_color) are added via inline styles.
  */
-  
+
+.widget_shopping_cart_content .yayboost-shipping-bar {
+  margin: 1rem;
+}
+
+.yayboost-shipping-bar {
+  margin-block: 1rem;
+}
+
 .yayboost-shipping-bar__message {
   margin: 0;
   font-size: 14px;

@@ -12,6 +12,12 @@ import { AlertCircle, Eye, Gift, Truck } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import {
+  DisplayPositionMultiSelect,
+  PAGE_CART,
+  PAGE_CHECKOUT,
+  type PositionsByPage,
+} from '@/lib/display-position';
 import { cn } from '@/lib/utils';
 import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -40,6 +46,12 @@ import UnavailableFeature from '@/components/unavailable-feature';
 // Get currency symbol from admin data
 const currencySymbol = window.yayboostData?.currencySymbol || '$';
 
+// Display positions schema (grouped by page type)
+const displayPositionsSchema = z.object({
+  cart: z.array(z.string()).optional(),
+  checkout: z.array(z.string()).optional(),
+});
+
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
@@ -47,7 +59,8 @@ const settingsSchema = z.object({
   message_progress: z.string().min(1),
   message_achieved: z.string().min(1),
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-  show_on: z.array(z.string()),
+  display_positions: displayPositionsSchema,
+  show_on_mini_cart: z.boolean(),
   show_progress_bar: z.boolean(),
   display_style: z.enum(['minimal_text', 'progress_bar', 'full_detail']),
   behavior_when_unlocked: z.enum(['show_message', 'hide_bar']),
@@ -55,20 +68,19 @@ const settingsSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
-const showOnOptions = [
-  { id: 'top_cart', label: __('Top Cart Page', 'yayboost') },
-  { id: 'bottom_cart', label: __('Bottom Cart Page', 'yayboost') },
-  { id: 'top_checkout', label: __('Top Checkout Page', 'yayboost') },
-  { id: 'bottom_checkout', label: __('Bottom Checkout Page', 'yayboost') },
-  { id: 'mini_cart', label: __('Mini Cart', 'yayboost') },
-];
+/** Allowed positions for cart page */
+const CART_POSITIONS = ['before_cart_table', 'after_cart_table'];
+
+/** Allowed positions for checkout page */
+const CHECKOUT_POSITIONS = ['before_checkout_form', 'after_checkout_form'];
 
 // Helper function to convert hex color to rgba with opacity
 function applyOpacity(hex: string, opacity: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, Math.floor((num >> 16) + (255 - (num >> 16)) * opacity));
+  const g = Math.min(255, Math.floor(((num >> 8) & 0x00FF) + (255 - ((num >> 8) & 0x00FF)) * opacity));
+  const b = Math.min(255, Math.floor((num & 0x0000FF) + (255 - (num & 0x0000FF)) * opacity));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 function getBlockColors(
@@ -81,7 +93,7 @@ function getBlockColors(
 } {
   return {
     primaryColor: primaryColor,
-    backgroundColor: achieved ? primaryColor : applyOpacity(primaryColor, 0.2),
+    backgroundColor: achieved ? primaryColor : applyOpacity(primaryColor, 0.75),
     textColor: achieved ? '#ffffff' : primaryColor,
   };
 }
@@ -398,40 +410,41 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
             </div>
             <FormField
               control={form.control}
-              name="show_on"
-              render={() => (
-                <FormItem>
-                  <div className="space-y-2">
-                    {showOnOptions.map((option) => (
-                      <FormField
-                        key={option.id}
-                        control={form.control}
-                        name="show_on"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-y-0 space-x-3">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(option.id)}
-                                onCheckedChange={(checked) => {
-                                  const current = field.value || [];
-                                  if (checked) {
-                                    field.onChange([...current, option.id]);
-                                  } else {
-                                    field.onChange(current.filter((v) => v !== option.id));
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="text-sm font-normal">{option.label}</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
+              name="display_positions"
+              render={({ field }) => (
+                <FormItem className="mb-4">
+                  <FormControl>
+                    <DisplayPositionMultiSelect
+                      pageTypes={[PAGE_CART, PAGE_CHECKOUT]}
+                      value={field.value as PositionsByPage}
+                      onChange={field.onChange}
+                      allowedPositions={{
+                        [PAGE_CART]: CART_POSITIONS,
+                        [PAGE_CHECKOUT]: CHECKOUT_POSITIONS,
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div>
+              <Label className="text-sm font-medium mb-2">{__('Other places', 'yayboost')}</Label>
+              <FormField
+                control={form.control}
+                name="show_on_mini_cart"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-y-0 space-x-3 pl-1">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal">
+                      {__('Mini Cart', 'yayboost')}
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+            </div>
             <Separator />
             <div className="space-y-1">
               <h3 className="text-sm font-medium">{__('Style', 'yayboost')}</h3>
@@ -649,7 +662,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   </span>
                   <span>
                     {currencySymbol}
-                    {(150).toFixed(2)}
+                    {(MOCK_THRESHOLD).toFixed(2)}
                   </span>
                 </div>
               </div>

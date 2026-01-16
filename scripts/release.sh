@@ -205,7 +205,11 @@ cmd_package() {
     # Copy directories
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
-    cp -r "$PLUGIN_DIR/vendor" "$temp_dir/"
+
+    # Copy only essential vendor files (autoload.php and composer directory)
+    mkdir -p "$temp_dir/vendor"
+    cp "$PLUGIN_DIR/vendor/autoload.php" "$temp_dir/vendor/"
+    cp -r "$PLUGIN_DIR/vendor/composer" "$temp_dir/vendor/"
 
     # Remove dev files from copied assets
     rm -rf "$temp_dir/assets/admin/dist/.vite" 2>/dev/null || true

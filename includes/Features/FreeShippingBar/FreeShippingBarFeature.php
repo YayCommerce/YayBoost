@@ -12,6 +12,7 @@ namespace YayBoost\Features\FreeShippingBar;
 
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Analytics\AnalyticsTracker;
+use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
 /**
  * Free Shipping Bar feature implementation
@@ -82,33 +83,40 @@ class FreeShippingBarFeature extends AbstractFeature {
     private static $impression_logged = false;
 
     /**
+     * Display position service
+     *
+     * @var DisplayPositionService
+     */
+    private DisplayPositionService $position_service;
+
+    /**
+     * Allowed positions for cart page
+     *
+     * @var array
+     */
+    protected array $cart_positions = [
+        'before_cart_table',
+        'after_cart_table',
+    ];
+
+    /**
+     * Allowed positions for checkout page
+     *
+     * @var array
+     */
+    protected array $checkout_positions = [
+        'before_checkout_form',
+        'after_checkout_form',
+    ];
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
     public function init(): void {
-        // Hook into appropriate locations based on show_on setting
-        $show_on  = $this->get('show_on');
-
-        // Map show_on values to WooCommerce hooks
-        $hook_map = [
-            'top_cart'        => 'woocommerce_before_cart_table',
-            'bottom_cart'     => 'woocommerce_after_cart_table',
-            'top_checkout'    => 'woocommerce_before_checkout_form',
-            'bottom_checkout' => 'woocommerce_after_checkout_form',
-        ];
-
-        foreach ($show_on as $location) {
-            if (isset( $hook_map[ $location ] )) {
-                add_action( $hook_map[ $location ], [ $this, 'render_bar' ] );
-            }
-        }
-
-        // Mini cart: Support both widget (hook) and block (JavaScript)
-        if (in_array( 'mini_cart', $show_on, true )) {
-            // Method 1: Hook for widget-based mini cart
-            add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
-        }
+        $this->position_service = new DisplayPositionService();
+        $this->register_display_hooks();
 
         // Add cart fragments filter for Classic Cart/Mini Cart updates
         add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_shipping_bar_fragment' ] );
@@ -117,6 +125,55 @@ class FreeShippingBarFeature extends AbstractFeature {
             new FreeShippingBarBlock( $this );
             new FreeShippingBarSlotFill( $this );
         }
+    }
+
+    /**
+     * Register display hooks based on settings
+     *
+     * @return void
+     */
+    protected function register_display_hooks(): void {
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
+        $display_positions = $this->get( 'display_positions', [] );
+
+        // Register cart and checkout page hooks via DisplayPositionService
+        $this->position_service->register_multi_page_hooks(
+            $display_positions,
+            [ $this, 'render_bar' ]
+        );
+
+        // Mini cart: Support both widget (hook) and block (JavaScript)
+        if ( $this->get( 'show_on_mini_cart', false ) ) {
+            add_action( 'woocommerce_before_mini_cart', [ $this, 'render_bar' ] );
+            add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ] );
+        }
+    }
+
+    /**
+     * Get position options for cart page admin UI
+     *
+     * @return array Options array with value/label pairs.
+     */
+    public function get_cart_position_options(): array {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_CART,
+            $this->cart_positions
+        );
+    }
+
+    /**
+     * Get position options for checkout page admin UI
+     *
+     * @return array Options array with value/label pairs.
+     */
+    public function get_checkout_position_options(): array {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_CHECKOUT,
+            $this->checkout_positions
+        );
     }
 
     /**
@@ -146,6 +203,17 @@ class FreeShippingBarFeature extends AbstractFeature {
         ];
     }
 
+    public function enqueue_styles(): void {
+        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
+            wp_enqueue_style(
+                'yayboost-free-shipping-bar',
+                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
+                [],
+                YAYBOOST_VERSION
+            );
+        }
+    }
+
     /**
      * Render the shipping bar
      *
@@ -158,14 +226,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
 
         // Enqueue CSS file, make sure style from block not enqueued
-        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
-            wp_enqueue_style(
-                'yayboost-free-shipping-bar',
-                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
-                [],
-                YAYBOOST_VERSION
-            );
-        }
+        $this->enqueue_styles();
 
         $bar_html = $this->get_bar_html();
 
@@ -889,16 +950,24 @@ class FreeShippingBarFeature extends AbstractFeature {
      * @param float  $opacity Opacity value (0.0 to 1.0).
      * @return string RGBA color string
      */
-    public function apply_opacity(string $hex, float $opacity = 0.2): string {
-        // Remove # if present
+    public function apply_opacity(string $hex, float $opacity = 0.75): string {
         $hex = ltrim( $hex, '#' );
-
-        // Convert hex to RGB
+    
+        // Handle shorthand hex (#fff)
+        if ( strlen( $hex ) === 3 ) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        
         $r = hexdec( substr( $hex, 0, 2 ) );
         $g = hexdec( substr( $hex, 2, 2 ) );
         $b = hexdec( substr( $hex, 4, 2 ) );
-
-        return sprintf( 'rgba(%d, %d, %d, %.2f)', $r, $g, $b, $opacity );
+        
+        // Blend with white
+        $r = round( $r + ( 255 - $r ) * $opacity );
+        $g = round( $g + ( 255 - $g ) * $opacity );
+        $b = round( $b + ( 255 - $b ) * $opacity );
+        
+        return sprintf( '#%02x%02x%02x', $r, $g, $b );
     }
 
     /**
@@ -929,14 +998,18 @@ class FreeShippingBarFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'           => true,
-                'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
-                'message_coupon'    => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
-                'primary_color'     => '#4CAF50',
-                'show_on'           => [ 'top_cart', 'top_checkout' ],
-                'show_progress_bar' => true,
-                'display_style'     => 'minimal_text',
+                'enabled'            => true,
+                'message_progress'   => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
+                'message_achieved'   => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
+                'message_coupon'     => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
+                'primary_color'      => '#4CAF50',
+                'display_positions'  => [
+                    'cart'     => [ 'before_cart_table' ],
+                    'checkout' => [ 'before_checkout_form' ],
+                ],
+                'show_on_mini_cart'  => false,
+                'show_progress_bar'  => true,
+                'display_style'      => 'minimal_text',
             ]
         );
     }

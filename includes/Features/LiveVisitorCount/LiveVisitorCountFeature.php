@@ -10,6 +10,7 @@
 namespace YayBoost\Features\LiveVisitorCount;
 
 use YayBoost\Features\AbstractFeature;
+use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
 /**
  * Live Visitor Count feature implementation
@@ -80,12 +81,33 @@ class LiveVisitorCountFeature extends AbstractFeature {
 	private $ajax_handler;
 
 	/**
+	 * Display position service
+	 *
+	 * @var DisplayPositionService
+	 */
+	private DisplayPositionService $position_service;
+
+	/**
+	 * Allowed positions for this feature (empty = all)
+	 *
+	 * @var array
+	 */
+	protected array $allowed_positions = [
+		'below_price',
+		'above_add_to_cart_button',
+		'below_add_to_cart_button',
+	];
+
+	/**
 	 * Constructor
 	 *
 	 * @param \YayBoost\Container\Container $container DI container.
 	 */
 	public function __construct( $container ) {
 		parent::__construct( $container );
+
+		// Initialize services
+		$this->position_service = new DisplayPositionService();
 
 		// Initialize modules
 		$this->tracker      = new LiveVisitorCountTracker( $this );
@@ -124,48 +146,25 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		}
 
 		$position = $this->get( 'display.position' );
-		if ( 'use_block' === $position ) {
-			return;
-		}
 
-		$hook     = $this->get_position_hook( $position );
-		$priority = $this->get_position_priority( $position );
-
-		add_action( $hook, array( $this, 'render_content' ), $priority );
+		$this->position_service->register_hook(
+			DisplayPositionService::PAGE_PRODUCT,
+			$position,
+			array( $this, 'render_content' )
+		);
 	}
 
 	/**
-	 * Get WooCommerce hook for display position
+	 * Get position options for admin UI
 	 *
-	 * @param string $position Position setting value.
-	 * @return string Hook name.
+	 * @return array Options array with value/label pairs.
 	 */
-	private function get_position_hook( string $position ): string {
-		$hooks = array(
-			'below_product_title'      => 'woocommerce_single_product_summary',
-			'above_add_to_cart_button' => 'woocommerce_before_add_to_cart_form	',
-			'below_add_to_cart_button' => 'woocommerce_after_add_to_cart_form',
-			'below_price'              => 'woocommerce_single_product_summary',
+	public function get_position_options(): array {
+		return $this->position_service->get_options_for_select(
+			DisplayPositionService::PAGE_PRODUCT,
+			$this->allowed_positions,
+			true // Include "Use Block" option
 		);
-
-		return $hooks[ $position ] ?? 'woocommerce_single_product_summary';
-	}
-
-	/**
-	 * Get hook priority for display position
-	 *
-	 * @param string $position Position setting value.
-	 * @return int Hook priority.
-	 */
-	private function get_position_priority( string $position ): int {
-		$priorities = array(
-			'below_product_title'      => 6,
-			'above_add_to_cart_button' => 10,
-			'below_add_to_cart_button' => 10,
-			'below_price'              => 11,
-		);
-
-		return $priorities[ $position ] ?? 6;
 	}
 
 	/**
@@ -223,15 +222,31 @@ class LiveVisitorCountFeature extends AbstractFeature {
 		if ( empty( $specific_categories ) ) {
 			return false;
 		}
+		$categories = array();
+		// $specific_categories = array_map( 'intval', $specific_categories );
+		foreach ( $specific_categories as $category ) {
+			$category = get_term_by( 'slug', $category, 'product_cat' );
+			if ( $category ) {
+				$categories[] = $category->term_id;
+				//if category has children, add them to the categories array
+				$children = get_term_children( $category->term_id, 'product_cat' );
+				if ( ! empty( $children ) ) {
+					$categories = array_merge( $categories, $children );
+				}
+			}
+		}
 
-		$specific_categories = array_map( 'intval', $specific_categories );
-		$product_categories  = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		if ( empty( $categories ) ) {
+			return false;
+		}
+
+		$product_categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
 
 		if ( is_wp_error( $product_categories ) ) {
 			return false;
 		}
 
-		return ! empty( array_intersect( array_map( 'intval', $product_categories ), $specific_categories ) );
+		return ! empty( array_intersect( array_map( 'intval', $product_categories ), $categories ) );
 	}
 
 	/**

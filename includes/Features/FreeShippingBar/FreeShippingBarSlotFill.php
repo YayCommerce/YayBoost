@@ -129,13 +129,6 @@ class FreeShippingBarSlotFill {
         );
 
         // wp_enqueue_style() will auto-register if not already registered
-        if ( ! wp_style_is( 'yayboost-free-shipping-bar-style', 'enqueued' ) ) {
-            wp_enqueue_style(
-                'yayboost-free-shipping-bar',
-                YAYBOOST_URL . 'assets/dist/blocks/free-shipping-bar/style-index.css',
-                [],
-                YAYBOOST_VERSION
-            );
-        }
+        $this->feature->enqueue_styles();
     }
 }
