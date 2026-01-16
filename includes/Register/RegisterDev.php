@@ -28,7 +28,7 @@ class RegisterDev {
     }
 
     public function register_all_scripts() {
-        $deps = [ 'react', 'react-dom', 'wp-hooks', 'wp-i18n', 'wp-components' ];
+        $deps = [ 'react', 'react-dom', 'wp-hooks', 'wp-i18n', 'wp-components', 'wp-element' ];
 
         wp_register_script( ScriptName::ADMIN_SETTINGS, 'http://localhost:3000/main.tsx', $deps, null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
     }

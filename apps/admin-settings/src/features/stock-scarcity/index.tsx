@@ -581,38 +581,36 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="w-fit min-w-xs rounded-lg border border-gray-200 bg-white p-4">
-            <div className="flex flex-col gap-3">
-              {/* Alert Text */}
-              {watchedValues.show_alert_text && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium whitespace-nowrap text-gray-900">
-                    {message}
-                  </span>
-                </div>
-              )}
+          <div className="flex flex-col gap-3">
+            {/* Alert Text */}
+            {watchedValues.show_alert_text && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium whitespace-nowrap text-gray-900">
+                  {message}
+                </span>
+              </div>
+            )}
 
-              {/* Progress Bar */}
-              {watchedValues.show_progress_bar && (
-                <div className="flex items-center gap-3">
+            {/* Progress Bar */}
+            {watchedValues.show_progress_bar && (
+              <div className="flex items-center gap-3">
+                <div
+                  className="h-2 min-w-[200px] overflow-hidden rounded-full"
+                  style={{ backgroundColor: watchedValues.background_color }}
+                >
                   <div
-                    className="h-2 min-w-[200px] overflow-hidden rounded-full"
-                    style={{ backgroundColor: watchedValues.background_color }}
-                  >
-                    <div
-                      className="h-full rounded-full transition-all duration-300"
-                      style={{
-                        width: `${progress}%`,
-                        backgroundColor: watchedValues.fill_color,
-                      }}
-                    />
-                  </div>
-                  <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
-                    {SAMPLE_STOCK_LEFT} left
-                  </span>
+                    className="h-full rounded-full transition-all duration-300"
+                    style={{
+                      width: `${progress}%`,
+                      backgroundColor: watchedValues.fill_color,
+                    }}
+                  />
                 </div>
-              )}
-            </div>
+                <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
+                  {SAMPLE_STOCK_LEFT} left
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
