@@ -110,7 +110,7 @@ class FreeShippingBarSlotFill {
         }
 
         $asset       = include $asset_file;
-        $script_deps = array_merge( $asset['dependencies'], [ 'wc-accounting' ] );
+        $script_deps = array_merge( $asset['dependencies'], [ 'wc-accounting', 'wc-settings' ] );
 
         // wp_enqueue_script() will auto-register if not already registered
         wp_enqueue_script(

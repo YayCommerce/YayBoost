@@ -51,6 +51,9 @@ wp_interactivity_state(
 
 wp_enqueue_script( 'wc-accounting' );
 
+// Enqueue wc-settings for frontend (needed for formatPrice utility)
+wp_enqueue_script( 'wc-settings' );
+
 // Prepare context for Interactivity API (per-block instance data)
 $context = [
     'threshold'    => $bar_data['threshold'],
