@@ -26,7 +26,7 @@ import {
 const FreeShippingBarSlot = ({ cart, ...rest }) => {
   // Get cart totals from WooCommerce store
   const cartTotals = cart?.cartTotals || {};
-  const cartTotal = cartTotals?.total_price || null;
+  const cartTotal = cartTotals?.total_items || null;
   if (cartTotal === null) {
     return null;
   }
