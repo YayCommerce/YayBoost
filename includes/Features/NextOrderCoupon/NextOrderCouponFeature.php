@@ -118,10 +118,9 @@ class NextOrderCouponFeature extends AbstractFeature {
         $coupon = new \WC_Coupon(); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
         $coupon->set_code( $coupon_code );
 
-        // Map discount type
-        $discount_type    = $settings['discount_type'] ?? 'percentage';
-        $wc_discount_type = $this->map_discount_type( $discount_type );
-        $coupon->set_discount_type( $wc_discount_type );
+        // Set discount type (directly use WooCommerce format)
+        $discount_type = $settings['discount_type'] ?? 'percent';
+        $coupon->set_discount_type( $discount_type );
 
         // Set discount amount
         if (isset( $settings['discount_value'] ) && $settings['discount_value'] > 0) {
@@ -267,21 +266,6 @@ class NextOrderCouponFeature extends AbstractFeature {
         }
     }
 
-    /**
-     * Map discount type from settings to WooCommerce format
-     *
-     * @param string $discount_type Discount type from settings.
-     * @return string WooCommerce discount type
-     */
-    protected function map_discount_type(string $discount_type): string {
-        $mapping = [
-            'percentage'    => 'percent',
-            'fixed_amount'  => 'fixed_cart',
-            'free_shipping' => 'free_shipping',
-        ];
-
-        return $mapping[ $discount_type ] ?? 'percent';
-    }
 
     /**
      * Check if coupon should be generated for order
@@ -561,7 +545,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         $coupon      = $coupon_info['coupon'];
 
         $discount_display = $this->format_discount_display(
-            $settings['discount_type'] ?? 'percentage',
+            $settings['discount_type'] ?? 'percent',
             $settings['discount_value'] ?? 0
         );
 
@@ -626,7 +610,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         $coupon      = $coupon_info['coupon'];
 
         $discount_display = $this->format_discount_display(
-            $settings['discount_type'] ?? 'percentage',
+            $settings['discount_type'] ?? 'percent',
             $settings['discount_value'] ?? 0
         );
 
@@ -727,9 +711,9 @@ class NextOrderCouponFeature extends AbstractFeature {
         $currency_symbol = \get_woocommerce_currency_symbol(); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 
         switch ($discount_type) {
-            case 'percentage':
+            case 'percent':
                 return $discount_value . '%';
-            case 'fixed_amount':
+            case 'fixed_cart':
                 return $currency_symbol . number_format( $discount_value, 2 );
             case 'free_shipping':
                 return __( 'Free shipping', 'yayboost' );
@@ -747,8 +731,8 @@ class NextOrderCouponFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'                => false,
-                'discount_type'           => 'percentage',
+                'enabled'                 => false,
+                'discount_type'           => 'percent',
                 'discount_value'          => 20,
                 'coupon_prefix'           => 'THANKS-',
                 'expires_after'           => 30,

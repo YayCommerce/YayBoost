@@ -45,7 +45,7 @@ const currencySymbol = window.yayboostData?.currencySymbol || '$';
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
-  discount_type: z.enum(['percentage', 'fixed_amount', 'free_shipping']),
+  discount_type: z.enum(['percent', 'fixed_cart', 'free_shipping']),
   discount_value: z.number().min(0).optional(),
   coupon_prefix: z.string().min(1),
   expires_after: z.number().min(1),
@@ -152,11 +152,11 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                     className="flex flex-col gap-3"
                   >
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="percentage" id="discount-percentage" />
+                      <RadioGroupItem value="percent" id="discount-percentage" />
                       <label htmlFor="discount-percentage" className="flex items-center gap-2">
                         {__('Percentage off', 'yayboost')}
                       </label>
-                      {field.value === 'percentage' && (
+                      {field.value === 'percent' && (
                         <FormField
                           control={form.control}
                           name="discount_value"
@@ -177,11 +177,11 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                       )}
                     </div>
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="fixed_amount" id="discount-fixed" />
+                      <RadioGroupItem value="fixed_cart" id="discount-fixed" />
                       <label htmlFor="discount-fixed" className="flex items-center gap-2">
                         {__('Fixed amount off', 'yayboost')}
                       </label>
-                      {field.value === 'fixed_amount' && (
+                      {field.value === 'fixed_cart' && (
                         <FormField
                           control={form.control}
                           name="discount_value"
