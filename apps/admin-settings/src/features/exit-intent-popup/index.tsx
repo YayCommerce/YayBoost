@@ -1,0 +1,283 @@
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { __ } from '@wordpress/i18n';
+import { AlertCircle, Eye } from 'lucide-react';
+import z from 'zod';
+
+import {
+  DisplayPositionSelect,
+  getPositionValues,
+  isUseBlockPosition,
+  PAGE_PRODUCT,
+} from '@/lib/display-position';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { useProductCategories, useProducts } from '@/hooks/use-product-data';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ColorPicker } from '@/components/ui/color-picker';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+  useForm,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { InputNumber } from '@/components/ui/input-number';
+import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
+import UnavailableFeature from '@/components/unavailable-feature';
+
+import { FeatureComponentProps } from '..';
+import { Checkbox } from '@/components/ui/checkbox';
+
+// Settings schema
+const settingsSchema = z.object({
+  enabled: z.boolean(),
+  trigger: z.object({
+    leaves_viewport: z.boolean(),
+    back_button_pressed: z.boolean(),
+  }),
+  offer: z.object({
+    type: z.enum(['percent', 'fixed_amount', 'free_shipping']),
+    value: z.number().min(0),
+    prefix: z.string().min(1),
+    expires: z.number().min(1),
+  }),
+  content: z.object({
+    headline: z.string().min(1),
+    message: z.string().min(1),
+    button_text: z.string().min(1),
+  }),
+  behavior: z.enum(['checkout_page', 'cart_page']),
+});
+
+type SettingsFormData = z.infer<typeof settingsSchema>;
+
+export default function ExitIntentPopupFeature({ featureId }: FeatureComponentProps) {
+  const { data: feature, isLoading, isFetching } = useFeature(featureId);
+  const updateSettings = useUpdateFeatureSettings();
+
+  const form = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: feature?.settings as SettingsFormData,
+  });
+
+  const onSubmit = (data: SettingsFormData) => {
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
+  };
+
+  const generatePreviewCode = (prefix: string) => {
+    return `${prefix}ABCDE`;
+  };
+
+  if (isLoading || isFetching) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+
+  if (!feature?.settings) {
+    return <UnavailableFeature />;
+  }
+
+  return (
+    <Form {...form}>
+      <FeatureLayoutHeader title={feature.name} description={feature.description} />
+      <div className="grid gap-6 lg:grid-cols-1">
+        <SettingsCard
+          headless
+          onSave={() => {
+            form.handleSubmit(onSubmit)();
+          }}
+          onReset={() => {
+            form.reset(feature?.settings as SettingsFormData);
+          }}
+          isSaving={updateSettings.isPending}
+          isDirty={form.formState.isDirty}
+          isLoading={isLoading || isFetching}
+        >
+          <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Trigger', 'yayboost')}</h3>
+            <p className="text-muted-foreground text-xs">
+              {__('Show popup when:', 'yayboost')}
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+          <FormField
+            control={form.control}
+            name="trigger.leaves_viewport"
+            render={({ field }) => (
+                <FormItem className="flex items-center">
+                <FormControl>
+                    <Checkbox
+                    id="trigger-leaves-viewport"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                <Label htmlFor="trigger-leaves-viewport" className="text-sm font-normal">
+                    {__('Leaves viewport', 'yayboost')}
+                </Label>
+                </FormItem>
+            )}
+          />
+        <FormField
+          control={form.control}
+          name="trigger.back_button_pressed"
+          render={({ field }) => (
+            <FormItem className="flex items-center">
+              <FormControl>
+                <Checkbox
+                  id="trigger-back-button-pressed"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <Label htmlFor="trigger-back-button-pressed" className="text-sm font-normal">
+                {__('Back button pressed', 'yayboost')}
+              </Label>
+            </FormItem>
+          )}
+        />
+        </div>
+        <Separator />
+        <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Offer', 'yayboost')}</h3>
+        </div>
+        <div className="space-y-6">
+            <FormField
+                control={form.control}
+                name="offer.type"
+                render={({ field }) => (
+                <FormItem>
+                    <Label>{__('Discount type:', 'yayboost')}</Label>
+                    <FormControl>
+                        <RadioGroup
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="flex  gap-6 flex-col"
+                        >
+                            <div className="flex items-center gap-2">
+                            <RadioGroupItem value="no_discount" id="no-discount" />
+                            <div className="space-y-1">
+                                <label htmlFor="no-discount">{__('No discount (just reminder)', 'yayboost')}</label>
+                            </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <RadioGroupItem value="percent" id="percent" />
+                            <div className="space-y-1">
+                                <label htmlFor="percent">{__('Percentage off', 'yayboost')}</label>
+                            </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <RadioGroupItem value="fixed_amount" id="fixed-amount" />
+                            <div className="space-y-1">
+                                <label htmlFor="fixed-amount">{__('Fixed amount off', 'yayboost')}</label>
+                            </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                            <RadioGroupItem value="free_shipping" id="free-shipping" />
+                            <div className="space-y-1">
+                                <label htmlFor="free-shipping">{__('Free shipping', 'yayboost')}</label>
+                            </div>
+                            </div>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        </div>
+        <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="offer.prefix"
+              render={({ field }) => (
+                <FormItem className="flex flex-row gap-2">
+                  <Label>{__('Coupon prefix', 'yayboost')}</Label>
+                  <FormControl>
+                    <Input id="offer-prefix" placeholder="GO-" className="w-64" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
+        <div className="space-y-6">{__('Preview:', 'yayboost')} {generatePreviewCode(form.watch('offer.prefix'))}</div>
+        <div className="space-y-6 flex gap-2">
+            <Label>{__('Expires after', 'yayboost')}</Label>
+            <FormField
+              control={form.control}
+              name="offer.expires"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <InputNumber id="offer-expires" placeholder="1" className="w-24" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <div>{__('hours', 'yayboost')}</div>
+        </div>
+        <Separator />
+        <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+            <p className="text-muted-foreground text-xs">{__('When customer clicks button', 'yayboost')}</p>
+        </div>
+        <div className="space-y-6">
+            <FormField
+                control={form.control}
+                name="behavior"
+                render={({ field }) => (
+                <FormItem>
+                    <FormControl>
+                        <RadioGroup
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="flex gap-6 flex-col"
+                        >
+                            <div className="flex items-center gap-2">
+                                <RadioGroupItem value="checkout_page" id="checkout_page" />
+                                <div className="space-y-1">
+                                    <label htmlFor="checkout_page">{__('Go to checkout page (with applying discount)', 'yayboost')}</label>
+                                </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                <RadioGroupItem value="cart_page" id="cart_page" />
+                                <div className="space-y-1">
+                                    <label htmlFor="cart_page">{__('Go to cart page (with applying discount)', 'yayboost')}</label>
+                                </div>
+                            </div>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        </div>
+        </SettingsCard>
+      </div>
+    </Form>
+  );
+}

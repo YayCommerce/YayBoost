@@ -40,6 +40,9 @@ export const featureComponents: Record<
 
   // Live Visitor Count
   live_visitor_count: lazy(() => import('./live-visitor-count')),
+
+  // Exit Intent Popup
+  exit_intent_popup: lazy(() => import('./exit-intent-popup')),
 };
 
 /**
