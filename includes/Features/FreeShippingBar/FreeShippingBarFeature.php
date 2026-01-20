@@ -327,11 +327,11 @@ class FreeShippingBarFeature extends AbstractFeature {
                             </div>
                             <div class="yayboost-shipping-bar__info">
                                 <div class="yayboost-shipping-bar__title" style="color: {{TEXT_COLOR}};">Free Shipping</div>
-                                <div class="yayboost-shipping-bar__subtitle" style="color: {{TEXT_COLOR}};">On orders over {{CURRENCY_SYMBOL}}{{THRESHOLD}}</div>
+                                <div class="yayboost-shipping-bar__subtitle" style="color: {{TEXT_COLOR}};">On orders over {{THRESHOLD}}</div>
                             </div>
                         </div>
                         <div class="yayboost-shipping-bar__header-right">
-                            <div class="yayboost-shipping-bar__cart-total" style="color: {{TEXT_COLOR}};">{{CURRENCY_SYMBOL}}{{CART_TOTAL}}</div>
+                            <div class="yayboost-shipping-bar__cart-total" style="color: {{TEXT_COLOR}};">{{CART_TOTAL}}</div>
                             <div class="yayboost-shipping-bar__cart-label" style="color: {{TEXT_COLOR}};">Cart total</div>
                         </div>
                     </div>
