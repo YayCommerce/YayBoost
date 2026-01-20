@@ -292,6 +292,11 @@ export function getCartTotalFromStore(thresholdInfo = {}) {
   return calculateCartTotalForShipping(cartData, thresholdInfo);
 }
 
+export function getCartTotalPriceFromStore() {
+  const cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
+  return cartData?.totals?.total_price;
+}
+
 /**
  * Calculate bar data from current cart state
  * @param {number|null} cartTotal Cart total (fetched from store if null)

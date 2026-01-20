@@ -4,6 +4,7 @@ import {
   getCartTotalFromStore,
   calculateCartTotalForShipping,
   updateShippingBarDOM,
+  getCartTotalPriceFromStore,
 } from "./helpers";
 
 // Try to get WooCommerce cart store (only works in Mini Cart context)
@@ -68,17 +69,16 @@ const { state, actions } = store("yayboost/free-shipping-bar", {
       }
 
       // Subscribe to changes in wp.data store
-      // Use thresholdInfo from state for correct cart total calculation
-      let previousCartTotal = getCartTotalFromStore(state.thresholdInfo);
+      let previousCartTotalPrice = getCartTotalPriceFromStore();
 
       subscribe(() => {
-        const currentCartTotal = getCartTotalFromStore(state.thresholdInfo);
-
-        if (!currentCartTotal) return;
+        const currentCartTotalPrice = getCartTotalPriceFromStore();
+      
+        if (!currentCartTotalPrice) return;
 
         // Only update if cart total actually changed
-        if (currentCartTotal !== previousCartTotal) {
-          previousCartTotal = currentCartTotal;
+        if ((previousCartTotalPrice !== currentCartTotalPrice)) {
+          previousCartTotalPrice = currentCartTotalPrice;
           actions.updateFromCart();
         }
       });
