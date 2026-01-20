@@ -253,19 +253,23 @@ export function calculateCartTotalForShipping(cartData, thresholdInfo = {}) {
 
   const ignoreDiscounts = thresholdInfo.ignore_discounts === "yes";
 
+  const minorUnit = cartData.totals.currency_minor_unit ?? 0;
+
   // Get subtotal (total_items in Blocks store = subtotal before discount)
   // This matches PHP: WC()->cart->get_displayed_subtotal()
-  let total = parseFloat(cartData.totals.total_items) || 0;
+  let total = toDisplayPrice(cartData.totals.total_items, minorUnit);
 
   // Subtract discount if not ignoring discounts
   // This matches PHP logic: if ($ignore_discounts !== 'yes')
   if (!ignoreDiscounts) {
-    const discount = parseFloat(cartData.totals.total_discount) || 0;
+    const discount = toDisplayPrice(cartData.totals.total_discount, minorUnit);
+
     total = total - discount;
 
     // If prices include tax, also subtract discount tax
     // Check if discount_tax exists (indicates prices include tax)
-    const discountTax = parseFloat(cartData.totals.total_discount_tax) || 0;
+    const discountTax = toDisplayPrice(cartData.totals.total_discount_tax, minorUnit);
+
     if (discountTax > 0) {
       // This matches PHP: if (WC()->cart->display_prices_including_tax())
       total = total - discountTax;
@@ -508,10 +512,25 @@ export function updateShippingBarDOM(barData, config = {}) {
   }
 
   // Update DOM directly - target the content wrapper inside the block
-  const contentElement = document.querySelector(
+  const contentElements = document.querySelectorAll(
     '[data-wp-interactive="yayboost/free-shipping-bar"] .yayboost-shipping-bar-content'
   );
-  if (contentElement) {
-    contentElement.innerHTML = htmlContent;
+  if (contentElements.length > 0) {
+    contentElements.forEach(contentElement => {
+      contentElement.innerHTML = htmlContent;
+    });
   }
+}
+
+
+export function toDisplayPrice(price, minorUnit) {
+
+  if ( ! price ) {
+    return null;
+  }
+
+  if ( minorUnit ) {
+    return price / (10 ** minorUnit);
+  }
+  return price;
 }

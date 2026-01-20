@@ -13,6 +13,7 @@ import {
   calculateBarData,
   buildBarHtml,
 } from "@blocks/free-shipping-bar/helpers";
+import { toDisplayPrice } from "@blocks/free-shipping-bar/helpers";
 
 /**
  * Free Shipping Bar Component
@@ -26,7 +27,7 @@ import {
 const FreeShippingBarSlot = ({ cart, ...rest }) => {
   // Get cart totals from WooCommerce store
   const cartTotals = cart?.cartTotals || {};
-  const cartTotal = cartTotals?.total_items || null;
+  const cartTotal = toDisplayPrice(cartTotals?.total_items, cartTotals?.currency_minor_unit);
   if (cartTotal === null) {
     return null;
   }
