@@ -15,9 +15,9 @@
   
     const config = yayboostExitIntentPopup;
     const popup = document.getElementById('yayboost-exit-intent-popup');
-    const overlay = popup?.querySelector('.yayboost-exit-intent-popup__overlay');
-    const closeBtn = popup?.querySelector('.yayboost-exit-intent-popup__close');
-    const actionBtn = popup?.querySelector('.yayboost-exit-intent-popup__button');
+    const overlay = popup ? popup.querySelector('.yayboost-exit-intent-popup__overlay') : null;
+    const closeBtn = popup ? popup.querySelector('.yayboost-exit-intent-popup__close') : null;
+    const actionBtn = popup ? popup.querySelector('.yayboost-exit-intent-popup__button') : null;
     if (!popup) {
       return;
     }
@@ -70,9 +70,15 @@
     function appendCouponToUrl(url, code) {
       if (!url) return '';
       if (!code) return url;
-      const u = new URL(url, window.location.origin);
-      u.searchParams.set('coupon_code', code);
-      return u.toString();
+      try {
+        const u = new URL(url, window.location.origin);
+        u.searchParams.set('coupon_code', code);
+        return u.toString();
+      } catch (e) {
+        // Fallback for older browsers without URL
+        const sep = url.indexOf('?') === -1 ? '?' : '&';
+        return url + sep + 'coupon_code=' + encodeURIComponent(code);
+      }
     }
 
     function getTargetUrl(code) {
