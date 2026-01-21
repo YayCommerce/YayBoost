@@ -378,20 +378,29 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2 rounded-md border p-4">
-                <div className="space-y-2">
-                  <h4 className="text-lg font-semibold">
-                    {contentPreview?.headline || __('Headline will appear here', 'yayboost')}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {contentPreview?.message || __('Message will appear here', 'yayboost')}
-                  </p>
-                  <button
-                    type="button"
-                    className="mt-2 bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors"
-                  >
-                    {contentPreview?.button_text || __('Button text', 'yayboost')}
-                  </button>
+              <div className="bg-muted/40 rounded-xl p-4">
+                <div className="relative mx-auto flex max-w-4xl flex-col overflow-hidden rounded-2xl border bg-white shadow-lg md:flex-row">
+                  {/* Left column: content */}
+                  <div className="flex-1 p-8 md:p-10">
+                    <div className="space-y-4 text-center">
+                      <h4 className="text-3xl font-black leading-tight text-slate-900">
+                        {contentPreview?.headline || __('Headline will appear here', 'yayboost')}
+                      </h4>
+                      <p className="text-base leading-relaxed text-slate-700">
+                        {contentPreview?.message || __('Message will appear here', 'yayboost')}
+                      </p>
+                      <button
+                        type="button"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-6 py-3 text-sm font-semibold transition-colors"
+                      >
+                        {contentPreview?.button_text || __('Button text', 'yayboost')}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Right column: visual */}
+                  <div className="hidden min-h-[260px] flex-1 bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 md:block">
+                    <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.05),transparent_25%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.06),transparent_35%)]" />
+                  </div>
                 </div>
               </div>
             </CardContent>
