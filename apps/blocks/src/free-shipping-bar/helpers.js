@@ -83,10 +83,10 @@ export function hasFreeShippingCoupon(config = {}) {
   if (appliedCoupons.length === 0) {
     return false;
   }
+  // Optional: Verify from PHP data if available (more accurate)
+  const phpCouponsData = config.appliedCoupons || {};
 
-  if (appliedCoupons.length > 0) {
-    // Optional: Verify from PHP data if available (more accurate)
-    const phpCouponsData = config.appliedCoupons || {};
+  if (appliedCoupons.length > 0 && phpCouponsData.length > 0) {
     for (let i = 0; i < appliedCoupons.length; i++) {
       const code = appliedCoupons[i];
       // If coupon code is a string, use it directly
@@ -100,18 +100,22 @@ export function hasFreeShippingCoupon(config = {}) {
     // Check if free_shipping method is selected in shipping rates
     // WooCommerce automatically selects free_shipping when coupon with free shipping is applied
     if (cartData[shippingRatesKey] && Array.isArray(cartData[shippingRatesKey])) {
-      cartData[shippingRatesKey].some(
+      const hasFreeShippingRate = cartData[shippingRatesKey].some(
         function (packageRates) {
-          if (!packageRates || !packageRates[shippingRatesKey]) {
+          if (!packageRates || !packageRates['shipping_rates']) {
             return false;
           }
   
-          return packageRates[shippingRatesKey].some(function (rate) {
+          return packageRates['shipping_rates'].some(function (rate) {
             // Check if free_shipping method is selected
             return rate.selected === true && rate.method_id === "free_shipping";
           });
         }
       );
+      
+      if (hasFreeShippingRate) {
+        return true;
+      }
     }
   }
 
