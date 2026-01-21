@@ -59,12 +59,24 @@ class ExitIntentPopupFeature extends AbstractFeature {
 	protected $priority = 2;
 
 	/**
+	 * AJAX handler instance
+	 *
+	 * @var ExitIntentPopupAjaxHandler
+	 */
+	private $ajax_handler;
+
+	/**
 	 * Constructor
 	 *
 	 * @param \YayBoost\Container\Container $container DI container.
 	 */
 	public function __construct( $container ) {
 		parent::__construct( $container );
+
+		$this->ajax_handler = new ExitIntentPopupAjaxHandler( $this );
+
+		// Register AJAX hooks
+		$this->ajax_handler->register_hooks();
 	}
 
 	/**
@@ -82,6 +94,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
 
 		// Render popup HTML in footer
 		add_action( 'wp_footer', array( $this, 'render_popup' ) );
+
 	}
 
 	/**
@@ -121,14 +134,11 @@ class ExitIntentPopupFeature extends AbstractFeature {
 			return;
 		}
 
-		$style_path = YAYBOOST_PATH . 'assets/css/exit-intent-popup.css';
-		$version    = file_exists( $style_path ) ? filemtime( $style_path ) : YAYBOOST_VERSION;
-
 		wp_enqueue_style(
 			'yayboost-exit-intent-popup',
 			YAYBOOST_URL . 'assets/css/exit-intent-popup.css',
 			array(),
-			$version
+			YAYBOOST_VERSION
 		);
 	}
 
@@ -142,14 +152,11 @@ class ExitIntentPopupFeature extends AbstractFeature {
 			return;
 		}
 
-		$script_path = YAYBOOST_PATH . 'assets/js/exit-intent-popup.js';
-		$version     = file_exists( $script_path ) ? filemtime( $script_path ) : YAYBOOST_VERSION;
-
 		wp_enqueue_script(
 			'yayboost-exit-intent-popup',
 			YAYBOOST_URL . 'assets/js/exit-intent-popup.js',
 			array( 'jquery' ),
-			$version,
+			YAYBOOST_VERSION,
 			true
 		);
 
@@ -173,6 +180,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
 		$behavior = $settings['behavior'] ?? 'checkout_page';
 
 		$checkout_url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : '';
+		$cart_url     = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : '';
 
 		return array(
 			'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
@@ -194,6 +202,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
 			),
 			'behavior'    => $behavior,
 			'checkoutUrl' => $checkout_url,
+			'cartUrl'     => $cart_url,
 		);
 	}
 

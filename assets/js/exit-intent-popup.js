@@ -25,6 +25,7 @@
     // Check if popup was already shown in this session
     const popupShownKey = 'yayboost_exit_intent_shown';
     const popupShown = sessionStorage.getItem(popupShownKey) === 'true';
+    const clientKeyStorage = 'yayboost_exit_intent_client_key';
     // Only show once per session
     if (popupShown) {
       return;
@@ -53,23 +54,94 @@
       if (!popup) {
         return;
       }
-      triggered = false;
       popup.style.display = 'none';
       document.body.style.overflow = ''; // Restore body scroll
     }
   
-    /**
-     * Handle button click - redirect to checkout
-     */
-    function handleActionClick() {
-      // Mark as shown only when CTA is clicked
-      sessionStorage.setItem(popupShownKey, 'true');
-
-      if (config.behavior === 'checkout_page' && config.checkoutUrl) {
-        window.location.href = config.checkoutUrl;
-      } else {
-        hidePopup();
+    function getClientKey() {
+      let key = sessionStorage.getItem(clientKeyStorage);
+      if (!key) {
+        key = 'yep_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        sessionStorage.setItem(clientKeyStorage, key);
       }
+      return key;
+    }
+
+    function appendCouponToUrl(url, code) {
+      if (!url) return '';
+      if (!code) return url;
+      const u = new URL(url, window.location.origin);
+      u.searchParams.set('coupon_code', code);
+      return u.toString();
+    }
+
+    function getTargetUrl(code) {
+      if (config.behavior === 'checkout_page' && config.checkoutUrl) {
+        return appendCouponToUrl(config.checkoutUrl, code);
+      }
+      if (config.behavior === 'cart_page' && config.cartUrl) {
+        return appendCouponToUrl(config.cartUrl, code);
+      }
+      return '';
+    }
+
+    async function createCouponOnce() {
+      const formData = new FormData();
+      formData.append('action', 'yayboost_exit_intent_coupon');
+      formData.append('nonce', config.nonce);
+      formData.append('client_key', getClientKey());
+
+      const resp = await fetch(config.ajaxUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: formData,
+      });
+
+      if (!resp.ok) {
+        throw new Error('Request failed');
+      }
+      const data = await resp.json();
+      if (!data || !data.success || !data.data || !data.data.code) {
+        throw new Error('Invalid response');
+      }
+      return data.data.code;
+    }
+
+    /**
+     * Handle button click - create coupon then redirect/apply
+     */
+    async function handleActionClick() {
+      // If offer is "no discount", skip coupon creation
+      if (config.offer && config.offer.type === 'no_discount') {
+        sessionStorage.setItem(popupShownKey, 'true');
+        const targetUrl = getTargetUrl('');
+        if (targetUrl) {
+          window.location.href = targetUrl;
+          return;
+        }
+        hidePopup();
+        return;
+      }
+
+      try {
+        const code = await createCouponOnce();
+        sessionStorage.setItem(popupShownKey, 'true');
+
+        const targetUrl = getTargetUrl(code);
+        if (targetUrl) {
+          window.location.href = targetUrl;
+          return;
+        }
+      } catch (err) {
+        // Fallback: still redirect if configured
+        const targetUrl = getTargetUrl('');
+        if (targetUrl) {
+          window.location.href = targetUrl;
+          return;
+        }
+      }
+
+      hidePopup();
     }
   
     // Exit intent detection: Mouse leaves viewport
