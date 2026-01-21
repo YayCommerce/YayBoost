@@ -192,7 +192,8 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                                                 id="offer-value-percent" 
                                                 placeholder="20" 
                                                 className="w-16"
-                                                {...valueField} 
+                                                value={valueField.value}
+                                                onValueChange={(val) => valueField.onChange(val)}
                                             />
                                         </FormControl>
                                         <span className="text-sm">%</span>
@@ -218,7 +219,8 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                                                 id="offer-value-fixed" 
                                                 placeholder="10" 
                                                 className="w-16"
-                                                {...valueField} 
+                                                value={valueField.value}
+                                                onValueChange={(val) => valueField.onChange(val)}
                                             />
                                         </FormControl>
                                         <FormMessage />
@@ -266,9 +268,15 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
             name="offer.expires"
             render={({ field }) => (
               <FormItem className="m-0">
-                <FormControl>
-                  <InputNumber id="offer-expires" placeholder="1" className="w-24" {...field} />
-                </FormControl>
+                  <FormControl>
+                   <InputNumber
+                     id="offer-expires"
+                     placeholder="1"
+                     className="w-24"
+                     value={field.value}
+                     onValueChange={(val) => field.onChange(val)}
+                   />
+                  </FormControl>
                 <FormMessage />
               </FormItem>
             )}
