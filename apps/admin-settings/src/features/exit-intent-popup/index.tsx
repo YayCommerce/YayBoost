@@ -243,46 +243,50 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                 )}
             />
         </div>
-        <div className="space-y-6">
-            <FormField
-              control={form.control}
-              name="offer.prefix"
-              render={({ field }) => (
-                <FormItem className="flex flex-row gap-2">
-                  <Label>{__('Coupon prefix', 'yayboost')}</Label>
-                  <FormControl>
-                    <Input id="offer-prefix" placeholder="GO-" className="w-64" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </div>
-        <div className="space-y-6">{__('Preview:', 'yayboost')} {generatePreviewCode(form.watch('offer.prefix'))}</div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Label className="text-sm">
-            {__('Expires after', 'yayboost')}
-          </Label>
-          <FormField
-            control={form.control}
-            name="offer.expires"
-            render={({ field }) => (
-              <FormItem className="m-0">
-                  <FormControl>
-                   <InputNumber
-                     id="offer-expires"
-                     placeholder="1"
-                     className="w-24"
-                     value={field.value}
-                     onValueChange={(val) => field.onChange(val)}
-                   />
-                  </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="text-sm">{__('hours', 'yayboost')}</div>
-        </div>
+        {offerType !== 'no_discount' && (
+          <>
+            <div className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="offer.prefix"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row gap-2">
+                      <Label>{__('Coupon prefix', 'yayboost')}</Label>
+                      <FormControl>
+                        <Input id="offer-prefix" placeholder="GO-" className="w-64" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            <div className="space-y-6">{__('Preview:', 'yayboost')} {generatePreviewCode(form.watch('offer.prefix'))}</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Label className="text-sm">
+                {__('Expires after', 'yayboost')}
+              </Label>
+              <FormField
+                control={form.control}
+                name="offer.expires"
+                render={({ field }) => (
+                  <FormItem className="m-0">
+                      <FormControl>
+                      <InputNumber
+                        id="offer-expires"
+                        placeholder="1"
+                        className="w-24"
+                        value={field.value}
+                        onValueChange={(val) => field.onChange(val)}
+                      />
+                      </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="text-sm">{__('hours', 'yayboost')}</div>
+            </div>
+          </>
+        )}
         <Separator />
         <div className="space-y-1">
             <h3 className="text-sm font-medium">{__('Content', 'yayboost')}</h3>
