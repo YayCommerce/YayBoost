@@ -1,24 +1,14 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { AlertCircle, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import z from 'zod';
-
-import {
-  DisplayPositionSelect,
-  getPositionValues,
-  isUseBlockPosition,
-  PAGE_PRODUCT,
-} from '@/lib/display-position';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
-import { useProductCategories, useProducts } from '@/hooks/use-product-data';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ColorPicker } from '@/components/ui/color-picker';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -27,7 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
-import { MultiSelect } from '@/components/ui/multi-select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 import { Separator } from '@/components/ui/separator';
@@ -38,6 +27,7 @@ import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 
 // Settings schema
 const settingsSchema = z.object({
@@ -47,7 +37,7 @@ const settingsSchema = z.object({
     back_button_pressed: z.boolean(),
   }),
   offer: z.object({
-    type: z.enum(['percent', 'fixed_amount', 'free_shipping']),
+    type: z.enum(['percent', 'fixed_amount', 'free_shipping', 'no_discount']),
     value: z.number().min(0),
     prefix: z.string().min(1),
     expires: z.number().min(1),
@@ -101,10 +91,13 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
     return <UnavailableFeature />;
   }
 
+  const offerType = form.watch('offer.type');
+  const contentPreview = form.watch('content');
+
   return (
     <Form {...form}>
       <FeatureLayoutHeader title={feature.name} description={feature.description} />
-      <div className="grid gap-6 lg:grid-cols-1">
+      <div className="grid gap-6 lg:grid-cols-2">
         <SettingsCard
           headless
           onSave={() => {
@@ -176,7 +169,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <RadioGroup
                             value={field.value}
                             onValueChange={field.onChange}
-                            className="flex  gap-6 flex-col"
+                            className="flex gap-6 flex-col"
                         >
                             <div className="flex items-center gap-2">
                             <RadioGroupItem value="no_discount" id="no-discount" />
@@ -186,14 +179,53 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                             </div>
                             <div className="flex items-center gap-2">
                             <RadioGroupItem value="percent" id="percent" />
-                            <div className="space-y-1">
+                            <div className="space-y-1 flex items-center gap-2">
                                 <label htmlFor="percent">{__('Percentage off', 'yayboost')}</label>
+                                {offerType === 'percent' && (
+                                <FormField
+                                    control={form.control}
+                                    name="offer.value"
+                                    render={({ field: valueField }) => (
+                                    <FormItem className="flex items-center gap-1">
+                                        <FormControl>
+                                            <InputNumber 
+                                                id="offer-value-percent" 
+                                                placeholder="20" 
+                                                className="w-16"
+                                                {...valueField} 
+                                            />
+                                        </FormControl>
+                                        <span className="text-sm">%</span>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                )}
                             </div>
                             </div>
                             <div className="flex items-center gap-2">
                             <RadioGroupItem value="fixed_amount" id="fixed-amount" />
-                            <div className="space-y-1">
+                            <div className="space-y-1 flex items-center gap-2">
                                 <label htmlFor="fixed-amount">{__('Fixed amount off', 'yayboost')}</label>
+                                {offerType === 'fixed_amount' && (
+                                <FormField
+                                    control={form.control}
+                                    name="offer.value"
+                                    render={({ field: valueField }) => (
+                                    <FormItem className="flex items-center gap-1">
+                                        <FormControl>
+                                            <InputNumber 
+                                                id="offer-value-fixed" 
+                                                placeholder="10" 
+                                                className="w-16"
+                                                {...valueField} 
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                    )}
+                                />
+                                )}
                             </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -225,20 +257,72 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
             />
         </div>
         <div className="space-y-6">{__('Preview:', 'yayboost')} {generatePreviewCode(form.watch('offer.prefix'))}</div>
-        <div className="space-y-6 flex gap-2">
-            <Label>{__('Expires after', 'yayboost')}</Label>
+        <div className="flex flex-wrap items-center gap-3">
+          <Label className="text-sm">
+            {__('Expires after', 'yayboost')}
+          </Label>
+          <FormField
+            control={form.control}
+            name="offer.expires"
+            render={({ field }) => (
+              <FormItem className="m-0">
+                <FormControl>
+                  <InputNumber id="offer-expires" placeholder="1" className="w-24" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="text-sm">{__('hours', 'yayboost')}</div>
+        </div>
+        <Separator />
+        <div className="space-y-1">
+            <h3 className="text-sm font-medium">{__('Content', 'yayboost')}</h3>
+        </div>
+        <div className="space-y-6">
             <FormField
-              control={form.control}
-              name="offer.expires"
-              render={({ field }) => (
+                control={form.control}
+                name="content.headline"
+                render={({ field }) => (
                 <FormItem>
-                  <FormControl>
-                    <InputNumber id="offer-expires" placeholder="1" className="w-24" {...field} />
-                  </FormControl>
+                    <Label>{__('Headline:', 'yayboost')}</Label>
+                    <FormControl>
+                        <Input id="content-headline" placeholder="Wait! Don't leave!" className="w-full" {...field} />
+                    </FormControl>
+                    <FormMessage />
                 </FormItem>
-              )}
+                )}
             />
-            <div>{__('hours', 'yayboost')}</div>
+        </div>
+        <div className="space-y-6">
+            <FormField
+                control={form.control}
+                name="content.message"
+                render={({ field }) => (
+                <FormItem>
+                    <Label>{__('Message:', 'yayboost')}</Label>
+                    <FormControl>
+                        <Textarea id="content-message" placeholder="Completed your order now and receive 10% discount" className="w-full" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        </div>
+        <div className="space-y-6">
+            <FormField
+                control={form.control}
+                name="content.button_text"
+                render={({ field }) => (
+                <FormItem>
+                    <Label>{__('Button text:', 'yayboost')}</Label>
+                    <FormControl>
+                        <Input id="content-button_text" placeholder="Complete my order" className="w-full" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
         </div>
         <Separator />
         <div className="space-y-1">
@@ -277,7 +361,37 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
             />
         </div>
         </SettingsCard>
+        <div className="sticky top-6 h-fit space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 rounded-md border p-4">
+                <div className="space-y-2">
+                  <h4 className="text-lg font-semibold">
+                    {contentPreview?.headline || __('Headline will appear here', 'yayboost')}
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    {contentPreview?.message || __('Message will appear here', 'yayboost')}
+                  </p>
+                  <button
+                    type="button"
+                    className="mt-2 bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                  >
+                    {contentPreview?.button_text || __('Button text', 'yayboost')}
+                  </button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+        </div>
       </div>
+     
     </Form>
   );
 }
