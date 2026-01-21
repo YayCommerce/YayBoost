@@ -86,7 +86,7 @@ export function hasFreeShippingCoupon(config = {}) {
   // Optional: Verify from PHP data if available (more accurate)
   const phpCouponsData = config.appliedCoupons || {};
 
-  if (appliedCoupons.length > 0 && phpCouponsData.length > 0) {
+  if (appliedCoupons.length > 0 && Object.keys(phpCouponsData).length > 0) {
     for (let i = 0; i < appliedCoupons.length; i++) {
       const code = appliedCoupons[i];
       // If coupon code is a string, use it directly
@@ -108,7 +108,7 @@ export function hasFreeShippingCoupon(config = {}) {
   
           return packageRates['shipping_rates'].some(function (rate) {
             // Check if free_shipping method is selected
-            return rate.selected === true && rate.method_id === "free_shipping";
+            return rate.method_id === "free_shipping";
           });
         }
       );

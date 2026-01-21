@@ -38,6 +38,7 @@ const FreeShippingBarSlot = ({ cart, ...rest }) => {
     settings: yayboostData.settings,
     thresholdInfo: yayboostData.thresholdInfo,
     templates: yayboostData.templates,
+    appliedCoupons: yayboostData.appliedCoupons,
   };
 
   const barData = calculateBarData(cartTotal, config);

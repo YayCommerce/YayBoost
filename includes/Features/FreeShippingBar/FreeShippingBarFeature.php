@@ -1035,6 +1035,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'show_on_mini_cart'  => false,
                 'show_progress_bar'  => true,
                 'display_style'      => 'minimal_text',
+                'behavior_when_unlocked' => 'show_message',
             ]
         );
     }
