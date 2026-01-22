@@ -389,7 +389,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-muted/40 rounded-xl p-4">
-                <div className="relative mx-auto flex max-w-4xl flex-col overflow-hidden rounded-2xl border bg-white shadow-lg md:flex-row">
+                <div className="relative mx-auto flex max-w-4xl flex-col overflow-hidden rounded-xl border bg-white shadow-lg md:flex-row">
                   {/* Left column: content */}
                   <div className="flex-1 p-8 md:p-10">
                     <div className="flex flex-col gap-4 items-center justify-center">
