@@ -45,10 +45,14 @@ wp_interactivity_state(
 		'settings'      => $localization_data['settings'] ?? [],
 		'thresholdInfo' => $localization_data['thresholdInfo'] ?? [],
 		'templates'     => $localization_data['templates'] ?? [],
+		'appliedCoupons' => $localization_data['appliedCoupons'] ?? [],
 	]
 );
 
 wp_enqueue_script( 'wc-accounting' );
+
+// Enqueue wc-settings for frontend (needed for formatPrice utility)
+wp_enqueue_script( 'wc-settings' );
 
 // Prepare context for Interactivity API (per-block instance data)
 $context = [

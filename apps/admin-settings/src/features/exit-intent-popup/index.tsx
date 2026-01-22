@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
 import { Eye } from 'lucide-react';
@@ -172,7 +172,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <RadioGroup
                             value={field.value}
                             onValueChange={field.onChange}
-                            className="flex gap-6 flex-col"
+                            className="flex gap-2 flex-col"
                         >
                             <div className="flex items-center gap-2">
                             <RadioGroupItem value="no_discount" id="no-discount" />
@@ -253,17 +253,20 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                   control={form.control}
                   name="offer.prefix"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row gap-2">
+                    <FormItem >
+                      <div className="flex flex-row gap-2">
                       <Label>{__('Coupon prefix', 'yayboost')}</Label>
                       <FormControl>
-                        <Input id="offer-prefix" placeholder="GO-" className="w-64" {...field} />
+                        <Input id="offer-prefix" placeholder="GO-" className="w-24" {...field} />
                       </FormControl>
                       <FormMessage />
+                      </div>
+                      <div>{__('Preview:', 'yayboost')} {previewCouponCode}</div>
                     </FormItem>
                   )}
                 />
+               
             </div>
-            <div className="space-y-6">{__('Preview:', 'yayboost')} {previewCouponCode}</div>
             <div className="flex flex-wrap items-center gap-3">
               <Label className="text-sm">
                 {__('Expires after', 'yayboost')}
@@ -302,7 +305,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                 <FormItem>
                     <Label>{__('Headline:', 'yayboost')}</Label>
                     <FormControl>
-                        <Input id="content-headline" placeholder="Wait! Don't leave!" className="w-full" {...field} />
+                        <Input id="content-headline" placeholder="You're leaving?" className="w-full" {...field} />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
@@ -354,7 +357,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <RadioGroup
                             value={field.value}
                             onValueChange={field.onChange}
-                            className="flex gap-6 flex-col"
+                            className="flex gap-2 flex-col"
                         >
                             <div className="flex items-center gap-2">
                                 <RadioGroupItem value="checkout_page" id="checkout_page" />
@@ -389,7 +392,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                 <div className="relative mx-auto flex max-w-4xl flex-col overflow-hidden rounded-2xl border bg-white shadow-lg md:flex-row">
                   {/* Left column: content */}
                   <div className="flex-1 p-8 md:p-10">
-                    <div className="space-y-4 text-center">
+                    <div className="flex flex-col gap-4 items-center justify-center">
                       <h4 className="text-3xl font-black leading-tight text-slate-900">
                         {contentPreview?.headline || __('Headline will appear here', 'yayboost')}
                       </h4>

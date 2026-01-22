@@ -20,6 +20,8 @@ class FBTPurchaseTracker {
      */
     const ORDER_ITEM_META_KEY = '_yayboost_fbt';
 
+    const ORDER_TRACKED_META_KEY = '_yayboost_fbt_tracked';
+
     /**
      * Register hooks
      *
@@ -46,8 +48,8 @@ class FBTPurchaseTracker {
      * @return void
      */
     public function save_fbt_meta_to_order_item( $item, $cart_item_key, $values, $order ): void {
-        if ( isset( $values['_yayboost_fbt'] ) && is_array( $values['_yayboost_fbt'] ) ) {
-            $item->add_meta_data( self::ORDER_ITEM_META_KEY, $values['_yayboost_fbt'], true );
+        if ( isset( $values[self::ORDER_ITEM_META_KEY] ) && is_array( $values[self::ORDER_ITEM_META_KEY] ) ) {
+            $item->add_meta_data( self::ORDER_ITEM_META_KEY, $values[self::ORDER_ITEM_META_KEY], true );
         }
     }
 
@@ -69,7 +71,7 @@ class FBTPurchaseTracker {
         }
 
         // Check if we already tracked this order
-        $tracked = $order->get_meta( '_yayboost_fbt_tracked' );
+        $tracked = $order->get_meta( self::ORDER_TRACKED_META_KEY );
         if ( $tracked ) {
             return;
         }
@@ -111,7 +113,7 @@ class FBTPurchaseTracker {
 
         // Mark order as tracked to prevent duplicate tracking
         if ( $has_fbt_items ) {
-            $order->update_meta_data( '_yayboost_fbt_tracked', time() );
+            $order->update_meta_data( self::ORDER_TRACKED_META_KEY, time() );
             $order->save();
         }
     }
