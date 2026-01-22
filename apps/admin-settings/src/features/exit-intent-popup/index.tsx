@@ -392,7 +392,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                 <div className="relative mx-auto flex max-w-4xl flex-col overflow-hidden rounded-xl border bg-white shadow-lg md:flex-row">
                   {/* Left column: content */}
                   <div className="flex-1 p-8 md:p-10">
-                    <div className="flex flex-col gap-4 items-center justify-center">
+                    <div className="flex flex-col gap-4 items-center justify-center text-center">
                       <h4 className="text-3xl font-black leading-tight text-slate-900">
                         {contentPreview?.headline || __('Headline will appear here', 'yayboost')}
                       </h4>
@@ -406,10 +406,6 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         {contentPreview?.button_text || __('Button text', 'yayboost')}
                       </button>
                     </div>
-                  </div>
-                  {/* Right column: visual */}
-                  <div className="hidden min-h-[260px] flex-1 bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 md:block">
-                    <div className="h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.05),transparent_25%),radial-gradient(circle_at_50%_80%,rgba(255,255,255,0.06),transparent_35%)]" />
                   </div>
                 </div>
               </div>
