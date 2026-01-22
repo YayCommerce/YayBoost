@@ -95,12 +95,6 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        // Check if coupon already generated for this order
-        $existing_coupon = $order->get_meta( '_yayboost_next_order_coupon' );
-        if ( ! empty( $existing_coupon )) {
-            return;
-        }
-
         // Check if coupon should be generated
         if ( ! $this->should_generate_coupon( $order )) {
             return;
@@ -274,6 +268,13 @@ class NextOrderCouponFeature extends AbstractFeature {
      * @return bool
      */
     protected function should_generate_coupon(\WC_Order $order): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+
+        // Check if coupon already generated for this order
+        $existing_coupon = $order->get_meta( '_yayboost_next_order_coupon' );
+        if ( ! empty( $existing_coupon )) {
+            return false;
+        }
+
         $settings = $this->get_settings();
 
         // Check minimum order total (after discount/shipping)
