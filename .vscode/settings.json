@@ -44,7 +44,6 @@
   "editor.wordWrap": "off",
 
   "github.gitAuthentication": false,
-  "php.validate.executablePath": "/opt/homebrew/bin/php",
   "prettier.singleQuote": false,
 
 
