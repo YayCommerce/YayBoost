@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
 import { Eye } from 'lucide-react';
@@ -61,6 +61,10 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
     defaultValues: feature?.settings as SettingsFormData,
   });
 
+  const offerType = form.watch('offer.type');
+  const offerPrefix = form.watch('offer.prefix');
+  const contentPreview = form.watch('content');
+
   const onSubmit = (data: SettingsFormData) => {
     updateSettings.mutate(
       { id: featureId, settings: data },
@@ -73,9 +77,9 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
     );
   };
 
-  const generatePreviewCode = (prefix: string) => {
-    return `${prefix}ABCDE`;
-  };
+  const previewCouponCode = useMemo(() => {
+    return `${offerPrefix}ABCDE`;
+  }, [offerPrefix]);
 
   if (isLoading || isFetching) {
     return (
@@ -91,8 +95,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
     return <UnavailableFeature />;
   }
 
-  const offerType = form.watch('offer.type');
-  const contentPreview = form.watch('content');
+ 
 
   return (
     <Form {...form}>
@@ -260,7 +263,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                   )}
                 />
             </div>
-            <div className="space-y-6">{__('Preview:', 'yayboost')} {generatePreviewCode(form.watch('offer.prefix'))}</div>
+            <div className="space-y-6">{__('Preview:', 'yayboost')} {previewCouponCode}</div>
             <div className="flex flex-wrap items-center gap-3">
               <Label className="text-sm">
                 {__('Expires after', 'yayboost')}
