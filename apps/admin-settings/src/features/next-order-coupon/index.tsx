@@ -4,6 +4,7 @@
  * Automatically generate a coupon discount after each purchase to encourage repeat orders.
  */
 
+import { useMemo } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
@@ -67,12 +68,6 @@ const displayLocationOptions = [
   { id: 'order_email', label: __('Order confirmation email', 'yayboost') },
   { id: 'my_account', label: __('My account → Orders', 'yayboost') },
 ];
-
-// Generate preview coupon code
-function generatePreviewCode(prefix: string): string {
-  const randomChars = 'ABCDE';
-  return `${prefix}${randomChars}`;
-}
 
 export default function NextOrderCouponFeature({ featureId }: FeatureComponentProps) {
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
@@ -214,18 +209,27 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
           <FormField
             control={form.control}
             name="coupon_prefix"
-            render={({ field }) => (
-              <FormItem>
-                <Label htmlFor="coupon_prefix">{__('Coupon prefix', 'yayboost')}</Label>
-                <FormControl>
-                  <Input id="coupon_prefix" className="w-64" {...field} />
-                </FormControl>
-                <FormDescription>
-                  {__('Preview:', 'yayboost')} {generatePreviewCode(field.value || couponPrefix)}
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              
+              const previewCode = useMemo(() => {
+                const prefix = field.value || couponPrefix;
+                const randomChars = 'ABCDE';
+                return `${prefix}${randomChars}`;
+              }, [field.value, couponPrefix]);
+
+              return (
+                <FormItem>
+                  <Label htmlFor="coupon_prefix">{__('Coupon prefix', 'yayboost')}</Label>
+                  <FormControl>
+                    <Input id="coupon_prefix" className="w-64" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {__('Preview:', 'yayboost')} {previewCode}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
 
           <FormField
