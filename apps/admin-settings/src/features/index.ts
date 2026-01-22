@@ -40,6 +40,9 @@ export const featureComponents: Record<
 
   // Live Visitor Count
   live_visitor_count: lazy(() => import('./live-visitor-count')),
+
+  // Purchase Activity Count
+  purchase_activity_count: lazy(() => import('./purchase-activity-count')),
 };
 
 /**
