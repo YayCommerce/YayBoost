@@ -20,6 +20,8 @@ class FBTCollector {
      */
     private $cache_manager;
 
+    const ORDER_PROCESSED_META_KEY = '_yayboost_fbt_processed';
+
     /**
      * Constructor
      *
@@ -42,7 +44,7 @@ class FBTCollector {
         }
 
         // Check if already processed to prevent duplicates
-        if ( $order->get_meta( '_yayboost_fbt_processed' ) ) {
+        if ( $this->is_order_processed( $order_id ) ) {
             return false;
         }
 
@@ -124,7 +126,7 @@ class FBTCollector {
      * @return void
      */
     private function mark_order_processed( \WC_Order $order ): void {
-        $order->update_meta_data( '_yayboost_fbt_processed', time() );
+        $order->update_meta_data( self::ORDER_PROCESSED_META_KEY, time() );
         $order->save();
     }
 
@@ -139,6 +141,6 @@ class FBTCollector {
         if ( ! $order ) {
             return false;
         }
-        return (bool) $order->get_meta( '_yayboost_fbt_processed' );
+        return (bool) $order->get_meta( self::ORDER_PROCESSED_META_KEY );
     }
 }
