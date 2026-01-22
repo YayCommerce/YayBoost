@@ -47,7 +47,7 @@ class FBTBackfill {
             SELECT COUNT(DISTINCT o.id)
             FROM {$wpdb->prefix}wc_orders o
             LEFT JOIN {$wpdb->prefix}wc_orders_meta om
-                ON o.id = om.order_id AND om.meta_key = '_yayboost_fbt_processed'
+                ON o.id = om.order_id AND om.meta_key = '" . FBTCollector::ORDER_PROCESSED_META_KEY . "'
             WHERE o.status = 'wc-completed'
               AND om.meta_value IS NULL
         ";
@@ -71,7 +71,7 @@ class FBTBackfill {
             "SELECT DISTINCT o.id
              FROM {$wpdb->prefix}wc_orders o
              LEFT JOIN {$wpdb->prefix}wc_orders_meta om
-                 ON o.id = om.order_id AND om.meta_key = '_yayboost_fbt_processed'
+                 ON o.id = om.order_id AND om.meta_key = '" . FBTCollector::ORDER_PROCESSED_META_KEY . "'
              WHERE o.status = 'wc-completed'
                AND om.meta_value IS NULL
                AND o.id > %d

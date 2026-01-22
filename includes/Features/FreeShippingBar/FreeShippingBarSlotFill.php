@@ -80,17 +80,37 @@ class FreeShippingBarSlotFill {
             return false;
         }
 
-        // Check show_on settings match block type
-        $show_on            = $this->feature->get_settings()['show_on'] ?? [];
-        $cart_locations     = [ 'top_cart', 'bottom_cart' ];
-        $checkout_locations = [ 'top_checkout', 'bottom_checkout' ];
+        // Get display_positions from settings (matches frontend structure)
+        // Structure: ['cart' => ['before_cart_table', 'after_cart_table'], 'checkout' => ['before_checkout_form', 'after_checkout_form']]
+        $display_positions = $this->feature->get_settings()['display_positions'] ?? [];
+        
+        // Allowed positions for cart blocks (slot/fill compatible)
+        $cart_positions = [ 'before_cart_table', 'after_cart_table' ];
+        
+        // Allowed positions for checkout blocks (slot/fill compatible)
+        $checkout_positions = [ 'before_checkout_form', 'after_checkout_form' ];
 
-        $is_cart_block     = $block['blockName'] === 'woocommerce/cart' &&
-            ! empty( array_intersect( $show_on, $cart_locations ) );
-        $is_checkout_block = $block['blockName'] === 'woocommerce/checkout' &&
-            ! empty( array_intersect( $show_on, $checkout_locations ) );
+        // Check if cart block should show shipping bar
+        $is_cart_block = $block['blockName'] === 'woocommerce/cart';
+        if ( $is_cart_block ) {
+            $cart_selected = $display_positions['cart'] ?? [];
+            // If any cart position is selected, enable slot/fill for cart block
+            if ( ! empty( array_intersect( $cart_selected, $cart_positions ) ) ) {
+                return true;
+            }
+        }
 
-        return $is_cart_block || $is_checkout_block;
+        // Check if checkout block should show shipping bar
+        $is_checkout_block = $block['blockName'] === 'woocommerce/checkout';
+        if ( $is_checkout_block ) {
+            $checkout_selected = $display_positions['checkout'] ?? [];
+            // If any checkout position is selected, enable slot/fill for checkout block
+            if ( ! empty( array_intersect( $checkout_selected, $checkout_positions ) ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -110,7 +130,7 @@ class FreeShippingBarSlotFill {
         }
 
         $asset       = include $asset_file;
-        $script_deps = array_merge( $asset['dependencies'], [ 'wc-accounting' ] );
+        $script_deps = array_merge( $asset['dependencies'], [ 'wc-accounting', 'wc-settings' ] );
 
         // wp_enqueue_script() will auto-register if not already registered
         wp_enqueue_script(

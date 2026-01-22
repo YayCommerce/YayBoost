@@ -13,6 +13,7 @@ import {
   calculateBarData,
   buildBarHtml,
 } from "@blocks/free-shipping-bar/helpers";
+import { toDisplayPrice } from "@blocks/free-shipping-bar/helpers";
 
 /**
  * Free Shipping Bar Component
@@ -26,7 +27,7 @@ import {
 const FreeShippingBarSlot = ({ cart, ...rest }) => {
   // Get cart totals from WooCommerce store
   const cartTotals = cart?.cartTotals || {};
-  const cartTotal = cartTotals?.total_price || null;
+  const cartTotal = toDisplayPrice(cartTotals?.total_items, cartTotals?.currency_minor_unit);
   if (cartTotal === null) {
     return null;
   }
@@ -37,6 +38,7 @@ const FreeShippingBarSlot = ({ cart, ...rest }) => {
     settings: yayboostData.settings,
     thresholdInfo: yayboostData.thresholdInfo,
     templates: yayboostData.templates,
+    appliedCoupons: yayboostData.appliedCoupons,
   };
 
   const barData = calculateBarData(cartTotal, config);

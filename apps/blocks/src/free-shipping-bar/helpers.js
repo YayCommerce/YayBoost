@@ -58,16 +58,67 @@ export function formatMessage(template, remaining, threshold, current) {
 
 /**
  * Check if cart has free shipping coupon
+ * Uses shipping rates check (real-time) + coupon codes verification
+ * Works for both page load and mini cart coupon application
+ * @param {object} config Configuration object with appliedCoupons from PHP (optional)
  * @return {boolean}
  */
-export function hasFreeShippingCoupon() {
-  // Check WooCommerce Blocks cart data
-  const cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
-  if (cartData?.coupons && Array.isArray(cartData.coupons)) {
-    return cartData.coupons.some(function (coupon) {
-      return coupon.discount_type === "free_shipping";
-    });
+export function hasFreeShippingCoupon(config = {}) {
+  let shippingRatesKey = "shippingRates";
+  let cartData = {};
+
+  if (config.cartData !== undefined) {
+    cartData = config.cartData;
+    shippingRatesKey = "shipping_rates";
+  } else {
+    cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
   }
+
+  if (!cartData) {
+    return false;
+  }
+
+  // Must have at least one coupon applied
+  const appliedCoupons = cartData.coupons || [];
+  if (appliedCoupons.length === 0) {
+    return false;
+  }
+  // Optional: Verify from PHP data if available (more accurate)
+  const phpCouponsData = config.appliedCoupons || {};
+
+  if (appliedCoupons.length > 0 && Object.keys(phpCouponsData).length > 0) {
+    for (let i = 0; i < appliedCoupons.length; i++) {
+      const code = appliedCoupons[i];
+      // If coupon code is a string, use it directly
+      const couponCode = typeof code === "string" ? code : code.code || code;
+
+      if (phpCouponsData[couponCode]?.free_shipping === true) {
+        return true; // Confirmed: coupon has free shipping
+      }
+    }
+  }else {
+    // Check if free_shipping method is selected in shipping rates
+    // WooCommerce automatically selects free_shipping when coupon with free shipping is applied
+    if (cartData[shippingRatesKey] && Array.isArray(cartData[shippingRatesKey])) {
+      const hasFreeShippingRate = cartData[shippingRatesKey].some(
+        function (packageRates) {
+          if (!packageRates || !packageRates['shipping_rates']) {
+            return false;
+          }
+  
+          return packageRates['shipping_rates'].some(function (rate) {
+            // Check if free_shipping method is selected
+            return rate.method_id === "free_shipping";
+          });
+        }
+      );
+      
+      if (hasFreeShippingRate) {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -192,16 +243,62 @@ export function buildBarResponse(
 }
 
 /**
- * Get cart total from WooCommerce Blocks store or fallback
+ * Calculate cart total for free shipping calculation (helper function)
+ * Similar to PHP's calculate_cart_total_for_shipping()
+ * Can be used with any cartData source (Blocks store, Interactivity store, etc.)
+ * @param {object} cartData Cart data object with totals
+ * @param {object} thresholdInfo Optional threshold info with ignore_discounts setting
  * @return {number|null}
  */
-export function getCartTotalFromStore() {
-  // For redux store
-  const cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
-  if (cartData?.totals?.total_price) {
-    return cartData.totals.total_price;
+export function calculateCartTotalForShipping(cartData, thresholdInfo = {}) {
+  if (!cartData?.totals) {
+    return null;
   }
-  return null;
+
+  const ignoreDiscounts = thresholdInfo.ignore_discounts === "yes";
+
+  const minorUnit = cartData.totals.currency_minor_unit ?? 0;
+
+  // Get subtotal (total_items in Blocks store = subtotal before discount)
+  // This matches PHP: WC()->cart->get_displayed_subtotal()
+  let total = toDisplayPrice(cartData.totals.total_items, minorUnit);
+
+  // Subtract discount if not ignoring discounts
+  // This matches PHP logic: if ($ignore_discounts !== 'yes')
+  if (!ignoreDiscounts) {
+    const discount = toDisplayPrice(cartData.totals.total_discount, minorUnit);
+
+    total = total - discount;
+
+    // If prices include tax, also subtract discount tax
+    // Check if discount_tax exists (indicates prices include tax)
+    const discountTax = toDisplayPrice(cartData.totals.total_discount_tax, minorUnit);
+
+    if (discountTax > 0) {
+      // This matches PHP: if (WC()->cart->display_prices_including_tax())
+      total = total - discountTax;
+    }
+  }
+
+  // Round to match WooCommerce behavior (same as PHP)
+  const decimals = window.wcSettings?.currency?.precision ?? 2;
+  return Math.round(total * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
+/**
+ * Get cart total from WooCommerce Blocks store for free shipping calculation
+ * Wrapper function that gets cartData from store and calls calculateCartTotalForShipping()
+ * @param {object} thresholdInfo Optional threshold info with ignore_discounts setting
+ * @return {number|null}
+ */
+export function getCartTotalFromStore(thresholdInfo = {}) {
+  const cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
+  return calculateCartTotalForShipping(cartData, thresholdInfo);
+}
+
+export function getCartTotalPriceFromStore() {
+  const cartData = window.wp?.data?.select?.("wc/store/cart")?.getCartData?.();
+  return cartData?.totals?.total_price;
 }
 
 /**
@@ -211,10 +308,11 @@ export function getCartTotalFromStore() {
  * @return {object|null}
  */
 export function calculateBarData(cartTotal = null, config = {}) {
+  const thresholdInfo = config.thresholdInfo || {};
+
   if (cartTotal === null) {
-    cartTotal = getCartTotalFromStore();
+    cartTotal = getCartTotalFromStore(thresholdInfo);
   }
-  const thresholdInfo = config.thresholdInfo;
 
   if (!thresholdInfo || !thresholdInfo.min_amount) {
     return null;
@@ -226,7 +324,7 @@ export function calculateBarData(cartTotal = null, config = {}) {
 
   const threshold = thresholdInfo.min_amount;
   const requiresType = thresholdInfo.requires_type || null;
-  const hasCoupon = hasFreeShippingCoupon();
+  const hasCoupon = hasFreeShippingCoupon(config);
   const progressData = calculateProgress(threshold, cartTotal);
 
   // Determine state
@@ -423,10 +521,25 @@ export function updateShippingBarDOM(barData, config = {}) {
   }
 
   // Update DOM directly - target the content wrapper inside the block
-  const contentElement = document.querySelector(
+  const contentElements = document.querySelectorAll(
     '[data-wp-interactive="yayboost/free-shipping-bar"] .yayboost-shipping-bar-content'
   );
-  if (contentElement) {
-    contentElement.innerHTML = htmlContent;
+  if (contentElements.length > 0) {
+    contentElements.forEach(contentElement => {
+      contentElement.innerHTML = htmlContent;
+    });
   }
+}
+
+
+export function toDisplayPrice(price, minorUnit) {
+
+  if ( ! price ) {
+    return null;
+  }
+
+  if ( minorUnit ) {
+    return price / (10 ** minorUnit);
+  }
+  return price;
 }
