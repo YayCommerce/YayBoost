@@ -58,6 +58,27 @@ class NextOrderCouponFeature extends AbstractFeature {
     protected $priority = 100;
 
     /**
+     * Meta key for user has ordered flag (user meta)
+     *
+     * @var string
+     */
+    private const META_KEY_HAS_ORDERED = '_yayboost_has_ordered';
+
+    /**
+     * Meta key for next order coupon code (order meta)
+     *
+     * @var string
+     */
+    private const META_KEY_COUPON_CODE = '_yayboost_next_order_coupon';
+
+    /**
+     * Meta key for next order coupon ID (order meta)
+     *
+     * @var string
+     */
+    private const META_KEY_COUPON_ID = '_yayboost_next_order_coupon_id';
+
+    /**
      * Initialize the feature
      *
      * @return void
@@ -164,15 +185,15 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        // Store coupon code in order meta using WooCommerce object methods
-        $order->update_meta_data( '_yayboost_next_order_coupon', $coupon_code );
-        $order->update_meta_data( '_yayboost_next_order_coupon_id', $coupon_id );
+        // Store coupon code in order meta
+        $order->update_meta_data( self::META_KEY_COUPON_CODE, $coupon_code );
+        $order->update_meta_data( self::META_KEY_COUPON_ID, $coupon_id );
         $order->save();
 
         // Mark customer as ordered (for logged-in customers)
         $customer_id = $order->get_customer_id();
         if ($customer_id > 0) {
-            $this->mark_customer_as_ordered( $customer_id );
+            update_user_meta( $customer_id, self::META_KEY_HAS_ORDERED, true );
         }
     }
 
@@ -186,17 +207,22 @@ class NextOrderCouponFeature extends AbstractFeature {
         $settings = $this->get_settings();
         $action   = $settings['on_cancel_refund_action'] ?? 'keep_and_count';
 
-        if ($action === 'delete_and_reset') {
-            $this->delete_coupon_for_order( $order_id );
-            $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-            if ($order) {
-                $customer_id = $order->get_customer_id();
-                if ($customer_id > 0) {
-                    $this->reset_customer_order_status( $customer_id );
-                }
-            }
-        }
         // If 'keep_and_count', do nothing - keep coupon and user_meta
+        if ($action !== 'delete_and_reset') {
+            return;
+        }
+
+        $this->delete_coupon_for_order( $order_id );
+
+        $order = \wc_get_order( $order_id );
+        if ( ! $order) {
+            return;
+        }
+
+        $customer_id = $order->get_customer_id();
+        if ($customer_id > 0) {
+            $this->reset_customer_order_status( $customer_id );
+        }
     }
 
     /**
@@ -211,7 +237,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $coupon_id = $order->get_meta( '_yayboost_next_order_coupon_id' );
+        $coupon_id = $this->get_order_coupon_id( $order );
         if ( ! empty( $coupon_id )) {
             // Delete coupon object (force delete)
             $coupon = new \WC_Coupon( $coupon_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
@@ -221,8 +247,8 @@ class NextOrderCouponFeature extends AbstractFeature {
         }
 
         // Delete order meta
-        $order->delete_meta_data( '_yayboost_next_order_coupon' );
-        $order->delete_meta_data( '_yayboost_next_order_coupon_id' );
+        $order->delete_meta_data( self::META_KEY_COUPON_CODE );
+        $order->delete_meta_data( self::META_KEY_COUPON_ID );
         $order->save();
     }
 
@@ -256,10 +282,9 @@ class NextOrderCouponFeature extends AbstractFeature {
 
         // Only reset if no other completed/processing orders exist
         if (count( $orders ) === 0) {
-            delete_user_meta( $customer_id, '_yayboost_has_ordered' );
+            delete_user_meta( $customer_id, self::META_KEY_HAS_ORDERED );
         }
     }
-
 
     /**
      * Check if coupon should be generated for order
@@ -270,7 +295,7 @@ class NextOrderCouponFeature extends AbstractFeature {
     protected function should_generate_coupon(\WC_Order $order): bool { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
 
         // Check if coupon already generated for this order
-        $existing_coupon = $order->get_meta( '_yayboost_next_order_coupon' );
+        $existing_coupon = $this->get_order_coupon_code( $order );
         if ( ! empty( $existing_coupon )) {
             return false;
         }
@@ -329,7 +354,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         // Check user_meta cache for logged-in customers (faster lookup)
         $customer_id = $order->get_customer_id();
         if ($customer_id > 0) {
-            $has_ordered = get_user_meta( $customer_id, '_yayboost_has_ordered', true );
+            $has_ordered = $this->get_user_has_ordered( $customer_id );
             if ($has_ordered) {
                 return 'returning';
             }
@@ -340,10 +365,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         $has_previous  = $this->has_previous_orders_by_email( $billing_email, $order->get_id() );
         $customer_type = $has_previous ? 'returning' : 'first_time';
 
-        // Cache result in user_meta if logged-in customer (for faster future lookup)
-        if ($customer_id > 0 && $has_previous) {
-            update_user_meta( $customer_id, '_yayboost_has_ordered', true );
-        }
+        // Note: Do not cache result here - set_user_has_ordered() will handle it after order completion
 
         return $customer_type;
     }
@@ -376,18 +398,6 @@ class NextOrderCouponFeature extends AbstractFeature {
         );
 
         return count( $orders ) > 0;
-    }
-
-    /**
-     * Mark customer as ordered (save to user_meta for logged-in customers)
-     *
-     * @param int $customer_id Customer ID.
-     * @return void
-     */
-    protected function mark_customer_as_ordered(int $customer_id): void {
-        if ($customer_id > 0) {
-            update_user_meta( $customer_id, '_yayboost_has_ordered', true );
-        }
     }
 
     /**
@@ -450,7 +460,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         }
 
         // Allow modification of generated code before returning
-        $code = apply_filters( 'yayboost_coupon_code_generated', $code, $prefix, $order_id, $this );
+        $code = apply_filters( 'yayboost_noc_coupon_code', $code, $prefix, $order_id, $this );
 
         return $code;
     }
@@ -497,12 +507,12 @@ class NextOrderCouponFeature extends AbstractFeature {
             return null;
         }
 
-        $coupon_code = $order->get_meta( '_yayboost_next_order_coupon' );
+        $coupon_code = $this->get_order_coupon_code( $order );
         if (empty( $coupon_code )) {
             return null;
         }
 
-        $coupon_id = $order->get_meta( '_yayboost_next_order_coupon_id' );
+        $coupon_id = $this->get_order_coupon_id( $order );
         $coupon    = null;
         if ( ! empty( $coupon_id )) {
             $coupon = new \WC_Coupon( $coupon_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
@@ -721,6 +731,41 @@ class NextOrderCouponFeature extends AbstractFeature {
             default:
                 return '';
         }
+    }
+
+    /**
+     * Get user has ordered flag from user meta
+     *
+     * @param int $customer_id Customer ID.
+     * @return bool
+     */
+    protected function get_user_has_ordered(int $customer_id): bool {
+        if ($customer_id <= 0) {
+            return false;
+        }
+        return (bool) get_user_meta( $customer_id, self::META_KEY_HAS_ORDERED, true );
+    }
+
+    /**
+     * Get coupon code from order meta
+     *
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
+     * @return string|null
+     */
+    protected function get_order_coupon_code(\WC_Order $order): ?string { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+        $code = $order->get_meta( self::META_KEY_COUPON_CODE );
+        return ! empty( $code ) ? $code : null;
+    }
+
+    /**
+     * Get coupon ID from order meta
+     *
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
+     * @return int|null
+     */
+    protected function get_order_coupon_id(\WC_Order $order): ?int { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+        $coupon_id = $order->get_meta( self::META_KEY_COUPON_ID );
+        return ! empty( $coupon_id ) ? (int) $coupon_id : null;
     }
 
     /**
