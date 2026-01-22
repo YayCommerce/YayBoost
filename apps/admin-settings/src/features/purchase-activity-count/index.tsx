@@ -42,6 +42,7 @@ import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
+import { RangePicker } from '@/components/ui/range-picker';
 
 // Allowed positions for this feature
 const ALLOWED_POSITIONS = [
@@ -61,6 +62,10 @@ const settingsSchema = z.object({
   enabled: z.boolean(),
   minimum_count_display: z.number().min(0),
   count_from: z.enum(['all', 'period']),
+  period_date: z.object({
+    from: z.string().optional(),
+    to: z.string().optional(),
+  }).optional(),
   target_products: z.object({
     apply: z.enum(['all', 'specific_categories', 'specific_products']),
     categories: z.array(z.string()).optional(),
@@ -160,6 +165,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
 
   const displayText = form.watch('display.text');
   const applyTo = form.watch('target_products.apply');
+  const countFrom = form.watch('count_from');
 
   if (isLoading || isFetching) {
     return (
@@ -246,6 +252,24 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               </FormItem>
             )}
           />
+          { countFrom === 'period' && (     
+            <FormField
+              control={form.control}
+              name="period_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <RangePicker
+                      className="w-fit"
+                      date={field.value ? { from: field.value.from ? new Date(field.value.from) : undefined, to: field.value.to ? new Date(field.value.to) : undefined } : undefined}
+                      setDate={(date) => field.onChange(date ? { from: date.from ? date.from.toISOString() : undefined, to: date.to ? date.to.toISOString() : undefined } : undefined)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <Separator />
           <div className="space-y-1">
             <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>

@@ -267,6 +267,10 @@ class PurchaseActivityCountFeature extends AbstractFeature {
 				'enabled'               => true,
 				'minimum_count_display' => 3,
 				'count_from'            => 'all',
+				'period_date'           => array(
+					'from' => '',
+					'to'   => '',
+				),
 				'display'               => array(
 					'text'                 => '{count} customers bought this product',
 					'position'             => 'below_price',
