@@ -31,9 +31,9 @@ class FreeShippingBarBlock {
     public function __construct( FreeShippingBarFeature $feature ) {
         $this->feature = $feature;
 
-		add_action( 'init', [ $this, 'register_block' ] );
-		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
-	}
+        add_action( 'init', [ $this, 'register_block' ] );
+        add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
+    }
 
     /**
      * Get feature instance
@@ -50,6 +50,12 @@ class FreeShippingBarBlock {
      * @return void
      */
     public function register_block() {
+        // Only register block if feature is enabled
+        // This prevents unnecessary preloading when feature is disabled
+        if ( ! $this->feature || ! $this->feature->is_enabled() ) {
+            return;
+        }
+        
         $block_json_path = YAYBOOST_PATH . 'assets/dist/blocks/free-shipping-bar/block.json';
 
         if ( ! file_exists( $block_json_path ) ) {

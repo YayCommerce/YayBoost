@@ -573,7 +573,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               )}
             />
 
-            <Separator />
+            {/* <Separator />
             <div className="space-y-1">
               <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
               <p className="text-muted-foreground text-xs">
@@ -609,7 +609,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
           </SettingsCard>
           {/* Gutenberg Block Info Section */}
           <Alert>

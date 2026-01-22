@@ -185,14 +185,39 @@ class FreeShippingBarFeature extends AbstractFeature {
     public function get_localization_data(): array {
         $settings = $this->get_settings();
 
+        // Get applied coupon codes and their free shipping status
+        // This helps JavaScript verify free shipping coupons more accurately
+        // Optimized: Only get applied coupon codes (fast, no object creation)
+        $applied_coupons_data = [];
+        if ( WC()->cart ) {
+            // Only get applied coupon codes (fast, no object creation)
+            $applied_codes = WC()->cart->get_applied_coupons();
+
+            foreach ( $applied_codes as $code ) {
+                // Get coupon ID from code
+                $coupon_id = wc_get_coupon_id_by_code( $code );
+
+                if ( $coupon_id ) {
+                    // Check free_shipping directly from post meta (no object creation)
+                    $free_shipping = 'yes' === get_post_meta( $coupon_id, 'free_shipping', true );
+
+                    $applied_coupons_data[ $code ] = [
+                        'code'          => $code,
+                        'free_shipping' => $free_shipping,
+                    ];
+                }
+            }
+        }
+
         return [
-            'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-            'nonce'         => wp_create_nonce( 'yayboost_shipping_bar' ),
-            'cartTotal'     => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
-            'thresholdInfo' => $this->get_threshold_info_for_js(),
-            'templates'     => $this->get_html_templates(),
-            'settingsHash'  => $this->get_settings_hash(),
-            'settings'      => [
+            'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+            'nonce'          => wp_create_nonce( 'yayboost_shipping_bar' ),
+            'cartTotal'      => $this->calculate_cart_total_for_shipping( $this->get_free_shipping_info()['ignore_discounts'] ?? 'no' ),
+            'thresholdInfo'  => $this->get_threshold_info_for_js(),
+            'templates'      => $this->get_html_templates(),
+            'settingsHash'   => $this->get_settings_hash(),
+            'appliedCoupons' => $applied_coupons_data,
+            'settings'       => [
                 'messageProgress' => $settings['message_progress'],
                 'messageAchieved' => $settings['message_achieved'],
                 'messageCoupon'   => $settings['message_coupon'],
@@ -302,11 +327,11 @@ class FreeShippingBarFeature extends AbstractFeature {
                             </div>
                             <div class="yayboost-shipping-bar__info">
                                 <div class="yayboost-shipping-bar__title" style="color: {{TEXT_COLOR}};">Free Shipping</div>
-                                <div class="yayboost-shipping-bar__subtitle" style="color: {{TEXT_COLOR}};">On orders over {{CURRENCY_SYMBOL}}{{THRESHOLD}}</div>
+                                <div class="yayboost-shipping-bar__subtitle" style="color: {{TEXT_COLOR}};">On orders over {{THRESHOLD}}</div>
                             </div>
                         </div>
                         <div class="yayboost-shipping-bar__header-right">
-                            <div class="yayboost-shipping-bar__cart-total" style="color: {{TEXT_COLOR}};">{{CURRENCY_SYMBOL}}{{CART_TOTAL}}</div>
+                            <div class="yayboost-shipping-bar__cart-total" style="color: {{TEXT_COLOR}};">{{CART_TOTAL}}</div>
                             <div class="yayboost-shipping-bar__cart-label" style="color: {{TEXT_COLOR}};">Cart total</div>
                         </div>
                     </div>
@@ -1010,6 +1035,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                 'show_on_mini_cart'  => false,
                 'show_progress_bar'  => true,
                 'display_style'      => 'minimal_text',
+                'behavior_when_unlocked' => 'show_message',
             ]
         );
     }
