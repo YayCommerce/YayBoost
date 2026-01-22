@@ -103,7 +103,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         $settings = $this->get_settings();
 
         // Generate unique coupon code based on order ID
-        $coupon_code = $this->generate_coupon_code( $settings['coupon_prefix'] ?? 'THANKS-', $order_id );
+        $coupon_code = $this->generate_coupon_code( $settings['coupon_prefix'], $order_id );
 
         // Get customer emails
         $allowed_emails = $this->get_customer_emails( $order );
@@ -546,8 +546,8 @@ class NextOrderCouponFeature extends AbstractFeature {
         $coupon      = $coupon_info['coupon'];
 
         $discount_display = $this->format_discount_display(
-            $settings['discount_type'] ?? 'percent',
-            $settings['discount_value'] ?? 0
+            $settings['discount_type'],
+            $settings['discount_value']
         );
 
         // Get expiry date from coupon object
@@ -562,11 +562,11 @@ class NextOrderCouponFeature extends AbstractFeature {
         // Use headline only for thank you page
         $headline = '';
         if ($is_thank_you_page) {
-            $headline = $settings['thank_you_headline'] ?? __( "🎁 Here's a gift for your next order!", 'yayboost' );
+            $headline = $settings['thank_you_headline'];
         }
 
         $message = $this->format_coupon_message(
-            $settings['thank_you_message'] ?? __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires {expiry}.', 'yayboost' ),
+            $settings['thank_you_message'],
             $coupon_code,
             $discount_display,
             $expiry_date
@@ -611,8 +611,8 @@ class NextOrderCouponFeature extends AbstractFeature {
         $coupon      = $coupon_info['coupon'];
 
         $discount_display = $this->format_discount_display(
-            $settings['discount_type'] ?? 'percent',
-            $settings['discount_value'] ?? 0
+            $settings['discount_type'],
+            $settings['discount_value']
         );
 
         // Get expiry date from coupon object
@@ -625,7 +625,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         }
 
         $email_content = $this->format_coupon_message(
-            $settings['email_content'] ?? __( "As a thank you, here's {discount} off your next order!", 'yayboost' ),
+            $settings['email_content'],
             $coupon_code,
             $discount_display,
             $expiry_date
@@ -734,12 +734,12 @@ class NextOrderCouponFeature extends AbstractFeature {
             [
                 'enabled'                 => false,
                 'discount_type'           => 'percent',
-                'discount_value'          => 20,
+                'discount_value'          => 10,
                 'coupon_prefix'           => 'THANKS-',
                 'expires_after'           => 30,
                 'minimum_order_total'     => 0,
                 'customer_type'           => 'all',
-                'on_cancel_refund_action' => 'keep_and_count',
+                'on_cancel_refund_action' => 'delete_and_reset',
                 'minimum_spend_to_use'    => 0,
                 'exclude_sale_items'      => false,
                 'display_locations'       => [ 'thank_you_page', 'order_email', 'my_account' ],

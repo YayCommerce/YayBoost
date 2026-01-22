@@ -146,7 +146,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                     onValueChange={field.onChange}
                     className="flex flex-col gap-3"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <RadioGroupItem value="percent" id="discount-percentage" />
                       <label htmlFor="discount-percentage" className="flex items-center gap-2">
                         {__('Percentage off', 'yayboost')}
@@ -171,7 +171,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                         />
                       )}
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <RadioGroupItem value="fixed_cart" id="discount-fixed" />
                       <label htmlFor="discount-fixed" className="flex items-center gap-2">
                         {__('Fixed amount off', 'yayboost')}
