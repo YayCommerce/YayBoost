@@ -17,14 +17,200 @@
     text-align: center;
 }
 
-/* Grid Layout */
+/* Images Section - Top */
+.yayboost-fbt__images-section {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #fafafa;
+    border-radius: 6px;
+}
+
+.yayboost-fbt__info-icon {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: #000;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: opacity 0.2s;
+}
+
+.yayboost-fbt__info-icon:hover {
+    opacity: 0.8;
+}
+
+.yayboost-fbt__info-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Images Scroll Container */
+.yayboost-fbt__images-scroll {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex: 1;
+    min-width: 0;
+    padding-right: 2rem;
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent;
+}
+
+.yayboost-fbt__images-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.yayboost-fbt__images-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.yayboost-fbt__images-scroll::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.yayboost-fbt__images-scroll::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.yayboost-fbt__image-item {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+}
+
+.yayboost-fbt__image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.yayboost-fbt__image-item a {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.yayboost-fbt__image-separator {
+    flex-shrink: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0.25rem;
+}
+
+/* Summary Area */
+.yayboost-fbt__summary {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1rem;
+    min-width: 200px;
+}
+
+.yayboost-fbt__summary .yayboost-fbt__total {
+    text-align: right;
+    font-size: 1.1rem;
+}
+
+.yayboost-fbt__add-btn--summary {
+    width: 100%;
+    text-align: center;
+}
+
+/* Information Message */
+.yayboost-fbt__message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background: #e3f2fd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.yayboost-fbt__message-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: #1976d2;
+}
+
+.yayboost-fbt__message-text {
+    flex: 1;
+    color: #333;
+}
+
+.yayboost-fbt__message-link {
+    color: #1976d2;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.yayboost-fbt__message-link:hover {
+    text-decoration: underline;
+}
+
+/* Products List - Bottom */
+.yayboost-fbt__products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.yayboost-fbt__products-list .yayboost-fbt__product {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.yayboost-fbt__products-list .yayboost-fbt__product:hover {
+    border-color: #ddd;
+    background: #fafafa;
+}
+
+.yayboost-fbt__products-list .yayboost-fbt__product--current {
+    background: #f0f7ff;
+    border-color: #1976d2;
+}
+
+.yayboost-fbt__products-list .yayboost-fbt__product--current:hover {
+    background: #e3f2fd;
+}
+
+/* Grid Layout (Legacy - kept for compatibility) */
 .yayboost-fbt__products--grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1.5rem;
 }
 
-/* List Layout */
+/* List Layout (Legacy - kept for compatibility) */
 .yayboost-fbt__products--list {
     display: flex;
     flex-direction: column;
@@ -43,7 +229,7 @@
     flex-shrink: 0;
 }
 
-/* Product Card */
+/* Product Card (Legacy - kept for compatibility) */
 .yayboost-fbt__product {
     position: relative;
     display: flex;
@@ -66,9 +252,8 @@
 
 /* Checkbox */
 .yayboost-fbt__checkbox {
-    position: absolute;
-    top: 0.75rem;
-    left: 0.75rem;
+    flex-shrink: 0;
+    position: relative;
     z-index: 10;
 }
 
@@ -79,7 +264,7 @@
     cursor: pointer;
 }
 
-/* Image */
+/* Image (Legacy - kept for compatibility) */
 .yayboost-fbt__image {
     margin-bottom: 0.75rem;
     text-align: center;
@@ -98,9 +283,16 @@
 /* Info */
 .yayboost-fbt__info {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    gap: 10px;
     flex-grow: 1;
+    min-width: 0;
+    align-items: center;
+}
+
+.yayboost-fbt__name {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.4;
 }
 
 .yayboost-fbt__name a {
@@ -110,6 +302,12 @@
 
 .yayboost-fbt__name a:hover {
     color: #0073aa;
+}
+
+.yayboost-fbt__current-label {
+    font-weight: 600;
+    color: #1976d2;
+    margin-right: 0.5rem;
 }
 
 .yayboost-fbt__price {
@@ -174,6 +372,30 @@
         padding: 1rem;
     }
 
+    .yayboost-fbt__images-section {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .yayboost-fbt__images-scroll {
+        width: 100%;
+        padding-right: 0;
+    }
+
+    .yayboost-fbt__summary {
+        width: 100%;
+        align-items: stretch;
+    }
+
+    .yayboost-fbt__summary .yayboost-fbt__total {
+        text-align: left;
+    }
+
+    .yayboost-fbt__info-icon {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
     .yayboost-fbt__products--grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -190,7 +412,16 @@
 }
 
 @media (max-width: 480px) {
+    .yayboost-fbt__image-item {
+        width: 100px;
+        height: 100px;
+    }
+
     .yayboost-fbt__products--grid {
         grid-template-columns: 1fr;
+    }
+
+    .yayboost-fbt__products-list .yayboost-fbt__product {
+        flex-wrap: wrap;
     }
 }
