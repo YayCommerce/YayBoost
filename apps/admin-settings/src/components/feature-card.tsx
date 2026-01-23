@@ -77,9 +77,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
           </div>
         </div>
         {/* Description */}
-        <CardDescription className="mt-2 line-clamp-2 text-sm font-normal">
-          {feature.description}
-        </CardDescription>
+        <CardDescription className="mt-2 line-clamp-2 text-sm font-normal" dangerouslySetInnerHTML={{ __html: feature.description }} />
       </CardHeader>
       {/* Bottom row: Settings Button + Toggle Switch */}
       <CardContent className="flex items-center justify-between pt-0">
