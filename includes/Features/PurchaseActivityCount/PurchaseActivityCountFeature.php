@@ -106,6 +106,9 @@ class PurchaseActivityCountFeature extends AbstractFeature {
     public function __construct( $container ) {
         parent::__construct( $container );
 
+        // Initialize services
+        $this->position_service = new DisplayPositionService();
+
         // Initialize modules
         $this->tracker  = new PurchaseActivityCountTracker( $this );
         $this->renderer = new PurchaseActivityCountRenderer( $this, $this->tracker );

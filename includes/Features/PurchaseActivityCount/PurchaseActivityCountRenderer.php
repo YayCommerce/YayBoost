@@ -63,7 +63,7 @@ class PurchaseActivityCountRenderer {
         $is_hidden             = $count < $minimum_count_display;
         $text                  = str_replace( '{count}', $count, $this->feature->get( 'display.text' ) );
 
-        return $this->render_content( $this->feature->get( 'display.style' ), $text, $count, $this->feature->get( 'display.text' ), $this->feature->get( 'display.text_color' ), $this->feature->get( 'display.background_color' ), $is_hidden );
+        return $this->render_content( $text, $count, $this->feature->get( 'display.text' ), $is_hidden );
     }
 
     /**

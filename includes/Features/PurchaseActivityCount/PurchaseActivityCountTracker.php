@@ -19,7 +19,8 @@ class PurchaseActivityCountTracker {
     /**
      * Cache TTL in seconds
      */
-    const CACHE_TTL = 30;
+    const CACHE_TTL = 300;
+    // 5 minutes
 
     /**
      * Cache key prefix for purchase activity counts
