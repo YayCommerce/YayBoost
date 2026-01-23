@@ -32,12 +32,13 @@
     }
   
     let mouseY = 0;
+    let previousMouseY = 0;
     let triggered = false;
     
     // Store event listener references for cleanup
     const eventHandlers = {
-      mouseleave: null,
       mousemove: null,
+      mouseout: null,
       popstate: null,
       closeBtnClick: null,
       overlayClick: null,
@@ -156,24 +157,33 @@
   
     // Exit intent detection: Mouse leaves viewport
     if (config.trigger.leaves_viewport) {
-      eventHandlers.mouseleave = function (e) {
-        // Check if mouse is leaving towards the top of the window
-        if (e.clientY <= 0 && !triggered && !popupShown) {
-          showPopup();
-        }
-      };
-      document.addEventListener('mouseleave', eventHandlers.mouseleave);
-  
-      // Also track mouse movement to detect when it goes above viewport
+      // Track mouse movement to detect when it goes above viewport
+      // This works across all browsers (Chrome, Firefox, Safari)
       eventHandlers.mousemove = function (e) {
+        previousMouseY = mouseY;
         mouseY = e.clientY;
   
-        // If mouse moves above viewport (y < 0), trigger popup
-        if (mouseY < 0 && !triggered && !popupShown) {
+        // If mouse moves above viewport (y <= 0), trigger popup
+        // Also check if mouse was previously in viewport and now is above
+        if (mouseY <= 0 && previousMouseY > 0 && !triggered && !popupShown) {
           showPopup();
         }
       };
       document.addEventListener('mousemove', eventHandlers.mousemove);
+  
+      // Use mouseout as additional detection method (more reliable in Safari/Firefox)
+      // Check if mouse is leaving towards the top of the window
+      eventHandlers.mouseout = function (e) {
+        // Check if the related target is null (mouse left the document)
+        // or if mouse is moving towards the top (clientY <= 0)
+        if ((!e.relatedTarget || e.relatedTarget.nodeName === 'HTML') && 
+            e.clientY <= 0 && 
+            !triggered && 
+            !popupShown) {
+          showPopup();
+        }
+      };
+      document.addEventListener('mouseout', eventHandlers.mouseout);
     }
   
     // Back button detection
@@ -206,14 +216,43 @@
         }
       }
 
-      // Delay marker setup slightly to ensure page is ready
-      backMarkerTimeout = setTimeout(initBackMarker, 120);
+      // Initialize marker immediately using requestAnimationFrame for minimal delay
+      // This ensures it runs as soon as possible but after the current execution context
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(initBackMarker);
+      } else {
+        // Fallback for older browsers
+        setTimeout(initBackMarker, 0);
+      }
 
       eventHandlers.popstate = function (e) {
         const state = e.state || window.history.state || {};
         const alreadyShown = sessionStorage.getItem(popupShownKey) === 'true';
 
-        // Only handle our own marker state
+        // Check if this is a back navigation (state is null or doesn't have our marker)
+        // This handles the case where back is pressed before marker is initialized
+        if (!state || !state.yayboostExitIntent) {
+          // If marker wasn't initialized yet, initialize it now and show popup
+          if (!backMarkerInitialized && !triggered && !alreadyShown) {
+            initBackMarker();
+            showPopup();
+            // Push marker to keep user on page
+            setTimeout(function () {
+              try {
+                window.history.pushState(
+                  mergeState(markerState, { ts: Date.now() }),
+                  '',
+                  window.location.href
+                );
+              } catch (err) {
+                // ignore
+              }
+            }, 0);
+            return;
+          }
+        }
+
+        // Handle our own marker state
         if (state && state.yayboostExitIntent) {
           if (!triggered && !alreadyShown) {
             showPopup();
@@ -277,13 +316,13 @@
      */
     function cleanup() {
       // Remove mouse event listeners
-      if (eventHandlers.mouseleave) {
-        document.removeEventListener('mouseleave', eventHandlers.mouseleave);
-        eventHandlers.mouseleave = null;
-      }
       if (eventHandlers.mousemove) {
         document.removeEventListener('mousemove', eventHandlers.mousemove);
         eventHandlers.mousemove = null;
+      }
+      if (eventHandlers.mouseout) {
+        document.removeEventListener('mouseout', eventHandlers.mouseout);
+        eventHandlers.mouseout = null;
       }
 
       // Remove popstate listener
