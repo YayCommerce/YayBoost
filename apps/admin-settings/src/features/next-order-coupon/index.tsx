@@ -8,11 +8,14 @@ import { useMemo } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
+import { Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Form,
   FormControl,
@@ -69,6 +72,269 @@ const displayLocationOptions = [
   { id: 'my_account', label: __('My account → Orders', 'yayboost') },
 ];
 
+// Helper function to format discount display
+function formatDiscountDisplay(
+  discountType: string,
+  discountValue?: number,
+): string {
+  if (discountType === 'percent') {
+    return `${discountValue || 0}%`;
+  }
+  if (discountType === 'fixed_cart') {
+    return `${currencySymbol}${(discountValue || 0).toFixed(2)}`;
+  }
+  if (discountType === 'free_shipping') {
+    return __('Free shipping', 'yayboost');
+  }
+  return '';
+}
+
+// Helper function to format coupon message with placeholders
+function formatCouponMessage(
+  template: string,
+  couponCode: string,
+  discount: string,
+  expiry: string,
+): string {
+  return template
+    .replace(/{coupon_code}/g, `<strong>${couponCode}</strong>`)
+    .replace(/{discount}/g, discount)
+    .replace(/{expiry}/g, expiry);
+}
+
+
+// Coupon Display Component (matches PHP render_coupon_display structure)
+function CouponDisplay({
+  couponCode,
+  message,
+  headline,
+}: {
+  couponCode: string;
+  message: string;
+  headline?: string;
+}) {
+  return (
+    <div
+      className="yayboost-next-order-coupon"
+      style={{
+        margin: '20px 0',
+        padding: '20px',
+        background: '#f8f9fa',
+        borderRadius: '6px',
+      }}
+    >
+      {headline && (
+        <h3
+          style={{
+            margin: '0 0 12px 0',
+            fontSize: '18px',
+            fontWeight: 600,
+          }}
+        >
+          {headline}
+        </h3>
+      )}
+      <div
+        style={{
+          margin: '0 0 12px 0',
+          fontSize: '14px',
+        }}
+        dangerouslySetInnerHTML={{ __html: message }}
+      />
+      <div
+        style={{
+          margin: 0,
+          padding: '12px',
+          background: '#ffffff',
+          borderRadius: '6px',
+          border: '1px solid #dee2e6',
+        }}
+      >
+        <div
+          style={{
+            margin: '0 0 6px 0',
+            fontSize: '12px',
+            fontWeight: 600,
+            textTransform: 'uppercase',
+          }}
+        >
+          {__('Coupon code:', 'yayboost')}
+        </div>
+        <div
+          style={{
+            margin: 0,
+            fontSize: '18px',
+            fontWeight: 700,
+          }}
+        >
+          {couponCode}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Placeholder components for WooCommerce content
+function ThankYouHeadingPlaceholder() {
+  return (
+    <div className="text-muted-foreground opacity-50">
+      <h2 className="text-2xl font-semibold mb-2">
+        {__('Thanks for your order', 'yayboost')}
+      </h2>
+      <p className="text-sm">
+        {__('We have received your order and will begin processing it right away.', 'yayboost')}
+      </p>
+    </div>
+  );
+}
+
+function OrderTablePlaceholder() {
+  return (
+    <div className="text-muted-foreground opacity-50 border rounded-lg p-4">
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>{__('Product', 'yayboost')}</span>
+          <span>{__('Total', 'yayboost')}</span>
+        </div>
+        <div className="border-t pt-2">
+          <div className="flex justify-between text-sm">
+            <span>{__('Sample Product × 1', 'yayboost')}</span>
+            <span>{currencySymbol}29.99</span>
+          </div>
+        </div>
+        <div className="border-t pt-2 flex justify-between font-semibold">
+          <span>{__('Total:', 'yayboost')}</span>
+          <span>{currencySymbol}29.99</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmailHeaderPlaceholder() {
+  return (
+    <div className="text-muted-foreground opacity-50 space-y-2 pb-4 border-b">
+      <h2 className="text-lg font-semibold">
+        {__('Order Confirmation', 'yayboost')}
+      </h2>
+      <p className="text-sm">
+        {__('Hello,', 'yayboost')}
+      </p>
+      <p className="text-sm">
+        {__('Your order has been received and is now being processed.', 'yayboost')}
+      </p>
+    </div>
+  );
+}
+
+function AddressSectionPlaceholder() {
+  return (
+    <div className="text-muted-foreground opacity-50 grid grid-cols-2 gap-4">
+      <div>
+        <h3 className="font-semibold mb-2">{__('Shipping address', 'yayboost')}</h3>
+        <div className="border border-gray-300 rounded bg-white p-3 text-sm">
+          <div>{__('John Doe', 'yayboost')}</div>
+          <div>{__('123 Main St', 'yayboost')}</div>
+          <div>{__('City', 'yayboost')}</div>
+          <div>{__('0901234567', 'yayboost')}</div>
+        </div>
+      </div>
+      <div>
+        <h3 className="font-semibold mb-2">{__('Billing address', 'yayboost')}</h3>
+        <div className="border border-gray-300 rounded bg-white p-3 text-sm">
+          <div>{__('John Doe', 'yayboost')}</div>
+          <div>{__('123 Main St', 'yayboost')}</div>
+          <div>{__('City', 'yayboost')}</div>
+          <div>{__('0901234567', 'yayboost')}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Preview component
+function NextOrderCouponPreview({ settings }: { settings: SettingsFormData }) {
+  const mockData = useMemo(() => {
+    const couponCode = `${settings.coupon_prefix || 'THANKS-'}12345`;
+    const discount = formatDiscountDisplay(
+      settings.discount_type,
+      settings.discount_value,
+    );
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + (settings.expires_after || 30));
+    const expiry = expiryDate.toLocaleDateString();
+
+    // Format thank you message
+    const thankYouMessage = formatCouponMessage(
+      settings.thank_you_message || '',
+      couponCode,
+      discount,
+      expiry,
+    );
+
+    // Format email content
+    const emailMessage = formatCouponMessage(
+      settings.email_content || '',
+      couponCode,
+      discount,
+      expiry,
+    );
+
+    return {
+      couponCode,
+      discount,
+      expiry,
+      thankYouMessage,
+      emailMessage,
+      headline: settings.thank_you_headline || '',
+    };
+  }, [
+    settings.coupon_prefix,
+    settings.discount_type,
+    settings.discount_value,
+    settings.expires_after,
+    settings.thank_you_message,
+    settings.email_content,
+    settings.thank_you_headline,
+  ]);
+
+  return (
+    <Tabs defaultValue="thank-you" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="thank-you">
+          {__('Thank You Page', 'yayboost')}
+        </TabsTrigger>
+        <TabsTrigger value="email">{__('Email', 'yayboost')}</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="thank-you" className="space-y-4 mt-4">
+        <div className="max-w-md mx-auto space-y-4 border-2 border-blue-500 rounded-lg p-4">
+          <ThankYouHeadingPlaceholder />
+          <CouponDisplay
+            couponCode={mockData.couponCode}
+            message={mockData.thankYouMessage}
+            headline={mockData.headline}
+          />
+          <OrderTablePlaceholder />
+          <AddressSectionPlaceholder />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="email" className="space-y-4 mt-4">
+        <div className="max-w-md mx-auto space-y-4 border-2 border-blue-500 rounded-lg p-4">
+          <EmailHeaderPlaceholder />
+          <CouponDisplay
+            couponCode={mockData.couponCode}
+            message={mockData.emailMessage}
+          />
+          <OrderTablePlaceholder />
+          <AddressSectionPlaceholder />
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
 export default function NextOrderCouponFeature({ featureId }: FeatureComponentProps) {
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
@@ -92,7 +358,6 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
   };
 
   const watchedValues = form.watch();
-  const discountType = watchedValues.discount_type;
   const couponPrefix = watchedValues.coupon_prefix || 'THANKS-';
 
   if (isLoading || isFetching) {
@@ -111,8 +376,10 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
   return (
     <Form {...form}>
       <FeatureLayoutHeader title={feature.name} description={feature.description} />
-      <div className="space-y-6">
-        <SettingsCard
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Settings Form */}
+        <div className="space-y-6">
+          <SettingsCard
           headless
           title="Configure Next Order Coupon"
           onSave={() => {
@@ -555,6 +822,25 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             )}
           />
         </SettingsCard>
+        </div>
+
+        {/* Preview Panel */}
+        <div className="space-y-6">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+              </div>
+              <CardDescription>
+                {__('See how the coupon will appear to customers', 'yayboost')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NextOrderCouponPreview settings={watchedValues} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Form>
   );

@@ -537,13 +537,8 @@ class NextOrderCouponFeature extends AbstractFeature {
         $settings          = $this->get_settings();
         $display_locations = $settings['display_locations'] ?? [];
 
-        // Detect context: thank you page or my account
-        $is_thank_you_page = \is_checkout() && isset( $_GET['order-received'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        $context           = $is_thank_you_page ? 'thank_you_page' : 'my_account';
-        $location_key      = $is_thank_you_page ? 'thank_you_page' : 'my_account';
-
         // Check if should display for this location
-        if ( ! in_array( $location_key, $display_locations, true )) {
+        if ( ! in_array( 'thank_you_page', $display_locations, true )) {
             return;
         }
 
@@ -569,11 +564,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             }
         }
 
-        // Use headline only for thank you page
-        $headline = '';
-        if ($is_thank_you_page) {
-            $headline = $settings['thank_you_headline'];
-        }
+        $headline = $settings['thank_you_headline'];
 
         $message = $this->format_coupon_message(
             $settings['thank_you_message'],
@@ -582,7 +573,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             $expiry_date
         );
 
-        $this->render_coupon_display( $coupon_code, $message, $context, $headline );
+        $this->render_coupon_display( $coupon_code, $message, $headline );
     }
 
     /**
@@ -641,7 +632,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             $expiry_date
         );
 
-        $this->render_coupon_display( $coupon_code, $email_content, 'email', '', $plain_text );
+        $this->render_coupon_display( $coupon_code, $email_content, '', $plain_text );
     }
 
 
@@ -674,12 +665,11 @@ class NextOrderCouponFeature extends AbstractFeature {
      *
      * @param string $coupon_code Coupon code.
      * @param string $message Formatted message.
-     * @param string $context Display context: 'thank_you_page', 'email', 'my_account'.
      * @param string $headline Optional headline (for thank you page).
      * @param bool   $plain_text Whether to render as plain text (for email).
      * @return void
      */
-    protected function render_coupon_display(string $coupon_code, string $message, string $context = 'thank_you_page', string $headline = '', bool $plain_text = false): void {
+    protected function render_coupon_display(string $coupon_code, string $message, string $headline = '', bool $plain_text = false): void {
         // Plain text version for email
         if ($plain_text) {
             echo "\n\n" . esc_html( $message ) . "\n";
@@ -689,7 +679,7 @@ class NextOrderCouponFeature extends AbstractFeature {
 
         ?>
         <div class="yayboost-next-order-coupon" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 6px;">
-            <?php if ( ! empty( $headline ) && $context === 'thank_you_page' ) : ?>
+            <?php if ( ! empty( $headline ) ) : ?>
                 <h3 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
                     <?php echo esc_html( $headline ); ?>
                 </h3>
