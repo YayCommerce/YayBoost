@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\ExitIntentPopup;
 
+use Hashids\Hashids;
+
 /**
  * AJAX endpoint handlers for exit intent popup
  */
@@ -35,6 +37,13 @@ class ExitIntentPopupAjaxHandler {
      * @var ExitIntentPopupFeature
      */
     private $feature;
+
+    /**
+     * Salt for Hashids (keep codes unique to this feature)
+     *
+     * @var string
+     */
+    private const HASHIDS_SALT = 'yayboost_eip';
 
     /**
      * Constructor
@@ -82,13 +91,15 @@ class ExitIntentPopupAjaxHandler {
             wp_send_json_error( [ 'message' => __( 'WooCommerce cart unavailable.', 'yayboost' ) ], 400 );
         }
 
-        $client_key = sanitize_text_field( wp_unslash( $_POST['client_key'] ?? '' ) );
+        $client_key = $this->get_client_key();
+
         if ( empty( $client_key ) ) {
             wp_send_json_error( [ 'message' => __( 'Missing client key.', 'yayboost' ) ], 400 );
         }
 
         $transient_key = 'yayboost_exit_coupon_' . md5( $client_key );
         $existing_code = get_transient( $transient_key );
+
         if ( $existing_code ) {
             $this->apply_coupon_to_cart( $existing_code );
             wp_send_json_success( [ 'code' => $existing_code ] );
@@ -164,8 +175,9 @@ class ExitIntentPopupAjaxHandler {
     private function generate_unique_coupon_code( string $prefix ): string {
         $attempts = 0;
         do {
-            $code   = $prefix . strtoupper( wp_generate_password( 6, false, false ) );
-            $exists = \wc_get_coupon_id_by_code( $code );
+            $encoded = $this->get_hashids()->encode( time() );
+            $code    = $prefix . $encoded;
+            $exists  = \wc_get_coupon_id_by_code( $code );
             ++$attempts;
         } while ( $exists && $attempts < 5 );
 
@@ -250,5 +262,34 @@ class ExitIntentPopupAjaxHandler {
      */
     private function is_local_ip( string $ip ): bool {
         return ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
+    }
+
+    /**
+     * Get client key.
+     *
+     * @return string Client key.
+     */
+    private function get_client_key(): string {
+        if ( is_user_logged_in() ) {
+            return 'user_' . get_current_user_id();
+        }
+
+        // For guests, use IP + User-Agent
+        $ip = $this->get_client_ip();
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        return 'guest_' . md5( $ip . $ua );
+    }
+
+    /**
+     * Get Hashids instance for coupon code encoding
+     *
+     * @return Hashids
+     */
+    protected function get_hashids(): Hashids {
+        static $instance = null;
+        if ( $instance === null ) {
+            $instance = new Hashids( 'yayboost_eip', 8 );
+        }
+        return $instance;
     }
 }

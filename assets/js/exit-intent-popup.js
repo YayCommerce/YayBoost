@@ -25,7 +25,7 @@
     // Check if popup was already shown in this session
     const popupShownKey = 'yayboost_exit_intent_shown';
     const popupShown = sessionStorage.getItem(popupShownKey) === 'true';
-    const clientKeyStorage = 'yayboost_exit_intent_client_key';
+    
     // Only show once per session
     if (popupShown) {
       return;
@@ -57,15 +57,6 @@
       popup.style.display = 'none';
       document.body.style.overflow = ''; // Restore body scroll
     }
-  
-    function getClientKey() {
-      let key = sessionStorage.getItem(clientKeyStorage);
-      if (!key) {
-        key = 'yep_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-        sessionStorage.setItem(clientKeyStorage, key);
-      }
-      return key;
-    }
 
     function appendCouponToUrl(url, code) {
       if (!url) return '';
@@ -95,8 +86,7 @@
       const formData = new FormData();
       formData.append('action', 'yayboost_exit_intent_coupon');
       formData.append('nonce', config.nonce);
-      formData.append('client_key', getClientKey());
-
+      
       const resp = await fetch(config.ajaxUrl, {
         method: 'POST',
         credentials: 'same-origin',

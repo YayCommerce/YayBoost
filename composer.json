@@ -12,7 +12,8 @@
     }
   ],
   "require": {
-    "php": ">=7.4"
+    "php": ">=7.4",
+    "hashids/hashids": "^5.0"
   },
   "config": {
     "allow-plugins": {
@@ -38,4 +39,3 @@
     "phpcbf": "phpcbf --standard=phpcs.xml"
   }
 }
-
