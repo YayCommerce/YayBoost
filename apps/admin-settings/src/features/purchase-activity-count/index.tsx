@@ -160,11 +160,11 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
                 <FormControl>
                   <div className="flex items-center gap-2">
                   <InputNumber
-                   className="w-24"
+                    className="w-24"
                     id="minimum-count-display"
                     placeholder={__('Minimum orders to display', 'yayboost')}
                     min={1}
-                    onChange={field.onChange}
+                    onValueChange={(val) => field.onChange(val)}
                     value={field.value ?? 0}
                   />
                   <span className="text-[#6A7282]">{__('orders', 'yayboost')}</span>
