@@ -12,7 +12,8 @@
     }
   ],
   "require": {
-    "php": ">=7.4"
+    "php": ">=7.4",
+    "hashids/hashids": "^4.1"
   },
   "config": {
     "allow-plugins": {

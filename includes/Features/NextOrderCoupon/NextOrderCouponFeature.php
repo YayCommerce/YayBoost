@@ -9,6 +9,7 @@
 
 namespace YayBoost\Features\NextOrderCoupon;
 
+use Hashids\Hashids;
 use YayBoost\Features\AbstractFeature;
 
 /**
@@ -79,6 +80,20 @@ class NextOrderCouponFeature extends AbstractFeature {
     private const META_KEY_COUPON_ID = '_yayboost_next_order_coupon_id';
 
     /**
+     * Salt for Hashids (keep codes unique to this feature)
+     *
+     * @var string
+     */
+    private const HASHIDS_SALT = 'yayboost_noc';
+
+    /**
+     * Minimum length for Hashids output
+     *
+     * @var int
+     */
+    private const HASHIDS_MIN_LENGTH = 6;
+
+    /**
      * Initialize the feature
      *
      * @return void
@@ -102,6 +117,19 @@ class NextOrderCouponFeature extends AbstractFeature {
 
         // Add coupon to order email (before order table)
         add_action( 'woocommerce_email_before_order_table', [ $this, 'display_email_before_order_table' ], 20, 4 );
+    }
+
+    /**
+     * Get Hashids instance for coupon code encoding
+     *
+     * @return Hashids
+     */
+    protected function get_hashids(): Hashids {
+        static $instance = null;
+        if ( $instance === null ) {
+            $instance = new Hashids( self::HASHIDS_SALT, self::HASHIDS_MIN_LENGTH );
+        }
+        return $instance;
     }
 
     /**
@@ -443,44 +471,25 @@ class NextOrderCouponFeature extends AbstractFeature {
     /**
      * Generate unique coupon code based on order ID
      *
-     * Format: {prefix}{order_id}
-     * Example: THANKS-12345
+     * Format: {prefix}{hashid}
+     * Example: THANKS-o2fXhV (order_id encoded via Hashids)
      *
      * @param string $prefix Coupon prefix.
      * @param int    $order_id Order ID to ensure uniqueness.
      * @return string
      */
-    protected function generate_coupon_code(string $prefix, int $order_id): string {
-        $code = $prefix . $order_id;
+    protected function generate_coupon_code( string $prefix, int $order_id ): string {
+        $encoded = $this->get_hashids()->encode( $order_id );
+        $code    = $encoded !== '' ? $prefix . $encoded : $prefix . $order_id;
 
-        // Defensive check (should never happen, but good practice)
-        if ($this->coupon_code_exists( $code )) {
-            // Fallback: append timestamp if somehow duplicate exists
-            $code = $prefix . $order_id . '-' . time();
+        if ( $this->coupon_code_exists( $code ) ) {
+            $encoded = $this->get_hashids()->encode( $order_id, time() );
+            $code    = $encoded !== '' ? $prefix . $encoded : $prefix . $order_id . '-' . time();
         }
 
         // Allow modification of generated code before returning
         $code = apply_filters( 'yayboost_noc_coupon_code', $code, $prefix, $order_id, $this );
 
-        return $code;
-    }
-
-    /**
-     * Generate a random coupon code with given prefix, characters, and length.
-     *
-     * Note: This method is not currently used for order coupons (which use order_id instead).
-     * Kept for potential future use or other coupon generation needs.
-     *
-     * @param string $prefix The prefix for the coupon code.
-     * @param string $characters The character set to use for random generation.
-     * @param int    $length The number of random characters to append.
-     * @return string The generated coupon code.
-     */
-    protected function generate_random_code(string $prefix, string $characters, int $length): string {
-        $code = $prefix;
-        for ($i = 0; $i < $length; $i++) {
-            $code .= $characters[ wp_rand( 0, strlen( $characters ) - 1 ) ];
-        }
         return $code;
     }
 
