@@ -33,6 +33,20 @@
   
     let mouseY = 0;
     let triggered = false;
+    
+    // Store event listener references for cleanup
+    const eventHandlers = {
+      mouseleave: null,
+      mousemove: null,
+      popstate: null,
+      closeBtnClick: null,
+      overlayClick: null,
+      actionBtnClick: null,
+      keydown: null
+    };
+    
+    // Store timeout reference for cleanup
+    let backMarkerTimeout = null;
   
     /**
      * Show the popup
@@ -142,22 +156,24 @@
   
     // Exit intent detection: Mouse leaves viewport
     if (config.trigger.leaves_viewport) {
-      document.addEventListener('mouseleave', function (e) {
+      eventHandlers.mouseleave = function (e) {
         // Check if mouse is leaving towards the top of the window
         if (e.clientY <= 0 && !triggered && !popupShown) {
           showPopup();
         }
-      });
+      };
+      document.addEventListener('mouseleave', eventHandlers.mouseleave);
   
       // Also track mouse movement to detect when it goes above viewport
-      document.addEventListener('mousemove', function (e) {
+      eventHandlers.mousemove = function (e) {
         mouseY = e.clientY;
   
         // If mouse moves above viewport (y < 0), trigger popup
         if (mouseY < 0 && !triggered && !popupShown) {
           showPopup();
         }
-      });
+      };
+      document.addEventListener('mousemove', eventHandlers.mousemove);
     }
   
     // Back button detection
@@ -191,67 +207,125 @@
       }
 
       // Delay marker setup slightly to ensure page is ready
-      setTimeout(initBackMarker, 120);
+      backMarkerTimeout = setTimeout(initBackMarker, 120);
 
-      window.addEventListener(
-        'popstate',
-        function (e) {
-          const state = e.state || window.history.state || {};
-          const alreadyShown = sessionStorage.getItem(popupShownKey) === 'true';
+      eventHandlers.popstate = function (e) {
+        const state = e.state || window.history.state || {};
+        const alreadyShown = sessionStorage.getItem(popupShownKey) === 'true';
 
-          // Only handle our own marker state
-          if (state && state.yayboostExitIntent) {
-            if (!triggered && !alreadyShown) {
-              showPopup();
-              // Re-push marker so the user stays on the page for this back press
-              setTimeout(function () {
-                try {
-                  window.history.pushState(
-                    mergeState(markerState, { ts: Date.now() }),
-                    '',
-                    window.location.href
-                  );
-                } catch (err) {
-                  // ignore
-                }
-              }, 0);
-            }
-            // If already shown, allow navigation by not re-pushing
+        // Only handle our own marker state
+        if (state && state.yayboostExitIntent) {
+          if (!triggered && !alreadyShown) {
+            showPopup();
+            // Re-push marker so the user stays on the page for this back press
+            setTimeout(function () {
+              try {
+                window.history.pushState(
+                  mergeState(markerState, { ts: Date.now() }),
+                  '',
+                  window.location.href
+                );
+              } catch (err) {
+                // ignore
+              }
+            }, 0);
           }
-        },
-        false
-      );
+          // If already shown, allow navigation by not re-pushing
+        }
+      };
+      window.addEventListener('popstate', eventHandlers.popstate, false);
     }
   
     // Close button event
     if (closeBtn) {
-      closeBtn.addEventListener('click', function (e) {
+      eventHandlers.closeBtnClick = function (e) {
         e.preventDefault();
         hidePopup();
-      });
+      };
+      closeBtn.addEventListener('click', eventHandlers.closeBtnClick);
     }
   
     // Overlay click to close
     if (overlay) {
-      overlay.addEventListener('click', function (e) {
+      eventHandlers.overlayClick = function (e) {
         e.preventDefault();
         hidePopup();
-      });
+      };
+      overlay.addEventListener('click', eventHandlers.overlayClick);
     }
   
     // Action button click
     if (actionBtn) {
-      actionBtn.addEventListener('click', function (e) {
+      eventHandlers.actionBtnClick = function (e) {
         e.preventDefault();
         handleActionClick();
-      });
+      };
+      actionBtn.addEventListener('click', eventHandlers.actionBtnClick);
     }
   
     // ESC key to close
-    document.addEventListener('keydown', function (e) {
+    eventHandlers.keydown = function (e) {
       if (e.key === 'Escape' && popup && popup.style.display !== 'none' && popup.style.display !== '') {
         hidePopup();
       }
-    });
+    };
+    document.addEventListener('keydown', eventHandlers.keydown);
+
+    /**
+     * Cleanup function to remove all event listeners and clear timeouts
+     * Call this when you want to completely remove the exit intent popup functionality
+     */
+    function cleanup() {
+      // Remove mouse event listeners
+      if (eventHandlers.mouseleave) {
+        document.removeEventListener('mouseleave', eventHandlers.mouseleave);
+        eventHandlers.mouseleave = null;
+      }
+      if (eventHandlers.mousemove) {
+        document.removeEventListener('mousemove', eventHandlers.mousemove);
+        eventHandlers.mousemove = null;
+      }
+
+      // Remove popstate listener
+      if (eventHandlers.popstate) {
+        window.removeEventListener('popstate', eventHandlers.popstate, false);
+        eventHandlers.popstate = null;
+      }
+
+      // Remove button/overlay click listeners
+      if (closeBtn && eventHandlers.closeBtnClick) {
+        closeBtn.removeEventListener('click', eventHandlers.closeBtnClick);
+        eventHandlers.closeBtnClick = null;
+      }
+      if (overlay && eventHandlers.overlayClick) {
+        overlay.removeEventListener('click', eventHandlers.overlayClick);
+        eventHandlers.overlayClick = null;
+      }
+      if (actionBtn && eventHandlers.actionBtnClick) {
+        actionBtn.removeEventListener('click', eventHandlers.actionBtnClick);
+        eventHandlers.actionBtnClick = null;
+      }
+
+      // Remove keyboard listener
+      if (eventHandlers.keydown) {
+        document.removeEventListener('keydown', eventHandlers.keydown);
+        eventHandlers.keydown = null;
+      }
+
+      // Clear timeout
+      if (backMarkerTimeout) {
+        clearTimeout(backMarkerTimeout);
+        backMarkerTimeout = null;
+      }
+
+      // Hide popup if visible
+      hidePopup();
+
+      // Reset initialization flag
+      window.yayboostExitIntentPopupInitialized = false;
+    }
+
+    // Expose cleanup function globally for external access
+    window.yayboostExitIntentPopupCleanup = cleanup;
   })(jQuery);
   
