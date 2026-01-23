@@ -17,6 +17,7 @@ import {
   Truck,
   Users,
   Zap,
+  SquareArrowOutUpRight,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +34,7 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
   smart_recommendations: <Sparkles className="h-5 w-5" />,
   order_bump: <Zap className="h-5 w-5" />,
   live_visitor_count: <Users className="h-5 w-5" />,
+  exit_intent_popup: <SquareArrowOutUpRight className="h-5 w-5" />,
 };
 
 // Health indicator colors and labels

@@ -17,6 +17,7 @@ use YayBoost\Features\StockScarcity\StockScarcityFeature;
 use YayBoost\Features\NextOrderCoupon\NextOrderCouponFeature;
 use YayBoost\Features\LiveVisitorCount\LiveVisitorCountFeature;
 use YayBoost\Features\PurchaseActivityCount\PurchaseActivityCountFeature;
+use YayBoost\Features\ExitIntentPopup\ExitIntentPopupFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -134,7 +135,7 @@ class ServiceProvider implements ServiceProviderInterface {
         );
         $this->features[] = 'feature.live_visitor_count';
 
-        // Register Live Visitor Count Feature
+        // Register Purchase Activity Count Feature
         $container->register(
             'feature.purchase_activity_count',
             function ( $c ) {
@@ -142,6 +143,14 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.purchase_activity_count';
+        // Register Exit Intent Popup Feature
+        $container->register(
+            'feature.exit_intent_popup',
+            function ( $c ) {
+                return new ExitIntentPopupFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.exit_intent_popup';
 
         // Register feature registry
         $container->register(
@@ -149,8 +158,8 @@ class ServiceProvider implements ServiceProviderInterface {
             function ( $c ) {
                 $registry = new FeatureRegistry();
                 // Register core features
-                foreach ( $this->features as $featureKey ) {
-                    $feature = $c->resolve( $featureKey );
+                foreach ( $this->features as $feature_key ) {
+                    $feature = $c->resolve( $feature_key );
                     $registry->register( $feature );
                 }
 
