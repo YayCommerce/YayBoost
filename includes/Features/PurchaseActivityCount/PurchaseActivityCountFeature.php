@@ -107,8 +107,8 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         parent::__construct( $container );
 
         // Initialize modules
-        // $this->tracker      = new LiveVisitorCountTracker( $this );
-        // $this->renderer     = new LiveVisitorCountRenderer( $this, $this->tracker );
+        $this->tracker  = new PurchaseActivityCountTracker( $this );
+        $this->renderer = new PurchaseActivityCountRenderer( $this, $this->tracker );
         // $this->ajax_handler = new LiveVisitorCountAjaxHandler( $this->tracker );
 
         // Register AJAX hooks
