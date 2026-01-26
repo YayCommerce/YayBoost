@@ -28,13 +28,22 @@
     return;
   }
 
+  // Check initial cart state from data attribute
+  const initialHasItems = popup.getAttribute("data-has-items") === "1";
+  if (!initialHasItems) {
+    // Cart is empty initially - mark it
+    localStorage.setItem("yayboost_exit_intent_cart_was_empty", "true");
+  }
+
   // Check if popup was already shown (persists across page reloads)
   const popupShownKey = "yayboost_exit_intent_shown";
   const popupShown = localStorage.getItem(popupShownKey) === "true";
 
-  // Only show once ever
-  if (popupShown) {
-    return;
+  // Reset shown state if cart was cleared (new session)
+  if (!initialHasItems && popupShown) {
+    // If cart is empty now but popup was shown before, reset it
+    // This allows popup to show again when items are added
+    localStorage.removeItem(popupShownKey);
   }
 
   let mouseY = 0;
@@ -60,6 +69,12 @@
    */
   function showPopup() {
     if (triggered || !popup) {
+      return;
+    }
+
+    // Double-check cart has items before showing
+    const hasItems = popup.getAttribute("data-has-items") === "1";
+    if (!hasItems) {
       return;
     }
 
@@ -160,49 +175,79 @@
     hidePopup();
   }
 
-  // Exit intent detection: Mouse leaves viewport
-  if (config.trigger.leaves_viewport) {
-    // Track mouse movement to detect when it goes above viewport
-    // This works across all browsers (Chrome, Firefox, Safari)
-    eventHandlers.mousemove = function (e) {
-      previousMouseY = mouseY;
-      mouseY = e.clientY;
-
-      // If mouse moves above viewport (y <= 0), trigger popup
-      // Also check if mouse was previously in viewport and now is above
-      if (mouseY <= 0 && previousMouseY > 0 && !triggered && !popupShown) {
-        showPopup();
+  /**
+   * Initialize event listeners (extracted for re-initialization)
+   */
+  function initializeEventListeners() {
+    // Exit intent detection: Mouse leaves viewport
+    if (config.trigger.leaves_viewport) {
+      // Remove existing listeners if any
+      if (eventHandlers.mousemove) {
+        document.removeEventListener("mousemove", eventHandlers.mousemove);
       }
-    };
-    document.addEventListener("mousemove", eventHandlers.mousemove);
-
-    // Use mouseout as additional detection method (more reliable in Safari/Firefox)
-    // Check if mouse is leaving towards the top of the window
-    eventHandlers.mouseout = function (e) {
-      // Check if the related target is null (mouse left the document)
-      // or if mouse is moving towards the top (clientY <= 0)
-      if (
-        (!e.relatedTarget || e.relatedTarget.nodeName === "HTML") &&
-        e.clientY <= 0 &&
-        !triggered &&
-        !popupShown
-      ) {
-        showPopup();
+      if (eventHandlers.mouseout) {
+        document.removeEventListener("mouseout", eventHandlers.mouseout);
       }
-    };
-    document.addEventListener("mouseout", eventHandlers.mouseout);
+
+      // Track mouse movement to detect when it goes above viewport
+      eventHandlers.mousemove = function (e) {
+        previousMouseY = mouseY;
+        mouseY = e.clientY;
+
+        // If mouse moves above viewport (y <= 0), trigger popup
+        // Also check if mouse was previously in viewport and now is above
+        // Check localStorage directly to get current state
+        const alreadyShown = localStorage.getItem(popupShownKey) === "true";
+        if (mouseY <= 0 && previousMouseY > 0 && !triggered && !alreadyShown) {
+          const hasItems = popup.getAttribute("data-has-items") === "1";
+          if (hasItems) {
+            showPopup();
+          }
+        }
+      };
+      document.addEventListener("mousemove", eventHandlers.mousemove);
+
+      // Use mouseout as additional detection method
+      eventHandlers.mouseout = function (e) {
+        // Check localStorage directly to get current state
+        const alreadyShown = localStorage.getItem(popupShownKey) === "true";
+        if (
+          (!e.relatedTarget || e.relatedTarget.nodeName === "HTML") &&
+          e.clientY <= 0 &&
+          !triggered &&
+          !alreadyShown
+        ) {
+          const hasItems = popup.getAttribute("data-has-items") === "1";
+          if (hasItems) {
+            showPopup();
+          }
+        }
+      };
+      document.addEventListener("mouseout", eventHandlers.mouseout);
+    }
   }
 
-  // Back button detection
+  // Always initialize event listeners
+  // They will check cart state before showing popup
+  initializeEventListeners();
+
+  // Back button detection - always set up listener, but check cart state
+  let initBackMarker = null;
+  let backMarkerInitialized = false;
   if (config.trigger.back_button_pressed) {
     const markerState = { yayboostExitIntent: true };
-    let backMarkerInitialized = false;
 
     function mergeState(state, extra) {
       return Object.assign({}, state || {}, extra || {});
     }
 
-    function initBackMarker() {
+    initBackMarker = function () {
+      const hasItems = popup.getAttribute("data-has-items") === "1";
+      if (!hasItems) {
+        // Reset initialization flag if cart is empty
+        backMarkerInitialized = false;
+        return;
+      }
       if (backMarkerInitialized) {
         return;
       }
@@ -221,20 +266,27 @@
       } catch (err) {
         // Ignore history errors (should be rare)
       }
-    }
+    };
 
-    // Initialize marker immediately using requestAnimationFrame for minimal delay
-    // This ensures it runs as soon as possible but after the current execution context
-    if (window.requestAnimationFrame) {
-      window.requestAnimationFrame(initBackMarker);
-    } else {
-      // Fallback for older browsers
-      setTimeout(initBackMarker, 0);
+    // Initialize marker immediately if cart has items, otherwise wait for items to be added
+    if (initialHasItems) {
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(initBackMarker);
+      } else {
+        // Fallback for older browsers
+        setTimeout(initBackMarker, 0);
+      }
     }
 
     eventHandlers.popstate = function (e) {
       const state = e.state || window.history.state || {};
       const alreadyShown = localStorage.getItem(popupShownKey) === "true";
+      const hasItems = popup.getAttribute("data-has-items") === "1";
+
+      // Only show popup if cart has items
+      if (!hasItems) {
+        return;
+      }
 
       // Check if this is a back navigation (state is null or doesn't have our marker)
       // This handles the case where back is pressed before marker is initialized
@@ -376,6 +428,125 @@
     window.yayboostExitIntentPopupInitialized = false;
   }
 
+  /**
+   * Sync popup state based on cart status
+   * Called when cart is updated via AJAX
+   */
+  function syncPopupState(hasItems) {
+    if (!popup) {
+      return;
+    }
+
+    // Update data attribute
+    popup.setAttribute("data-has-items", hasItems ? "1" : "0");
+
+    if (hasItems) {
+      // Cart has items - ensure popup is available
+      // Don't show it automatically, just make it available for exit intent
+      const wasEmpty = localStorage.getItem("yayboost_exit_intent_cart_was_empty") === "true";
+      if (wasEmpty) {
+        // Reset popup shown state when items are added (allows popup to show again)
+        localStorage.removeItem(popupShownKey);
+        localStorage.removeItem("yayboost_exit_intent_cart_was_empty");
+        // Reset triggered state so popup can be shown
+        triggered = false;
+        // Initialize back button marker if not already initialized
+        if (initBackMarker && typeof initBackMarker === 'function') {
+          initBackMarker();
+        }
+      }
+    } else {
+      // Cart is empty - hide popup if visible and mark cart as empty
+      hidePopup();
+      localStorage.setItem("yayboost_exit_intent_cart_was_empty", "true");
+      // Reset triggered state
+      triggered = false;
+      // Reset back marker initialization so it can be re-initialized when items are added
+      if (initBackMarker) {
+        backMarkerInitialized = false;
+      }
+      // Don't cleanup completely - just prevent showing
+      // Keep listeners in case items are added back
+    }
+  }
+
+
+  /**
+   * Handle WooCommerce cart fragments update
+   */
+  function handleCartFragments(fragments) {
+    if (
+      fragments &&
+      fragments.yayboost_exit_intent_popup_state &&
+      typeof fragments.yayboost_exit_intent_popup_state.has_items !== "undefined"
+    ) {
+      syncPopupState(fragments.yayboost_exit_intent_popup_state.has_items);
+    }
+  }
+
+  // Listen for WooCommerce cart fragments update
+  // WooCommerce triggers 'wc_fragment_refresh' event after updating fragments
+  $(document.body).on("wc_fragment_refresh", function (event, data) {
+    if (data && data.yayboost_exit_intent_popup_state) {
+      syncPopupState(data.yayboost_exit_intent_popup_state.has_items);
+    }
+  });
+
+  // Listen for when product is added to cart (AJAX)
+  $(document.body).on("added_to_cart", function (event, fragments, cart_hash, $button) {
+    // Check cart status via AJAX after a short delay to ensure cart is updated
+    setTimeout(function () {
+      if (config.ajaxUrl && config.nonce) {
+        const formData = new FormData();
+        formData.append("action", "yayboost_exit_intent_check_cart");
+        formData.append("nonce", config.nonce);
+
+        fetch(config.ajaxUrl, {
+          method: "POST",
+          credentials: "same-origin",
+          body: formData,
+        })
+          .then((resp) => resp.json())
+          .then((data) => {
+            if (data && data.success && data.data) {
+              syncPopupState(data.data.has_items);
+            }
+          })
+          .catch(() => {
+            // Silently fail if AJAX check fails
+          });
+      }
+    }, 100);
+  });
+
+  // Also listen for cart updated event (WooCommerce 3.x+)
+  $(document.body).on("updated_cart_totals", function () {
+    // Check cart status via AJAX
+    if (config.ajaxUrl && config.nonce) {
+      const formData = new FormData();
+      formData.append("action", "yayboost_exit_intent_check_cart");
+      formData.append("nonce", config.nonce);
+
+      fetch(config.ajaxUrl, {
+        method: "POST",
+        credentials: "same-origin",
+        body: formData,
+      })
+        .then((resp) => resp.json())
+        .then((data) => {
+          if (data && data.success && data.data) {
+            syncPopupState(data.data.has_items);
+          }
+        })
+        .catch(() => {
+          // Silently fail if AJAX check fails
+        });
+    }
+  });
+
   // Expose cleanup function globally for external access
   window.yayboostExitIntentPopupCleanup = cleanup;
+  
+  // Expose sync function for external access
+  window.yayboostExitIntentPopupSync = syncPopupState;
 })(jQuery);

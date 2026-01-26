@@ -63,6 +63,26 @@ class ExitIntentPopupAjaxHandler {
         // AJAX: create one-time coupon
         add_action( 'wp_ajax_yayboost_exit_intent_coupon', [ $this, 'handle_create_coupon' ] );
         add_action( 'wp_ajax_nopriv_yayboost_exit_intent_coupon', [ $this, 'handle_create_coupon' ] );
+
+        // AJAX: check cart status
+        add_action( 'wp_ajax_yayboost_exit_intent_check_cart', [ $this, 'handle_check_cart' ] );
+        add_action( 'wp_ajax_nopriv_yayboost_exit_intent_check_cart', [ $this, 'handle_check_cart' ] );
+    }
+
+    /**
+     * Handle AJAX: check if cart has items.
+     *
+     * @return void
+     */
+    public function handle_check_cart(): void {
+        check_ajax_referer( 'yayboost_exit_intent', 'nonce' );
+
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            wp_send_json_success( [ 'has_items' => false ] );
+        }
+
+        $has_items = WC()->cart->get_cart_contents_count() > 0;
+        wp_send_json_success( [ 'has_items' => $has_items ] );
     }
 
     /**
