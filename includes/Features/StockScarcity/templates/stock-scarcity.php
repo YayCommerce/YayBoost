@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Template for stock scarcity feature
  *
@@ -8,29 +7,31 @@
  *
  * @var \WC_Product $current_product
  * @var array $settings
+ *
+ * @package YayBoost\Features\StockScarcity
  */
 
-if ( empty($args) || ! is_array($args) ) {
+if ( empty( $args ) || ! is_array( $args ) ) {
     return;
 }
 
-extract($args);
+extract( $args );
 
-if ( empty($product) || ! $product instanceof \WC_Product ) {
+if ( empty( $product ) || ! $product instanceof \WC_Product ) {
     return;
 }
 
-if (! $product->is_in_stock()) {
+if ( ! $product->is_in_stock()) {
     return;
 }
 
-$urgent_threshold = $settings['urgent_threshold'] ?? $default_settings['urgent_threshold'];
-$show_alert_text = $settings['show_alert_text'] ?? $default_settings['show_alert_text'];
-$show_progress_bar = $settings['show_progress_bar'] ?? $default_settings['show_progress_bar'];
-$default_message = ! empty($settings['default_message']) ? $settings['default_message'] : $default_settings['default_message'];
-$urgent_message = ! empty($settings['urgent_message']) ? $settings['urgent_message'] : $default_settings['urgent_message'];
-$fill_color = $settings['fill_color'] ?? $default_settings['fill_color'];
-$background_color = $settings['background_color'] ?? $default_settings['background_color'];
+$urgent_threshold    = $settings['urgent_threshold'] ?? $default_settings['urgent_threshold'];
+$show_alert_text     = $settings['show_alert_text'] ?? $default_settings['show_alert_text'];
+$show_progress_bar   = $settings['show_progress_bar'] ?? $default_settings['show_progress_bar'];
+$default_message     = ! empty( $settings['default_message'] ) ? $settings['default_message'] : $default_settings['default_message'];
+$urgent_message      = ! empty( $settings['urgent_message'] ) ? $settings['urgent_message'] : $default_settings['urgent_message'];
+$fill_color          = $settings['fill_color'] ?? $default_settings['fill_color'];
+$background_color    = $settings['background_color'] ?? $default_settings['background_color'];
 $low_stock_threshold = $settings['low_stock_threshold'] ?? $default_settings['low_stock_threshold'];
 
 $stock_quantity = $current_product->get_stock_quantity();
@@ -40,12 +41,12 @@ if ($stock_quantity === null || $stock_quantity <= 0 || $stock_quantity > $low_s
 
 // Check if urgent
 $is_urgent = $stock_quantity <= $urgent_threshold;
-$message = $is_urgent
-    ? str_replace('{stock}', $stock_quantity, $urgent_message)
-    : str_replace('{stock}', $stock_quantity, $default_message);
+$message   = $is_urgent
+    ? str_replace( '{stock}', $stock_quantity, $urgent_message )
+    : str_replace( '{stock}', $stock_quantity, $default_message );
 
 // Calculate progress
-$progress = min(100, ($stock_quantity / $low_stock_threshold) * 100);
+$progress = min( 100, ($stock_quantity / $low_stock_threshold) * 100 );
 
 $use_fixed_number = $settings['fixed_stock_number']['is_enabled'] ?? $default_settings['fixed_stock_number']['is_enabled'];
 if ($use_fixed_number) {
@@ -53,8 +54,8 @@ if ($use_fixed_number) {
 
     if ($fixed_stock_number > 0) {
         // Calculate percentage SOLD, not remaining
-        $sold = $fixed_stock_number - $stock_quantity;
-        $progress = min(100, ($sold / $fixed_stock_number) * 100);
+        $sold     = $fixed_stock_number - $stock_quantity;
+        $progress = min( 100, ($sold / $fixed_stock_number) * 100 );
     }
 }
 
@@ -64,7 +65,7 @@ if ($use_fixed_number) {
     <?php if ($show_alert_text) : ?>
         <div class="yayboost-stock-scarcity__message" style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 14px; font-weight: 500; color: #111827;">
-                <?php echo wp_kses_post($message); ?>
+                <?php echo wp_kses_post( $message ); ?>
             </span>
         </div>
     <?php endif; ?>
@@ -78,21 +79,21 @@ if ($use_fixed_number) {
                     min-width: 200px;
                     overflow: hidden;
                     border-radius: 9999px;
-                    background-color: <?php echo esc_attr($background_color); ?>;
+                    background-color: <?php echo esc_attr( $background_color ); ?>;
                 ">
                 <div
                     class="yayboost-stock-scarcity__progress-fill"
                     style="
                         height: 100%;
                         border-radius: 9999px;
-                        background-color: <?php echo esc_attr($fill_color); ?>;
-                        width: <?php echo esc_attr($progress); ?>%;
+                        background-color: <?php echo esc_attr( $fill_color ); ?>;
+                        width: <?php echo esc_attr( $progress ); ?>%;
                         transition: width 0.3s ease;
                     ">
                 </div>
             </div>
             <span style="font-size: 14px; color: #4b5563; white-space: nowrap; flex-shrink: 0;">
-                <?php echo esc_html($stock_quantity); ?> left
+                <?php echo esc_html( $stock_quantity ); ?> left
             </span>
         </div>
     <?php endif; ?>
