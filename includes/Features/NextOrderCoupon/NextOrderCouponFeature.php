@@ -138,15 +138,11 @@ class NextOrderCouponFeature extends AbstractFeature {
     /**
      * Generate coupon for order after completion
      *
-     * @param int $order_id Order ID.
+     * @param int       $order_id Order ID.
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
      * @return void
      */
-    public function generate_coupon_for_order(int $order_id): void {
-        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-        if ( ! $order) {
-            return;
-        }
-
+    public function generate_coupon_for_order(int $order_id, \WC_Order $order): void {
         // Check if coupon should be generated
         if ( ! $this->should_generate_coupon( $order )) {
             return;
@@ -231,10 +227,11 @@ class NextOrderCouponFeature extends AbstractFeature {
     /**
      * Handle order cancelled or refunded
      *
-     * @param int $order_id Order ID.
+     * @param int       $order_id Order ID.
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
      * @return void
      */
-    public function handle_order_cancelled_or_refunded(int $order_id): void {
+    public function handle_order_cancelled_or_refunded(int $order_id, \WC_Order $order): void {
         $settings = $this->get_settings();
         $action   = $settings['on_cancel_refund_action'] ?? 'keep_and_count';
 
@@ -243,12 +240,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $this->delete_coupon_for_order( $order_id );
-
-        $order = \wc_get_order( $order_id );
-        if ( ! $order) {
-            return;
-        }
+        $this->delete_coupon_for_order( $order );
 
         $customer_id = $order->get_customer_id();
         if ($customer_id > 0) {
@@ -259,15 +251,10 @@ class NextOrderCouponFeature extends AbstractFeature {
     /**
      * Delete coupon for order
      *
-     * @param int $order_id Order ID.
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
      * @return void
      */
-    protected function delete_coupon_for_order(int $order_id): void {
-        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-        if ( ! $order) {
-            return;
-        }
-
+    protected function delete_coupon_for_order( \WC_Order $order ): void {
         $coupon_id = $this->get_order_coupon_id( $order );
         if ( ! empty( $coupon_id )) {
             // Delete coupon object (force delete)
