@@ -23,7 +23,7 @@ export default function FeatureLayoutHeader({
         </Link>
         <div>
           <h1 className="text-2xl font-semibold">{title}</h1>
-          {description && <p className="text-muted-foreground text-sm">{description}</p>}
+          {description && <p className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: description }} />}
         </div>
       </div>
       {actions && actions.length > 0 && (
