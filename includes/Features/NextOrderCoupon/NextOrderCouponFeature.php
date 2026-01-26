@@ -815,8 +815,8 @@ class NextOrderCouponFeature extends AbstractFeature {
                 'exclude_sale_items'      => false,
                 'display_locations'       => [ 'thank_you_page', 'order_email', 'my_account' ],
                 'thank_you_headline'      => __( "🎁 Here's a gift for your next order!", 'yayboost' ),
-                'thank_you_message'       => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires {expiry}.', 'yayboost' ),
-                'email_content'           => __( "As a thank you, here's {discount} off your next order!", 'yayboost' ),
+                'thank_you_message'       => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires in {expiry}.', 'yayboost' ),
+                'email_content'           => __( "As a thank you, here's {discount} off your next order!. Expires in {expiry}", 'yayboost' ),
             ]
         );
     }
