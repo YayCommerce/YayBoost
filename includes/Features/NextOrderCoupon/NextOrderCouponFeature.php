@@ -112,10 +112,13 @@ class NextOrderCouponFeature extends AbstractFeature {
         // Handle refunded orders
         add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 1 );
 
-        // Display coupon before order table (works for both thank you page and my account)
-        add_action( 'woocommerce_order_details_before_order_table', [ $this, 'display_before_order_table' ], 10, 1 );
+        // Display coupon on thank you page
+        add_action( 'woocommerce_before_thankyou', [ $this, 'display_thank_you_page' ], 10, 1 );
 
-        // Add coupon to order email (before order table)
+        // Display coupon before order table in my account
+        add_action( 'woocommerce_order_details_before_order_table', [ $this, 'display_my_account_orders' ], 10, 1 );
+
+        // Display coupon in order email (before order table)
         add_action( 'woocommerce_email_before_order_table', [ $this, 'display_email_before_order_table' ], 20, 4 );
     }
 
@@ -535,21 +538,58 @@ class NextOrderCouponFeature extends AbstractFeature {
             'coupon' => $coupon,
         ];
     }
+    /**
+     * Display coupon before order table in thank you page
+     *
+     * @param int $order_id Order ID.
+     * @return void
+     */
+    public function display_thank_you_page( int $order_id ): void {
+        $settings          = $this->get_settings();
+        $display_locations = $settings['display_locations'] ?? [];
+
+        if ( ! in_array( 'thank_you_page', $display_locations, true ) ) {
+            return;
+        }
+
+        $order = \wc_get_order( $order_id );
+        if ( ! $order ) {
+            return;
+        }
+
+        $this->display_before_order_table( $order );
+    }
 
     /**
-     * Display coupon before order table (works for both thank you page and my account)
+     * Display coupon before order table in my account orders
+     *
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
+     * @return void
+     */
+    public function display_my_account_orders( \WC_Order $order ): void {
+        // Skip if not on account page (hook fires on multiple pages)
+        if ( ! is_account_page() ) {
+            return;
+        }
+
+        $settings          = $this->get_settings();
+        $display_locations = $settings['display_locations'] ?? [];
+
+        if ( ! in_array( 'my_account', $display_locations, true ) ) {
+            return;
+        }
+
+        $this->display_before_order_table( $order );
+    }
+
+    /**
+     * Display coupon before order table in my account orders
      *
      * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
      * @return void
      */
     public function display_before_order_table(\WC_Order $order): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
-        $settings          = $this->get_settings();
-        $display_locations = $settings['display_locations'] ?? [];
-
-        // Check if should display for this location
-        if ( ! in_array( 'thank_you_page', $display_locations, true )) {
-            return;
-        }
+        $settings = $this->get_settings();
 
         $coupon_info = $this->get_coupon_from_order( $order->get_id() );
         if ( ! $coupon_info) {
