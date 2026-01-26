@@ -104,13 +104,13 @@ class NextOrderCouponFeature extends AbstractFeature {
         }
 
         // Generate coupon when order is completed
-        add_action( 'woocommerce_order_status_completed', [ $this, 'generate_coupon_for_order' ], 10, 1 );
+        add_action( 'woocommerce_order_status_completed', [ $this, 'generate_coupon_for_order' ], 10, 2 );
 
         // Handle cancelled orders
-        add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 1 );
+        add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
 
         // Handle refunded orders
-        add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 1 );
+        add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
 
         // Display coupon on thank you page
         add_action( 'woocommerce_before_thankyou', [ $this, 'display_thank_you_page' ], 10, 1 );
