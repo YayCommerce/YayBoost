@@ -112,10 +112,6 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         // Initialize modules
         $this->tracker  = new PurchaseActivityCountTracker( $this );
         $this->renderer = new PurchaseActivityCountRenderer( $this, $this->tracker );
-        // $this->ajax_handler = new LiveVisitorCountAjaxHandler( $this->tracker );
-
-        // Register AJAX hooks
-        // $this->ajax_handler->register_hooks();
     }
 
     /**
@@ -130,7 +126,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
 
         // Register hooks after query is parsed
         add_action( 'wp', [ $this, 'register_product_hooks' ] );
-
+        add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ], 10, 2 );
         // Initialize block
         // new LiveVisitorCountBlock( $this );
     }
@@ -311,5 +307,22 @@ class PurchaseActivityCountFeature extends AbstractFeature {
                 ],
             ]
         );
+    }
+
+    /**
+     * Handle new order
+     *
+     * @param int       $order_id Order ID.
+     * @param \WC_Order $order Order object.
+     * @return void
+     */
+    public function handle_new_order( int $order_id, \WC_Order $order ): void {
+        $products = $order->get_items();
+        foreach ( $products as $product ) {
+            $product_id = ! empty( $product->get_variation_id() ) ? $product->get_variation_id() : $product->get_product_id();
+            if ( $product_id ) {
+                $this->tracker->update_purchase_activity_count( $product_id );
+            }
+        }
     }
 }
