@@ -127,8 +127,9 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         // Register hooks after query is parsed
         add_action( 'wp', [ $this, 'register_product_hooks' ] );
         add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ], 10, 2 );
+
         // Initialize block
-        // new LiveVisitorCountBlock( $this );
+        new PurchaseActivityCountBlock( $this );
     }
 
     /**
@@ -169,12 +170,21 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      * @return bool True if feature should apply.
      */
     public function should_apply_to_current_product(): bool {
-        $apply = $this->get( 'target_products.apply' );
+        return $this->should_apply_to_product( get_the_ID() ?: 0 );
+    }
 
-        $product_id = get_the_ID();
+    /**
+     * Check if the feature should apply to a specific product
+     *
+     * @param int $product_id Product ID (e.g. from block context when inside product-template).
+     * @return bool True if feature should apply.
+     */
+    public function should_apply_to_product( int $product_id ): bool {
         if ( ! $product_id ) {
             return false;
         }
+
+        $apply = $this->get( 'target_products.apply' );
 
         if ( 'all' === $apply ) {
             $exclude = $this->get( 'target_products.exclude' ) ?? [];
@@ -262,10 +272,24 @@ class PurchaseActivityCountFeature extends AbstractFeature {
     /**
      * Get rendered content (for block rendering)
      *
+     * @param int|null $product_id Optional. Product ID when block is inside product-template. Null for current post/product.
      * @return string HTML content.
      */
-    public function get_content(): string {
-        return $this->renderer->get_content();
+    public function get_content( ?int $product_id = null ): string {
+        return $this->renderer->get_content( $product_id );
+    }
+
+    /**
+     * Get rendered content for a specific product (e.g. when block is inside product-template)
+     *
+     * @param int $product_id Product ID from block context.
+     * @return string HTML content or empty string if should not apply.
+     */
+    public function get_content_for_product( int $product_id ): string {
+        if ( ! $this->should_apply_to_product( $product_id ) ) {
+            return '';
+        }
+        return $this->renderer->get_content( $product_id );
     }
 
     /**

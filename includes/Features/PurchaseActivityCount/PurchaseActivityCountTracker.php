@@ -43,16 +43,19 @@ class PurchaseActivityCountTracker {
     }
 
     /**
-     * Get purchase activity count for current product
+     * Get purchase activity count for current product (or specific product when in block context)
      *
+     * @param int|null $product_id Optional. Product ID when block is inside product-template. Null to use current post/product.
      * @return int count.
      */
-    public function get_purchase_activity_count(): int {
-        if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-            return 0;
+    public function get_purchase_activity_count( ?int $product_id = null ): int {
+        $page_id = $product_id;
+        if ( $page_id === null ) {
+            if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+                return 0;
+            }
+            $page_id = $this->get_current_page_id();
         }
-
-        $page_id = $this->get_current_page_id();
         if ( ! $page_id ) {
             return 0;
         }
