@@ -126,6 +126,11 @@ class PurchaseActivityCountFeature extends AbstractFeature {
 
         // Register hooks after query is parsed
         add_action( 'wp', [ $this, 'register_product_hooks' ] );
+        $show_on_shop_page = $this->get( 'display.show_on_shop_page' );
+        if ( $show_on_shop_page ) {
+            add_action( 'woocommerce_after_shop_loop_item', [ $this, 'render_content' ] );
+        }
+        
         add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ], 10, 2 );
 
         // Initialize block
@@ -139,6 +144,12 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      */
     public function register_product_hooks(): void {
         if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+            return;
+        }
+
+        $show_on_product_page = $this->get( 'display.show_on_product_page' );
+
+        if ( ! $show_on_product_page ) {
             return;
         }
 

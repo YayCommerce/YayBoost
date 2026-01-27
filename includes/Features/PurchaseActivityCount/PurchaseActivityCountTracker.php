@@ -51,9 +51,6 @@ class PurchaseActivityCountTracker {
     public function get_purchase_activity_count( ?int $product_id = null ): int {
         $page_id = $product_id;
         if ( $page_id === null ) {
-            if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-                return 0;
-            }
             $page_id = $this->get_current_page_id();
         }
         if ( ! $page_id ) {
