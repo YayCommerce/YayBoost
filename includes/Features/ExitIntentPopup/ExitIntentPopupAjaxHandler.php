@@ -9,8 +9,6 @@
 
 namespace YayBoost\Features\ExitIntentPopup;
 
-use Hashids\Hashids;
-
 /**
  * AJAX endpoint handlers for exit intent popup
  */
@@ -37,13 +35,6 @@ class ExitIntentPopupAjaxHandler {
      * @var ExitIntentPopupFeature
      */
     private $feature;
-
-    /**
-     * Salt for Hashids (keep codes unique to this feature)
-     *
-     * @var string
-     */
-    private const HASHIDS_SALT = 'yayboost_eip';
 
     /**
      * Constructor
@@ -193,13 +184,12 @@ class ExitIntentPopupAjaxHandler {
      * @return string
      */
     private function generate_unique_coupon_code( string $prefix ): string {
-        $attempts = 0;
-        do {
-            $encoded = $this->get_hashids()->encode( time() );
-            $code    = $prefix . $encoded;
-            $exists  = \wc_get_coupon_id_by_code( $code );
-            ++$attempts;
-        } while ( $exists && $attempts < 5 );
+        $encoded = strtoupper( substr( md5( 'yayboost_eip_' . time() ), 0, 8 ) );
+        $code = $prefix . $encoded;
+        if( wc_get_coupon_id_by_code( $code ) ) {
+            $encoded = strtoupper( substr( md5( 'yayboost_eip_coupon_' . time() ), 0, 8 ) );
+            $code = $prefix . $encoded;
+        }
 
         return $code;
     }
@@ -298,18 +288,5 @@ class ExitIntentPopupAjaxHandler {
         $ip = $this->get_client_ip();
         $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
         return 'guest_' . md5( $ip . $ua );
-    }
-
-    /**
-     * Get Hashids instance for coupon code encoding
-     *
-     * @return Hashids
-     */
-    protected function get_hashids(): Hashids {
-        static $instance = null;
-        if ( $instance === null ) {
-            $instance = new Hashids( 'yayboost_eip', 8 );
-        }
-        return $instance;
     }
 }
