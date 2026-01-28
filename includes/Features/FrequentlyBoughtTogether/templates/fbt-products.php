@@ -15,6 +15,11 @@ defined( 'ABSPATH' ) || exit;
 
 $layout = $settings['layout'] ?? 'grid';
 $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
+
+// Get current product and combine with FBT products (current product first)
+$current_product = wc_get_product( $product_id );
+$fbt_products    = array_filter( $products, fn( $p ) => $p->get_id() !== $product_id );
+$all_products    = $current_product ? array_merge( [ $current_product ], $fbt_products ) : $fbt_products;
 ?>
 
 <div class="yayboost-fbt" data-product-id="<?php echo esc_attr( $product_id ); ?>">
@@ -30,12 +35,12 @@ $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yaybo
         
         <div class="yayboost-fbt__images-scroll">
             <?php
-            $product_count = count( $products );
-            $index = 0;
-            foreach ( $products as $product ) :
+            $product_count = count( $all_products );
+            $index         = 0;
+            foreach ( $all_products as $product ) :
                 $fbt_product_id = $product->get_id();
-                $product_image = $product->get_image( 'woocommerce_thumbnail' );
-                $product_link  = $product->get_permalink();
+                $product_image  = $product->get_image( 'woocommerce_thumbnail' );
+                $product_link   = $product->get_permalink();
                 ?>
                 <div class="yayboost-fbt__image-item">
                     <a href="<?php echo esc_url( $product_link ); ?>">
@@ -46,7 +51,7 @@ $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yaybo
                     <span class="yayboost-fbt__image-separator">+</span>
                 <?php endif; ?>
                 <?php
-                $index++;
+                ++$index;
             endforeach;
             ?>
         </div>
@@ -76,14 +81,14 @@ $title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yaybo
 
     <!-- Bottom Section: Product List with Checkboxes -->
     <div class="yayboost-fbt__products-list">
-        <?php foreach ( $products as $product ) : ?>
-            <?php
+        <?php
+        foreach ( $all_products as $product ) :
             $fbt_product_id = $product->get_id();
-            $product_name  = $product->get_name();
-            $product_price = $product->get_price();
-            $product_link  = $product->get_permalink();
-            $is_current    = ( $fbt_product_id == $product_id );
-            $product_class = 'yayboost-fbt__product';
+            $product_name   = $product->get_name();
+            $product_price  = $product->get_price();
+            $product_link   = $product->get_permalink();
+            $is_current     = ( $fbt_product_id == $product_id );
+            $product_class  = 'yayboost-fbt__product';
             if ( $is_current ) {
                 $product_class .= ' yayboost-fbt__product--current';
             }
