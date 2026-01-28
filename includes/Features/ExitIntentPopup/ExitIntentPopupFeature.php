@@ -181,6 +181,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
 
         $checkout_url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : '';
         $cart_url     = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : '';
+        $shop_url     = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : '';
 
         return [
             'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
@@ -203,6 +204,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
             'behavior'    => $behavior,
             'checkoutUrl' => $checkout_url,
             'cartUrl'     => $cart_url,
+            'shopUrl'     => $shop_url,
         ];
     }
 
@@ -270,7 +272,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
      */
     protected function save_settings( array $settings ): void {
         parent::save_settings( $settings );
-        ExitIntentPopupAjaxHandler::clear_coupon_transients();
+        ExitIntentPopupAjaxHandler::clear_transients();
     }
 
     /**

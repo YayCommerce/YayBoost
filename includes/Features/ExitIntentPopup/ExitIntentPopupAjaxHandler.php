@@ -33,7 +33,13 @@ class ExitIntentPopupAjaxHandler {
      * Transient key prefix for one-time coupon (per client).
      * Used for storage and for clearing on settings save.
      */
-    const TRANSIENT_KEY_PREFIX = 'yayboost_exit_coupon_';
+    const TRANSIENT_COUPON_PREFIX = 'yayboost_eip_coupon_';
+
+    /**
+     * Transient key prefix for rate limit (per IP).
+     * Used for storage and for clearing on settings save.
+     */
+    const TRANSIENT_RATE_LIMIT_PREFIX = 'yayboost_eip_rate_limit_';
 
     /**
      * Tracker instance
@@ -72,10 +78,10 @@ class ExitIntentPopupAjaxHandler {
      *
      * @return void
      */
-    public static function clear_coupon_transients(): void {
+    public static function clear_transients(): void {
         global $wpdb;
-        $prefix  = self::TRANSIENT_KEY_PREFIX;
-        $escaped = $wpdb->esc_like( '_transient_' . $prefix ) . '%';
+        $prefix  = 'yayboost_eip_';
+        $escaped = $wpdb->esc_like( '_transient_' . $prefix . 'coupon_' ) . '%';
         $wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", $escaped, $wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%' ) );
     }
 
@@ -102,12 +108,11 @@ class ExitIntentPopupAjaxHandler {
      */
     public function handle_create_coupon(): void {
         check_ajax_referer( 'yayboost_exit_intent', 'nonce' );
-
         // Check IP rate limit
         if ( ! $this->check_rate_limit() ) {
             wp_send_json_error(
                 [
-                    'message' => __( 'Too many requests. Please try again later.', 'yayboost' ),
+                    'message' => __( 'Rate limit exceeded.', 'yayboost' ),
                 ],
                 429
             );
@@ -127,7 +132,7 @@ class ExitIntentPopupAjaxHandler {
             wp_send_json_error( [ 'message' => __( 'Missing client key.', 'yayboost' ) ], 400 );
         }
 
-        $transient_key = self::TRANSIENT_KEY_PREFIX . md5( $client_key );
+        $transient_key = self::TRANSIENT_COUPON_PREFIX . md5( $client_key );
         $existing_code = get_transient( $transient_key );
 
         if ( $existing_code ) {
@@ -264,7 +269,7 @@ class ExitIntentPopupAjaxHandler {
             return true;
         }
 
-        $rate_limit_key = 'yayboost_exit_intent_rate_' . md5( $ip );
+        $rate_limit_key = self::TRANSIENT_RATE_LIMIT_PREFIX . md5( $ip );
         $request_count  = get_transient( $rate_limit_key );
 
         if ( false === $request_count ) {

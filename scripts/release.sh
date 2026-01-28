@@ -80,7 +80,7 @@ sed_inplace() {
 
 # Get current version from main plugin file
 get_version() {
-    echo "1.0.0"
+    echo "1.0.12"
 }
 
 # Update version in all relevant files

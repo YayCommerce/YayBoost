@@ -22,13 +22,16 @@
     const overlay = popup
       ? popup.querySelector(".yayboost-exit-intent-popup__overlay")
       : null;
+    const content = popup
+      ? popup.querySelector(".yayboost-exit-intent-popup__content")
+      : null;
     const closeBtn = popup
       ? popup.querySelector(".yayboost-exit-intent-popup__close")
       : null;
     const actionBtn = popup
       ? popup.querySelector(".yayboost-exit-intent-popup__button")
       : null;
-    
+
     if (!popup) {
       // If popup not found, try again after a short delay (for block themes)
       if (document.readyState === "loading") {
@@ -41,11 +44,11 @@
     }
 
     // Popup found, proceed with initialization
-    initializePopup(popup, overlay, closeBtn, actionBtn);
+    initializePopup(popup, overlay, content, closeBtn, actionBtn);
   }
 
   // Main initialization function
-  function initializePopup(popup, overlay, closeBtn, actionBtn) {
+  function initializePopup(popup, overlay, content, closeBtn, actionBtn) {
     // Check initial cart state from data attribute
     const initialHasItems = popup.getAttribute("data-has-items") === "1";
     if (!initialHasItems) {
@@ -87,10 +90,12 @@
      * Returns a promise that resolves to true if cart has items, false otherwise
      */
     function checkCartStateRealTime() {
-      return new Promise(function(resolve) {
+      return new Promise(function (resolve) {
         if (!config.ajaxUrl || !config.nonce) {
           // Fallback to data attribute if AJAX not available
-          const hasItems = popup ? popup.getAttribute("data-has-items") === "1" : false;
+          const hasItems = popup
+            ? popup.getAttribute("data-has-items") === "1"
+            : false;
           resolve(hasItems);
           return;
         }
@@ -106,7 +111,8 @@
         })
           .then((resp) => resp.json())
           .then((data) => {
-            const hasItems = data && data.success && data.data && data.data.has_items === true;
+            const hasItems =
+              data && data.success && data.data && data.data.has_items === true;
             // Update the data attribute with the real-time result
             if (popup) {
               popup.setAttribute("data-has-items", hasItems ? "1" : "0");
@@ -115,7 +121,9 @@
           })
           .catch(() => {
             // Fallback to data attribute on error
-            const hasItems = popup ? popup.getAttribute("data-has-items") === "1" : false;
+            const hasItems = popup
+              ? popup.getAttribute("data-has-items") === "1"
+              : false;
             resolve(hasItems);
           });
       });
@@ -187,12 +195,9 @@
         body: formData,
       });
 
-      if (!resp.ok) {
-        throw new Error("Request failed");
-      }
       const data = await resp.json();
       if (!data || !data.success || !data.data || !data.data.code) {
-        throw new Error("Invalid response");
+        throw new Error(data.data.message);
       }
       return data.data.code;
     }
@@ -201,6 +206,19 @@
      * Handle button click - create coupon then redirect/apply
      */
     async function handleActionClick() {
+      if (
+        actionBtn.classList.contains(
+          "yayboost-exit-intent-popup__button--continue-shopping",
+        )
+      ) {
+        localStorage.removeItem(popupShownKey);
+        window.location.href = config.shopUrl;
+        return;
+      }
+      // help me add spin loading and disable button after click
+      actionBtn.disabled = true;
+      actionBtn.innerHTML =
+        '<span class="yayboost-button-spinner"></span> ' + actionBtn.innerHTML;
       // If offer is "no discount", skip coupon creation
       if (config.offer && config.offer.type === "no_discount") {
         const targetUrl = getTargetUrl("");
@@ -214,22 +232,33 @@
 
       try {
         const code = await createCouponOnce();
-
+        actionBtn.disabled = false;
+        actionBtn.innerHTML = actionBtn.innerHTML.replace(
+          '<span class="yayboost-button-spinner"></span>',
+          "",
+        );
         const targetUrl = getTargetUrl(code);
         if (targetUrl) {
           window.location.href = targetUrl;
           return;
         }
       } catch (err) {
-        // Fallback: still redirect if configured
-        const targetUrl = getTargetUrl("");
-        if (targetUrl) {
-          window.location.href = targetUrl;
-          return;
-        }
+        actionBtn.disabled = false;
+        actionBtn.innerHTML = actionBtn.innerHTML.replace(
+          '<span class="yayboost-button-spinner"></span>',
+          "",
+        );
+        actionBtn.classList.add(
+          "yayboost-exit-intent-popup__button--continue-shopping",
+        );
+        // Change button text to "Try again"
+        actionBtn.innerHTML = "Continue shopping";
+        // create a div with class "yayboost-exit-intent-popup__error"
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "yayboost-exit-intent-popup__error";
+        errorDiv.appendChild(document.createTextNode(err.message));
+        content.appendChild(errorDiv);
       }
-
-      hidePopup();
     }
 
     /**
@@ -255,10 +284,15 @@
           // Also check if mouse was previously in viewport and now is above
           // Check localStorage directly to get current state
           const alreadyShown = localStorage.getItem(popupShownKey) === "true";
-          if (mouseY <= 0 && previousMouseY > 0 && !triggered && !alreadyShown) {
+          if (
+            mouseY <= 0 &&
+            previousMouseY > 0 &&
+            !triggered &&
+            !alreadyShown
+          ) {
             // Verify cart state in real-time before showing popup
             // This prevents showing popup when cart was just emptied via AJAX
-            checkCartStateRealTime().then(function(hasItems) {
+            checkCartStateRealTime().then(function (hasItems) {
               if (hasItems && !triggered) {
                 showPopup();
               }
@@ -279,7 +313,7 @@
           ) {
             // Verify cart state in real-time before showing popup
             // This prevents showing popup when cart was just emptied via AJAX
-            checkCartStateRealTime().then(function(hasItems) {
+            checkCartStateRealTime().then(function (hasItems) {
               if (hasItems && !triggered) {
                 showPopup();
               }
@@ -353,7 +387,7 @@
 
         // Function to show popup after verifying cart state
         function showPopupIfCartHasItems() {
-          checkCartStateRealTime().then(function(hasItemsRealTime) {
+          checkCartStateRealTime().then(function (hasItemsRealTime) {
             if (hasItemsRealTime && !triggered && !alreadyShown) {
               showPopup();
             }
@@ -515,7 +549,9 @@
       if (hasItems) {
         // Cart has items - ensure popup is available
         // Don't show it automatically, just make it available for exit intent
-        const wasEmpty = localStorage.getItem("yayboost_exit_intent_cart_was_empty") === "true";
+        const wasEmpty =
+          localStorage.getItem("yayboost_exit_intent_cart_was_empty") ===
+          "true";
         if (wasEmpty) {
           // Reset popup shown state when items are added (allows popup to show again)
           localStorage.removeItem(popupShownKey);
@@ -523,7 +559,7 @@
           // Reset triggered state so popup can be shown
           triggered = false;
           // Initialize back button marker if not already initialized
-          if (initBackMarker && typeof initBackMarker === 'function') {
+          if (initBackMarker && typeof initBackMarker === "function") {
             initBackMarker();
           }
         }
@@ -547,24 +583,10 @@
       }
     }
 
-
-    /**
-     * Handle WooCommerce cart fragments update
-     */
-    function handleCartFragments(fragments) {
-      if (
-        fragments &&
-        fragments.yayboost_exit_intent_popup_state &&
-        typeof fragments.yayboost_exit_intent_popup_state.has_items !== "undefined"
-      ) {
-        syncPopupState(fragments.yayboost_exit_intent_popup_state.has_items);
-      }
-    }
-
     // Listen for WooCommerce cart fragments update
     // WooCommerce triggers 'wc_fragment_refresh' event after updating fragments
     // Use jQuery if available, otherwise use vanilla JS
-    if ($ && typeof $.fn.on === 'function') {
+    if ($ && typeof $.fn.on === "function") {
       $(document.body).on("wc_fragment_refresh", function (event, data) {
         if (data && data.yayboost_exit_intent_popup_state) {
           syncPopupState(data.yayboost_exit_intent_popup_state.has_items);
@@ -572,31 +594,34 @@
       });
 
       // Listen for when product is added to cart (AJAX)
-      $(document.body).on("added_to_cart", function (event, fragments, cart_hash, $button) {
-        // Check cart status via AJAX after a short delay to ensure cart is updated
-        setTimeout(function () {
-          if (config.ajaxUrl && config.nonce) {
-            const formData = new FormData();
-            formData.append("action", "yayboost_exit_intent_check_cart");
-            formData.append("nonce", config.nonce);
+      $(document.body).on(
+        "added_to_cart",
+        function (event, fragments, cart_hash, $button) {
+          // Check cart status via AJAX after a short delay to ensure cart is updated
+          setTimeout(function () {
+            if (config.ajaxUrl && config.nonce) {
+              const formData = new FormData();
+              formData.append("action", "yayboost_exit_intent_check_cart");
+              formData.append("nonce", config.nonce);
 
-            fetch(config.ajaxUrl, {
-              method: "POST",
-              credentials: "same-origin",
-              body: formData,
-            })
-              .then((resp) => resp.json())
-              .then((data) => {
-                if (data && data.success && data.data) {
-                  syncPopupState(data.data.has_items);
-                }
+              fetch(config.ajaxUrl, {
+                method: "POST",
+                credentials: "same-origin",
+                body: formData,
               })
-              .catch(() => {
-                // Silently fail if AJAX check fails
-              });
-          }
-        }, 100);
-      });
+                .then((resp) => resp.json())
+                .then((data) => {
+                  if (data && data.success && data.data) {
+                    syncPopupState(data.data.has_items);
+                  }
+                })
+                .catch(() => {
+                  // Silently fail if AJAX check fails
+                });
+            }
+          }, 100);
+        },
+      );
 
       // Also listen for cart updated event (WooCommerce 3.x+)
       // This fires when cart items are removed, quantities updated, etc.
@@ -625,39 +650,44 @@
       });
 
       // Listen specifically for cart item removal
-      $(document.body).on("removed_from_cart", function (event, fragments, cart_hash, button) {
-        // Immediately check cart status when item is removed
-        if (config.ajaxUrl && config.nonce) {
-          const formData = new FormData();
-          formData.append("action", "yayboost_exit_intent_check_cart");
-          formData.append("nonce", config.nonce);
+      $(document.body).on(
+        "removed_from_cart",
+        function (event, fragments, cart_hash, button) {
+          // Immediately check cart status when item is removed
+          if (config.ajaxUrl && config.nonce) {
+            const formData = new FormData();
+            formData.append("action", "yayboost_exit_intent_check_cart");
+            formData.append("nonce", config.nonce);
 
-          fetch(config.ajaxUrl, {
-            method: "POST",
-            credentials: "same-origin",
-            body: formData,
-          })
-            .then((resp) => resp.json())
-            .then((data) => {
-              if (data && data.success && data.data) {
-                syncPopupState(data.data.has_items);
-              }
+            fetch(config.ajaxUrl, {
+              method: "POST",
+              credentials: "same-origin",
+              body: formData,
             })
-            .catch(() => {
-              // Silently fail if AJAX check fails
-            });
-        }
-      });
+              .then((resp) => resp.json())
+              .then((data) => {
+                if (data && data.success && data.data) {
+                  syncPopupState(data.data.has_items);
+                }
+              })
+              .catch(() => {
+                // Silently fail if AJAX check fails
+              });
+          }
+        },
+      );
     } else {
       // Fallback for vanilla JS when jQuery is not available
       // WooCommerce custom events are typically jQuery events, but we can listen via DOM events
-      document.body.addEventListener('wc_fragment_refresh', function(event) {
+      document.body.addEventListener("wc_fragment_refresh", function (event) {
         if (event.detail && event.detail.yayboost_exit_intent_popup_state) {
-          syncPopupState(event.detail.yayboost_exit_intent_popup_state.has_items);
+          syncPopupState(
+            event.detail.yayboost_exit_intent_popup_state.has_items,
+          );
         }
       });
 
-      document.body.addEventListener('added_to_cart', function(event) {
+      document.body.addEventListener("added_to_cart", function (event) {
         setTimeout(function () {
           if (config.ajaxUrl && config.nonce) {
             const formData = new FormData();
@@ -682,7 +712,7 @@
         }, 100);
       });
 
-      document.body.addEventListener('updated_cart_totals', function() {
+      document.body.addEventListener("updated_cart_totals", function () {
         if (config.ajaxUrl && config.nonce) {
           const formData = new FormData();
           formData.append("action", "yayboost_exit_intent_check_cart");
@@ -706,7 +736,7 @@
       });
 
       // Listen for cart item removal (vanilla JS fallback)
-      document.body.addEventListener('removed_from_cart', function() {
+      document.body.addEventListener("removed_from_cart", function () {
         if (config.ajaxUrl && config.nonce) {
           const formData = new FormData();
           formData.append("action", "yayboost_exit_intent_check_cart");
@@ -732,7 +762,7 @@
 
     // Expose cleanup function globally for external access
     window.yayboostExitIntentPopupCleanup = cleanup;
-    
+
     // Expose sync function for external access
     window.yayboostExitIntentPopupSync = syncPopupState;
   }
@@ -747,7 +777,7 @@
       // DOM is already ready, but wait a bit for block themes to render
       // Block themes may render content asynchronously
       if (window.requestAnimationFrame) {
-        window.requestAnimationFrame(function() {
+        window.requestAnimationFrame(function () {
           setTimeout(initExitIntentPopup, 0);
         });
       } else {
@@ -757,12 +787,16 @@
   }
 
   // If jQuery is not available yet, wait for it (WooCommerce requires jQuery)
-  if (typeof jQuery === 'undefined' && typeof $ === 'undefined') {
+  if (typeof jQuery === "undefined" && typeof $ === "undefined") {
     // Wait for jQuery to load (max 5 seconds)
     let jqueryWaitCount = 0;
-    const jqueryCheckInterval = setInterval(function() {
+    const jqueryCheckInterval = setInterval(function () {
       jqueryWaitCount++;
-      if (typeof jQuery !== 'undefined' || typeof $ !== 'undefined' || jqueryWaitCount > 50) {
+      if (
+        typeof jQuery !== "undefined" ||
+        typeof $ !== "undefined" ||
+        jqueryWaitCount > 50
+      ) {
         clearInterval(jqueryCheckInterval);
         startInit();
       }
@@ -770,4 +804,6 @@
   } else {
     startInit();
   }
-})(typeof jQuery !== 'undefined' ? jQuery : (typeof $ !== 'undefined' ? $ : null));
+})(
+  typeof jQuery !== "undefined" ? jQuery : typeof $ !== "undefined" ? $ : null,
+);
