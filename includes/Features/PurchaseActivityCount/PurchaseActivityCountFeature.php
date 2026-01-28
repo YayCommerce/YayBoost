@@ -130,7 +130,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         if ( $show_on_shop_page ) {
             add_action( 'woocommerce_after_shop_loop_item', [ $this, 'render_content' ] );
         }
-        
+
         add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ], 10, 2 );
 
         // Initialize block
@@ -324,12 +324,8 @@ class PurchaseActivityCountFeature extends AbstractFeature {
                 'enabled'               => true,
                 'minimum_count_display' => 3,
                 'count_from'            => 'all',
-                'period_date'           => [
-                    'from' => '',
-                    'to'   => '',
-                ],
                 'display'               => [
-                    'text'                 => '{count} customers bought this product',
+                    'text'                 => '{count} bought this product',
                     'position'             => 'below_price',
                     'show_on_product_page' => true,
                     'show_on_shop_page'    => false,
