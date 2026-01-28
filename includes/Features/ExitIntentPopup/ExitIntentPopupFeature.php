@@ -95,12 +95,6 @@ class ExitIntentPopupFeature extends AbstractFeature {
         // Render popup HTML in footer
         add_action( 'wp_footer', [ $this, 'render_popup' ] );
 
-        // Hook into WooCommerce cart updates
-        add_action( 'woocommerce_add_to_cart', [ $this, 'handle_cart_update' ], 10, 6 );
-        add_action( 'woocommerce_cart_item_removed', [ $this, 'handle_cart_update' ], 10, 1 );
-        add_action( 'woocommerce_cart_item_restored', [ $this, 'handle_cart_update' ], 10, 1 );
-        add_action( 'woocommerce_after_cart_item_quantity_update', [ $this, 'handle_cart_update' ], 10, 1 );
-
         // Add cart fragments for AJAX cart updates
         add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_cart_fragments' ] );
     }
@@ -220,8 +214,8 @@ class ExitIntentPopupFeature extends AbstractFeature {
     public function render_popup(): void {
         // Always render popup HTML if feature is enabled
         // JavaScript will control visibility based on cart state
-        $settings = $this->get_settings();
-        $content  = $settings['content'] ?? [];
+        $settings  = $this->get_settings();
+        $content   = $settings['content'] ?? [];
         $has_items = $this->should_show_popup();
 
         ?>
@@ -238,22 +232,6 @@ class ExitIntentPopupFeature extends AbstractFeature {
     }
 
     /**
-     * Handle cart update events
-     *
-     * @param mixed $cart_item_key Cart item key or product ID.
-     * @param int   $product_id Product ID (optional).
-     * @param int   $quantity Quantity (optional).
-     * @param int   $variation_id Variation ID (optional).
-     * @param array $variation Variation data (optional).
-     * @param array $cart_item_data Cart item data (optional).
-     * @return void
-     */
-    public function handle_cart_update( $cart_item_key = null, $product_id = null, $quantity = null, $variation_id = null, $variation = null, $cart_item_data = null ): void {
-        // This method is called when cart is updated
-        // The actual sync happens via cart fragments in add_cart_fragments()
-    }
-
-    /**
      * Add cart fragments for exit intent popup sync
      *
      * @param array $fragments Existing cart fragments.
@@ -265,14 +243,25 @@ class ExitIntentPopupFeature extends AbstractFeature {
         }
 
         $has_items = $this->should_show_popup();
-        
+
         // Add popup state to fragments
         $fragments['yayboost_exit_intent_popup_state'] = [
-            'has_items' => $has_items,
+            'has_items'  => $has_items,
             'cart_count' => function_exists( 'WC' ) && WC()->cart ? WC()->cart->get_cart_contents_count() : 0,
         ];
 
         return $fragments;
+    }
+
+    /**
+     * Save feature settings and clear coupon transients so new offer settings take effect.
+     *
+     * @param array $settings Settings to save.
+     * @return void
+     */
+    protected function save_settings( array $settings ): void {
+        parent::save_settings( $settings );
+        ExitIntentPopupAjaxHandler::clear_coupon_transients();
     }
 
     /**

@@ -30,6 +30,12 @@ class ExitIntentPopupAjaxHandler {
     const RATE_LIMIT_WINDOW = 3600;
 
     /**
+     * Transient key prefix for one-time coupon (per client).
+     * Used for storage and for clearing on settings save.
+     */
+    const TRANSIENT_KEY_PREFIX = 'yayboost_exit_coupon_';
+
+    /**
      * Tracker instance
      *
      * @var ExitIntentPopupFeature
@@ -58,6 +64,19 @@ class ExitIntentPopupAjaxHandler {
         // AJAX: check cart status
         add_action( 'wp_ajax_yayboost_exit_intent_check_cart', [ $this, 'handle_check_cart' ] );
         add_action( 'wp_ajax_nopriv_yayboost_exit_intent_check_cart', [ $this, 'handle_check_cart' ] );
+    }
+
+    /**
+     * Clear all exit-intent coupon transients (e.g. when admin saves settings).
+     * Removes cached one-time coupon codes so new offer settings take effect.
+     *
+     * @return void
+     */
+    public static function clear_coupon_transients(): void {
+        global $wpdb;
+        $prefix  = self::TRANSIENT_KEY_PREFIX;
+        $escaped = $wpdb->esc_like( '_transient_' . $prefix ) . '%';
+        $wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", $escaped, $wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%' ) );
     }
 
     /**
@@ -108,7 +127,7 @@ class ExitIntentPopupAjaxHandler {
             wp_send_json_error( [ 'message' => __( 'Missing client key.', 'yayboost' ) ], 400 );
         }
 
-        $transient_key = 'yayboost_exit_coupon_' . md5( $client_key );
+        $transient_key = self::TRANSIENT_KEY_PREFIX . md5( $client_key );
         $existing_code = get_transient( $transient_key );
 
         if ( $existing_code ) {
@@ -185,10 +204,10 @@ class ExitIntentPopupAjaxHandler {
      */
     private function generate_unique_coupon_code( string $prefix ): string {
         $encoded = strtoupper( substr( md5( 'yayboost_eip_' . time() ), 0, 8 ) );
-        $code = $prefix . $encoded;
-        if( wc_get_coupon_id_by_code( $code ) ) {
+        $code    = $prefix . $encoded;
+        if ( wc_get_coupon_id_by_code( $code ) ) {
             $encoded = strtoupper( substr( md5( 'yayboost_eip_coupon_' . time() ), 0, 8 ) );
-            $code = $prefix . $encoded;
+            $code    = $prefix . $encoded;
         }
 
         return $code;
