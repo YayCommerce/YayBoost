@@ -9,8 +9,8 @@
 
 namespace YayBoost\Features\NextOrderCoupon;
 
-use Hashids\Hashids;
 use YayBoost\Features\AbstractFeature;
+use YayBoost\Utils\CodeGenerator;
 
 /**
  * Next Order Coupon feature implementation
@@ -80,18 +80,18 @@ class NextOrderCouponFeature extends AbstractFeature {
     private const META_KEY_COUPON_ID = '_yayboost_next_order_coupon_id';
 
     /**
-     * Salt for Hashids (keep codes unique to this feature)
+     * Salt for hash generation (keep codes unique to this feature)
      *
      * @var string
      */
-    private const HASHIDS_SALT = 'yayboost_noc';
+    private const HASH_SALT = 'yayboost_noc';
 
     /**
-     * Minimum length for Hashids output
+     * Code generator instance
      *
-     * @var int
+     * @var CodeGenerator
      */
-    private const HASHIDS_MIN_LENGTH = 6;
+    private $code_generator;
 
     /**
      * Initialize the feature
@@ -107,10 +107,10 @@ class NextOrderCouponFeature extends AbstractFeature {
         add_action( 'woocommerce_order_status_completed', [ $this, 'generate_coupon_for_order' ], 10, 2 );
 
         // Handle cancelled orders
-        add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
+        // add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
 
         // Handle refunded orders
-        add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
+        // add_action( 'woocommerce_order_status_refunded', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
 
         // Display coupon on thank you page
         add_action( 'woocommerce_before_thankyou', [ $this, 'display_thank_you_page' ], 10, 1 );
@@ -123,16 +123,15 @@ class NextOrderCouponFeature extends AbstractFeature {
     }
 
     /**
-     * Get Hashids instance for coupon code encoding
+     * Get code generator instance
      *
-     * @return Hashids
+     * @return CodeGenerator
      */
-    protected function get_hashids(): Hashids {
-        static $instance = null;
-        if ( $instance === null ) {
-            $instance = new Hashids( self::HASHIDS_SALT, self::HASHIDS_MIN_LENGTH );
+    protected function get_code_generator(): CodeGenerator {
+        if ( $this->code_generator === null ) {
+            $this->code_generator = new CodeGenerator( self::HASH_SALT, 8 );
         }
-        return $instance;
+        return $this->code_generator;
     }
 
     /**
@@ -160,20 +159,22 @@ class NextOrderCouponFeature extends AbstractFeature {
         $coupon = new \WC_Coupon(); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
         $coupon->set_code( $coupon_code );
 
-        // Set discount type (directly use WooCommerce format)
+        // Set discount type
         $discount_type = $settings['discount_type'] ?? 'percent';
-        $coupon->set_discount_type( $discount_type );
 
-        // Set discount amount
-        if (isset( $settings['discount_value'] ) && $settings['discount_value'] > 0) {
-            if ($discount_type !== 'free_shipping') {
+        // Handle free shipping separately (not a valid discount type in WooCommerce)
+        if ( $discount_type === 'free_shipping' ) {
+            // Use valid discount type and set free shipping
+            $coupon->set_discount_type( 'fixed_cart' );
+            $coupon->set_amount( 0 );
+            $coupon->set_free_shipping( true );
+        } else {
+            $coupon->set_discount_type( $discount_type );
+
+            // Set discount amount
+            if ( isset( $settings['discount_value'] ) && $settings['discount_value'] > 0 ) {
                 $coupon->set_amount( $settings['discount_value'] );
             }
-        }
-
-        // Set free shipping if discount type is free_shipping
-        if ($discount_type === 'free_shipping') {
-            $coupon->set_free_shipping( true );
         }
 
         // Set expiration date (from order completed date)
@@ -461,20 +462,22 @@ class NextOrderCouponFeature extends AbstractFeature {
     /**
      * Generate unique coupon code based on order ID
      *
-     * Format: {prefix}{hashid}
-     * Example: THANKS-o2fXhV (order_id encoded via Hashids)
+     * Format: {prefix}{hash}
+     * Example: THANKS-A1B2C3D4 (order_id encoded via md5)
      *
      * @param string $prefix Coupon prefix.
      * @param int    $order_id Order ID to ensure uniqueness.
      * @return string
      */
     protected function generate_coupon_code( string $prefix, int $order_id ): string {
-        $encoded = $this->get_hashids()->encode( $order_id );
-        $code    = $encoded !== '' ? $prefix . $encoded : $prefix . $order_id;
+        $generator = $this->get_code_generator();
+        $encoded   = $generator->encode( $order_id );
+        $code      = $prefix . $encoded;
 
+        // Fallback if code exists (rare case)
         if ( $this->coupon_code_exists( $code ) ) {
-            $encoded = $this->get_hashids()->encode( $order_id, time() );
-            $code    = $encoded !== '' ? $prefix . $encoded : $prefix . $order_id . '-' . time();
+            $encoded = $generator->encode( $order_id, time() );
+            $code    = $prefix . $encoded;
         }
 
         // Allow modification of generated code before returning
@@ -803,20 +806,20 @@ class NextOrderCouponFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'                 => false,
-                'discount_type'           => 'percent',
-                'discount_value'          => 10,
-                'coupon_prefix'           => 'THANKS-',
-                'expires_after'           => 30,
-                'minimum_order_total'     => 0,
-                'customer_type'           => 'all',
-                'on_cancel_refund_action' => 'delete_and_reset',
-                'minimum_spend_to_use'    => 0,
-                'exclude_sale_items'      => false,
-                'display_locations'       => [ 'thank_you_page', 'order_email', 'my_account' ],
-                'thank_you_headline'      => __( "🎁 Here's a gift for your next order!", 'yayboost' ),
-                'thank_you_message'       => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires in {expiry}.', 'yayboost' ),
-                'email_content'           => __( "As a thank you, here's {discount} off your next order!. Expires in {expiry}", 'yayboost' ),
+                'enabled'              => false,
+                'discount_type'        => 'percent',
+                'discount_value'       => 10,
+                'coupon_prefix'        => 'THANKS-',
+                'expires_after'        => 30,
+                'minimum_order_total'  => 0,
+                'customer_type'        => 'all',
+                // 'on_cancel_refund_action' => 'delete_and_reset',
+                'minimum_spend_to_use' => 0,
+                'exclude_sale_items'   => false,
+                'display_locations'    => [ 'thank_you_page', 'order_email', 'my_account' ],
+                'thank_you_headline'   => __( "🎁 Here's a gift for your next order!", 'yayboost' ),
+                'thank_you_message'    => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires in {expiry}.', 'yayboost' ),
+                'email_content'        => __( "As a thank you, here's {discount} off your next order!. Expires in {expiry}", 'yayboost' ),
             ]
         );
     }

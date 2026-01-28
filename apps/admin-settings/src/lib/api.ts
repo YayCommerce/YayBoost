@@ -13,6 +13,7 @@ declare global {
       version: string;
       currencySymbol?: string;
       hasReviewed: boolean;
+      dateFormat?: string;
       urls: {
         images: string;
         wcPlaceholderImage: string;

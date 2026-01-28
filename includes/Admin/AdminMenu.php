@@ -65,6 +65,7 @@ class AdminMenu {
                 'version'        => YAYBOOST_VERSION,
                 'currencySymbol' => get_woocommerce_currency_symbol(),
                 'hasReviewed'    => (bool) get_option( 'yayboost_has_reviewed', false ) ?? false,
+                'dateFormat'     => get_option( 'date_format' ),
                 'urls'           => array(
                     'images'       => YAYBOOST_URL . 'assets/images/',
                     'wcPlaceholderImage' => \wc_placeholder_img_src(),
