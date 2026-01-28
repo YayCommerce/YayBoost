@@ -434,15 +434,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             $allowed_emails[] = $billing_email;
         }
 
-        // Get customer ID (from order or from email if guest checkout)
         $customer_id = $order->get_customer_id();
-        if ($customer_id === 0 && ! empty( $billing_email )) {
-            // Guest checkout - check if email has account
-            $existing_user_id = email_exists( $billing_email );
-            if ($existing_user_id) {
-                $customer_id = $existing_user_id;
-            }
-        }
 
         // Add user_email if customer has account (for WooCommerce coupon validation)
         if ($customer_id > 0) {
@@ -500,15 +492,10 @@ class NextOrderCouponFeature extends AbstractFeature {
     /**
      * Get coupon info from order
      *
-     * @param int $order_id Order ID.
+     * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
      * @return array{code: string, coupon: \WC_Coupon|null}|null
      */
-    protected function get_coupon_from_order(int $order_id): ?array {
-        $order = \wc_get_order( $order_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
-        if ( ! $order) {
-            return null;
-        }
-
+    protected function get_coupon_from_order(\WC_Order $order): ?array { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
         $coupon_code = $this->get_order_coupon_code( $order );
         if (empty( $coupon_code )) {
             return null;
@@ -581,7 +568,7 @@ class NextOrderCouponFeature extends AbstractFeature {
     public function display_before_order_table(\WC_Order $order): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
         $settings = $this->get_settings();
 
-        $coupon_info = $this->get_coupon_from_order( $order->get_id() );
+        $coupon_info = $this->get_coupon_from_order( $order );
         if ( ! $coupon_info) {
             return;
         }
@@ -642,7 +629,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $coupon_info = $this->get_coupon_from_order( $order->get_id() );
+        $coupon_info = $this->get_coupon_from_order( $order );
         if ( ! $coupon_info) {
             return;
         }
