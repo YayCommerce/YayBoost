@@ -16,6 +16,7 @@ use YayBoost\Features\SmartRecommendations\SmartRecommendationsFeature;
 use YayBoost\Features\StockScarcity\StockScarcityFeature;
 use YayBoost\Features\NextOrderCoupon\NextOrderCouponFeature;
 use YayBoost\Features\LiveVisitorCount\LiveVisitorCountFeature;
+use YayBoost\Features\ExitIntentPopup\ExitIntentPopupFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -133,14 +134,23 @@ class ServiceProvider implements ServiceProviderInterface {
         );
         $this->features[] = 'feature.live_visitor_count';
 
+        // Register Exit Intent Popup Feature
+        $container->register(
+            'feature.exit_intent_popup',
+            function ( $c ) {
+                return new ExitIntentPopupFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.exit_intent_popup';
+
         // Register feature registry
         $container->register(
             'feature.registry',
             function ( $c ) {
                 $registry = new FeatureRegistry();
                 // Register core features
-                foreach ( $this->features as $featureKey ) {
-                    $feature = $c->resolve( $featureKey );
+                foreach ( $this->features as $feature_key ) {
+                    $feature = $c->resolve( $feature_key );
                     $registry->register( $feature );
                 }
 
