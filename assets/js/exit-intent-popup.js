@@ -156,6 +156,23 @@
       if (!popup) {
         return;
       }
+      if (
+        actionBtn.classList.contains(
+          "yayboost-exit-intent-popup__button--continue-shopping",
+        )
+      ) {
+        actionBtn.classList.remove(
+          "yayboost-exit-intent-popup__button--continue-shopping",
+        );
+        // delete the error div
+        const errorDiv = content.querySelector(
+          ".yayboost-exit-intent-popup__error",
+        );
+        if (errorDiv) {
+          errorDiv.remove();
+        }
+        actionBtn.innerHTML = actionBtn.getAttribute("original-text");
+      }
       popup.style.display = "none";
       document.body.style.overflow = ""; // Restore body scroll
     }
@@ -211,7 +228,6 @@
           "yayboost-exit-intent-popup__button--continue-shopping",
         )
       ) {
-        localStorage.removeItem(popupShownKey);
         window.location.href = config.shopUrl;
         return;
       }
@@ -243,6 +259,8 @@
           return;
         }
       } catch (err) {
+        localStorage.removeItem(popupShownKey);
+        triggered = false;
         actionBtn.disabled = false;
         actionBtn.innerHTML = actionBtn.innerHTML.replace(
           '<span class="yayboost-button-spinner"></span>',
@@ -251,6 +269,7 @@
         actionBtn.classList.add(
           "yayboost-exit-intent-popup__button--continue-shopping",
         );
+        actionBtn.setAttribute("original-text", actionBtn.innerHTML);
         // Change button text to "Try again"
         actionBtn.innerHTML = "Continue shopping";
         // create a div with class "yayboost-exit-intent-popup__error"
