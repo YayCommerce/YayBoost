@@ -217,6 +217,15 @@ class ExitIntentPopupFeature extends AbstractFeature {
         $settings  = $this->get_settings();
         $content   = $settings['content'] ?? [];
         $has_items = $this->should_show_popup();
+        // Replace {amount} with offer value
+        $offer_type  = $settings['offer']['type'] ?? 'percent';
+        $offer_value = $settings['offer']['value'] ?? 20;
+        $button_text = $content['button_text'] ?? '';
+        if ( $offer_type === 'percent' ) {
+            $button_text = str_replace( '{amount}', $offer_value . '%', $button_text );
+        } elseif ( $offer_type === 'fixed_amount' ) {
+            $button_text = str_replace( '{amount}', wc_price( (float) $offer_value ), $button_text );
+        }
 
         ?>
         <div id="yayboost-exit-intent-popup" class="yayboost-exit-intent-popup" style="display: none;" data-has-items="<?php echo $has_items ? '1' : '0'; ?>">
@@ -225,7 +234,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
                 <button class="yayboost-exit-intent-popup__close" aria-label="<?php esc_attr_e( 'Close', 'yayboost' ); ?>">&times;</button>
                 <h2 class="yayboost-exit-intent-popup__headline"><?php echo esc_html( $content['headline'] ?? '' ); ?></h2>
                 <p class="yayboost-exit-intent-popup__message"><?php echo esc_html( $content['message'] ?? '' ); ?></p>
-                <button class="yayboost-exit-intent-popup__button"><?php echo esc_html( $content['button_text'] ?? '' ); ?></button>
+                <button class="yayboost-exit-intent-popup__button"><?php echo wp_kses_post( $button_text ); ?></button>
             </div>
         </div>
         <?php

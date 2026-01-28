@@ -7,7 +7,15 @@ import z from 'zod';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Form, FormControl, FormField, FormItem, FormMessage, useForm } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+  useForm,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
@@ -54,6 +62,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
   });
 
   const offerType = form.watch('offer.type');
+  const offerValue = form.watch('offer.value');
   const offerPrefix = form.watch('offer.prefix');
   const contentPreview = form.watch('content');
 
@@ -72,6 +81,16 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
   const previewCouponCode = useMemo(() => {
     return `${offerPrefix}ABCDE`;
   }, [offerPrefix]);
+
+  const previewButtonText = useMemo(() => {
+    if (offerType === 'percent') {
+      return contentPreview?.button_text?.replace('{amount}', `${offerValue}%`);
+    } else if (offerType === 'fixed_amount') {
+      return contentPreview?.button_text?.replace('{amount}', `$${offerValue}`);
+    } else {
+      return contentPreview?.button_text;
+    }
+  }, [contentPreview?.button_text, offerType, offerValue]);
 
   if (isLoading || isFetching) {
     return (
@@ -342,6 +361,9 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                       {...field}
                     />
                   </FormControl>
+                  <FormDescription>
+                    {__('Available placeholders:', 'yayboost')} {'{amount}'}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -414,7 +436,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         type="button"
                         className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-6 py-3 text-sm font-semibold transition-colors"
                       >
-                        {contentPreview?.button_text || __('Button text', 'yayboost')}
+                        {previewButtonText || __('Button text', 'yayboost')}
                       </button>
                     </div>
                   </div>

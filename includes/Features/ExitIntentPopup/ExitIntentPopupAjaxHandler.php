@@ -152,7 +152,7 @@ class ExitIntentPopupAjaxHandler {
         $amount      = $value;
         $is_free     = false;
 
-        if ( 'fixed' === $type || 'fixed_cart' === $type ) {
+        if ( 'fixed_amount' === $type ) {
             $coupon_type = 'fixed_cart';
         } elseif ( 'free_shipping' === $type ) {
             $coupon_type = 'fixed_cart';
