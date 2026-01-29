@@ -197,13 +197,12 @@ class PurchaseActivityCountFeature extends AbstractFeature {
 
         $apply = $this->get( 'target_products.apply' );
 
-        if ( 'all' === $apply ) {
+        if ( 'all' === $apply || 'specific_categories' === $apply ) {
             $exclude = $this->get( 'target_products.exclude' ) ?? [];
             $exclude = array_map( 'intval', $exclude );
             if ( ! empty( $exclude ) && in_array( $product_id, $exclude, true ) ) {
                 return false;
             }
-            return true;
         }
 
         if ( 'specific_products' === $apply ) {
@@ -214,7 +213,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
             return $this->matches_specific_categories( $product_id );
         }
 
-        return false;
+        return true;
     }
 
     /**
@@ -241,11 +240,12 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      */
     private function matches_specific_categories( int $product_id ): bool {
         $specific_categories = $this->get( 'target_products.categories' ) ?? [];
+
         if ( empty( $specific_categories ) ) {
             return false;
         }
         $categories = [];
-        // $specific_categories = array_map( 'intval', $specific_categories );
+
         foreach ( $specific_categories as $category ) {
             $category = get_term_by( 'slug', $category, 'product_cat' );
             if ( $category ) {
