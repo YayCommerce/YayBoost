@@ -142,7 +142,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         $show_on_shop_page    = $this->get( 'display.show_on_shop_page' );
         $position             = $this->get( 'display.position' );
         // Register product page hooks
-        if ( $show_on_product_page && function_exists( 'is_product' ) && is_product() ) {
+        if ( $show_on_product_page ) {
             $this->position_service->register_hook(
                 DisplayPositionService::PAGE_PRODUCT,
                 $position,
@@ -150,7 +150,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
             );
         }
         // Register shop page hooks
-        if ( $show_on_shop_page && function_exists( 'is_shop' ) && is_shop() ) {
+        if ( $show_on_shop_page ) {
             $this->position_service->register_mapped_hook(
                 $position,
                 DisplayPositionService::PAGE_PRODUCT,
