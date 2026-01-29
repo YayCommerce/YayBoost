@@ -5,423 +5,427 @@
  */
 
 .yayboost-fbt {
-    margin: 2rem 0;
-    padding: 1.5rem;
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+  margin: 32px 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
 .yayboost-fbt__title {
-    margin: 0 0 1.5rem;
-    text-align: center;
+  margin: 0 0 24px;
+  text-align: center;
 }
 
 /* Images Section - Top */
 .yayboost-fbt__images-section {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: #fafafa;
-    border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 6px;
 }
 
 .yayboost-fbt__info-icon {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    background: #000;
-    border: none;
-    border-radius: 4px;
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    transition: opacity 0.2s;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: #000;
+  border: none;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: opacity 0.2s;
 }
 
 .yayboost-fbt__info-icon:hover {
-    opacity: 0.8;
+  opacity: 0.8;
 }
 
 .yayboost-fbt__info-icon svg {
-    width: 16px;
-    height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 /* Images Scroll Container */
 .yayboost-fbt__images-scroll {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex: 1;
-    min-width: 0;
-    padding-right: 2rem;
-    scrollbar-width: thin;
-    scrollbar-color: #ccc transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  min-width: 0;
+  padding-right: 32px;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
 }
 
 .yayboost-fbt__images-scroll::-webkit-scrollbar {
-    height: 6px;
+  height: 6px;
 }
 
 .yayboost-fbt__images-scroll::-webkit-scrollbar-track {
-    background: transparent;
+  background: transparent;
 }
 
 .yayboost-fbt__images-scroll::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 3px;
+  background: #ccc;
+  border-radius: 3px;
 }
 
 .yayboost-fbt__images-scroll::-webkit-scrollbar-thumb:hover {
-    background: #999;
+  background: #999;
 }
 
 .yayboost-fbt__image-item {
-    flex-shrink: 0;
-    width: 120px;
-    height: 120px;
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
 }
 
 .yayboost-fbt__image-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 4px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .yayboost-fbt__image-item a {
-    display: block;
-    width: 100%;
-    height: 100%;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .yayboost-fbt__image-separator {
-    flex-shrink: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #333;
-    margin: 0 0.25rem;
+  flex-shrink: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 4px;
 }
 
 /* Summary Area */
 .yayboost-fbt__summary {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 1rem;
-    min-width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+  min-width: 200px;
 }
 
 .yayboost-fbt__summary .yayboost-fbt__total {
-    text-align: right;
-    font-size: 1.1rem;
+  text-align: right;
+  font-size: 18px;
 }
 
 .yayboost-fbt__add-btn--summary {
-    width: 100%;
-    text-align: center;
+  width: 100%;
+  text-align: center;
 }
 
 /* Information Message */
 .yayboost-fbt__message {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    background: #e3f2fd;
-    border-radius: 4px;
-    font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #e3f2fd;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .yayboost-fbt__message-icon {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    color: #1976d2;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: #1976d2;
 }
 
 .yayboost-fbt__message-text {
-    flex: 1;
-    color: #333;
+  flex: 1;
+  color: #333;
 }
 
 .yayboost-fbt__message-link {
-    color: #1976d2;
-    text-decoration: none;
-    white-space: nowrap;
+  color: #1976d2;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .yayboost-fbt__message-link:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 /* Products List - Bottom */
 .yayboost-fbt__products-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .yayboost-fbt__products-list .yayboost-fbt__product {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.75rem 1rem;
-    background: #fff;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    transition: border-color 0.2s, background-color 0.2s;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
 }
 
 .yayboost-fbt__products-list .yayboost-fbt__product:hover {
-    border-color: #ddd;
-    background: #fafafa;
+  border-color: #ddd;
+  background: #fafafa;
 }
 
 .yayboost-fbt__products-list .yayboost-fbt__product--current {
-    background: #f0f7ff;
-    border-color: #1976d2;
+  background: #f0f7ff;
+  border-color: #1976d2;
 }
 
 .yayboost-fbt__products-list .yayboost-fbt__product--current:hover {
-    background: #e3f2fd;
+  background: #e3f2fd;
 }
 
 /* Grid Layout (Legacy - kept for compatibility) */
 .yayboost-fbt__products--grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
 }
 
 /* List Layout (Legacy - kept for compatibility) */
 .yayboost-fbt__products--list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .yayboost-fbt__products--list .yayboost-fbt__product {
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .yayboost-fbt__products--list .yayboost-fbt__image {
-    width: 80px;
-    flex-shrink: 0;
+  width: 80px;
+  flex-shrink: 0;
 }
 
 /* Product Card (Legacy - kept for compatibility) */
 .yayboost-fbt__product {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    background: #fafafa;
-    border: 1px solid #eee;
-    border-radius: 6px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .yayboost-fbt__product:hover {
-    border-color: #ddd;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .yayboost-fbt__product.is-unchecked {
-    opacity: 0.6;
+  opacity: 0.6;
 }
 
 /* Checkbox */
 .yayboost-fbt__checkbox {
-    flex-shrink: 0;
-    position: relative;
-    z-index: 10;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .yayboost-fbt__checkbox input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    cursor: pointer;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
 }
 
 /* Image (Legacy - kept for compatibility) */
 .yayboost-fbt__image {
-    margin-bottom: 0.75rem;
-    text-align: center;
+  margin-bottom: 12px;
+  text-align: center;
 }
 
 .yayboost-fbt__image img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
 }
 
 .yayboost-fbt__image a {
-    display: block;
+  display: block;
 }
 
 /* Info */
 .yayboost-fbt__info {
-    display: flex;
-    gap: 10px;
-    flex-grow: 1;
-    min-width: 0;
-    align-items: center;
+  display: flex;
+  gap: 10px;
+  flex-grow: 1;
+  min-width: 0;
+  align-items: center;
 }
 
 .yayboost-fbt__name {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.4;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
 .yayboost-fbt__name a {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 .yayboost-fbt__name a:hover {
-    color: #0073aa;
+  color: #0073aa;
 }
 
 .yayboost-fbt__current-label {
-    font-weight: 600;
-    color: #1976d2;
-    margin-right: 0.5rem;
+  font-weight: 600;
+  color: #1976d2;
+  margin-right: 8px;
 }
 
 .yayboost-fbt__price {
-    font-weight: 600;
-    color: #333;
+  font-weight: 600;
+  color: #333;
 }
 
 .yayboost-fbt__price del {
-    color: #999;
-    font-weight: 400;
-    margin-right: 0.5rem;
+  color: #999;
+  font-weight: 400;
+  margin-right: 0.5rem;
 }
 
 .yayboost-fbt__price ins {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 /* Footer */
 .yayboost-fbt__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
 }
 
 .yayboost-fbt__total {
-    font-size: 1.1rem;
+  font-size: 18px;
 }
 
 .yayboost-fbt__total-label {
-    color: #666;
-    margin-right: 0.5rem;
+  color: #666;
+  margin-right: 8px;
 }
 
 .yayboost-fbt__total-price {
-    font-weight: 600;
-    color: #0073aa;
+  font-weight: 600;
+  color: #0073aa;
 }
 
 /* Add Button */
 .yayboost-fbt__add-btn {
-    cursor: pointer;
-    transition: opacity 0.2s;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
 .yayboost-fbt__add-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .yayboost-fbt__add-btn.is-loading {
-    pointer-events: none;
+  pointer-events: none;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .yayboost-fbt {
-        padding: 1rem;
-    }
+  .yayboost-fbt {
+    padding: 16px;
+  }
 
-    .yayboost-fbt__images-section {
-        flex-direction: column;
-        gap: 1rem;
-    }
+  .yayboost-fbt__images-section {
+    flex-direction: column;
+    gap: 16px;
+  }
 
-    .yayboost-fbt__images-scroll {
-        width: 100%;
-        padding-right: 0;
-    }
+  .yayboost-fbt__images-scroll {
+    width: 100%;
+    padding-right: 0;
+  }
 
-    .yayboost-fbt__summary {
-        width: 100%;
-        align-items: stretch;
-    }
+  .yayboost-fbt__summary {
+    width: 100%;
+    align-items: stretch;
+  }
 
-    .yayboost-fbt__summary .yayboost-fbt__total {
-        text-align: left;
-    }
+  .yayboost-fbt__summary .yayboost-fbt__total {
+    text-align: left;
+  }
 
-    .yayboost-fbt__info-icon {
-        top: 0.5rem;
-        right: 0.5rem;
-    }
+  .yayboost-fbt__info-icon {
+    top: 8px;
+    right: 8px;
+  }
 
-    .yayboost-fbt__products--grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .yayboost-fbt__products--grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-    .yayboost-fbt__footer {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-    }
+  .yayboost-fbt__footer {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
 
-    .yayboost-fbt__add-btn {
-        width: 100%;
-    }
+  .yayboost-fbt__add-btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
-    .yayboost-fbt__image-item {
-        width: 100px;
-        height: 100px;
-    }
+  .yayboost-fbt__image-item {
+    width: 100px;
+    height: 100px;
+  }
 
-    .yayboost-fbt__products--grid {
-        grid-template-columns: 1fr;
-    }
+  .yayboost-fbt__products--grid {
+    grid-template-columns: 1fr;
+  }
 
-    .yayboost-fbt__products-list .yayboost-fbt__product {
-        flex-wrap: wrap;
-    }
+  .yayboost-fbt__products-list .yayboost-fbt__product {
+    flex-wrap: wrap;
+  }
 }
