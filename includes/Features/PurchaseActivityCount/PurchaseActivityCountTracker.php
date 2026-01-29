@@ -58,22 +58,15 @@ class PurchaseActivityCountTracker {
         }
 
         // Get date range from settings
-        $count_from  = $this->feature->get( 'count_from' ) ?? 'all';
-        $period_date = $this->feature->get( 'period_date' ) ?? [
-            'from' => '',
-            'to'   => '',
-        ];
+        $count_from = $this->feature->get( 'count_from' ) ?? 'all';
 
         // Build cache key with date range info
         $cache_key = self::CACHE_KEY_PREFIX . $page_id;
-        if ( 'period' === $count_from && ! empty( $period_date['from'] ) && ! empty( $period_date['to'] ) ) {
-            $cache_key .= '_' . md5( $period_date['from'] . '_' . $period_date['to'] );
-        }
 
         return Cache::remember(
             $cache_key,
             self::CACHE_TTL,
-            fn() => $this->count_purchase_activity( $page_id, $count_from, $period_date )
+            fn() => $this->count_purchase_activity( $page_id, $count_from )
         );
     }
 
@@ -85,7 +78,7 @@ class PurchaseActivityCountTracker {
      * @param array  $period_date Date range array with 'from' and 'to' keys.
      * @return int Purchase activity count.
      */
-    public function count_purchase_activity( int $product_id, string $count_from = 'all', array $period_date = [] ): int {
+    public function count_purchase_activity( int $product_id, string $count_from = 'all' ): int {
         $count = 0;
 
         // Determine date range
