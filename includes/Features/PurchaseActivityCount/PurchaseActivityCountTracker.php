@@ -311,7 +311,7 @@ class PurchaseActivityCountTracker {
     }
 
     /**
-     * Get cached visitor count (for AJAX handler)
+     * Get cached purchase activity count (for AJAX handler)
      *
      * @param int $page_id Page ID.
      * @return int|false Count or false if not cached.
@@ -321,10 +321,10 @@ class PurchaseActivityCountTracker {
     }
 
     /**
-     * Set cached visitor count (for AJAX handler)
+     * Set cached purchase activity count (for AJAX handler)
      *
      * @param int $page_id Page ID.
-     * @param int $count   Count.
+     * @param int $count Count.
      * @return bool Success.
      */
     public function set_cached_count( int $page_id, int $count ): bool {
