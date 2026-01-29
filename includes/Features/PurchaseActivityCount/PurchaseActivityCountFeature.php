@@ -125,12 +125,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         }
 
         // Register hooks after query is parsed
-        add_action( 'wp', [ $this, 'register_product_hooks' ] );
-        $show_on_shop_page = $this->get( 'display.show_on_shop_page' );
-        if ( $show_on_shop_page ) {
-            add_action( 'woocommerce_after_shop_loop_item', [ $this, 'render_content' ] );
-        }
-
+        add_action( 'wp', [ $this, 'register_product_and_shop_hooks' ] );
         add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ], 10, 2 );
 
         // Initialize block
@@ -142,24 +137,29 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      *
      * @return void
      */
-    public function register_product_hooks(): void {
-        if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-            return;
-        }
-
+    public function register_product_and_shop_hooks(): void {
         $show_on_product_page = $this->get( 'display.show_on_product_page' );
-
-        if ( ! $show_on_product_page ) {
-            return;
+        $show_on_shop_page    = $this->get( 'display.show_on_shop_page' );
+        $position             = $this->get( 'display.position' );
+        // Register product page hooks
+        if ( $show_on_product_page && function_exists( 'is_product' ) && is_product() ) {
+            $this->position_service->register_hook(
+                DisplayPositionService::PAGE_PRODUCT,
+                $position,
+                [ $this, 'render_content' ]
+            );
         }
-
-        $position = $this->get( 'display.position' );
-
-        $this->position_service->register_hook(
-            DisplayPositionService::PAGE_PRODUCT,
-            $position,
-            [ $this, 'render_content' ]
-        );
+        // Register shop page hooks
+        if ( $show_on_shop_page && function_exists( 'is_shop' ) && is_shop() ) {
+            $this->position_service->register_mapped_hook(
+                $position,
+                DisplayPositionService::PAGE_PRODUCT,
+                DisplayPositionService::PAGE_SHOP,
+                [ $this, 'render_content' ],
+                'after_shop_loop_item'
+                // fallback
+            );
+        }
     }
 
     /**
