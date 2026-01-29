@@ -92,15 +92,58 @@ class PurchaseActivityCountTracker {
         $date_from = null;
         $date_to   = null;
 
-        if ( 'period' === $count_from && ! empty( $period_date['from'] ) && ! empty( $period_date['to'] ) ) {
-            $date_from = $period_date['from'];
-            $date_to   = $period_date['to'];
+        if ( 'all' !== $count_from  ) {
+            $date_range = $this->get_date_range_from_period( $count_from );
+            $date_from  = $date_range['from'];
+            $date_to    = $date_range['to'];
         }
 
         // query count orders for product
         $count = $this->count_orders_by_product_id( $product_id, $date_from, $date_to );
         return (int) $count;
     }
+
+
+    /**
+     * Get date range from period
+     *
+     * @param string $period Period.
+     * @return array Date range.
+     */
+    private function get_date_range_from_period( string $period ): array {
+        switch ( $period ) {
+            case 'past_week':
+                return [
+                    'from' => gmdate( 'Y-m-d', strtotime( '-7 days' ) ),
+                    'to'   => gmdate( 'Y-m-d' ),
+                ];
+            case 'past_month':
+                return [
+                    'from' => gmdate( 'Y-m-d', strtotime( '-30 days' ) ),
+                    'to'   => gmdate( 'Y-m-d' ),
+                ];
+            case 'this_week':
+                return [
+                    'from' => gmdate( 'Y-m-d', strtotime( 'this week' ) ),
+                    'to'   => gmdate( 'Y-m-d' ),
+                ];
+            case 'this_month':
+                return [
+                    'from' => gmdate( 'Y-m-d', strtotime( 'first day of this month' ) ),
+                    'to'   => gmdate( 'Y-m-d' ),
+                ];
+            case 'this_year':
+                return [
+                    'from' => gmdate( 'Y-m-d', strtotime( 'first day of this year' ) ),
+                    'to'   => gmdate( 'Y-m-d' ),
+                ];
+            default:
+                return [
+                    'from' => gmdate( 'Y-m-d', strtotime( '-7 days' ) ),
+                    'to'   => gmdate( 'Y-m-d' ),
+                ];
+        }//end switch
+    }//end get_date_range_from_period()
 
     /**
      * Get current page ID with fallbacks
