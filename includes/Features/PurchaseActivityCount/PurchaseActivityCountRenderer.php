@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\PurchaseActivityCount;
 
+use YayBoost\Utils\Helpers;
+
 /**
  * Content rendering for purchase activity count
  */
@@ -61,25 +63,21 @@ class PurchaseActivityCountRenderer {
     public function get_content( ?int $product_id = null ): string {
         $minimum_count_display = (int) ( $this->feature->get( 'minimum_count_display' ) ?? 1 );
         $count                 = $this->tracker->get_purchase_activity_count( $product_id );
-        
         if ( $count < $minimum_count_display ) {
             return '';
         }
-        
-        $text                  = str_replace( '{count}', $count, $this->feature->get( 'display.text' ) );
-        return $this->render_content( $text, $count, $this->feature->get( 'display.text' ));
+
+        $text = str_replace( '{count}', Helpers::format_pretty_number( $count ), $this->feature->get( 'display.text' ) );
+        return $this->render_content( $text );
     }
 
     /**
      * Render content based on style
      *
      * @param string $text             Rendered text with count.
-     * @param int    $count            Visitor count.
-     * @param string $display_text     Original display text template.
-     * @param bool   $is_hidden        Whether element should be hidden.
      * @return string HTML content.
      */
-    private function render_content( string $text, int $count, string $display_text ): string {
+    private function render_content( string $text ): string {
         return sprintf(
             '<div class="yayboost-pac">%s</div>',
             wp_kses_post( $text )
