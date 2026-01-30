@@ -10,20 +10,21 @@ import { useNavigate } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
 import {
   Activity,
+  MessageSquare,
   ShoppingCart,
   Sparkles,
+  SquareArrowOutUpRight,
   Ticket,
   Timer,
   Truck,
   Users,
   Zap,
-  SquareArrowOutUpRight,
 } from 'lucide-react';
 
+import { dashboardApi, FeatureHealthResponse } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { dashboardApi, FeatureHealthResponse } from '@/lib/api';
 
 // Icon mapping for features
 const FEATURE_ICONS: Record<string, React.ReactNode> = {
@@ -35,6 +36,7 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
   order_bump: <Zap className="h-5 w-5" />,
   live_visitor_count: <Users className="h-5 w-5" />,
   exit_intent_popup: <SquareArrowOutUpRight className="h-5 w-5" />,
+  recent_purchase_notification: <MessageSquare className="h-5 w-5" />,
 };
 
 // Health indicator colors and labels
@@ -93,9 +95,7 @@ export function FeatureHealthGrid() {
             <CardTitle className="text-base">{__('Feature Health', 'yayboost')}</CardTitle>
           </div>
           {data?.date_range && (
-            <span className="text-muted-foreground text-xs">
-              {__('Last 7 days', 'yayboost')}
-            </span>
+            <span className="text-muted-foreground text-xs">{__('Last 7 days', 'yayboost')}</span>
           )}
         </div>
       </CardHeader>

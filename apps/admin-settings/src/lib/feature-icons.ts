@@ -11,6 +11,7 @@
 
 import type { Icon } from '@phosphor-icons/react';
 import {
+  Chat,
   Clock,
   CreditCard,
   DotsThreeOutline,
@@ -30,19 +31,19 @@ import {
  */
 export const iconMap: Record<string, Icon> = {
   // Feature icons
-  'lightning': Lightning,
-  'truck': Truck,
+  lightning: Lightning,
+  truck: Truck,
   'hourglass-high': HourglassHigh,
   'plus-circle': PlusCircle,
-  'users': Users,
-  'gift': Gift,
+  users: Users,
+  gift: Gift,
   'shopping-cart': ShoppingCart,
-  'record': Record,
-
+  record: Record,
+  chat: Chat,
   // Category icons
   'credit-card': CreditCard,
-  'search': MagnifyingGlass,
-  'clock': Clock,
+  search: MagnifyingGlass,
+  clock: Clock,
   'more-horizontal': DotsThreeOutline,
 };
 
