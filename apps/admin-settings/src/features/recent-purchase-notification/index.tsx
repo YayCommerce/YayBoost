@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { Eye } from 'lucide-react';
+import { Eye, X } from 'lucide-react';
 import z from 'zod';
 
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
@@ -82,6 +83,25 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
   };
 
   const trackingMode = form.watch('tracking_mode');
+  const customerName = form.watch('display.customer_name');
+  const productDetails = form.watch('display.product_details') ?? ['title', 'price'];
+
+  const customerNamePreview = useMemo(() => {
+    switch (customerName) {
+      case 'Anonymous':
+        return __('Someone', 'yayboost');
+      case 'full-name':
+        return __('John Doe', 'yayboost');
+      case 'first-name-only':
+        return __('John', 'yayboost');
+      case 'first-name-initial':
+        return __('John D.', 'yayboost');
+      case 'initial-only':
+        return __('J D.', 'yayboost');
+      default:
+        return __('Someone', 'yayboost');
+    }
+  }, [customerName]);
 
   if (isLoading || isFetching) {
     return (
@@ -442,17 +462,58 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
           />
         </SettingsCard>
         <div className="sticky top-6 h-fit space-y-6">
-          <Card>
-            <CardHeader>
+          <Card className="overflow-hidden shadow-sm">
+            <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                <CardTitle className="text-foreground font-bold tracking-wide uppercase">
+                  {__('Preview', 'yayboost')}
+                </CardTitle>
               </div>
               <CardDescription>
-                {__('See how the section will look on your store', 'yayboost')}
+                {__('See how the notification will look on your store', 'yayboost')}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">Preview</CardContent>
+            <CardContent className="space-y-4">
+              {/* Inner notification card - matches frontend style */}
+              <div className="bg-card rounded-lg border p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-foreground text-sm font-medium">
+                      {customerNamePreview} {__('bought this product', 'yayboost')}
+                    </p>
+                    <span className="text-muted-foreground text-xs">
+                      {__('10m ago', 'yayboost')}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-0.5"
+                      aria-label={__('Close', 'yayboost')}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-3">
+                  <div className="bg-muted h-14 w-14 shrink-0 rounded-md" aria-hidden />
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    {productDetails.includes('title') && (
+                      <p className="text-foreground text-sm font-medium">
+                        {__('Product A', 'yayboost')}
+                      </p>
+                    )}
+                    {productDetails.includes('price') && (
+                      <p className="text-foreground text-sm">10$</p>
+                    )}
+                    {productDetails.includes('rating') && (
+                      <p className="text-sm">{__('★★★★☆', 'yayboost')}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>
