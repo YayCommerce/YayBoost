@@ -8,12 +8,10 @@ import { useMemo } from 'react';
 import { FeatureComponentProps } from '@/features';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { format } from 'date-fns';
 import { CircleQuestionMark, Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { convertWordPressDateFormatToDateFns } from '@/lib/utils';
 import { useFeature, useToggleFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -253,11 +251,12 @@ function NextOrderCouponPreview({ settings }: { settings: SettingsFormData }) {
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + (settings.expires_after || 30));
 
-    // Format date according to WordPress/WooCommerce settings
-    const wpDateFormat =
-      (window as any).wcSettings?.dateFormat || window.yayboostData?.dateFormat || 'F j, Y'; // fallback
-    const dateFnsFormat = convertWordPressDateFormatToDateFns(wpDateFormat);
-    const expiry = format(expiryDate, dateFnsFormat);
+    // Format date using WordPress date API
+    const wpDateSettings = (window as any).wp?.date?.getSettings();
+    const wpDateFormat = wpDateSettings?.formats?.date || 'F j, Y';
+    const expiry =
+      (window as any).wp?.date?.format(wpDateFormat, expiryDate) ||
+      expiryDate.toLocaleDateString();
 
     // Format thank you message
     const thankYouMessage = formatCouponMessage(
