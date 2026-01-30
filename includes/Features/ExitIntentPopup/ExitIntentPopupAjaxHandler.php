@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\ExitIntentPopup;
 
+use YayBoost\Analytics\AnalyticsTracker;
+
 /**
  * AJAX endpoint handlers for exit intent popup
  */
@@ -137,6 +139,14 @@ class ExitIntentPopupAjaxHandler {
 
         if ( $existing_code ) {
             $this->apply_coupon_to_cart( $existing_code );
+            if ( AnalyticsTracker::is_enabled() ) {
+                AnalyticsTracker::click(
+                    AnalyticsTracker::FEATURE_EXIT_INTENT,
+                    0,
+                    null,
+                    [ 'source' => 'exit_intent_popup_button' ]
+                );
+            }
             wp_send_json_success( [ 'code' => $existing_code ] );
         }
 
@@ -180,6 +190,15 @@ class ExitIntentPopupAjaxHandler {
         set_transient( $transient_key, $code, $hours * HOUR_IN_SECONDS );
 
         $this->apply_coupon_to_cart( $code );
+
+        if ( AnalyticsTracker::is_enabled() ) {
+            AnalyticsTracker::click(
+                AnalyticsTracker::FEATURE_EXIT_INTENT,
+                0,
+                null,
+                [ 'source' => 'exit_intent_popup_button' ]
+            );
+        }
 
         wp_send_json_success( [ 'code' => $code ] );
     }

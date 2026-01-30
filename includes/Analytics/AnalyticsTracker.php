@@ -31,6 +31,7 @@ class AnalyticsTracker {
     const FEATURE_NEXT_ORDER      = 'next_order_coupon';
     const FEATURE_RECOMMENDATIONS = 'smart_recommendations';
     const FEATURE_ORDER_BUMP      = 'order_bump';
+    const FEATURE_EXIT_INTENT     = 'exit_intent_popup';
 
     /**
      * Session ID (cached for request)
@@ -42,9 +43,9 @@ class AnalyticsTracker {
     /**
      * Log an analytics event
      *
-     * @param string   $feature_id Feature identifier
-     * @param string   $event_type Event type (impression, click, add_to_cart, purchase)
-     * @param array    $data       Additional event data
+     * @param string $feature_id Feature identifier
+     * @param string $event_type Event type (impression, click, add_to_cart, purchase)
+     * @param array  $data       Additional event data
      * @return int|false Insert ID or false on failure
      */
     public static function log( string $feature_id, string $event_type, array $data = [] ) {
@@ -79,10 +80,14 @@ class AnalyticsTracker {
      * @return int|false
      */
     public static function impression( string $feature_id, int $product_id, array $metadata = [] ) {
-        return self::log( $feature_id, self::EVENT_IMPRESSION, [
-            'product_id' => $product_id,
-            'metadata'   => $metadata,
-        ] );
+        return self::log(
+            $feature_id,
+            self::EVENT_IMPRESSION,
+            [
+                'product_id' => $product_id,
+                'metadata'   => $metadata,
+            ]
+        );
     }
 
     /**
@@ -95,11 +100,15 @@ class AnalyticsTracker {
      * @return int|false
      */
     public static function click( string $feature_id, int $product_id, int $related_product_id = null, array $metadata = [] ) {
-        return self::log( $feature_id, self::EVENT_CLICK, [
-            'product_id'         => $product_id,
-            'related_product_id' => $related_product_id,
-            'metadata'           => $metadata,
-        ] );
+        return self::log(
+            $feature_id,
+            self::EVENT_CLICK,
+            [
+                'product_id'         => $product_id,
+                'related_product_id' => $related_product_id,
+                'metadata'           => $metadata,
+            ]
+        );
     }
 
     /**
@@ -114,13 +123,17 @@ class AnalyticsTracker {
      * @return int|false
      */
     public static function add_to_cart( string $feature_id, int $product_id, int $related_product_id, int $quantity = 1, float $revenue = 0, array $metadata = [] ) {
-        return self::log( $feature_id, self::EVENT_ADD_TO_CART, [
-            'product_id'         => $product_id,
-            'related_product_id' => $related_product_id,
-            'quantity'           => $quantity,
-            'revenue'            => $revenue,
-            'metadata'           => $metadata,
-        ] );
+        return self::log(
+            $feature_id,
+            self::EVENT_ADD_TO_CART,
+            [
+                'product_id'         => $product_id,
+                'related_product_id' => $related_product_id,
+                'quantity'           => $quantity,
+                'revenue'            => $revenue,
+                'metadata'           => $metadata,
+            ]
+        );
     }
 
     /**
@@ -136,14 +149,18 @@ class AnalyticsTracker {
      * @return int|false
      */
     public static function purchase( string $feature_id, int $order_id, int $product_id, int $related_product_id, int $quantity = 1, float $revenue = 0, array $metadata = [] ) {
-        return self::log( $feature_id, self::EVENT_PURCHASE, [
-            'order_id'           => $order_id,
-            'product_id'         => $product_id,
-            'related_product_id' => $related_product_id,
-            'quantity'           => $quantity,
-            'revenue'            => $revenue,
-            'metadata'           => $metadata,
-        ] );
+        return self::log(
+            $feature_id,
+            self::EVENT_PURCHASE,
+            [
+                'order_id'           => $order_id,
+                'product_id'         => $product_id,
+                'related_product_id' => $related_product_id,
+                'quantity'           => $quantity,
+                'revenue'            => $revenue,
+                'metadata'           => $metadata,
+            ]
+        );
     }
 
     /**
