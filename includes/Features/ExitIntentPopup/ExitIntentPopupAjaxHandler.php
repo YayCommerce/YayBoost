@@ -17,7 +17,7 @@ class ExitIntentPopupAjaxHandler {
     /**
      * Nonce action name
      */
-    const NONCE_ACTION = 'yayboost_exit_intent_popup';
+    const NONCE_ACTION = 'yayboost_exit_intent';
 
     /**
      * Maximum requests per IP per time window
@@ -30,23 +30,24 @@ class ExitIntentPopupAjaxHandler {
     const RATE_LIMIT_WINDOW = 3600;
 
     /**
-     * Transient key prefix for one-time coupon (per client).
-     * Used for storage and for clearing on settings save.
-     */
-    const TRANSIENT_COUPON_PREFIX = 'yayboost_eip_coupon_';
-
-    /**
      * Transient key prefix for rate limit (per IP).
      * Used for storage and for clearing on settings save.
      */
     const TRANSIENT_RATE_LIMIT_PREFIX = 'yayboost_eip_rate_limit_';
 
     /**
-     * Tracker instance
+     * Feature instance
      *
      * @var ExitIntentPopupFeature
      */
     private $feature;
+
+    /**
+     * Tracker instance
+     *
+     * @var ExitIntentPopupTracker
+     */
+    private $tracker;
 
     /**
      * Constructor
@@ -55,6 +56,7 @@ class ExitIntentPopupAjaxHandler {
      */
     public function __construct( ExitIntentPopupFeature $feature ) {
         $this->feature = $feature;
+        $this->tracker = $feature->get_tracker();
     }
 
     /**
@@ -70,18 +72,21 @@ class ExitIntentPopupAjaxHandler {
         // AJAX: check cart status
         add_action( 'wp_ajax_yayboost_exit_intent_check_cart', [ $this, 'handle_check_cart' ] );
         add_action( 'wp_ajax_nopriv_yayboost_exit_intent_check_cart', [ $this, 'handle_check_cart' ] );
+
+        // AJAX: mark popup shown
+        add_action( 'wp_ajax_yayboost_exit_intent_shown', [ $this, 'handle_mark_shown' ] );
+        add_action( 'wp_ajax_nopriv_yayboost_exit_intent_shown', [ $this, 'handle_mark_shown' ] );
     }
 
     /**
-     * Clear all exit-intent coupon transients (e.g. when admin saves settings).
-     * Removes cached one-time coupon codes so new offer settings take effect.
+     * Clear rate limit transients (e.g. when admin saves settings).
      *
      * @return void
      */
     public static function clear_transients(): void {
         global $wpdb;
-        $prefix  = 'yayboost_eip_';
-        $escaped = $wpdb->esc_like( '_transient_' . $prefix . 'coupon_' ) . '%';
+        $prefix  = self::TRANSIENT_RATE_LIMIT_PREFIX;
+        $escaped = $wpdb->esc_like( '_transient_' . $prefix ) . '%';
         $wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->options WHERE option_name LIKE %s OR option_name LIKE %s", $escaped, $wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%' ) );
     }
 
@@ -91,7 +96,7 @@ class ExitIntentPopupAjaxHandler {
      * @return void
      */
     public function handle_check_cart(): void {
-        check_ajax_referer( 'yayboost_exit_intent', 'nonce' );
+        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
 
         if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
             wp_send_json_success( [ 'has_items' => false ] );
@@ -102,20 +107,40 @@ class ExitIntentPopupAjaxHandler {
     }
 
     /**
+     * Handle AJAX: mark popup as shown
+     *
+     * @return void
+     */
+    public function handle_mark_shown(): void {
+        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+
+        if ( ! $this->feature->is_enabled() ) {
+            wp_send_json_error( [ 'message' => __( 'Feature disabled.', 'yayboost' ) ], 400 );
+        }
+
+        if ( ! $this->check_rate_limit() ) {
+            wp_send_json_error( [ 'message' => __( 'Too many requests.', 'yayboost' ) ], 429 );
+        }
+
+        if ( ! $this->tracker->is_eligible() ) {
+            wp_send_json_error( [ 'message' => __( 'Not eligible.', 'yayboost' ) ], 400 );
+        }
+
+        $this->tracker->mark_shown();
+
+        wp_send_json_success( [ 'marked' => true ] );
+    }
+
+    /**
      * Handle AJAX: create a one-time coupon for exit intent.
      *
      * @return void
      */
     public function handle_create_coupon(): void {
-        check_ajax_referer( 'yayboost_exit_intent', 'nonce' );
-        // Check IP rate limit
+        check_ajax_referer( self::NONCE_ACTION, 'nonce' );
+
         if ( ! $this->check_rate_limit() ) {
-            wp_send_json_error(
-                [
-                    'message' => __( 'Rate limit exceeded.', 'yayboost' ),
-                ],
-                429
-            );
+            wp_send_json_error( [ 'message' => __( 'Too many requests.', 'yayboost' ) ], 429 );
         }
 
         if ( ! $this->feature->is_enabled() ) {
@@ -123,35 +148,69 @@ class ExitIntentPopupAjaxHandler {
         }
 
         if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-            wp_send_json_error( [ 'message' => __( 'WooCommerce cart unavailable.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'WooCommerce unavailable.', 'yayboost' ) ], 400 );
         }
 
-        $client_key = $this->get_client_key();
+        // Check if already has coupon (return existing if still valid)
+        $state = $this->tracker->get_state();
+        if ( ! empty( $state['coupon_code'] ) ) {
+            $existing_code = $state['coupon_code'];
 
-        if ( empty( $client_key ) ) {
-            wp_send_json_error( [ 'message' => __( 'Missing client key.', 'yayboost' ) ], 400 );
+            // Validate coupon is still usable (not expired, not used up)
+            if ( $this->is_coupon_valid( $existing_code ) ) {
+                $this->apply_coupon_to_cart( $existing_code );
+                wp_send_json_success(
+                    [
+                        'code'     => $existing_code,
+                        'existing' => true,
+                    ]
+                );
+                return;
+            }
+
+            // Coupon expired/invalid - clear it from state and create new one
+            $this->tracker->clear_coupon();
         }
 
-        $transient_key = self::TRANSIENT_COUPON_PREFIX . md5( $client_key );
-        $existing_code = get_transient( $transient_key );
-
-        if ( $existing_code ) {
-            $this->apply_coupon_to_cart( $existing_code );
-            wp_send_json_success( [ 'code' => $existing_code ] );
+        // User must have seen the popup to create coupon (shown_at must be set)
+        // This prevents direct AJAX calls without triggering the popup first
+        if ( empty( $state['shown_at'] ) ) {
+            wp_send_json_error( [ 'message' => __( 'Not eligible for offer.', 'yayboost' ) ], 400 );
         }
 
         $settings = $this->feature->get_settings();
         $offer    = $settings['offer'] ?? [];
 
         $type = $offer['type'] ?? 'percent';
-
-        // If no discount, do not create coupon
         if ( 'no_discount' === $type ) {
             wp_send_json_error( [ 'message' => __( 'No discount configured.', 'yayboost' ) ], 400 );
         }
+
+        $code = $this->create_coupon( $offer );
+        if ( ! $code ) {
+            wp_send_json_error( [ 'message' => __( 'Failed to create coupon.', 'yayboost' ) ], 500 );
+            return;
+        }
+
+        // Mark as used in tracker
+        $this->tracker->mark_used( $code );
+
+        $this->apply_coupon_to_cart( $code );
+
+        wp_send_json_success( [ 'code' => $code ] );
+    }
+
+    /**
+     * Create WooCommerce coupon
+     *
+     * @param array $offer Offer settings.
+     * @return string|null Coupon code or null on failure.
+     */
+    private function create_coupon( array $offer ): ?string {
+        $type   = $offer['type'] ?? 'percent';
         $value  = isset( $offer['value'] ) ? floatval( $offer['value'] ) : 0;
         $prefix = isset( $offer['prefix'] ) ? sanitize_text_field( $offer['prefix'] ) : 'GO-';
-        $hours  = isset( $offer['expires'] ) ? absint( $offer['expires'] ) : 1;
+        $hours  = isset( $offer['expires'] ) ? max( 1, absint( $offer['expires'] ) ) : 1;
 
         $coupon_type = 'percent';
         $amount      = $value;
@@ -167,21 +226,28 @@ class ExitIntentPopupAjaxHandler {
 
         $code = $this->generate_unique_coupon_code( $prefix );
 
-        $coupon = new \WC_Coupon();
-        $coupon->set_code( $code );
-        $coupon->set_discount_type( $coupon_type );
-        $coupon->set_amount( $amount );
-        $coupon->set_free_shipping( $is_free );
-        $coupon->set_usage_limit( 1 );
-        $coupon->set_usage_limit_per_user( 1 );
-        $coupon->set_date_expires( time() + ( $hours * HOUR_IN_SECONDS ) );
-        $coupon->save();
+        try {
+            $coupon = new \WC_Coupon();
+            $coupon->set_code( $code );
+            $coupon->set_discount_type( $coupon_type );
+            $coupon->set_amount( $amount );
+            $coupon->set_free_shipping( $is_free );
+            $coupon->set_usage_limit( 1 );
+            $coupon->set_usage_limit_per_user( 1 );
+            $coupon->set_date_expires( time() + ( $hours * HOUR_IN_SECONDS ) );
 
-        set_transient( $transient_key, $code, $hours * HOUR_IN_SECONDS );
+            $coupon_id = $coupon->save();
 
-        $this->apply_coupon_to_cart( $code );
+            if ( ! $coupon_id || is_wp_error( $coupon_id ) ) {
+                error_log( 'YayBoost: Failed to save exit intent coupon' );
+                return null;
+            }
 
-        wp_send_json_success( [ 'code' => $code ] );
+            return $code;
+        } catch ( \Exception $e ) {
+            error_log( 'YayBoost: Exit intent coupon exception: ' . $e->getMessage() );
+            return null;
+        }//end try
     }
 
     /**
@@ -202,18 +268,55 @@ class ExitIntentPopupAjaxHandler {
     }
 
     /**
-     * Generate unique coupon code with prefix.
+     * Check if a coupon is still valid (exists, not expired, has usage remaining).
      *
-     * @param string $prefix Prefix.
-     * @return string
+     * @param string $code Coupon code.
+     * @return bool True if coupon is valid and usable.
+     */
+    private function is_coupon_valid( string $code ): bool {
+        $coupon_id = wc_get_coupon_id_by_code( $code );
+        if ( ! $coupon_id ) {
+            return false;
+        }
+
+        try {
+            $coupon = new \WC_Coupon( $coupon_id );
+
+            // Check if coupon is valid using WooCommerce's built-in validation
+            $discounts = new \WC_Discounts( WC()->cart );
+            $valid     = $discounts->is_coupon_valid( $coupon );
+
+            // is_coupon_valid returns true or WP_Error
+            return true === $valid;
+        } catch ( \Exception $e ) {
+            return false;
+        }
+    }
+
+    /**
+     * Generate unique coupon code
+     *
+     * @param string $prefix Code prefix.
+     * @return string Unique coupon code.
      */
     private function generate_unique_coupon_code( string $prefix ): string {
-        $encoded = strtoupper( substr( md5( 'yayboost_eip_' . time() ), 0, 8 ) );
-        $code    = $prefix . $encoded;
-        if ( wc_get_coupon_id_by_code( $code ) ) {
-            $encoded = strtoupper( substr( md5( 'yayboost_eip_coupon_' . time() ), 0, 8 ) );
-            $code    = $prefix . $encoded;
+        $max_attempts = 10;
+
+        for ( $i = 0; $i < $max_attempts; $i++ ) {
+            // Use 8 chars for more entropy
+            $random = strtoupper( wp_generate_password( 8, false, false ) );
+            $code   = $prefix . $random;
+
+            if ( ! wc_get_coupon_id_by_code( $code ) ) {
+                return $code;
+            }
         }
+
+        // Fallback: add timestamp suffix for guaranteed uniqueness
+        $random = strtoupper( wp_generate_password( 6, false, false ) );
+        $code   = $prefix . $random . substr( time(), -4 );
+
+        error_log( "YayBoost: Used timestamp fallback for coupon: {$code}" );
 
         return $code;
     }
@@ -296,21 +399,5 @@ class ExitIntentPopupAjaxHandler {
      */
     private function is_local_ip( string $ip ): bool {
         return ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE );
-    }
-
-    /**
-     * Get client key.
-     *
-     * @return string Client key.
-     */
-    private function get_client_key(): string {
-        if ( is_user_logged_in() ) {
-            return 'user_' . get_current_user_id();
-        }
-
-        // For guests, use IP + User-Agent
-        $ip = $this->get_client_ip();
-        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-        return 'guest_' . md5( $ip . $ua );
     }
 }
