@@ -45,11 +45,10 @@
         },
 
         /**
-         * Update total price and button text
+         * Update total price
          */
         updateTotal: function () {
             let total = 0;
-            let selectedCount = 0;
 
             this.container.find('.yayboost-fbt__product').each(function () {
                 const $product = $(this);
@@ -58,31 +57,15 @@
                 if ($checkbox.is(':checked')) {
                     const price = parseFloat($product.data('price')) || 0;
                     total += price;
-                    selectedCount++;
                 }
             });
 
             const formattedTotal = this.formatPrice(total);
             this.container.find('.yayboost-fbt__total-price').html(formattedTotal);
 
-            // Update button text with count
-            const $button = this.container.find('.yayboost-fbt__add-btn');
-            if (selectedCount === 0) {
-                $button.prop('disabled', true);
-            } else {
-                $button.prop('disabled', false);
-                let buttonText;
-                if (selectedCount === 1) {
-                    buttonText = yayboostFBT.i18n.addToBasket || 'Add to basket';
-                } else {
-                    const template = yayboostFBT.i18n.addAllToBasket || 'Add all {count} to basket';
-                    buttonText = template.replace('{count}', selectedCount);
-                }
-                // Only update if not in loading/success state
-                if (!$button.hasClass('is-loading') && !$button.hasClass('fbt-add-btn--success')) {
-                    $button.text(buttonText);
-                }
-            }
+            // Disable button if nothing selected
+            const hasSelected = this.container.find('input[type="checkbox"]:checked').length > 0;
+            this.container.find('.yayboost-fbt__add-btn').prop('disabled', !hasSelected);
         },
 
         /**
@@ -116,6 +99,7 @@
             }
 
             // Set loading state
+            const originalText = $button.text();
             $button
                 .prop('disabled', true)
                 .addClass('is-loading')
@@ -147,33 +131,30 @@
                         $(document.body).trigger('wc_fragment_refresh');
                         $(document.body).trigger('added_to_cart');
 
-                        // Show success (green state, matches sample)
-                        $button
-                            .removeClass('is-loading')
-                            .addClass('fbt-add-btn--success')
-                            .text(yayboostFBT.i18n.added);
+                        // Show success
+                        $button.text(yayboostFBT.i18n.added);
 
-                        // Reset after delay (updateTotal will set correct button text)
+                        // Reset after delay
                         setTimeout(function () {
                             $button
                                 .prop('disabled', false)
-                                .removeClass('fbt-add-btn--success');
-                            self.updateTotal(); // Updates button text with current count
+                                .removeClass('is-loading')
+                                .text(originalText);
                         }, 2000);
                     } else {
                         self.showError(response.data.message || yayboostFBT.i18n.error);
                         $button
                             .prop('disabled', false)
-                            .removeClass('is-loading');
-                        self.updateTotal(); // Restore button text
+                            .removeClass('is-loading')
+                            .text(originalText);
                     }
                 },
                 error: function () {
                     self.showError(yayboostFBT.i18n.error);
                     $button
                         .prop('disabled', false)
-                        .removeClass('is-loading');
-                    self.updateTotal(); // Restore button text
+                        .removeClass('is-loading')
+                        .text(originalText);
                 },
             });
         },

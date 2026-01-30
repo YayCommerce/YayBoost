@@ -101,15 +101,14 @@ class FBTRenderer {
         }
 
         // Get from database
-        $threshold      = $this->settings['min_order_threshold'] ?? 5;
-        $max_products   = $this->settings['max_products'] ?? 4;
+        $threshold     = $this->settings['min_order_threshold'] ?? 5;
+        $max_products  = $this->settings['max_products'] ?? 4;
         $product_orders = FBTProductStatsTable::get_order_count( $product_id );
 
         $product_ids = FBTRelationshipTable::get_related_products(
             $product_id,
             $threshold,
-            $max_products + 5,
-            // Get extra in case some are filtered out
+            $max_products + 5, // Get extra in case some are filtered out
             $product_orders
         );
 
@@ -212,16 +211,14 @@ class FBTRenderer {
             'yayboost-fbt',
             'yayboostFBT',
             [
-                'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
-                'nonce'          => wp_create_nonce( 'yayboost_fbt_add_to_cart' ),
+                'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+                'nonce'         => wp_create_nonce( 'yayboost_fbt_add_to_cart' ),
                 'currencySymbol' => get_woocommerce_currency_symbol(),
-                'i18n'           => [
-                    'adding'         => __( 'Adding...', 'yayboost' ),
-                    'added'          => __( 'Added!', 'yayboost' ),
-                    'viewCart'       => __( 'View Cart', 'yayboost' ),
-                    'error'          => __( 'Error adding to cart', 'yayboost' ),
-                    'addToBasket'    => __( 'Add to basket', 'yayboost' ),
-                    'addAllToBasket' => __( 'Add all {count} to basket', 'yayboost' ),
+                'i18n'          => [
+                    'adding'      => __( 'Adding...', 'yayboost' ),
+                    'added'       => __( 'Added!', 'yayboost' ),
+                    'viewCart'    => __( 'View Cart', 'yayboost' ),
+                    'error'       => __( 'Error adding to cart', 'yayboost' ),
                 ],
             ]
         );
