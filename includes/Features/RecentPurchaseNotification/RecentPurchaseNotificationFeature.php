@@ -96,7 +96,7 @@ class RecentPurchaseNotificationFeature extends AbstractFeature {
                 ],
                 'timing'        => [
                     'delay'    => 10,
-                    'interval' => 10,
+                    'interval_between' => 10,
                 ],
                 'display'       => [
                     'customer_name'   => 'full-name',

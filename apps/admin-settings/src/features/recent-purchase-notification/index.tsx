@@ -45,7 +45,7 @@ const settingsSchema = z.object({
   }),
   timing: z.object({
     delay: z.number().min(1),
-    interval: z.number().min(1),
+    interval_between: z.number().min(1),
   }),
   display: z.object({
     customer_name: z.enum([
@@ -337,17 +337,17 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
           />
           <FormField
             control={form.control}
-            name="timing.interval"
+            name="timing.interval_between"
             render={({ field }) => (
               <FormItem>
-                <Label htmlFor="interval">
+                <Label htmlFor="interval_between">
                   {__('Interval between notifications (seconds)', 'yayboost')}
                 </Label>
                 <FormControl>
                   <div className="w-fit">
                     <InputNumber
                       {...field}
-                      id="interval"
+                      id="interval_between"
                       min={1}
                       onValueChange={(value) => field.onChange(value || 1)}
                       value={parseInt(field.value?.toString() ?? '1', 10)}
