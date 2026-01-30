@@ -70,7 +70,7 @@ const layoutOptions = [
 // SVG checkmark for circle checkbox (matches frontend fbt-products.php)
 const FBT_CHECK_ICON = (
   <svg
-    className="fbt-checkbox__icon w-[10px] h-[10px] text-white"
+    className="fbt-checkbox__icon h-[10px] w-[10px] text-white"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -115,40 +115,38 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
       : __('Add all', 'yayboost') + ` ${selectedCount} ` + __('to basket', 'yayboost');
 
   return (
-    <section className="yayboost-fbt fbt-section font-sans py-8 border-t border-gray-200 max-w-full">
-      <h2 className="yayboost-fbt__title fbt-section__title text-[15px] font-semibold text-black mb-6 tracking-tight">
+    <section className="yayboost-fbt fbt-section max-w-full border-t border-gray-200 py-8 font-sans">
+      <h2 className="yayboost-fbt__title fbt-section__title mb-6 text-[15px] font-semibold tracking-tight text-black">
         {settings.section_title || __('Frequently Bought Together', 'yayboost')}
       </h2>
 
       {/* Product images row + summary (matches fbt-products.php) */}
-      <div className="fbt-products yayboost-fbt__products flex items-center gap-3 mb-6">
+      <div className="fbt-products yayboost-fbt__products mb-6 flex items-center gap-3">
         {displayProducts.map((product, index) => (
           <span key={product.id} className="flex items-center gap-3">
-            {index > 0 && (
-              <span className="fbt-plus text-gray-400 text-lg font-light">
-                +
-              </span>
-            )}
-            <div className="fbt-product-image w-[100px] h-[100px] bg-gray-100 rounded-lg overflow-hidden shrink-0">
+            {index > 0 && <span className="fbt-plus text-lg font-light text-gray-400">+</span>}
+            <div className="fbt-product-image h-[100px] w-[100px] shrink-0 overflow-hidden rounded-lg bg-gray-100">
               <img
                 src={window.yayboostData?.urls?.wcPlaceholderImage}
                 alt={product.name}
-                className="w-full h-full object-contain"
+                className="h-full w-full object-contain"
               />
             </div>
           </span>
         ))}
         <div className="fbt-summary ml-auto text-right">
-          <p className="fbt-summary__total text-[13px] text-gray-600 mb-1">
+          <p className="fbt-summary__total mb-1 text-[13px] text-gray-600">
             {__('Total price', 'yayboost')}
           </p>
-          <p className="fbt-summary__price yayboost-fbt__total-price text-[22px] font-semibold text-black mb-4 tracking-tight">
+          <p className="fbt-summary__price yayboost-fbt__total-price mb-4 text-[22px] font-semibold tracking-tight text-black">
             {formatPrice(totalPrice)}
           </p>
           <button
             type="button"
-            className={`yayboost-fbt__add-btn fbt-add-btn inline-flex items-center justify-center h-11 px-6 text-sm font-medium text-white bg-black border-none rounded-lg cursor-pointer transition-opacity ${
-              selectedCount === 0 ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-85 active:opacity-70'
+            className={`yayboost-fbt__add-btn fbt-add-btn inline-flex h-11 cursor-pointer items-center justify-center rounded-lg border-none bg-black px-6 text-sm font-medium text-white transition-opacity ${
+              selectedCount === 0
+                ? 'cursor-not-allowed opacity-40'
+                : 'hover:opacity-85 active:opacity-70'
             }`}
             disabled={selectedCount === 0}
           >
@@ -166,32 +164,30 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
             <label
               key={product.id}
               htmlFor={`fbt-preview-${product.id}`}
-              className={`yayboost-fbt__product fbt-item flex items-start gap-3 py-4 border-b border-gray-200 cursor-pointer transition-colors hover:bg-gray-100 hover:mx-[-16px] hover:px-4 ${
+              className={`yayboost-fbt__product fbt-item flex cursor-pointer items-start gap-3 border-b border-gray-200 px-2.5 py-4 transition-colors hover:bg-[#f5f5f5] ${
                 index === 0 ? 'border-t border-gray-200' : ''
               }`}
             >
-              <div className="fbt-checkbox relative w-5 h-5 shrink-0 mt-px">
+              <div className="fbt-checkbox relative mt-px h-5 w-5 shrink-0">
                 <input
                   type="checkbox"
                   id={`fbt-preview-${product.id}`}
                   checked={isSelected}
                   onChange={() => toggleProduct(product.id)}
-                  className="absolute w-full h-full opacity-0 cursor-pointer m-0"
+                  className="absolute m-0 h-full w-full cursor-pointer opacity-0"
                 />
                 <span
-                  className={`fbt-checkbox__box w-5 h-5 border-[1.5px] rounded-full flex items-center justify-center box-border transition-all ${
-                    isSelected
-                      ? 'bg-black border-black'
-                      : 'border-gray-400'
+                  className={`fbt-checkbox__box box-border flex h-5 w-5 items-center justify-center rounded-full border-[1.5px] transition-all ${
+                    isSelected ? 'border-black bg-black' : 'border-gray-400'
                   }`}
                 >
                   {isSelected && FBT_CHECK_ICON}
                 </span>
               </div>
-              <div className="fbt-item__content flex-1 min-w-0">
-                <p className="fbt-item__name text-sm font-normal text-black mb-1 leading-[1.4]">
+              <div className="fbt-item__content min-w-0 flex-1">
+                <p className="fbt-item__name mb-1 text-sm leading-[1.4] font-normal text-black">
                   {isFirst && (
-                    <span className="fbt-item__badge text-xs font-medium text-gray-600 mr-1.5">
+                    <span className="fbt-item__badge mr-1.5 text-xs font-medium text-gray-600">
                       {__('This item:', 'yayboost')}
                     </span>
                   )}
