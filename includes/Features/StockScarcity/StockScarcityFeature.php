@@ -90,8 +90,7 @@ class StockScarcityFeature extends AbstractFeature {
      *
      * @return void
      */
-    public function init(): void
-    {
+    public function init(): void {
         $this->position_service = new DisplayPositionService();
         $this->register_display_hooks();
     }
@@ -101,19 +100,18 @@ class StockScarcityFeature extends AbstractFeature {
      *
      * @return void
      */
-    protected function register_display_hooks(): void
-    {
-        if (! $this->is_enabled()) {
+    protected function register_display_hooks(): void {
+        if ( ! $this->is_enabled()) {
             return;
         }
 
-        $show_on = $this->get('show_on', []);
+        $show_on = $this->get( 'show_on', [] );
 
-        if (in_array('product_page', $show_on, true)) {
+        if (in_array( 'product_page', $show_on, true )) {
             $this->register_product_page_hook();
         }
 
-        if (in_array('shop_category_pages', $show_on, true)) {
+        if (in_array( 'shop_category_pages', $show_on, true )) {
             $this->register_shop_page_hook();
         }
     }
@@ -123,14 +121,13 @@ class StockScarcityFeature extends AbstractFeature {
      *
      * @return void
      */
-    protected function register_product_page_hook(): void
-    {
-        $position = $this->get('position_on_product_page');
+    protected function register_product_page_hook(): void {
+        $position = $this->get( 'position_on_product_page' );
 
         $this->position_service->register_hook(
             DisplayPositionService::PAGE_PRODUCT,
             $position,
-            [$this, 'render_stock_scarcity_template']
+            [ $this, 'render_stock_scarcity_template' ]
         );
     }
 
@@ -141,16 +138,16 @@ class StockScarcityFeature extends AbstractFeature {
      *
      * @return void
      */
-    protected function register_shop_page_hook(): void
-    {
-        $position = $this->get('position_on_product_page');
+    protected function register_shop_page_hook(): void {
+        $position = $this->get( 'position_on_product_page' );
 
         $this->position_service->register_mapped_hook(
             $position,
             DisplayPositionService::PAGE_PRODUCT,
             DisplayPositionService::PAGE_SHOP,
-            [$this, 'render_stock_scarcity_template'],
-            'after_shop_loop_item' // fallback
+            [ $this, 'render_stock_scarcity_template' ],
+            'after_shop_loop_item'
+            // fallback
         );
     }
 
@@ -159,8 +156,7 @@ class StockScarcityFeature extends AbstractFeature {
      *
      * @return array Options array with value/label pairs.
      */
-    public function get_product_position_options(): array
-    {
+    public function get_product_position_options(): array {
         return $this->position_service->get_options_for_select(
             DisplayPositionService::PAGE_PRODUCT,
             $this->product_positions
@@ -172,8 +168,7 @@ class StockScarcityFeature extends AbstractFeature {
      *
      * @return array Options array with value/label pairs.
      */
-    public function get_shop_position_options(): array
-    {
+    public function get_shop_position_options(): array {
         return $this->position_service->get_options_for_select(
             DisplayPositionService::PAGE_SHOP,
             $this->shop_positions
@@ -183,12 +178,11 @@ class StockScarcityFeature extends AbstractFeature {
     /**
      * Check if stock scarcity should be displayed for current product
      *
-     * @param \WC_Product|null $product Product to check
+     * @param \WC_Product|null $product Product to check.
      * @return bool
      */
-    protected function should_display_stock_scarcity($product): bool
-    {
-        if (empty($product)) {
+    protected function should_display_stock_scarcity($product): bool {
+        if (empty( $product )) {
             return false;
         }
 
@@ -197,8 +191,9 @@ class StockScarcityFeature extends AbstractFeature {
         $apply_to = $settings['apply_to'] ?? 'all_products';
 
         $exclude_products = $settings['exclude_products'] ?? [];
-        if (!empty($exclude_products) && in_array((string) $product->get_id(), $exclude_products)) {
-            return false; // Product is in exclude list
+        if ( ! empty( $exclude_products ) && in_array( (string) $product->get_id(), $exclude_products )) {
+            return false;
+            // Product is in exclude list
         }
 
         switch ($apply_to) {
@@ -207,47 +202,46 @@ class StockScarcityFeature extends AbstractFeature {
             case 'specific_categories':
                 $selected_categories = $settings['specific_categories'] ?? [];
 
-                if (empty($selected_categories)) {
+                if (empty( $selected_categories )) {
                     return false;
                 }
 
-                $product_category_ids = wp_get_post_terms($product->get_id(), 'product_cat', ['fields' => 'ids']);
+                $product_category_ids = wp_get_post_terms( $product->get_id(), 'product_cat', [ 'fields' => 'ids' ] );
 
-                if (empty($product_category_ids) || is_wp_error($product_category_ids)) {
+                if (empty( $product_category_ids ) || is_wp_error( $product_category_ids )) {
                     return false;
                 }
 
                 // Build list of all category IDs to match (selected + all their descendants)
                 $categories_to_match = [];
                 foreach ($selected_categories as $category_slug) {
-                    $term = get_term_by('slug', $category_slug, 'product_cat');
+                    $term = get_term_by( 'slug', $category_slug, 'product_cat' );
                     if ($term) {
                         $categories_to_match[] = $term->term_id;
                         // Add all children (descendants) of this category
-                        $children = get_term_children($term->term_id, 'product_cat');
-                        if (!empty($children) && !is_wp_error($children)) {
-                            $categories_to_match = array_merge($categories_to_match, $children);
+                        $children = get_term_children( $term->term_id, 'product_cat' );
+                        if ( ! empty( $children ) && ! is_wp_error( $children )) {
+                            $categories_to_match = array_merge( $categories_to_match, $children );
                         }
                     }
                 }
 
-                return !empty(array_intersect($product_category_ids, $categories_to_match));
+                return ! empty( array_intersect( $product_category_ids, $categories_to_match ) );
             case 'specific_products':
                 $selected_products = $settings['specific_products'] ?? [];
 
-                if (empty($selected_products)) {
+                if (empty( $selected_products )) {
                     return false;
                 }
 
-                return in_array((string) $product->get_id(), $selected_products);
+                return in_array( (string) $product->get_id(), $selected_products );
 
             default:
                 return false;
-        }
+        }//end switch
     }
 
-    public function render_stock_scarcity_template($current_product = null): void
-    {
+    public function render_stock_scarcity_template($current_product = null): void {
 
         if ( ! $this->is_enabled() ) {
             return;
@@ -255,28 +249,28 @@ class StockScarcityFeature extends AbstractFeature {
 
         global $product;
 
-        if (empty($current_product) && !empty($product)) {
+        if (empty( $current_product ) && ! empty( $product )) {
             $current_product = $product;
         }
 
-        if (empty($current_product)) {
+        if (empty( $current_product )) {
             return;
         }
 
         // Check if should display for this product
-        if (!$this->should_display_stock_scarcity($current_product)) {
+        if ( ! $this->should_display_stock_scarcity( $current_product )) {
             return;
         }
 
-        $args = array(
-            'product' => $current_product,
-            'settings' => $this->get_settings(),
+        $args = [
+            'product'          => $current_product,
+            'settings'         => $this->get_settings(),
             'default_settings' => $this->get_default_settings(),
-        );
+        ];
 
         $path = YAYBOOST_PATH . 'includes/Features/StockScarcity/templates/stock-scarcity.php';
 
-        if (file_exists($path)) {
+        if (file_exists( $path )) {
             // Track impression
             $this->track_impression( $current_product );
 
@@ -319,25 +313,25 @@ class StockScarcityFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled' => true,
-                'low_stock_threshold' => 10,
-                'show_alert_text' => true,
-                'show_progress_bar' => true,
-                'default_message' => '🔥 Only {stock} left in stock!',
-                'urgent_threshold' => 5,
-                'urgent_message' => '⚠️ Hurry! Only {stock} left!',
-                'fixed_stock_number' => [
+                'enabled'                  => true,
+                'low_stock_threshold'      => 10,
+                'show_alert_text'          => true,
+                'show_progress_bar'        => true,
+                'default_message'          => '🔥 Only {stock} left in stock!',
+                'urgent_threshold'         => 5,
+                'urgent_message'           => '⚠️ Hurry! Only {stock} left!',
+                'fixed_stock_number'       => [
                     'is_enabled' => false,
-                    'number' => 50,
+                    'number'     => 50,
                 ],
-                'fill_color' => '#E53935',
-                'background_color' => '#EEEEEE',
+                'fill_color'               => '#E53935',
+                'background_color'         => '#EEEEEE',
                 'position_on_product_page' => 'below_product_title',
-                'show_on' => ['product_page', 'shop_category_pages'],
-                'apply_to' => 'all_products',
-                'specific_categories' => [],
-                'specific_products' => [],
-                'exclude_products' => [],
+                'show_on'                  => [ 'product_page', 'shop_category_pages' ],
+                'apply_to'                 => 'all_products',
+                'specific_categories'      => [],
+                'specific_products'        => [],
+                'exclude_products'         => [],
             ]
         );
     }
