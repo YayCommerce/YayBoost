@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\ExitIntentPopup;
 
+use YayBoost\Utils\CodeGenerator;
+
 /**
  * AJAX endpoint handlers for exit intent popup
  */
@@ -34,6 +36,13 @@ class ExitIntentPopupAjaxHandler {
      * Used for storage and for clearing on settings save.
      */
     const TRANSIENT_RATE_LIMIT_PREFIX = 'yayboost_eip_rate_limit_';
+
+    /**
+     * Salt for hash generation (keep codes unique to this feature)
+     *
+     * @var string
+     */
+    private const HASH_SALT = 'yayboost_eip';
 
     /**
      * Feature instance
@@ -303,23 +312,18 @@ class ExitIntentPopupAjaxHandler {
      * @return string Unique coupon code.
      */
     private function generate_unique_coupon_code( string $prefix ): string {
-        $max_attempts = 10;
 
-        for ( $i = 0; $i < $max_attempts; $i++ ) {
-            // Use 8 chars for more entropy
-            $random = strtoupper( wp_generate_password( 8, false, false ) );
-            $code   = $prefix . $random;
+        $generator = new CodeGenerator( self::HASH_SALT, 8 );
+        $encoded   = $generator->encode( time() );
+        $code      = $prefix . $encoded;
 
-            if ( ! wc_get_coupon_id_by_code( $code ) ) {
-                return $code;
-            }
+        if ( ! wc_get_coupon_id_by_code( $code ) ) {
+            return $code;
         }
 
         // Fallback: add timestamp suffix for guaranteed uniqueness
-        $random = strtoupper( wp_generate_password( 6, false, false ) );
-        $code   = $prefix . $random . substr( time(), -4 );
-
-        error_log( "YayBoost: Used timestamp fallback for coupon: {$code}" );
+        $encoded = $generator->encode( time(), time() );
+        $code    = $prefix . $encoded;
 
         return $code;
     }
