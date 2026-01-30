@@ -180,7 +180,7 @@ class ExitIntentPopupTracker {
         $state['converted_at'] = time();
         $state['order_id']     = absint( $order_id );
 
-        // Extend expiry to 1 year for converted state
+        // Extend expiry to cooldown period for converted state
         $state['expires_at'] = time() + ( $this->get_cooldown_seconds() * DAY_IN_SECONDS );
 
         $this->set_state( $state );

@@ -182,6 +182,8 @@ class ExitIntentPopupAjaxHandler {
         $offer    = $settings['offer'] ?? [];
 
         $type = $offer['type'] ?? 'percent';
+
+        // If no discount, do not create coupon
         if ( 'no_discount' === $type ) {
             wp_send_json_error( [ 'message' => __( 'No discount configured.', 'yayboost' ) ], 400 );
         }
@@ -295,6 +297,7 @@ class ExitIntentPopupAjaxHandler {
 
     /**
      * Generate unique coupon code
+     * TODO: replace with other function later
      *
      * @param string $prefix Code prefix.
      * @return string Unique coupon code.

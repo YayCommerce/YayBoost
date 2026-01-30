@@ -194,11 +194,12 @@ class ExitIntentPopupFeature extends AbstractFeature {
      * @return array Localization data array.
      */
     public function get_localization_data(): array {
-        $settings = $this->get_settings();
-        $offer    = $settings['offer'] ?? [];
-        $content  = $settings['content'] ?? [];
-        $trigger  = $settings['trigger'] ?? [];
-        $behavior = $settings['behavior'] ?? 'checkout_page';
+        $settings         = $this->get_settings();
+        $default_settings = $this->get_default_settings();
+        $offer            = $settings['offer'] ?? $default_settings['offer'];
+        $content          = $settings['content'] ?? $default_settings['content'];
+        $trigger          = $settings['trigger'] ?? $default_settings['trigger'];
+        $behavior         = $settings['behavior'] ?? $default_settings['behavior'];
 
         $checkout_url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : '';
         $cart_url     = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : '';
@@ -209,22 +210,22 @@ class ExitIntentPopupFeature extends AbstractFeature {
 
         return [
             'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
-            'nonce'       => wp_create_nonce( 'yayboost_exit_intent' ),
+            'nonce'       => wp_create_nonce( ExitIntentPopupAjaxHandler::NONCE_ACTION ),
             'isEligible'  => $is_eligible,
             'trigger'     => [
-                'leaves_viewport'     => ! empty( $trigger['leaves_viewport'] ),
-                'back_button_pressed' => ! empty( $trigger['back_button_pressed'] ),
+                'leavesViewport'    => ! empty( $trigger['leaves_viewport'] ),
+                'backButtonPressed' => ! empty( $trigger['back_button_pressed'] ),
             ],
             'content'     => [
-                'headline'    => $content['headline'] ?? '',
-                'message'     => $content['message'] ?? '',
-                'button_text' => $content['button_text'] ?? '',
+                'headline'   => $content['headline'] ?? $default_settings['content']['headline'],
+                'message'    => $content['message'] ?? $default_settings['content']['message'],
+                'buttonText' => $content['button_text'] ?? $default_settings['content']['button_text'],
             ],
             'offer'       => [
-                'type'    => $offer['type'] ?? 'percent',
-                'value'   => $offer['value'] ?? 20,
-                'prefix'  => $offer['prefix'] ?? 'GO-',
-                'expires' => $offer['expires'] ?? 1,
+                'type'    => $offer['type'] ?? $default_settings['offer']['type'],
+                'value'   => $offer['value'] ?? $default_settings['offer']['value'],
+                'prefix'  => $offer['prefix'] ?? $default_settings['offer']['prefix'],
+                'expires' => $offer['expires'] ?? $default_settings['offer']['expires'],
             ],
             'behavior'    => $behavior,
             'checkoutUrl' => $checkout_url,
@@ -302,12 +303,19 @@ class ExitIntentPopupFeature extends AbstractFeature {
     public function update_settings( array $settings ): void {
         $current = $this->get_settings();
 
+        // Check if changing the coupon relavant settings
+
+        $is_different_offer_type    = ($current['offer']['type'] ?? '') !== ($settings['offer']['type'] ?? '');
+        $is_different_offer_value   = ($current['offer']['value'] ?? '') !== ($settings['offer']['value'] ?? '');
+        $is_different_offer_prefix  = ($current['offer']['prefix'] ?? '') !== ($settings['offer']['prefix'] ?? '');
+        $is_different_offer_expires = ($current['offer']['expires'] ?? '') !== ($settings['offer']['expires'] ?? '');
+
         // Check if settings actually changed (excluding version)
         $current_without_version  = $current;
         $settings_without_version = $settings;
         unset( $current_without_version['version'], $settings_without_version['version'] );
 
-        $changed = $current_without_version !== $settings_without_version;
+        $changed = $is_different_offer_type || $is_different_offer_value || $is_different_offer_prefix || $is_different_offer_expires;
 
         if ( $changed ) {
             // Bump version to invalidate all cached states

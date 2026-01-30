@@ -1,6 +1,5 @@
 (function ($) {
   "use strict";
-
   // Prevent duplicate initialization
   if (window.yayboostExitIntentPopupInitialized) {
     return;
@@ -317,7 +316,7 @@
      */
     function initializeEventListeners() {
       // Exit intent detection: Mouse leaves viewport
-      if (config.trigger.leaves_viewport) {
+      if (config.trigger.leavesViewport) {
         // Remove existing listeners if any
         if (eventHandlers.mousemove) {
           document.removeEventListener("mousemove", eventHandlers.mousemove);
@@ -361,7 +360,7 @@
     // Back button detection - always set up listener, but check cart state
     let initBackMarker = null;
     let backMarkerInitialized = false;
-    if (config.trigger.back_button_pressed) {
+    if (config.trigger.backButtonPressed) {
       const markerState = { yayboostExitIntent: true };
 
       function mergeState(state, extra) {
