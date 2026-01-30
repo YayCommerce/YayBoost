@@ -15,6 +15,7 @@ log.xml
 **/pnpm-lock.yaml
 
 .claude/
+.cursor/
 .opencode/
 docs/
 plans/
