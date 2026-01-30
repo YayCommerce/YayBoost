@@ -3,9 +3,10 @@
  * FBT Products Template
  *
  * Displays frequently bought together products on single product page.
+ * Structure matches sample: product images row + summary, then list with checkboxes.
  *
- * @var array $products   Array of WC_Product objects
- * @var int   $product_id Current product ID
+ * @var array $products   Array of WC_Product objects (related products)
+ * @var int   $product_id Current product ID (main product on page)
  * @var array $settings   Feature settings
  *
  * @package YayBoost
@@ -13,122 +14,76 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$layout = $settings['layout'] ?? 'grid';
-$title  = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
+$section_title    = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
+$main_product     = $product_id ? wc_get_product( $product_id ) : null;
+$display_products = $main_product ? array_merge( [ $main_product ], $products ) : $products;
 
-// Get current product and combine with FBT products (current product first)
-$current_product = wc_get_product( $product_id );
-$fbt_products    = array_filter( $products, fn( $p ) => $p->get_id() !== $product_id );
-$all_products    = $current_product ? array_merge( [ $current_product ], $fbt_products ) : $fbt_products;
+// SVG checkmark for checkbox (matches sample)
+$svg_check = '<svg class="fbt-checkbox__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 ?>
 
-<div class="yayboost-fbt" data-product-id="<?php echo esc_attr( $product_id ); ?>">
-    <h2 class="yayboost-fbt__title"><?php echo esc_html( $title ); ?></h2>
+<section class="yayboost-fbt fbt-section" data-product-id="<?php echo esc_attr( $product_id ); ?>">
+    <h2 class="yayboost-fbt__title fbt-section__title"><?php echo esc_html( $section_title ); ?></h2>
 
-    <!-- Top Section: Product Images with Summary -->
-    <div class="yayboost-fbt__images-section">
-        <button type="button" class="yayboost-fbt__info-icon" aria-label="<?php esc_attr_e( 'Information', 'yayboost' ); ?>">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm1 12H7V7h2v5zm0-6H7V4h2v2z" fill="currentColor"/>
-            </svg>
-        </button>
-        
-        <div class="yayboost-fbt__images-scroll">
-            <?php
-            $product_count = count( $all_products );
-            $index         = 0;
-            foreach ( $all_products as $product ) :
-                $fbt_product_id = $product->get_id();
-                $product_image  = $product->get_image( 'woocommerce_thumbnail' );
-                $product_link   = $product->get_permalink();
-                ?>
-                <div class="yayboost-fbt__image-item">
-                    <a href="<?php echo esc_url( $product_link ); ?>">
-                        <?php echo wp_kses_post( $product_image ); ?>
-                    </a>
-                </div>
-                <?php if ( $index < $product_count - 1 ) : ?>
-                    <span class="yayboost-fbt__image-separator">+</span>
-                <?php endif; ?>
+    <!-- Product images row (scrollable) + summary (fixed outside scroll) -->
+    <div class="fbt-products yayboost-fbt__products">
+        <div class="fbt-products-scroll">
+            <?php foreach ( $display_products as $index => $product ) : ?>
                 <?php
-                ++$index;
-            endforeach;
-            ?>
+                $pid       = $product->get_id();
+                $name      = $product->get_name();
+                $img       = $product->get_image( 'woocommerce_thumbnail' );
+                $permalink = $product->get_permalink();
+                ?>
+                <?php if ( $index > 0 ) : ?>
+                    <span class="fbt-plus">+</span>
+                <?php endif; ?>
+                <div class="fbt-product-image">
+                    <a href="<?php echo esc_url( $permalink ); ?>"><?php echo wp_kses_post( $img ); ?></a>
+                </div>
+            <?php endforeach; ?>
         </div>
-
-        <div class="yayboost-fbt__summary">
-            <div class="yayboost-fbt__total">
-                <span class="yayboost-fbt__total-label"><?php esc_html_e( 'Total price:', 'yayboost' ); ?></span>
-                <span class="yayboost-fbt__total-price"></span>
-            </div>
-            <button type="button" class="yayboost-fbt__add-btn yayboost-fbt__add-btn--summary button alt wp-block-button__link wp-element-button">
-                <?php esc_html_e( 'Add all to Basket', 'yayboost' ); ?>
+        <div class="fbt-summary">
+            <p class="fbt-summary__total"><?php esc_html_e( 'Total price', 'yayboost' ); ?></p>
+            <p class="fbt-summary__price yayboost-fbt__total-price"></p>
+            <button type="button" class="yayboost-fbt__add-btn fbt-add-btn">
+                <?php esc_html_e( 'Add all to basket', 'yayboost' ); ?>
             </button>
         </div>
     </div>
 
-    <!-- Middle Section: Information Message -->
-    <div class="yayboost-fbt__message">
-        <svg class="yayboost-fbt__message-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.1"/>
-            <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm1 12H7V7h2v5zm0-6H7V4h2v2z" fill="currentColor"/>
-        </svg>
-        <span class="yayboost-fbt__message-text">
-            <?php esc_html_e( 'These items are dispatched from and sold by different sellers.', 'yayboost' ); ?>
-        </span>
-        <a href="#" class="yayboost-fbt__message-link"><?php esc_html_e( 'Show details', 'yayboost' ); ?></a>
-    </div>
-
-    <!-- Bottom Section: Product List with Checkboxes -->
-    <div class="yayboost-fbt__products-list">
-        <?php
-        foreach ( $all_products as $product ) :
-            $fbt_product_id = $product->get_id();
-            $product_name   = $product->get_name();
-            $product_price  = $product->get_price();
-            $product_link   = $product->get_permalink();
-            $is_current     = ( $fbt_product_id == $product_id );
-            $product_class  = 'yayboost-fbt__product';
-            if ( $is_current ) {
-                $product_class .= ' yayboost-fbt__product--current';
-            }
+    <!-- Product list with checkboxes -->
+    <div class="fbt-list">
+        <?php foreach ( $display_products as $index => $product ) : ?>
+            <?php
+            $pid       = $product->get_id();
+            $name      = $product->get_name();
+            $price     = (float) $product->get_price();
+            $permalink = $product->get_permalink();
+            $is_first  = ( $index === 0 );
             ?>
-            <label for="fbt-product-<?php echo esc_attr( $fbt_product_id ); ?>" class="<?php echo esc_attr( $product_class ); ?>" data-product-id="<?php echo esc_attr( $fbt_product_id ); ?>" data-price="<?php echo esc_attr( $product_price ); ?>">
-                <div class="yayboost-fbt__checkbox">
+            <label for="fbt-product-<?php echo esc_attr( $pid ); ?>" class="yayboost-fbt__product fbt-item" data-product-id="<?php echo esc_attr( $pid ); ?>" data-price="<?php echo esc_attr( $price ); ?>">
+                <div class="fbt-checkbox">
                     <input
                         type="checkbox"
                         name="fbt_products[]"
-                        value="<?php echo esc_attr( $fbt_product_id ); ?>"
-                        id="fbt-product-<?php echo esc_attr( $fbt_product_id ); ?>"
+                        value="<?php echo esc_attr( $pid ); ?>"
+                        id="fbt-product-<?php echo esc_attr( $pid ); ?>"
+                        data-price="<?php echo esc_attr( $price ); ?>"
                         checked
                     >
+                    <span class="fbt-checkbox__box"><?php echo $svg_check; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
                 </div>
-
-                <div class="yayboost-fbt__info">
-                    <h3 class="yayboost-fbt__name">
-                        <?php if ( $is_current ) : ?>
-                            <span class="yayboost-fbt__current-label"><?php esc_html_e( 'This item:', 'yayboost' ); ?></span>
+                <div class="fbt-item__content">
+                    <p class="fbt-item__name">
+                        <?php if ( $is_first ) : ?>
+                            <span class="fbt-item__badge"><?php esc_html_e( 'This item:', 'yayboost' ); ?></span>
                         <?php endif; ?>
-                        <a href="<?php echo esc_url( $product_link ); ?>">
-                            <?php echo esc_html( $product_name ); ?>
-                        </a>
-                    </h3>
-                    <span class="yayboost-fbt__price">
-                        <?php echo wp_kses_post( $product->get_price_html() ); ?>
-                    </span>
+                        <a href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( $name ); ?></a>
+                    </p>
+                    <span class="fbt-item__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
                 </div>
             </label>
         <?php endforeach; ?>
     </div>
-
-    <!-- Footer: Total Price and Add to Cart Button -->
-    <div class="yayboost-fbt__footer">
-        <div class="yayboost-fbt__total">
-            <span class="yayboost-fbt__total-label"><?php esc_html_e( 'Total:', 'yayboost' ); ?></span>
-            <span class="yayboost-fbt__total-price"></span>
-        </div>
-        <button type="button" class="yayboost-fbt__add-btn button alt wp-block-button__link wp-element-button">
-            <?php esc_html_e( 'Add Selected to Cart', 'yayboost' ); ?>
-        </button>
-    </div>
-</div>
+</section>

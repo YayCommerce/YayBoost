@@ -216,10 +216,12 @@ class FBTRenderer {
                 'nonce'          => wp_create_nonce( 'yayboost_fbt_add_to_cart' ),
                 'currencySymbol' => get_woocommerce_currency_symbol(),
                 'i18n'           => [
-                    'adding'   => __( 'Adding...', 'yayboost' ),
-                    'added'    => __( 'Added!', 'yayboost' ),
-                    'viewCart' => __( 'View Cart', 'yayboost' ),
-                    'error'    => __( 'Error adding to cart', 'yayboost' ),
+                    'adding'         => __( 'Adding...', 'yayboost' ),
+                    'added'          => __( 'Added!', 'yayboost' ),
+                    'viewCart'       => __( 'View Cart', 'yayboost' ),
+                    'error'          => __( 'Error adding to cart', 'yayboost' ),
+                    'addToBasket'    => __( 'Add to basket', 'yayboost' ),
+                    'addAllToBasket' => __( 'Add all {count} to basket', 'yayboost' ),
                 ],
             ]
         );
