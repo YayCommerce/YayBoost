@@ -75,7 +75,7 @@ abstract class AbstractFeature implements FeatureInterface {
      *
      * @var string
      */
-    protected $optionName;
+    protected $option_name;
 
     /**
      * Constructor
@@ -83,8 +83,8 @@ abstract class AbstractFeature implements FeatureInterface {
      * @param Container $container
      */
     public function __construct(Container $container) {
-        $this->container  = $container;
-        $this->optionName = 'yayboost_feature_' . $this->id;
+        $this->container   = $container;
+        $this->option_name = 'yayboost_feature_' . $this->id;
     }
 
     /**
@@ -189,7 +189,7 @@ abstract class AbstractFeature implements FeatureInterface {
      */
     public function get_settings(): array {
         $defaults = $this->get_default_settings();
-        $settings = get_option( $this->optionName, [] );
+        $settings = get_option( $this->option_name, [] );
 
         return array_merge( $defaults, $settings );
     }
@@ -252,7 +252,7 @@ abstract class AbstractFeature implements FeatureInterface {
      * @return void
      */
     protected function save_settings(array $settings): void {
-        update_option( $this->optionName, $settings );
+        update_option( $this->option_name, $settings );
     }
 
     /**
@@ -294,14 +294,14 @@ abstract class AbstractFeature implements FeatureInterface {
 
     public function get(string $key, $default = null) {
         $settings = $this->get_settings();
-        $keys = explode('.', $key);
-        $value = $settings;
+        $keys     = explode( '.', $key );
+        $value    = $settings;
 
         foreach ($keys as $k) {
-            if (!isset($value[$k])) {
+            if ( ! isset( $value[ $k ] )) {
                 return $default;
             }
-            $value = $value[$k];
+            $value = $value[ $k ];
         }
 
         return $value;
