@@ -38,4 +38,3 @@
     "phpcbf": "phpcbf --standard=phpcs.xml"
   }
 }
-
