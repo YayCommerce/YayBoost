@@ -3,7 +3,7 @@
  * Plugin Name: YayBoost
  * Plugin URI: https://yaycommerce.com/yayboost
  * Description: Boost your WooCommerce sales with intelligent features and recommendations
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: YayCommerce
  * Author URI: https://yaycommerce.com
  * Text Domain: yayboost
@@ -19,7 +19,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants
-define( 'YAYBOOST_VERSION', '1.0.0' );
+define( 'YAYBOOST_VERSION', '1.0.2' );
 define( 'YAYBOOST_FILE', __FILE__ );
 define( 'YAYBOOST_PATH', plugin_dir_path( __FILE__ ) );
 define( 'YAYBOOST_URL', plugin_dir_url( __FILE__ ) );
