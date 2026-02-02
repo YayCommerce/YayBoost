@@ -11,7 +11,6 @@ import { Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-import { cn } from '@/lib/utils';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -44,7 +43,7 @@ import { FBTBackfillCard } from './fbt-backfill-card';
 // Get currency symbol from admin data
 const currencySymbol = window.yayboostData?.currencySymbol || '$';
 
-// Mock products for preview
+// Mock products for preview (first = main product "This item", rest = recommendations)
 const MOCK_PRODUCTS = [
   { id: 1, name: 'Product A', price: 18 },
   { id: 2, name: 'Product B', price: 16 },
@@ -68,146 +67,133 @@ const layoutOptions = [
   { value: 'list', label: __('List', 'yayboost') },
 ];
 
-// Preview component - matches frontend template structure (fbt-products.php + fbt.css)
+// SVG checkmark for circle checkbox (matches frontend fbt-products.php)
+const FBT_CHECK_ICON = (
+  <svg
+    className="fbt-checkbox__icon h-[10px] w-[10px] text-white"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={3}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+// Preview component - matches frontend template (fbt-products.php + fbt.css): images row + summary, then list
 function FBTPreview({ settings }: { settings: SettingsFormData }) {
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(
     new Set(MOCK_PRODUCTS.map((p) => p.id)),
   );
 
-  // Calculate total price from selected products
   const totalPrice = useMemo(() => {
-    return MOCK_PRODUCTS.filter((product) => selectedProducts.has(product.id)).reduce(
-      (sum, product) => sum + (product.price || 0),
+    return MOCK_PRODUCTS.filter((p) => selectedProducts.has(p.id)).reduce(
+      (sum, p) => sum + (p.price || 0),
       0,
     );
   }, [selectedProducts]);
 
-  // Limit products by max_products setting
   const displayProducts = MOCK_PRODUCTS.slice(0, settings.max_products || 4);
+  const selectedCount = displayProducts.filter((p) => selectedProducts.has(p.id)).length;
 
   const toggleProduct = (productId: number) => {
     setSelectedProducts((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(productId)) {
-        newSet.delete(productId);
-      } else {
-        newSet.add(productId);
-      }
-      return newSet;
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
     });
   };
 
-  const formatPrice = (price: number) => {
-    return `${currencySymbol}${price.toFixed(2)}`;
-  };
+  const formatPrice = (price: number) => `${currencySymbol}${price.toFixed(2)}`;
 
-  const isGrid = settings.layout === 'grid';
+  const addButtonText =
+    selectedCount === 0
+      ? __('Add all to basket', 'yayboost')
+      : __('Add all', 'yayboost') + ` ${selectedCount} ` + __('to basket', 'yayboost');
 
   return (
-    <div
-      className="yayboost-fbt"
-      style={{
-        padding: '1.5rem',
-        background: '#fff',
-        border: '1px solid #e0e0e0',
-        borderRadius: '8px',
-      }}
-    >
-      {/* Title */}
-      <h2
-        className="yayboost-fbt__title"
-        style={{ margin: '0 0 1.5rem', textAlign: 'center', fontSize: '1.25rem', fontWeight: 600 }}
-      >
+    <section className="yayboost-fbt fbt-section max-w-full border-t border-gray-200 py-8 font-sans">
+      <h2 className="yayboost-fbt__title fbt-section__title mb-6 text-[15px] font-semibold tracking-tight text-black">
         {settings.section_title || __('Frequently Bought Together', 'yayboost')}
       </h2>
 
-      {/* Products Grid/List */}
-      <div
-        className={`yayboost-fbt__products yayboost-fbt__products--${settings.layout}`}
-        style={
-          isGrid
-            ? { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }
-            : { display: 'flex', flexDirection: 'column', gap: '1rem' }
-        }
-      >
-        {displayProducts.map((product) => {
+      {/* Product images row + summary (matches fbt-products.php) */}
+      <div className="fbt-products yayboost-fbt__products mb-6 flex items-center gap-3">
+        {displayProducts.map((product, index) => (
+          <span key={product.id} className="flex items-center gap-3">
+            {index > 0 && <span className="fbt-plus text-lg font-light text-gray-400">+</span>}
+            <div className="fbt-product-image h-[100px] w-[100px] shrink-0 overflow-hidden rounded-lg bg-gray-100">
+              <img
+                src={window.yayboostData?.urls?.wcPlaceholderImage}
+                alt={product.name}
+                className="h-full w-full object-contain"
+              />
+            </div>
+          </span>
+        ))}
+        <div className="fbt-summary ml-auto text-right">
+          <p className="fbt-summary__total mb-1 text-[13px] text-gray-600">
+            {__('Total price', 'yayboost')}
+          </p>
+          <p className="fbt-summary__price yayboost-fbt__total-price mb-4 text-[22px] font-semibold tracking-tight text-black">
+            {formatPrice(totalPrice)}
+          </p>
+          <button
+            type="button"
+            className={`yayboost-fbt__add-btn fbt-add-btn inline-flex h-11 cursor-pointer items-center justify-center rounded-lg border-none bg-black px-6 text-sm font-medium text-white transition-opacity ${
+              selectedCount === 0
+                ? 'cursor-not-allowed opacity-40'
+                : 'hover:opacity-85 active:opacity-70'
+            }`}
+            disabled={selectedCount === 0}
+          >
+            {addButtonText}
+          </button>
+        </div>
+      </div>
+
+      {/* Product list with checkboxes (matches fbt-list / fbt-item) */}
+      <div className="fbt-list flex flex-col gap-0">
+        {displayProducts.map((product, index) => {
+          const isFirst = index === 0;
           const isSelected = selectedProducts.has(product.id);
           return (
             <label
               key={product.id}
               htmlFor={`fbt-preview-${product.id}`}
-              className={cn('yayboost-fbt__product', !isSelected && 'is-unchecked')}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                flexDirection: isGrid ? 'column' : 'row',
-                alignItems: isGrid ? 'stretch' : 'center',
-                gap: isGrid ? '0' : '1rem',
-                padding: '1rem',
-                background: '#fafafa',
-                border: '1px solid #eee',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                opacity: isSelected ? 1 : 0.6,
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-              }}
+              className={`yayboost-fbt__product fbt-item flex cursor-pointer items-start gap-3 border-b border-gray-200 px-2.5 py-4 transition-colors hover:bg-[#f5f5f5] ${
+                index === 0 ? 'border-t border-gray-200' : ''
+              }`}
             >
-              {/* Checkbox - absolute positioned top-left */}
-              <div
-                className="yayboost-fbt__checkbox"
-                style={{
-                  position: 'absolute',
-                  top: '0.75rem',
-                  left: '0.75rem',
-                  zIndex: 10,
-                }}
-              >
+              <div className="fbt-checkbox relative mt-px h-5 w-5 shrink-0">
                 <input
                   type="checkbox"
                   id={`fbt-preview-${product.id}`}
                   checked={isSelected}
                   onChange={() => toggleProduct(product.id)}
-                  style={{ width: '18px', height: '18px', margin: 0, cursor: 'pointer' }}
+                  className="absolute m-0 h-full w-full cursor-pointer opacity-0"
                 />
-              </div>
-
-              {/* Image */}
-              <div
-                className="yayboost-fbt__image"
-                style={{
-                  marginBottom: isGrid ? '0.75rem' : 0,
-                  textAlign: 'center',
-                  width: isGrid ? 'auto' : '80px',
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src={window.yayboostData?.urls?.wcPlaceholderImage}
-                  alt={product.name}
-                  style={{ maxWidth: '100%', height: 'auto', borderRadius: '4px' }}
-                />
-              </div>
-
-              {/* Info */}
-              <div
-                className="yayboost-fbt__info"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.5rem',
-                  flexGrow: 1,
-                }}
-              >
-                <h3
-                  className="yayboost-fbt__name"
-                  style={{ margin: 0, fontSize: '0.9rem', fontWeight: 500 }}
-                >
-                  {product.name}
-                </h3>
                 <span
-                  className="yayboost-fbt__price"
-                  style={{ fontWeight: 600, color: '#333' }}
+                  className={`fbt-checkbox__box box-border flex h-5 w-5 items-center justify-center rounded-full border-[1.5px] transition-all ${
+                    isSelected ? 'border-black bg-black' : 'border-gray-400'
+                  }`}
                 >
+                  {isSelected && FBT_CHECK_ICON}
+                </span>
+              </div>
+              <div className="fbt-item__content min-w-0 flex-1">
+                <p className="fbt-item__name mb-1 text-sm leading-[1.4] font-normal text-black">
+                  {isFirst && (
+                    <span className="fbt-item__badge mr-1.5 text-xs font-medium text-gray-600">
+                      {__('This item:', 'yayboost')}
+                    </span>
+                  )}
+                  <span>{product.name}</span>
+                </p>
+                <span className="fbt-item__price text-sm font-medium text-black">
                   {formatPrice(product.price)}
                 </span>
               </div>
@@ -215,44 +201,7 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
           );
         })}
       </div>
-
-      {/* Footer */}
-      <div
-        className="yayboost-fbt__footer"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          marginTop: '1.5rem',
-          paddingTop: '1.5rem',
-          borderTop: '1px solid #eee',
-        }}
-      >
-        <div className="yayboost-fbt__total" style={{ fontSize: '1.1rem' }}>
-          <span className="yayboost-fbt__total-label" style={{ color: '#666', marginRight: '0.5rem' }}>
-            {__('Total:', 'yayboost')}
-          </span>
-          <span className="yayboost-fbt__total-price" style={{ fontWeight: 600, color: '#0073aa' }}>
-            {formatPrice(totalPrice)}
-          </span>
-        </div>
-        <button
-          type="button"
-          className="yayboost-fbt__add-btn button alt"
-          disabled={selectedProducts.size === 0}
-          style={{
-            padding: '0.75rem 1.5rem',
-            fontSize: '0.9rem',
-            cursor: selectedProducts.size === 0 ? 'not-allowed' : 'pointer',
-            opacity: selectedProducts.size === 0 ? 0.6 : 1,
-          }}
-        >
-          {__('Add Selected to Cart', 'yayboost')}
-        </button>
-      </div>
-    </div>
+    </section>
   );
 }
 
