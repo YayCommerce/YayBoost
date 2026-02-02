@@ -44,41 +44,24 @@ class PurchaseActivityCountRenderer {
     /**
      * Render visitor count content
      *
+     * @param int $product_id Optional. Product ID when block is inside product-template. Null for current post/product.
+     *
      * @return void
      */
-    public function render(): void {
-        if ( ! $this->feature->should_apply_to_current_product() ) {
+    public function render( $product_id = null ): void {
+
+        if ( ! $this->feature->should_apply_to_product( $product_id ) ) {
             return;
         }
         $this->enqueue_assets();
-        echo wp_kses_post( $this->get_content() );
-    }
-
-    /**
-     * Get rendered HTML content
-     *
-     * @param int|null $product_id Optional. Product ID when block is inside product-template. Null for current post/product.
-     * @return string HTML content.
-     */
-    public function get_content( ?int $product_id = null ): string {
         $minimum_count_display = (int) ( $this->feature->get( 'minimum_count_display' ) ?? 1 );
         $count                 = $this->tracker->get_purchase_activity_count( $product_id );
         if ( $count < $minimum_count_display ) {
-            return '';
+            return;
         }
 
         $text = str_replace( '{count}', Helpers::format_pretty_number( $count ), $this->feature->get( 'display.text' ) );
-        return $this->render_content( $text );
-    }
-
-    /**
-     * Render content based on style
-     *
-     * @param string $text             Rendered text with count.
-     * @return string HTML content.
-     */
-    private function render_content( string $text ): string {
-        return sprintf(
+        printf(
             '<div class="yayboost-pac">%s</div>',
             wp_kses_post( $text )
         );

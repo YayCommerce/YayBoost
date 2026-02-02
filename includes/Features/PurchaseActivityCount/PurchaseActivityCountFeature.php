@@ -176,22 +176,22 @@ class PurchaseActivityCountFeature extends AbstractFeature {
     }
 
     /**
-     * Check if the feature should apply to the current product
-     *
-     * @return bool True if feature should apply.
-     */
-    public function should_apply_to_current_product(): bool {
-        return $this->should_apply_to_product( get_the_ID() ?: 0 );
-    }
-
-    /**
      * Check if the feature should apply to a specific product
      *
-     * @param int $product_id Product ID (e.g. from block context when inside product-template).
+     * @param int $product_id Product ID (e.g. from block context when inside product-template). Null for current post/product.
      * @return bool True if feature should apply.
      */
-    public function should_apply_to_product( int $product_id ): bool {
+    public function should_apply_to_product( $product_id = null ): bool {
         if ( ! $product_id ) {
+            return false;
+        }
+
+        $product = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return false;
+        }
+
+        if ( ! ( $product instanceof \WC_Product ) ) {
             return false;
         }
 
@@ -272,38 +272,6 @@ class PurchaseActivityCountFeature extends AbstractFeature {
     }
 
     /**
-     * Render visitor count content (delegated to renderer)
-     *
-     * @return void
-     */
-    public function render_content(): void {
-        $this->renderer->render();
-    }
-
-    /**
-     * Get rendered content (for block rendering)
-     *
-     * @param int|null $product_id Optional. Product ID when block is inside product-template. Null for current post/product.
-     * @return string HTML content.
-     */
-    public function get_content( ?int $product_id = null ): string {
-        return $this->renderer->get_content( $product_id );
-    }
-
-    /**
-     * Get rendered content for a specific product (e.g. when block is inside product-template)
-     *
-     * @param int $product_id Product ID from block context.
-     * @return string HTML content or empty string if should not apply.
-     */
-    public function get_content_for_product( int $product_id ): string {
-        if ( ! $this->should_apply_to_product( $product_id ) ) {
-            return '';
-        }
-        return $this->renderer->get_content( $product_id );
-    }
-
-    /**
      * Enqueue frontend assets (for block rendering)
      *
      * @return void
@@ -355,5 +323,15 @@ class PurchaseActivityCountFeature extends AbstractFeature {
                 $this->tracker->update_purchase_activity_count( $product_id );
             }
         }
+    }
+
+    public function get_renderer(): PurchaseActivityCountRenderer {
+        return $this->renderer;
+    }
+
+    public function render_content(): void {
+        $product_id = get_the_ID();
+
+        $this->renderer->render( $product_id );
     }
 }

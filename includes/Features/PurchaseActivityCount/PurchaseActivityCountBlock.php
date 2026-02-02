@@ -24,20 +24,12 @@ class PurchaseActivityCountBlock {
     private $feature;
 
     /**
-     * Static feature instance for render.php access
-     *
-     * @var PurchaseActivityCountFeature|null
-     */
-    private static $feature_instance = null;
-
-    /**
      * Constructor
      *
      * @param PurchaseActivityCountFeature $feature Feature instance.
      */
     public function __construct( PurchaseActivityCountFeature $feature ) {
-        $this->feature          = $feature;
-        self::$feature_instance = $feature;
+        $this->feature = $feature;
 
         add_action( 'init', [ $this, 'register_block' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
@@ -51,15 +43,6 @@ class PurchaseActivityCountBlock {
      */
     public function get_feature() {
         return $this->feature;
-    }
-
-    /**
-     * Get static feature instance (for render.php access)
-     *
-     * @return PurchaseActivityCountFeature|null
-     */
-    public static function get_feature_instance() {
-        return self::$feature_instance;
     }
 
     /**
