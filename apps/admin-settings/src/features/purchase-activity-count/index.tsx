@@ -363,7 +363,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               )}
             />
           )}
-          {applyTo === 'all' && (
+          {applyTo !== 'specific_products' && (
             <FormField
               control={form.control}
               name="target_products.exclude"
