@@ -10,10 +10,11 @@
  * @package YayBoost
  */
 
-use YayBoost\Features\LiveVisitorCount\LiveVisitorCountBlock;
-
 // Get feature instance from static method
-$feature = LiveVisitorCountBlock::get_feature_instance();
+$feature = null;
+if ( isset( $block->block_type->provides_context['feature'] ) ) {
+	$feature = $block->block_type->provides_context['feature'];
+}
 
 // If no feature or disabled, return empty
 if ( ! $feature || ! $feature->is_enabled() ) {
@@ -25,12 +26,11 @@ if ( ! function_exists( 'is_product' ) || ! is_product() ) {
 	return '';
 }
 
-if ( ! $feature->should_apply_to_current_product() ) {
-	return '';
-}
+$renderer = $feature->get_renderer();
 
-// Get the content from feature (same as hook render)
-$content = $feature->get_content();
+ob_start();
+$renderer->render();
+$content = ob_get_clean();
 
 if ( empty( $content ) ) {
 	return '';
