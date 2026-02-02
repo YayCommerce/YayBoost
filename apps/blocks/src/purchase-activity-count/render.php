@@ -10,10 +10,11 @@
  * @package YayBoost
  */
 
-use YayBoost\Features\PurchaseActivityCount\PurchaseActivityCountBlock;
-
-// Get feature instance from static method
-$feature = PurchaseActivityCountBlock::get_feature_instance();
+// Get feature instance
+$feature = null;
+if ( isset( $block->block_type->provides_context['feature'] ) ) {
+	$feature = $block->block_type->provides_context['feature'];
+}
 
 // If no feature or disabled, return empty
 if ( ! $feature || ! $feature->is_enabled() ) {
@@ -30,15 +31,11 @@ if ( ! $is_single_product && ! $is_product_block_context ) {
 	return '';
 }
 
-// Get the content: use product from block context when inside product-template, else current product
-if ( $is_product_block_context ) {
-	$content = $feature->get_content_for_product( $context_post_id );
-} else {
-	if ( ! $feature->should_apply_to_current_product() ) {
-		return '';
-	}
-	$content = $feature->get_content();
-}
+$renderer = $feature->get_renderer();
+
+ob_start();
+$renderer->render( $is_product_block_context ? $context_post_id : null );
+$content = ob_get_clean();
 
 if ( empty( $content ) ) {
 	return '';
