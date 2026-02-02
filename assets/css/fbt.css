@@ -344,7 +344,7 @@
   }
 
   .yayboost-fbt .fbt-summary {
-    width: auto;
+    width: 100%;
     margin-left: auto;
     margin-top: 0;
     text-align: right;
@@ -358,6 +358,12 @@
     font-size: 20px;
   }
 
+  .yayboost-fbt .fbt-summary .fbt-summary__total-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .yayboost-fbt .fbt-add-btn,
   .yayboost-fbt .yayboost-fbt__add-btn {
     width: 100%;
@@ -367,6 +373,14 @@
     margin: 0;
     padding: 16px 0;
     background: transparent;
+  }
+
+  .yayboost-fbt .fbt-products {
+    flex-direction: column;
+  }
+
+  .yayboost-fbt .fbt-products-scroll {
+    width: 100%;
   }
 }
 

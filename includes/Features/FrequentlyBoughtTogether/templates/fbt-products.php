@@ -44,8 +44,10 @@ $svg_check = '<svg class="fbt-checkbox__icon" viewBox="0 0 24 24" fill="none" st
             <?php endforeach; ?>
         </div>
         <div class="fbt-summary">
-            <p class="fbt-summary__total"><?php esc_html_e( 'Total price', 'yayboost' ); ?></p>
-            <p class="fbt-summary__price yayboost-fbt__total-price"></p>
+            <div class="fbt-summary__total-price">
+                <p class="fbt-summary__total"><?php esc_html_e( 'Total price', 'yayboost' ); ?></p>
+                <p class="fbt-summary__price yayboost-fbt__total-price"></p>
+            </div>
             <button type="button" class="yayboost-fbt__add-btn fbt-add-btn">
                 <?php esc_html_e( 'Add all to basket', 'yayboost' ); ?>
             </button>
