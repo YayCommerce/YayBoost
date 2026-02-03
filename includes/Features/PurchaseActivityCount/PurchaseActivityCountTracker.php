@@ -127,7 +127,7 @@ class PurchaseActivityCountTracker {
                 ];
             case 'this_year':
                 return [
-                    'from' => gmdate( 'Y-m-d', strtotime( 'first day of this year' ) ),
+                    'from' => gmdate( 'Y-m-d', strtotime( 'first day of January this year' ) ),
                     'to'   => gmdate( 'Y-m-d' ),
                 ];
             default:
