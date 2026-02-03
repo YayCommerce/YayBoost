@@ -194,6 +194,19 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
                     </SelectContent>
                   </Select>
                 </FormControl>
+                <FormDescription>
+                  {countFrom === 'all' && __('Count all orders since the beginning.', 'yayboost')}
+                  {countFrom === 'past_week' &&
+                    __('Count orders from the last 7 days.', 'yayboost')}
+                  {countFrom === 'past_month' &&
+                    __('Count orders from the last 30 days.', 'yayboost')}
+                  {countFrom === 'this_week' &&
+                    __('Count orders from Monday to today (resets every Monday).', 'yayboost')}
+                  {countFrom === 'this_month' &&
+                    __('Count orders from the 1st of this month (resets monthly).', 'yayboost')}
+                  {countFrom === 'this_year' &&
+                    __('Count orders from January 1st (resets yearly).', 'yayboost')}
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
