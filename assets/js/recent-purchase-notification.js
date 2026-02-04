@@ -376,8 +376,8 @@
     }
 
     formatCustomerName(name) {
+      if (name == "") return name;
       const formatSettings = this.settings.customerName;
-      console.log(formatSettings);
       switch (formatSettings) {
         case "full-name":
           return name

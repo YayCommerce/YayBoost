@@ -109,21 +109,7 @@ class RecentPurchaseNotificationFeature extends AbstractFeature {
         add_action( 'wp_enqueue_scripts', [ $this, 'maybe_enqueue_assets' ] );
         // Render content in footer
         add_action( 'wp_footer', [ $this, 'maybe_render_content' ] );
-        // WC new order hook
-        add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ] );
     }
-
-    /**
-     * Handle new order
-     *
-     * @param int $order_id Order ID.
-     * @return void
-     */
-    public function handle_new_order( int $order_id ): void {
-        // Add new order meta is yayboost_recent_purchase_notification_order to track if the order is a recent purchase
-        update_post_meta( $order_id, '_yayboost_recent_purchase_notification_order', true );
-    }
-
 
     /**
      * Check if we're on a WooCommerce page where notifications should show

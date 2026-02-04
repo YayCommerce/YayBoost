@@ -161,6 +161,7 @@ class RecentPurchaseNotificationTracker {
         if ( $is_delta ) {
             $orders    = $this->query_orders( $limit, $after_id );
             $purchases = $this->normalize_orders_to_purchases( $orders );
+            $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
             $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
             return [
                 'purchases'     => $purchases,
@@ -172,9 +173,10 @@ class RecentPurchaseNotificationTracker {
         $result    = Cache::remember(
             $cache_key,
             self::CACHE_TTL,
-            function () use ( $limit ) {
+            function () use ( $limit, $min_orders ) {
                 $orders    = $this->query_orders( $limit, null );
                 $purchases = $this->normalize_orders_to_purchases( $orders );
+                $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
                 $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
                 return [
                     'purchases'     => $purchases,
@@ -202,16 +204,9 @@ class RecentPurchaseNotificationTracker {
             : [];
 
         $args = [
-            'limit'      => $limit,
-            'meta_query' => [
-                [
-                    'key'     => '_yayboost_recent_purchase_notification_order',
-                    'value'   => 'true',
-                    'compare' => '=',
-                ],
-            ],
-            'orderby'    => 'date',
-            'order'      => 'DESC',
+            'limit'   => $limit,
+            'orderby' => 'date',
+            'order'   => 'DESC',
         ];
 
         if ( ! empty( $wc_statuses ) ) {
@@ -227,8 +222,6 @@ class RecentPurchaseNotificationTracker {
             $wp_args = [
                 'post_type'      => 'shop_order',
                 'posts_per_page' => $after_id > 0 ? $limit + 50 : $limit,
-                'meta_key'       => '_yayboost_recent_purchase_notification_order',
-                'meta_value'     => true,
                 'orderby'        => 'date',
                 'order'          => 'DESC',
             ];
@@ -322,6 +315,7 @@ class RecentPurchaseNotificationTracker {
             }
             $purchases[] = [
                 'id'             => (string) $order->get_id(),
+                'customer_name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
                 'order_id'       => (int) $order->get_id(),
                 'product_id'     => (int) $product->get_id(),
                 'product_url'    => $product->get_permalink(),
