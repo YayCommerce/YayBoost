@@ -3,7 +3,7 @@
  * Plugin Name: YayBoost
  * Plugin URI: https://yaycommerce.com/yayboost
  * Description: Boost your WooCommerce sales with intelligent features and recommendations
- * Version: 1.0.2
+ * Version: 1.0.0.11
  * Author: YayCommerce
  * Author URI: https://yaycommerce.com
  * Text Domain: yayboost
@@ -19,7 +19,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants
-define( 'YAYBOOST_VERSION', '1.0.2' );
+define( 'YAYBOOST_VERSION', '1.0.0.11' );
 define( 'YAYBOOST_FILE', __FILE__ );
 define( 'YAYBOOST_PATH', plugin_dir_path( __FILE__ ) );
 define( 'YAYBOOST_URL', plugin_dir_url( __FILE__ ) );
@@ -46,6 +46,9 @@ function yayboost_init() {
         add_action( 'admin_notices', 'yayboost_woocommerce_missing_notice' );
         return;
     }
+
+    // Register FBT backfill cron hooks
+    \YayBoost\Features\FrequentlyBoughtTogether\FBTBackfillCron::register();
 
     try {
         $bootstrap = new \YayBoost\Bootstrap();
@@ -108,6 +111,9 @@ function yayboost_activate() {
     // Schedule analytics cron jobs
     \YayBoost\Analytics\AnalyticsAggregator::schedule();
 
+    // Schedule FBT backfill to run in background
+    \YayBoost\Features\FrequentlyBoughtTogether\FBTBackfillCron::schedule();
+
     // Flush rewrite rules
     flush_rewrite_rules();
 }
@@ -119,6 +125,9 @@ register_activation_hook( __FILE__, 'yayboost_activate' );
 function yayboost_deactivate() {
     // Unschedule analytics cron jobs
     \YayBoost\Analytics\AnalyticsAggregator::unschedule();
+
+    // Unschedule FBT backfill cron
+    \YayBoost\Features\FrequentlyBoughtTogether\FBTBackfillCron::unschedule();
 
     flush_rewrite_rules();
 }

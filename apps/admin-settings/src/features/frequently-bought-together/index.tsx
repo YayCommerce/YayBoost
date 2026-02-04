@@ -38,7 +38,8 @@ import FeatureLayoutHeader from '@/components/feature-layout-header';
 import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
-import { FBTBackfillCard } from './fbt-backfill-card';
+// Backfill now runs automatically on plugin activation
+// import { FBTBackfillCard } from './fbt-backfill-card';
 
 // Get currency symbol from admin data
 const currencySymbol = window.yayboostData?.currencySymbol || '$';
@@ -374,7 +375,6 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               )}
             />
           </SettingsCard>
-          <FBTBackfillCard />
         </div>
         {/* Preview Panel */}
         <div className="space-y-6">

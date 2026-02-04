@@ -96,6 +96,11 @@ class DashboardController extends BaseController {
         $health_data = [];
 
         foreach ( $features as $feature ) {
+            // Skip incoming/coming_soon features from health display
+            if ( 'coming_soon' === $feature->get_status() ) {
+                continue;
+            }
+
             $feature_id   = $feature->get_id();
             $is_enabled   = $feature->is_enabled();
             $analytics_id = $feature_analytics_map[ $feature_id ] ?? $feature_id;
@@ -208,16 +213,7 @@ class DashboardController extends BaseController {
                     'path'  => '/features/free_shipping_bar',
                 ],
             ],
-            [
-                'id'          => 'run_backfill',
-                'title'       => __( 'Run FBT historical data backfill', 'yayboost' ),
-                'description' => __( 'Analyze past orders to generate product recommendations.', 'yayboost' ),
-                'completed'   => $this->is_fbt_backfill_completed(),
-                'action'      => [
-                    'label' => __( 'Run Backfill', 'yayboost' ),
-                    'path'  => '/features/frequently_bought_together',
-                ],
-            ],
+            // Backfill now runs automatically on plugin activation
             [
                 'id'          => 'wait_analytics',
                 'title'       => __( 'Wait for first analytics data', 'yayboost' ),

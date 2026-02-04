@@ -39,6 +39,10 @@ export function OnboardingChecklist() {
     return null;
   }
 
+  if (!isLoading && !data?.dismissed) {
+    sessionStorage.removeItem('yayboost_onboarding_dismissed');
+  }
+
   if (data?.dismissed) {
     sessionStorage.setItem('yayboost_onboarding_dismissed', 'true');
   }
