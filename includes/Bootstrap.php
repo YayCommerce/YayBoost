@@ -9,6 +9,8 @@ namespace YayBoost;
 
 use YayBoost\Container\Container;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Main Bootstrap class for plugin initialization
  */

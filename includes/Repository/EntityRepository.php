@@ -59,7 +59,9 @@ class EntityRepository extends AbstractRepository {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "UPDATE {$this->get_table()}
                  SET status = %s, updated_at = %s
                  WHERE id IN ({$placeholders})
@@ -93,8 +95,9 @@ class EntityRepository extends AbstractRepository {
         $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $result = $wpdb->query(
+        $result = $wpdb->query( // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "DELETE FROM {$this->get_table()}
                  WHERE id IN ({$placeholders})
                  AND feature_id = %s

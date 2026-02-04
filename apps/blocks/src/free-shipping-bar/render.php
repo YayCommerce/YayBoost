@@ -10,6 +10,8 @@
  * @package YayBoost
  */
 
+defined( 'ABSPATH' ) || exit;
+
 // Get feature instance
 $feature = null;
 if ( isset( $block->block_type->provides_context['feature'] ) ) {
@@ -67,11 +69,11 @@ $context = [
 
 ?>
 <div
-    <?php echo get_block_wrapper_attributes( [ 'class' => 'yayboost-shipping-bar-block-wrapper' ] ); ?>
+    <?php echo get_block_wrapper_attributes( [ 'class' => 'yayboost-shipping-bar-block-wrapper' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
     data-wp-interactive="yayboost/free-shipping-bar"
     data-wp-init="callbacks.init"
 	data-wp-watch="callbacks.watchCartUpdates"
-    <?php echo wp_interactivity_data_wp_context( $context ); ?>
+    <?php echo wp_interactivity_data_wp_context( $context ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 >
     <div class="yayboost-shipping-bar-content">
         <?php echo $bar_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

@@ -3,6 +3,8 @@ namespace YayBoost\Register;
 
 use YayBoost\Traits\Singleton;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Register Facade.
  *

@@ -12,6 +12,7 @@ namespace YayBoost\Features\LiveVisitorCount;
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Live Visitor Count feature implementation
  */

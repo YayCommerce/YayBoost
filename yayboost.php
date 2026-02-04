@@ -1,17 +1,18 @@
 <?php
 /**
- * Plugin Name: YayBoost
+ * Plugin Name: YayBoost - WooCommerce Conversion Optimization
  * Plugin URI: https://yaycommerce.com/yayboost
  * Description: Boost your WooCommerce sales with intelligent features and recommendations
- * Version: 1.0.0.11
+ * Version: 1.0.0
  * Author: YayCommerce
  * Author URI: https://yaycommerce.com
  * Text Domain: yayboost
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
- * WC requires at least: 6.0
- * WC tested up to: 8.0
+ * Tested up to: 6.9
+ * WC requires at least: 8.0
+ * WC tested up to: 10.4.3
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
@@ -19,7 +20,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants
-define( 'YAYBOOST_VERSION', '1.0.0.11' );
+define( 'YAYBOOST_VERSION', '1.0.0' );
 define( 'YAYBOOST_FILE', __FILE__ );
 define( 'YAYBOOST_PATH', plugin_dir_path( __FILE__ ) );
 define( 'YAYBOOST_URL', plugin_dir_url( __FILE__ ) );
@@ -59,6 +60,7 @@ function yayboost_init() {
             function () use ($e) {
                 printf(
                     '<div class="notice notice-error"><p>%s</p></div>',
+                    /* translators: %s: Error message. */
                     esc_html( sprintf( __( 'YayBoost Error: %s', 'yayboost' ), $e->getMessage() ) )
                 );
             }

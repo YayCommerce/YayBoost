@@ -12,6 +12,7 @@ namespace YayBoost\Features\PurchaseActivityCount;
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Purchase Activity Count feature implementation
  */

@@ -10,6 +10,8 @@
  * @package YayBoost
  */
 
+defined( 'ABSPATH' ) || exit;
+
 // Get feature instance
 $feature = null;
 if ( isset( $block->block_type->provides_context['feature'] ) ) {
@@ -42,6 +44,6 @@ if ( empty( $content ) ) {
 }
 
 ?>
-<div <?php echo get_block_wrapper_attributes(); ?>>
+<div <?php echo get_block_wrapper_attributes(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 	<?php echo wp_kses_post( $content ); ?>
 </div>

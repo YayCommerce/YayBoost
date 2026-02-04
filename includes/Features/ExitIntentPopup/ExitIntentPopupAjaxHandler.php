@@ -11,6 +11,8 @@ namespace YayBoost\Features\ExitIntentPopup;
 
 use YayBoost\Utils\CodeGenerator;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * AJAX endpoint handlers for exit intent popup
  */
@@ -250,13 +252,17 @@ class ExitIntentPopupAjaxHandler {
             $coupon_id = $coupon->save();
 
             if ( ! $coupon_id || is_wp_error( $coupon_id ) ) {
-                error_log( 'YayBoost: Failed to save exit intent coupon' );
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( 'YayBoost: Failed to save exit intent coupon' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                }
                 return null;
             }
 
             return $code;
         } catch ( \Exception $e ) {
-            error_log( 'YayBoost: Exit intent coupon exception: ' . $e->getMessage() );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                error_log( 'YayBoost: Exit intent coupon exception: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+            }
             return null;
         }//end try
     }

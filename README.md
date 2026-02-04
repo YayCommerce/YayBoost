@@ -1,4 +1,8 @@
-# YayBoost
+# YayBoost - WooCommerce Conversion Optimization
+
+**Version:** 1.0.0
+**License:** GPL v2 or later
+**Author:** YayCommerce
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/yaycommerce/yayboost)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-blue.svg)](https://wordpress.org/)
@@ -26,9 +30,9 @@ YayBoost is a modular WordPress plugin that provides powerful conversion optimiz
 
 ## 📋 Requirements
 
-- **WordPress**: 5.8 or higher
+- **WordPress**: 6.0 or higher
 - **PHP**: 7.4 or higher
-- **WooCommerce**: 6.0 or higher (tested up to 8.0)
+- **WooCommerce**: 10.0 or higher (tested up to 10.4.3)
 - **Node.js**: 18+ (for development)
 - **pnpm**: Latest version (for development)
 

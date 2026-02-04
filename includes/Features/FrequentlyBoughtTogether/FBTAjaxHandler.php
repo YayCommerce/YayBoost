@@ -11,6 +11,7 @@ namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\Analytics\AnalyticsTracker;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Handles FBT AJAX actions
  */

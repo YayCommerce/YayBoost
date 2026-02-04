@@ -9,6 +9,7 @@
 
 namespace YayBoost\Features\FreeShippingBar;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Free Shipping Bar Slot/Fill class
  */
@@ -83,10 +84,10 @@ class FreeShippingBarSlotFill {
         // Get display_positions from settings (matches frontend structure)
         // Structure: ['cart' => ['before_cart_table', 'after_cart_table'], 'checkout' => ['before_checkout_form', 'after_checkout_form']]
         $display_positions = $this->feature->get_settings()['display_positions'] ?? [];
-        
+
         // Allowed positions for cart blocks (slot/fill compatible)
         $cart_positions = [ 'before_cart_table', 'after_cart_table' ];
-        
+
         // Allowed positions for checkout blocks (slot/fill compatible)
         $checkout_positions = [ 'before_checkout_form', 'after_checkout_form' ];
 

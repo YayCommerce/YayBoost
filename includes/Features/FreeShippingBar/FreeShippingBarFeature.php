@@ -14,6 +14,7 @@ use YayBoost\Features\AbstractFeature;
 use YayBoost\Analytics\AnalyticsTracker;
 use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Free Shipping Bar feature implementation
  */

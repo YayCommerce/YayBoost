@@ -11,6 +11,7 @@
 
 namespace YayBoost\Features\PurchaseActivityCount;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Purchase Activity Count Block class
  */

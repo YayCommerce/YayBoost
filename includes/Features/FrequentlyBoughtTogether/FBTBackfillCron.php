@@ -11,6 +11,8 @@ namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\API\Controllers\DashboardController;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Handles background FBT backfill via WP-Cron
  */

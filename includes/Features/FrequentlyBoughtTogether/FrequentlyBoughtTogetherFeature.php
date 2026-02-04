@@ -12,6 +12,8 @@ namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\Features\AbstractFeature;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Frequently Bought Together feature implementation
  */

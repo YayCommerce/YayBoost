@@ -11,6 +11,7 @@
 
 namespace YayBoost\Features\FreeShippingBar;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Free Shipping Bar Block class
  */

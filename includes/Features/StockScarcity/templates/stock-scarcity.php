@@ -11,6 +11,8 @@
  * @package YayBoost\Features\StockScarcity
  */
 
+defined( 'ABSPATH' ) || exit;
+
 if ( empty( $args ) || ! is_array( $args ) ) {
     return;
 }

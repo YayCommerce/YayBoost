@@ -66,7 +66,7 @@ class FBTRelationshipTable {
         global $wpdb;
         $table_name = self::get_table_name();
         $query      = $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name );
-        return $wpdb->get_var( $query ) === $table_name;
+        return $wpdb->get_var( $query ) === $table_name; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -84,6 +84,7 @@ class FBTRelationshipTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "INSERT INTO {$table_name} (product_id, related_product_id, co_purchase_count, updated_at)
                  VALUES (%d, %d, 1, NOW())
                  ON DUPLICATE KEY UPDATE co_purchase_count = co_purchase_count + 1, updated_at = NOW()",
@@ -117,6 +118,7 @@ class FBTRelationshipTable {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_col(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
             $wpdb->prepare(
                 "SELECT related_product_id
                  FROM {$table_name}
@@ -146,7 +148,7 @@ class FBTRelationshipTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
-                "DELETE FROM {$table_name} WHERE product_id = %d OR related_product_id = %d",
+                "DELETE FROM {$table_name} WHERE product_id = %d OR related_product_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 $product_id,
                 $product_id
             )
