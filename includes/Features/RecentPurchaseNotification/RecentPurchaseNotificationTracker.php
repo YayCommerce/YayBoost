@@ -160,6 +160,13 @@ class RecentPurchaseNotificationTracker {
      * @return array
      */
     private function query_orders( int $limit, ?int $after_id ): array {
+        $order_time_range = $this->feature->get( 'real_orders.order_time_range' );
+        $order_status     = $this->feature->get( 'real_orders.order_status' );
+        $order_status     = is_array( $order_status ) ? $order_status : [];
+        $wc_statuses      = ! empty( $order_status )
+            ? array_map( fn( $s ) => ( strpos( (string) $s, 'wc-' ) === 0 ? $s : 'wc-' . $s ), $order_status )
+            : [];
+
         $args = [
             'limit'      => $limit,
             'meta_query' => [
@@ -173,6 +180,15 @@ class RecentPurchaseNotificationTracker {
             'order'      => 'DESC',
         ];
 
+        if ( ! empty( $wc_statuses ) ) {
+            $args['status'] = $wc_statuses;
+        }
+
+        $since_ts = $this->get_order_time_range_since_timestamp( $order_time_range );
+        if ( $since_ts !== null ) {
+            $args['date_created'] = '>' . $since_ts;
+        }
+
         if ( version_compare( WC_VERSION, '7.0', '<' ) ) {
             $wp_args = [
                 'post_type'      => 'shop_order',
@@ -182,8 +198,19 @@ class RecentPurchaseNotificationTracker {
                 'orderby'        => 'date',
                 'order'          => 'DESC',
             ];
-            $posts   = get_posts( $wp_args );
-            $orders  = array_filter(
+            if ( ! empty( $wc_statuses ) ) {
+                $wp_args['post_status'] = $wc_statuses;
+            }
+            if ( $since_ts !== null ) {
+                $wp_args['date_query'] = [
+                    [
+                        'after'     => gmdate( 'Y-m-d H:i:s', $since_ts ),
+                        'inclusive' => true,
+                    ],
+                ];
+            }
+            $posts  = get_posts( $wp_args );
+            $orders = array_filter(
                 array_map( fn( $p ) => wc_get_order( $p->ID ), $posts ),
                 fn( $o ) => $o instanceof \WC_Order
             );
@@ -192,7 +219,7 @@ class RecentPurchaseNotificationTracker {
                 return array_slice( $orders, 0, $limit );
             }
             return array_values( $orders );
-        }
+        }//end if
 
         $orders = wc_get_orders( $args );
         if ( $after_id > 0 && ! empty( $orders ) ) {
@@ -200,6 +227,29 @@ class RecentPurchaseNotificationTracker {
             $orders = array_slice( $orders, 0, $limit );
         }
         return $orders;
+    }
+
+    /**
+     * Get Unix timestamp for "since" based on order_time_range setting
+     *
+     * @param string|null $order_time_range One of last-24-hours, last-7-days, last-30-days, all-time.
+     * @return int|null Timestamp or null for all-time (no filter).
+     */
+    private function get_order_time_range_since_timestamp( $order_time_range ): ?int {
+        if ( empty( $order_time_range ) || $order_time_range === 'all-time' ) {
+            return null;
+        }
+        $now = time();
+        switch ( $order_time_range ) {
+            case 'last-24-hours':
+                return $now - DAY_IN_SECONDS;
+            case 'last-7-days':
+                return $now - ( 7 * DAY_IN_SECONDS );
+            case 'last-30-days':
+                return $now - ( 30 * DAY_IN_SECONDS );
+            default:
+                return null;
+        }
     }
 
     /**
@@ -351,72 +401,6 @@ class RecentPurchaseNotificationTracker {
             _n( '%d minute', '%d minutes', $mins, 'yayboost' ),
             $mins
         );
-    }
-
-    /**
-     * Get visitor count for current product page (legacy, kept for compatibility)
-     *
-     * @return array Purchases data.
-     */
-    public function get_purchases_data(): array {
-        $page_id = $this->get_current_page_id();
-        if ( ! $page_id ) {
-            return [];
-        }
-        $result = $this->get_purchase_list( $page_id, 20, null );
-        return $result['purchases'] ?? [];
-    }
-
-    /**
-     * Get recent purchases data for a specific page
-     *
-     * @param int $page_id Page ID.
-     * @return array Recent purchases data.
-     */
-    public function get_recent_purchases_data( int $page_id ): array {
-        // Get all orders with _yayboost_recent_purchase_notification_order meta
-        if ( version_compare( WC_VERSION, '7.0', '<' ) ) {
-            $orders = get_posts(
-                [
-                    'post_type'      => 'shop_order',
-                    'posts_per_page' => -1,
-                    'meta_key'       => '_yayboost_recent_purchase_notification_order',
-                    'meta_value'     => true,
-                ]
-            );
-        } else {
-            // if wc version is greater than 7.0, use wc_get_orders instead of get_posts
-            if ( version_compare( WC_VERSION, '7.0', '>=' ) ) {
-                $orders = wc_get_orders(
-                    [
-                        'meta_query' => [
-                            [
-                                'key'     => '_yayboost_recent_purchase_notification_order',
-                                'value'   => 'true',
-                                'compare' => '=',
-                            ],
-                        ],
-                        'limit'      => -1,
-                    ]
-                );
-            }
-        }//end if
-        if ( empty( $orders ) ) {
-            return [];
-        }
-
-        $purchases_data = [];
-        foreach ( $orders as $order ) {
-            if ( ! $order instanceof \WC_Order ) {
-                continue;
-            }
-            $purchases_data[] = [
-                'customer_name' => $order->get_customer_name(),
-                'product'       => $order->get_items(),
-                'time'          => $order->get_date_created(),
-            ];
-        }
-        return $purchases_data;
     }
 
     /**

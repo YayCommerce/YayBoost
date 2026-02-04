@@ -41,7 +41,7 @@
         initialDelay: initialDelay || 10,
         intervalBetween: (intervalBetween || 10) * 1000,
         minimumOrderRequired: minimumOrderRequired || 3,
-        duration: 50 * 1000,
+        duration: 5000, // 5 seconds
         productDetails: productDetails || ["title", "price"],
       };
       this.purchaseList = [];
