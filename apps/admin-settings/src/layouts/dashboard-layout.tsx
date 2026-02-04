@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 const navigation = [
   { name: __('Dashboard', 'yayboost'), key: 'dashboard', path: '/', icon: HouseIcon },
   { name: __('Features', 'yayboost'), key: 'features', path: '/features', icon: PackageIcon },
-  { name: __('Settings', 'yayboost'), key: 'settings', path: '/settings', icon: SettingsIcon },
+  // { name: __('Settings', 'yayboost'), key: 'settings', path: '/settings', icon: SettingsIcon },
 ];
 
 // Get current tab from location pathname

@@ -312,35 +312,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
               <p className="text-muted-foreground text-xs">
                 {__(
-                  'Configure where and how to display frequently bought together products',
+                  'Configure how to display frequently bought together products',
                   'yayboost',
                 )}
               </p>
             </div>
-            <FormField
-              control={form.control}
-              name="layout"
-              render={({ field }) => (
-                <FormItem>
-                  <Label>{__('Layout', 'yayboost')}</Label>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={__('Select layout', 'yayboost')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {layoutOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <FormField
               control={form.control}

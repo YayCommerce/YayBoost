@@ -21,6 +21,7 @@ import {
   MagnifyingGlass,
   PlusCircle,
   Record,
+  Scroll,
   ShoppingCart,
   Truck,
   Users,
@@ -38,8 +39,10 @@ export const iconMap: Record<string, Icon> = {
   users: Users,
   gift: Gift,
   'shopping-cart': ShoppingCart,
-  record: Record,
   chat: Chat,
+  record: Record,
+  scroll: Scroll,
+
   // Category icons
   'credit-card': CreditCard,
   search: MagnifyingGlass,

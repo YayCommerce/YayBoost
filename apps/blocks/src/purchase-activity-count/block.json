@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "yayboost/purchase-activity-count",
+  "version": "1.0.0",
+  "title": "Purchase Activity Count",
+  "category": "widgets",
+  "description": "Display purchase activity count currently viewing the current product or category page",
+  "keywords": ["yayboost", "product", "category", "page"],
+  "usesContext": ["postId", "postType", "queryId"],
+  "ancestor": [
+    "woocommerce/all-products",
+    "woocommerce/featured-product",
+    "woocommerce/product-template",
+    "core/post-template"
+  ],
+  "attributes": {},
+  "supports": {
+    "html": false,
+    "interactivity": true,
+    "anchor": true,
+    "align": true,
+    "spacing": {
+      "margin": true,
+      "padding": true
+    }
+  },
+  "textdomain": "yayboost",
+  "editorScript": "file:./index.js",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php"
+}

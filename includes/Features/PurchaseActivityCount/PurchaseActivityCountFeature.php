@@ -10,7 +10,7 @@
 namespace YayBoost\Features\PurchaseActivityCount;
 
 use YayBoost\Features\AbstractFeature;
-// use YayBoost\Shared\DisplayPosition\DisplayPositionService;
+use YayBoost\Shared\DisplayPosition\DisplayPositionService;
 
 /**
  * Purchase Activity Count feature implementation
@@ -50,7 +50,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      *
      * @var string
      */
-    protected $icon = 'shopping-cart';
+    protected $icon = 'scroll';
 
     /**
      * Display priority
@@ -81,6 +81,24 @@ class PurchaseActivityCountFeature extends AbstractFeature {
     private $ajax_handler;
 
     /**
+     * Display position service
+     *
+     * @var DisplayPositionService
+     */
+    private DisplayPositionService $position_service;
+
+    /**
+     * Allowed positions for this feature (empty = all)
+     *
+     * @var array
+     */
+    protected array $allowed_positions = [
+        'below_product_title',
+        'below_price',
+        'below_add_to_cart_button',
+    ];
+
+    /**
      * Constructor
      *
      * @param \YayBoost\Container\Container $container DI container.
@@ -88,13 +106,12 @@ class PurchaseActivityCountFeature extends AbstractFeature {
     public function __construct( $container ) {
         parent::__construct( $container );
 
-        // Initialize modules
-        // $this->tracker      = new LiveVisitorCountTracker( $this );
-        // $this->renderer     = new LiveVisitorCountRenderer( $this, $this->tracker );
-        // $this->ajax_handler = new LiveVisitorCountAjaxHandler( $this->tracker );
+        // Initialize services
+        $this->position_service = new DisplayPositionService();
 
-        // Register AJAX hooks
-        // $this->ajax_handler->register_hooks();
+        // Initialize modules
+        $this->tracker  = new PurchaseActivityCountTracker( $this );
+        $this->renderer = new PurchaseActivityCountRenderer( $this, $this->tracker );
     }
 
     /**
@@ -108,10 +125,11 @@ class PurchaseActivityCountFeature extends AbstractFeature {
         }
 
         // Register hooks after query is parsed
-        add_action( 'wp', [ $this, 'register_product_hooks' ] );
+        add_action( 'wp', [ $this, 'register_product_and_shop_hooks' ] );
+        add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ], 10, 2 );
 
         // Initialize block
-        // new LiveVisitorCountBlock( $this );
+        new PurchaseActivityCountBlock( $this );
     }
 
     /**
@@ -119,18 +137,29 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      *
      * @return void
      */
-    public function register_product_hooks(): void {
-        if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-            return;
+    public function register_product_and_shop_hooks(): void {
+        $show_on_product_page = $this->get( 'display.show_on_product_page' );
+        $show_on_shop_page    = $this->get( 'display.show_on_shop_page' );
+        $position             = $this->get( 'display.position' );
+        // Register product page hooks
+        if ( $show_on_product_page ) {
+            $this->position_service->register_hook(
+                DisplayPositionService::PAGE_PRODUCT,
+                $position,
+                [ $this, 'render_content' ]
+            );
         }
-
-        // $position = $this->get( 'display.position' );
-
-        // $this->position_service->register_hook(
-        // DisplayPositionService::PAGE_PRODUCT,
-        // $position,
-        // array( $this, 'render_content' )
-        // );
+        // Register shop page hooks
+        if ( $show_on_shop_page ) {
+            $this->position_service->register_mapped_hook(
+                $position,
+                DisplayPositionService::PAGE_PRODUCT,
+                DisplayPositionService::PAGE_SHOP,
+                [ $this, 'render_content' ],
+                'after_shop_loop_item'
+                // fallback
+            );
+        }
     }
 
     /**
@@ -138,41 +167,54 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      *
      * @return array Options array with value/label pairs.
      */
-    // public function get_position_options(): array {
-    // return $this->position_service->get_options_for_select(
-    // DisplayPositionService::PAGE_PRODUCT,
-    // $this->allowed_positions,
-    // true // Include "Use Block" option
-    // );
-    // }
+    public function get_position_options(): array {
+        return $this->position_service->get_options_for_select(
+            DisplayPositionService::PAGE_PRODUCT,
+            $this->allowed_positions,
+            false
+        );
+    }
 
     /**
-     * Check if the feature should apply to the current product
+     * Check if the feature should apply to a specific product
      *
+     * @param int $product_id Product ID (e.g. from block context when inside product-template). Null for current post/product.
      * @return bool True if feature should apply.
      */
-    // public function should_apply_to_current_product(): bool {
-    // $apply = $this->get( 'apply_on.apply' );
+    public function should_apply_to_product( $product_id = null ): bool {
+        if ( ! $product_id ) {
+            return false;
+        }
 
-    // if ( 'all' === $apply ) {
-    // return true;
-    // }
+        $product = wc_get_product( $product_id );
+        if ( ! $product ) {
+            return false;
+        }
 
-    // $product_id = get_the_ID();
-    // if ( ! $product_id ) {
-    // return false;
-    // }
+        if ( ! ( $product instanceof \WC_Product ) ) {
+            return false;
+        }
 
-    // if ( 'specific_products' === $apply ) {
-    // return $this->matches_specific_products( $product_id );
-    // }
+        $apply = $this->get( 'target_products.apply' );
 
-    // if ( 'specific_categories' === $apply ) {
-    // return $this->matches_specific_categories( $product_id );
-    // }
+        if ( 'all' === $apply || 'specific_categories' === $apply ) {
+            $exclude = $this->get( 'target_products.exclude' ) ?? [];
+            $exclude = array_map( 'intval', $exclude );
+            if ( ! empty( $exclude ) && in_array( $product_id, $exclude, true ) ) {
+                return false;
+            }
+        }
 
-    // return false;
-    // }
+        if ( 'specific_products' === $apply ) {
+            return $this->matches_specific_products( $product_id );
+        }
+
+        if ( 'specific_categories' === $apply ) {
+            return $this->matches_specific_categories( $product_id );
+        }
+
+        return true;
+    }
 
     /**
      * Check if product matches specific products setting
@@ -180,15 +222,15 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      * @param int $product_id Product ID.
      * @return bool True if matches.
      */
-    // private function matches_specific_products( int $product_id ): bool {
-    // $specific_products = $this->get( 'apply_on.products' ) ?? array();
-    // if ( empty( $specific_products ) ) {
-    // return false;
-    // }
+    private function matches_specific_products( int $product_id ): bool {
+        $specific_products = $this->get( 'target_products.products' ) ?? [];
+        if ( empty( $specific_products ) ) {
+            return false;
+        }
 
-    // $specific_products = array_map( 'intval', $specific_products );
-    // return in_array( $product_id, $specific_products, true );
-    // }
+        $specific_products = array_map( 'intval', $specific_products );
+        return in_array( $product_id, $specific_products, true );
+    }
 
     /**
      * Check if product matches specific categories setting
@@ -196,54 +238,37 @@ class PurchaseActivityCountFeature extends AbstractFeature {
      * @param int $product_id Product ID.
      * @return bool True if matches.
      */
-    // private function matches_specific_categories( int $product_id ): bool {
-    // $specific_categories = $this->get( 'apply_on.categories' ) ?? array();
-    // if ( empty( $specific_categories ) ) {
-    // return false;
-    // }
-    // $categories = array();
-    // $specific_categories = array_map( 'intval', $specific_categories );
-    // foreach ( $specific_categories as $category ) {
-    // $category = get_term_by( 'slug', $category, 'product_cat' );
-    // if ( $category ) {
-    // $categories[] = $category->term_id;
-    // if category has children, add them to the categories array
-    // $children = get_term_children( $category->term_id, 'product_cat' );
-    // if ( ! empty( $children ) ) {
-    // $categories = array_merge( $categories, $children );
-    // }
-    // }
-    // }
+    private function matches_specific_categories( int $product_id ): bool {
+        $specific_categories = $this->get( 'target_products.categories' ) ?? [];
 
-    // if ( empty( $categories ) ) {
-    // return false;
-    // }
+        if ( empty( $specific_categories ) ) {
+            return false;
+        }
+        $categories = [];
 
-    // $product_categories = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+        foreach ( $specific_categories as $category ) {
+            $category = get_term_by( 'slug', $category, 'product_cat' );
+            if ( $category ) {
+                $categories[] = $category->term_id;
+                // if category has children, add them to the categories array
+                $children = get_term_children( $category->term_id, 'product_cat' );
+                if ( ! empty( $children ) ) {
+                    $categories = array_merge( $categories, $children );
+                }
+            }
+        }
 
-    // if ( is_wp_error( $product_categories ) ) {
-    // return false;
-    // }
+        if ( empty( $categories ) ) {
+            return false;
+        }
 
-    // return ! empty( array_intersect( array_map( 'intval', $product_categories ), $categories ) );
-    // }
+        $product_categories = wp_get_post_terms( $product_id, 'product_cat', [ 'fields' => 'ids' ] );
 
-    /**
-     * Render visitor count content (delegated to renderer)
-     *
-     * @return void
-     */
-    public function render_content(): void {
-        $this->renderer->render();
-    }
+        if ( is_wp_error( $product_categories ) ) {
+            return false;
+        }
 
-    /**
-     * Get rendered content (for block rendering)
-     *
-     * @return string HTML content.
-     */
-    public function get_content(): string {
-        return $this->renderer->get_content();
+        return ! empty( array_intersect( array_map( 'intval', $product_categories ), $categories ) );
     }
 
     /**
@@ -281,5 +306,32 @@ class PurchaseActivityCountFeature extends AbstractFeature {
                 ],
             ]
         );
+    }
+
+    /**
+     * Handle new order
+     *
+     * @param int       $order_id Order ID.
+     * @param \WC_Order $order Order object.
+     * @return void
+     */
+    public function handle_new_order( int $order_id, \WC_Order $order ): void {
+        $products = $order->get_items();
+        foreach ( $products as $product ) {
+            $product_id = ! empty( $product->get_variation_id() ) ? $product->get_variation_id() : $product->get_product_id();
+            if ( $product_id ) {
+                $this->tracker->update_purchase_activity_count( $product_id );
+            }
+        }
+    }
+
+    public function get_renderer(): PurchaseActivityCountRenderer {
+        return $this->renderer;
+    }
+
+    public function render_content(): void {
+        $product_id = get_the_ID();
+
+        $this->renderer->render( $product_id );
     }
 }

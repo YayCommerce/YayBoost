@@ -62,9 +62,9 @@ class FBTAjaxHandler {
             );
         }
 
-        $added   = [];
-        $errors  = [];
-        $cart    = WC()->cart;
+        $added  = [];
+        $errors = [];
+        $cart   = WC()->cart;
 
         foreach ( $product_ids as $product_id ) {
             $product = wc_get_product( $product_id );
@@ -102,12 +102,13 @@ class FBTAjaxHandler {
             $source_product_id = isset( $_POST['source_product_id'] ) ? absint( $_POST['source_product_id'] ) : 0;
 
             // Add FBT metadata to cart item for purchase tracking
-            $cart_item_data = [
-                '_yayboost_fbt' => [
-                    'source_product_id' => $source_product_id,
-                    'added_at'          => time(),
-                ],
-            ];
+            if ( $source_product_id !== $product_id ) {
+                $cart_item_data = [
+                    '_yayboost_fbt' => [
+                        'source_product_id' => $source_product_id,
+                    ],
+                ];
+            }
 
             // Add to cart with FBT metadata
             $cart_item_key = $cart->add_to_cart( $product_id, 1, 0, [], $cart_item_data );
@@ -133,8 +134,8 @@ class FBTAjaxHandler {
                     __( 'Failed to add %s to cart.', 'yayboost' ),
                     $product->get_name()
                 );
-            }
-        }
+            }//end if
+        }//end foreach
 
         // Return response
         if ( empty( $added ) ) {

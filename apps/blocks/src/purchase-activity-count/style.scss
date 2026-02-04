@@ -1,0 +1,25 @@
+/* Purchase Activity Count Styles */
+
+.yayboost-pac {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--wp--preset--color--brandy-foreground, #111111);
+}
+
+/* Apply block alignment (Align left / center / right) to inner content */
+.wp-block-yayboost-purchase-activity-count {
+  &.alignleft {
+    text-align: left;
+  }
+
+  &.aligncenter {
+    text-align: center;
+  }
+
+  &.alignright {
+    text-align: right;
+  }
+}

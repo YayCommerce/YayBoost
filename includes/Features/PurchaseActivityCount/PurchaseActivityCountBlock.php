@@ -1,45 +1,45 @@
 <?php
 /**
- * Live Visitor Count Gutenberg Block
+ * Purchase Activity Count Gutenberg Block
  *
- * Registers the Live Visitor Count block using WordPress Interactivity API.
+ * Registers the Purchase Activity Count block using WordPress Interactivity API.
  * - Editor: Data localized via enqueue_block_editor_assets
  * - Frontend: Data passed via wp_interactivity_state() in render.php
  *
  * @package YayBoost
  */
 
-namespace YayBoost\Features\LiveVisitorCount;
+namespace YayBoost\Features\PurchaseActivityCount;
 
 /**
- * Live Visitor Count Block class
+ * Purchase Activity Count Block class
  */
-class LiveVisitorCountBlock {
+class PurchaseActivityCountBlock {
 
     /**
      * Feature instance
      *
-     * @var LiveVisitorCountFeature
+     * @var PurchaseActivityCountFeature
      */
     private $feature;
 
     /**
      * Constructor
      *
-     * @param LiveVisitorCountFeature $feature Feature instance.
+     * @param PurchaseActivityCountFeature $feature Feature instance.
      */
-    public function __construct( LiveVisitorCountFeature $feature ) {
+    public function __construct( PurchaseActivityCountFeature $feature ) {
         $this->feature = $feature;
 
         add_action( 'init', [ $this, 'register_block' ] );
         add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_editor_data' ] );
-        add_filter( 'allowed_block_types_all', [ $this, 'restrict_block_to_product_pages' ], 10, 2 );
+        add_filter( 'allowed_block_types_all', [ $this, 'restrict_block_to_product_or_category_pages' ], 10, 2 );
     }
 
     /**
      * Get feature instance
      *
-     * @return LiveVisitorCountFeature|null
+     * @return PurchaseActivityCountFeature|null
      */
     public function get_feature() {
         return $this->feature;
@@ -51,7 +51,7 @@ class LiveVisitorCountBlock {
      * @return void
      */
     public function register_block() {
-        $block_json_path = YAYBOOST_PATH . 'assets/dist/blocks/live-visitor-count/block.json';
+        $block_json_path = YAYBOOST_PATH . 'assets/dist/blocks/purchase-activity-count/block.json';
 
         if ( ! file_exists( $block_json_path ) ) {
             return;
@@ -77,20 +77,20 @@ class LiveVisitorCountBlock {
      */
     public function enqueue_editor_data() {
         wp_localize_script(
-            'yayboost-live-visitor-count-editor-script',
-            'yayboostLiveVisitorCount',
+            'yayboost-purchase-activity-count-editor-script',
+            'yayboostPurchaseActivityCount',
             $this->feature->get_settings()
         );
     }
 
     /**
-     * Restrict block availability to product post type only
+     * Restrict block availability to product or category pages (and templates so it can be used inside product-template)
      *
      * @param bool|array              $allowed_block_types Array of allowed block type slugs, or true if all blocks are allowed.
      * @param WP_Block_Editor_Context $context The current block editor context.
      * @return bool|array Modified allowed block types.
      */
-    public function restrict_block_to_product_pages( $allowed_block_types, $context ) {
+    public function restrict_block_to_product_or_category_pages( $allowed_block_types, $context ) {
         // If we're not in an editor context, return as-is
         if ( ! isset( $context->post ) ) {
             return $allowed_block_types;
@@ -98,13 +98,13 @@ class LiveVisitorCountBlock {
 
         $post_type = get_post_type( $context->post );
 
-        // If we're on a product page, allow the block
-        if ( 'product' === $post_type ) {
+        // Allow on product/category pages, or when editing templates (so block can be used inside product-template block)
+        if ( in_array( $post_type, [ 'product', 'category', 'wp_template', 'wp_template_part' ], true ) ) {
             return $allowed_block_types;
         }
 
-        // Not on product page - remove this block
-        $block_name = 'yayboost/live-visitor-count';
+        // Not on allowed context - remove this block
+        $block_name = 'yayboost/purchase-activity-count';
 
         // If all blocks allowed (true), get all registered blocks and exclude ours
         if ( true === $allowed_block_types ) {
