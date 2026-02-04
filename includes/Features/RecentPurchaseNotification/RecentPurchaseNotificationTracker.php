@@ -140,7 +140,7 @@ class RecentPurchaseNotificationTracker {
                     $orders    = $this->query_orders( self::QUERY_LIMIT_FOR_MIN_ORDERS, null );
                     $purchases = $this->normalize_orders_to_purchases( $orders );
                     $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
-                    $last = null;
+                    $last      = null;
                     foreach ( $purchases as $p ) {
                         $oid = (int) ( $p['order_id'] ?? 0 );
                         if ( $oid > 0 && ( $last === null || $oid > $last ) ) {
@@ -154,7 +154,7 @@ class RecentPurchaseNotificationTracker {
                 }
             );
             return $result;
-        }
+        }//end if
 
         $is_delta = $after_id > 0;
 
@@ -370,7 +370,7 @@ class RecentPurchaseNotificationTracker {
                 continue;
             }
             $seen_product_ids[ $pid ] = true;
-            $result[]                = $p;
+            $result[]                 = $p;
             if ( count( $result ) >= $limit ) {
                 break;
             }
@@ -388,7 +388,7 @@ class RecentPurchaseNotificationTracker {
         if ( $product->is_on_sale() ) {
             $regular = wc_price( $product->get_regular_price() );
             $sale    = wc_price( $product->get_price() );
-            $html    = $regular . ' → ' . $sale;
+            $html    = $regular . ' - ' . $sale;
         } else {
             $html = wc_price( $product->get_price() );
         }
