@@ -74,7 +74,7 @@ class EntityTable {
             $table_name
         );
 
-        return $wpdb->get_var( $query ) === $table_name;
+        return $wpdb->get_var( $query ) === $table_name; // phpcs:ignore WordPress.DB
     }
 
     /**
@@ -87,7 +87,7 @@ class EntityTable {
 
         $table_name = self::get_table_name();
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $wpdb->query( "DROP TABLE IF EXISTS {$table_name}" );
+        $wpdb->query( "DROP TABLE IF EXISTS {$table_name}" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
         return ! self::exists();
     }

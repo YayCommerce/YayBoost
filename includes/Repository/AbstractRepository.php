@@ -54,7 +54,7 @@ abstract class AbstractRepository {
 
         $result = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT * FROM {$this->get_table()} WHERE id = %d AND feature_id = %s AND entity_type = %s",
+                "SELECT * FROM {$this->get_table()} WHERE id = %d AND feature_id = %s AND entity_type = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 $id,
                 $this->feature_id,
                 $this->entity_type
@@ -110,7 +110,7 @@ abstract class AbstractRepository {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $results = $wpdb->get_results(
-            $wpdb->prepare( $sql, $args['limit'], $args['offset'] ),
+            $wpdb->prepare( $sql, $args['limit'], $args['offset'] ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
             ARRAY_A
         );
 
@@ -240,7 +240,7 @@ abstract class AbstractRepository {
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$this->get_table()} WHERE {$where}"
+            "SELECT COUNT(*) FROM {$this->get_table()} WHERE {$where}" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         );
     }
 

@@ -74,7 +74,7 @@ class AnalyticsEventsTable {
         global $wpdb;
         $table_name = self::get_table_name();
         $query      = $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name );
-        return $wpdb->get_var( $query ) === $table_name;
+        return $wpdb->get_var( $query ) === $table_name; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -111,17 +111,28 @@ class AnalyticsEventsTable {
             self::get_table_name(),
             $data,
             [
-                '%s', // feature_id
-                '%s', // event_type
-                '%d', // product_id
-                '%d', // related_product_id
-                '%d', // order_id
-                '%d', // quantity
-                '%f', // revenue
-                '%s', // session_id
-                '%d', // user_id
-                '%s', // metadata
-                '%s', // created_at
+                '%s',
+                // feature_id
+                                    '%s',
+                // event_type
+                                    '%d',
+                // product_id
+                                    '%d',
+                // related_product_id
+                                    '%d',
+                // order_id
+                                    '%d',
+                // quantity
+                                    '%f',
+                // revenue
+                                    '%s',
+                // session_id
+                                    '%d',
+                // user_id
+                                    '%s',
+                // metadata
+                                    '%s',
+            // created_at
             ]
         );
 
@@ -142,6 +153,7 @@ class AnalyticsEventsTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "DELETE FROM {$table_name}
                  WHERE created_at < DATE_SUB(NOW(), INTERVAL %d DAY)
                  LIMIT %d",
@@ -166,6 +178,7 @@ class AnalyticsEventsTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return $wpdb->get_results(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "SELECT
                     feature_id,
                     event_type,
@@ -217,12 +230,13 @@ class AnalyticsEventsTable {
         $table_name = self::get_table_name();
 
         // Event types we want to show in activity feed
-        $event_types = [ 'purchase', 'threshold_reached', 'add_to_cart' ];
+        $event_types  = [ 'purchase', 'threshold_reached', 'add_to_cart' ];
         $placeholders = implode( ',', array_fill( 0, count( $event_types ), '%s' ) );
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "SELECT
                     id,
                     feature_id,

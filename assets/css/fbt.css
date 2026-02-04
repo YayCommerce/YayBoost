@@ -4,15 +4,9 @@
  */
 
 /* ============================================
-   Typography
-   ============================================ */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
-
-/* ============================================
    Variables
    ============================================ */
 :root {
-  --fbt-font: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --fbt-black: #111111;
   --fbt-gray-900: #1a1a1a;
   --fbt-gray-600: #666666;
@@ -28,7 +22,6 @@
    Section Container (scoped for theme safety)
    ============================================ */
 .yayboost-fbt.fbt-section {
-  font-family: var(--fbt-font);
   padding: 32px 0;
   border-top: 1px solid var(--fbt-gray-200);
 }
@@ -144,7 +137,6 @@
   justify-content: center;
   height: 44px;
   padding: 0 24px;
-  font-family: var(--fbt-font);
   font-size: 14px;
   font-weight: 500;
   color: var(--fbt-white);

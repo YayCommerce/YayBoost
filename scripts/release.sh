@@ -205,6 +205,7 @@ cmd_package() {
     # Copy directories
     cp -r "$PLUGIN_DIR/assets" "$temp_dir/"
     cp -r "$PLUGIN_DIR/includes" "$temp_dir/"
+    cp -r "$PLUGIN_DIR/languages" "$temp_dir/"
 
     # Copy only essential vendor files (autoload.php and composer directory)
     mkdir -p "$temp_dir/vendor"
@@ -213,6 +214,11 @@ cmd_package() {
 
     # Remove dev files from copied assets
     rm -rf "$temp_dir/assets/admin/dist/.vite" 2>/dev/null || true
+
+    # Copy composer.json
+    if [ -f "$PLUGIN_DIR/composer.json" ]; then
+        cp "$PLUGIN_DIR/composer.json" "$temp_dir/"
+    fi
 
     # Copy README if exists (but not development docs)
     if [ -f "$PLUGIN_DIR/README.md" ]; then

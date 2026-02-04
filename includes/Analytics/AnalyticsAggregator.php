@@ -10,6 +10,7 @@
 
 namespace YayBoost\Analytics;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Aggregates and cleans up analytics data
  */
@@ -99,7 +100,7 @@ class AnalyticsAggregator {
      * @return array Results summary
      */
     public static function aggregate_date( string $date ): array {
-        $events = AnalyticsEventsTable::get_events_for_date( $date );
+        $events  = AnalyticsEventsTable::get_events_for_date( $date );
         $results = [
             'date'     => $date,
             'features' => [],
@@ -121,15 +122,15 @@ class AnalyticsAggregator {
             }
 
             $stat_map = [
-                'impression'   => 'impressions',
-                'click'        => 'clicks',
-                'add_to_cart'  => 'add_to_carts',
-                'purchase'     => 'purchases',
+                'impression'  => 'impressions',
+                'click'       => 'clicks',
+                'add_to_cart' => 'add_to_carts',
+                'purchase'    => 'purchases',
             ];
 
             $event_type = $event['event_type'];
             if ( isset( $stat_map[ $event_type ] ) ) {
-                $stat_name = $stat_map[ $event_type ];
+                $stat_name                                = $stat_map[ $event_type ];
                 $by_feature[ $feature_id ][ $stat_name ] += (int) $event['event_count'];
 
                 if ( 'purchase' === $event_type ) {
@@ -142,7 +143,7 @@ class AnalyticsAggregator {
                     $by_feature[ $feature_id ]['unique_products'] = $unique;
                 }
             }
-        }
+        }//end foreach
 
         // Upsert aggregates
         foreach ( $by_feature as $feature_id => $stats ) {
@@ -180,7 +181,8 @@ class AnalyticsAggregator {
      */
     public static function get_retention_days(): int {
         $days = get_option( 'yayboost_analytics_retention_days', self::DEFAULT_RETENTION_DAYS );
-        return max( 7, min( 365, (int) $days ) ); // Clamp between 7-365 days
+        return max( 7, min( 365, (int) $days ) );
+        // Clamp between 7-365 days
     }
 
     /**
@@ -190,7 +192,8 @@ class AnalyticsAggregator {
      */
     public static function get_batch_size(): int {
         $size = get_option( 'yayboost_analytics_cleanup_batch', self::DEFAULT_BATCH_SIZE );
-        return max( 1000, min( 50000, (int) $size ) ); // Clamp between 1k-50k
+        return max( 1000, min( 50000, (int) $size ) );
+        // Clamp between 1k-50k
     }
 
     /**
@@ -208,9 +211,9 @@ class AnalyticsAggregator {
         $end     = strtotime( $end_date );
 
         while ( $current <= $end ) {
-            $date = gmdate( 'Y-m-d', $current );
+            $date             = gmdate( 'Y-m-d', $current );
             $results[ $date ] = self::aggregate_date( $date );
-            $current = strtotime( '+1 day', $current );
+            $current          = strtotime( '+1 day', $current );
         }
 
         return $results;

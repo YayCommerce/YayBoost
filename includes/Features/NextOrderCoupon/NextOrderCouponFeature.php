@@ -12,6 +12,8 @@ namespace YayBoost\Features\NextOrderCoupon;
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Utils\CodeGenerator;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Next Order Coupon feature implementation
  */

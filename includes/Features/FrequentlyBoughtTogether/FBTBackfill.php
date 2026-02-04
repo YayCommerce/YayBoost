@@ -66,17 +66,19 @@ class FBTBackfill {
     public function process_batch( int $batch_size, int $last_order_id = 0 ): array {
         global $wpdb;
 
-        // Get unprocessed completed orders
         $sql = $wpdb->prepare(
-            "SELECT DISTINCT o.id
-             FROM {$wpdb->prefix}wc_orders o
-             LEFT JOIN {$wpdb->prefix}wc_orders_meta om
-                 ON o.id = om.order_id AND om.meta_key = '" . FBTCollector::ORDER_PROCESSED_META_KEY . "'
-             WHERE o.status = 'wc-completed'
-               AND om.meta_value IS NULL
-               AND o.id > %d
-             ORDER BY o.id ASC
-             LIMIT %d",
+            "
+                SELECT DISTINCT o.id
+                FROM {$wpdb->prefix}wc_orders o
+                LEFT JOIN {$wpdb->prefix}wc_orders_meta om
+                    ON o.id = om.order_id AND om.meta_key = %s
+                WHERE o.status = 'wc-completed'
+                  AND om.meta_value IS NULL
+                  AND o.id > %d
+                ORDER BY o.id ASC
+                LIMIT %d
+            ",
+            FBTCollector::ORDER_PROCESSED_META_KEY,
             $last_order_id,
             $batch_size
         );
@@ -84,9 +86,9 @@ class FBTBackfill {
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $order_ids = $wpdb->get_col( $sql );
 
-        $processed     = 0;
-        $errors        = 0;
-        $new_last_id   = $last_order_id;
+        $processed   = 0;
+        $errors      = 0;
+        $new_last_id = $last_order_id;
 
         foreach ( $order_ids as $order_id ) {
             try {
@@ -95,7 +97,9 @@ class FBTBackfill {
                 $new_last_id = (int) $order_id;
             } catch ( \Exception $e ) {
                 ++$errors;
-                error_log( 'FBT Backfill Error for order ' . $order_id . ': ' . $e->getMessage() );
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    error_log( 'FBT Backfill Error for order ' . $order_id . ': ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                }
             }
         }
 

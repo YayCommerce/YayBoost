@@ -3,6 +3,7 @@ namespace YayBoost\Register;
 
 use YayBoost\Traits\Singleton;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Register in Development Mode
  * Will get deleted in production

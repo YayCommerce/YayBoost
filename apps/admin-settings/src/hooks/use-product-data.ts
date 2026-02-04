@@ -23,6 +23,7 @@ export function useProductCategories(): UseQueryResult<CategoryOption[], Error> 
       const response = await api.get('/product-data/categories');
       return response.data.data as CategoryOption[];
     },
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -48,5 +49,6 @@ export function useProducts(searchTerm: string = '') {
       const response = await api.get('/product-data/products', { params });
       return response.data.data as ProductOption[];
     },
+    refetchOnWindowFocus: false,
   });
 }

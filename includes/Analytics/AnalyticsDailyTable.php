@@ -71,7 +71,7 @@ class AnalyticsDailyTable {
         global $wpdb;
         $table_name = self::get_table_name();
         $query      = $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name );
-        return $wpdb->get_var( $query ) === $table_name;
+        return $wpdb->get_var( $query ) === $table_name; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -100,6 +100,7 @@ class AnalyticsDailyTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "INSERT INTO {$table_name}
                     (feature_id, stat_date, impressions, clicks, add_to_carts, purchases, revenue, unique_products, aggregated_at)
                  VALUES (%s, %s, %d, %d, %d, %d, %f, %d, NOW())
@@ -147,6 +148,7 @@ class AnalyticsDailyTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "INSERT INTO {$table_name}
                     (feature_id, stat_date, {$stat_name}, aggregated_at)
                  VALUES (%s, %s, %f, NOW())
@@ -178,6 +180,7 @@ class AnalyticsDailyTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return $wpdb->get_results(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "SELECT * FROM {$table_name}
                  WHERE feature_id = %s
                    AND stat_date BETWEEN %s AND %s
@@ -205,6 +208,7 @@ class AnalyticsDailyTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->get_row(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "SELECT
                     SUM(impressions) as total_impressions,
                     SUM(clicks) as total_clicks,
@@ -246,6 +250,7 @@ class AnalyticsDailyTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "SELECT
                     feature_id,
                     SUM(impressions) as total_impressions,

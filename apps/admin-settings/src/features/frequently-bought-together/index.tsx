@@ -38,7 +38,8 @@ import FeatureLayoutHeader from '@/components/feature-layout-header';
 import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
-import { FBTBackfillCard } from './fbt-backfill-card';
+// Backfill now runs automatically on plugin activation
+// import { FBTBackfillCard } from './fbt-backfill-card';
 
 // Get currency symbol from admin data
 const currencySymbol = window.yayboostData?.currencySymbol || '$';
@@ -270,15 +271,18 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               control={form.control}
               name="max_products"
               render={({ field }) => (
-                <FormItem className="w-60">
+                <FormItem>
                   <Label>{__('Maximum products to show', 'yayboost')}</Label>
                   <FormControl>
-                    <InputNumber
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      min={1}
-                      max={20}
-                    />
+                    <div className='w-fit'>
+                      <InputNumber
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        min={1}
+                        max={20}
+                        className="w-24"
+                        />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -289,15 +293,18 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               control={form.control}
               name="min_order_threshold"
               render={({ field }) => (
-                <FormItem className="w-60">
+                <FormItem>
                   <Label>{__('Minimum Order Threshold', 'yayboost')}</Label>
                   <FormControl>
-                    <InputNumber
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      min={0}
-                      max={100}
-                    />
+                    <div className='w-fit'>
+                      <InputNumber
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        min={0}
+                        max={100}
+                        className="w-24"
+                        />
+                    </div>
                   </FormControl>
                   <FormDescription>
                     {__('Recommend products appear in at least', 'yayboost')}{' '}
@@ -368,7 +375,6 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               )}
             />
           </SettingsCard>
-          <FBTBackfillCard />
         </div>
         {/* Preview Panel */}
         <div className="space-y-6">

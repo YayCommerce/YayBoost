@@ -51,7 +51,7 @@ class Container {
      */
     public function resolve($key) {
         if ( ! $this->has( $key )) {
-            throw new Exception( "Service '{$key}' not found in container." );
+            throw new Exception( esc_html( "Service '{$key}' not found in container." ) );
         }
 
         // Return existing instance if singleton
@@ -108,7 +108,7 @@ class Container {
      */
     public function make($key) {
         if ( ! $this->has( $key )) {
-            throw new Exception( "Service '{$key}' not found in container." );
+            throw new Exception( esc_html( "Service '{$key}' not found in container." ) );
         }
 
         $resolver = $this->services[ $key ]['resolver'];

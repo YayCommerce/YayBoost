@@ -264,7 +264,7 @@ class PurchaseActivityCountTracker {
         }
 
         $count = $wpdb->get_var(
-            $wpdb->prepare( $query, ...$prepare_args )
+            $wpdb->prepare( $query, ...$prepare_args ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         );
 
         return (int) $count;

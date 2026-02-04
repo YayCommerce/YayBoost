@@ -517,28 +517,30 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
         />
       )}
 
-      <FormField
-        control={form.control}
-        name="exclude_products"
-        render={({ field }) => (
-          <FormItem>
-            <Label className="font-medium">Exclude products</Label>
-            <FormControl>
-              <MultiSelect
-                key={'exclude_products'}
-                options={excludeProducts ?? []}
-                value={field.value}
-                onChange={field.onChange}
-                placeholder={`Search products...`}
-                onSearchChange={onExcludeProductsSearch}
-                showSearch={true}
-                emptyText={`No products found`}
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {!isProducts && (
+        <FormField
+          control={form.control}
+          name="exclude_products"
+          render={({ field }) => (
+            <FormItem>
+              <Label className="font-medium">Exclude products</Label>
+              <FormControl>
+                <MultiSelect
+                  key={'exclude_products'}
+                  options={excludeProducts ?? []}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder={`Search products...`}
+                  onSearchChange={onExcludeProductsSearch}
+                  showSearch={true}
+                  emptyText={`No products found`}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </>
   );
 };

@@ -11,6 +11,7 @@ namespace YayBoost\Features\SmartRecommendations;
 
 use YayBoost\Features\AbstractFeature;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Free Shipping Bar feature implementation
  */
@@ -57,7 +58,7 @@ class SmartRecommendationsFeature extends AbstractFeature {
      */
     protected $priority = 100;
 
-     /**
+    /**
      * Feature status
      *
      * @var string

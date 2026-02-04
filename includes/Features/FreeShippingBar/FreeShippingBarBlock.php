@@ -11,6 +11,7 @@
 
 namespace YayBoost\Features\FreeShippingBar;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Free Shipping Bar Block class
  */
@@ -55,22 +56,22 @@ class FreeShippingBarBlock {
         if ( ! $this->feature || ! $this->feature->is_enabled() ) {
             return;
         }
-        
+
         $block_json_path = YAYBOOST_PATH . 'assets/dist/blocks/free-shipping-bar/block.json';
 
         if ( ! file_exists( $block_json_path ) ) {
             return;
         }
 
-		// Register block with feature context for render.php
-		// Frontend data localization handled via wp_interactivity_state() in render.php
-		register_block_type(
-			$block_json_path,
-			[
-				'provides_context' => [
-					'feature' => $this->feature,
-				],
-			]
+        // Register block with feature context for render.php
+        // Frontend data localization handled via wp_interactivity_state() in render.php
+        register_block_type(
+            $block_json_path,
+            [
+                'provides_context' => [
+                    'feature' => $this->feature,
+                ],
+            ]
         );
     }
 

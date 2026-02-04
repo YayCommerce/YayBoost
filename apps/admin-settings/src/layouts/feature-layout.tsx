@@ -3,7 +3,7 @@
  */
 
 import { SpinnerIcon } from '@phosphor-icons/react';
-import { ArrowUpRightIcon, FolderLockIcon } from 'lucide-react';
+import { ArrowUpRightIcon, ClockIcon, FolderLockIcon } from 'lucide-react';
 import { Link, useNavigate } from '@tanstack/react-router';
 
 import { useFeature, useToggleFeature } from '@/hooks/use-features';
@@ -52,6 +52,28 @@ export function FeatureLayout({ featureId, children }: FeatureLayoutProps) {
           Back to dashboard
         </Link>
       </div>
+    );
+  }
+
+  // Block coming soon features from direct URL access
+  if (feature.status === 'coming_soon') {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <ClockIcon />
+          </EmptyMedia>
+          <EmptyTitle>{feature.name}</EmptyTitle>
+          <EmptyDescription>
+            This feature is coming soon. We're working hard to bring it to you!
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button variant="outline" onClick={() => navigate({ to: '/features' })}>
+            Back to features
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 

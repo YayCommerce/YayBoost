@@ -608,15 +608,6 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               />
             </CardContent>
           </Card>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {__(
-                'Gutenberg block "Live Visitor Count" is not supported in this version.',
-                'yayboost',
-              )}
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
     </Form>

@@ -61,7 +61,7 @@ class FBTProductStatsTable {
         global $wpdb;
         $table_name = self::get_table_name();
         $query      = $wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name );
-        return $wpdb->get_var( $query ) === $table_name;
+        return $wpdb->get_var( $query ) === $table_name; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
     }
 
     /**
@@ -78,6 +78,7 @@ class FBTProductStatsTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "INSERT INTO {$table_name} (product_id, order_count, updated_at)
                  VALUES (%d, 1, NOW())
                  ON DUPLICATE KEY UPDATE order_count = order_count + 1, updated_at = NOW()",
@@ -101,7 +102,7 @@ class FBTProductStatsTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $count = $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT order_count FROM {$table_name} WHERE product_id = %d",
+                "SELECT order_count FROM {$table_name} WHERE product_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 $product_id
             )
         );
@@ -123,6 +124,7 @@ class FBTProductStatsTable {
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $result = $wpdb->query(
             $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
                 "INSERT INTO {$table_name} (product_id, order_count, updated_at)
                  VALUES (%d, %d, NOW())
                  ON DUPLICATE KEY UPDATE order_count = %d, updated_at = NOW()",

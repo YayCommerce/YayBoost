@@ -11,6 +11,8 @@ namespace YayBoost\Features\ExitIntentPopup;
 
 use YayBoost\Features\AbstractFeature;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Exit Intent Popup feature implementation
  */

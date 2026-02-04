@@ -9,6 +9,8 @@ namespace YayBoost;
 
 use YayBoost\Container\Container;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Main Bootstrap class for plugin initialization
  */
@@ -110,6 +112,10 @@ class Bootstrap {
         do_action( 'yayboost_loaded', $this->container );
 
         $this->container->resolve( 'admin.menu' )->register();
+
+        // Plugin action links
+        add_filter( 'plugin_action_links_' . YAYBOOST_BASENAME, [ $this, 'add_plugin_action_links' ] );
+        add_filter( 'plugin_row_meta', [ $this, 'add_plugin_author_links' ], 10, 2 );
     }
 
     /**
@@ -129,5 +135,31 @@ class Bootstrap {
      */
     public function get_container() {
         return $this->container;
+    }
+
+    /**
+     * Add plugin action links
+     *
+     * @param array $links The plugin action links
+     * @return array The plugin action links
+     */
+    public function add_plugin_action_links( $links ) {
+        array_unshift( $links, '<a href="' . admin_url( 'admin.php?page=yayboost' ) . '">' . __( 'Settings', 'yayboost' ) . '</a>' );
+        return $links;
+    }
+
+    /**
+     * Add plugin author links
+     *
+     * @param array  $links The plugin action links
+     * @param string $file The plugin file
+     * @return array The plugin action links
+     */
+    public function add_plugin_author_links( $links, $file ) {
+        if ( YAYBOOST_BASENAME === $file ) {
+            $links[] = '<a href="https://docs.yaycommerce.com/yayboost/getting-started/introduction" target="_blank">' . __( 'Docs', 'yayboost' ) . '</a>';
+            $links[] = '<a href="https://yaycommerce.com/support/" target="_blank">' . __( 'Support', 'yayboost' ) . '</a>';
+        }
+        return $links;
     }
 }

@@ -10,6 +10,7 @@
 
 namespace YayBoost\Shared\DisplayPosition;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Service for managing display positions on WooCommerce pages
  */

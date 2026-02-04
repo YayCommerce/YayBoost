@@ -11,6 +11,7 @@ namespace YayBoost\Features\FrequentlyBoughtTogether;
 
 use YayBoost\Analytics\AnalyticsTracker;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Handles purchase tracking for FBT items
  */
@@ -48,8 +49,8 @@ class FBTPurchaseTracker {
      * @return void
      */
     public function save_fbt_meta_to_order_item( $item, $cart_item_key, $values, $order ): void {
-        if ( isset( $values[self::ORDER_ITEM_META_KEY] ) && is_array( $values[self::ORDER_ITEM_META_KEY] ) ) {
-            $item->add_meta_data( self::ORDER_ITEM_META_KEY, $values[self::ORDER_ITEM_META_KEY], true );
+        if ( isset( $values[ self::ORDER_ITEM_META_KEY ] ) && is_array( $values[ self::ORDER_ITEM_META_KEY ] ) ) {
+            $item->add_meta_data( self::ORDER_ITEM_META_KEY, $values[ self::ORDER_ITEM_META_KEY ], true );
         }
     }
 
@@ -109,7 +110,7 @@ class FBTPurchaseTracker {
                     'order_item_id' => $item->get_id(),
                 ]
             );
-        }
+        }//end foreach
 
         // Mark order as tracked to prevent duplicate tracking
         if ( $has_fbt_items ) {

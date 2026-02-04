@@ -11,6 +11,7 @@
 
 namespace YayBoost\Features\LiveVisitorCount;
 
+defined( 'ABSPATH' ) || exit;
 /**
  * Live Visitor Count Block class
  */
