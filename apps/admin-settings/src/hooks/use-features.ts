@@ -23,6 +23,7 @@ export function useFeatures() {
   return useQuery({
     queryKey: featureKeys.lists(),
     queryFn: featureApi.getAll,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -33,6 +34,7 @@ export function useFeatureCategories() {
   return useQuery({
     queryKey: featureKeys.categories(),
     queryFn: featureApi.getCategories,
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -47,6 +49,7 @@ export function useFeature(id: string, forceRefresh?: boolean) {
     queryFn: () => featureApi.get(id),
     enabled: !!id,
     refetchOnMount: !!forceRefresh,
+    refetchOnWindowFocus: false,
   });
 }
 

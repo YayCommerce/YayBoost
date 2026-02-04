@@ -95,7 +95,7 @@ export function DashboardLayout() {
                 <Button
                   variant="outline"
                   className="cursor-pointer"
-                  onClick={() => window.open('https://docs.yaycommerce.com/yayreviews', '_blank')}
+                  onClick={() => window.open('https://docs.yaycommerce.com/yayboost', '_blank')}
                 >
                   <BookIcon />
                 </Button>
