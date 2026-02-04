@@ -295,7 +295,7 @@ class PurchaseActivityCountFeature extends AbstractFeature {
                 'count_from'            => 'all',
                 'display'               => [
                     'text'                 => '{count} bought this product',
-                    'position'             => 'below_price',
+                    'position'             => 'below_add_to_cart_button',
                     'show_on_product_page' => true,
                     'show_on_shop_page'    => false,
                 ],
