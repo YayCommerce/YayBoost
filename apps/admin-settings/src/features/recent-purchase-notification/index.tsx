@@ -53,7 +53,7 @@ const settingsSchema = z.object({
       'first-name-only',
       'first-name-initial',
       'initial-only',
-      'Anonymous',
+      'anonymous',
     ]),
     product_details: z.array(z.enum(['title', 'price', 'rating'])),
   }),
@@ -88,7 +88,7 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
 
   const customerNamePreview = useMemo(() => {
     switch (customerName) {
-      case 'Anonymous':
+      case 'anonymous':
         return __('Someone', 'yayboost');
       case 'full-name':
         return __('John Doe', 'yayboost');
@@ -387,7 +387,7 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
                       {__('First name + Initial', 'yayboost')}
                     </SelectItem>
                     <SelectItem value="initial-only">{__('Initial only', 'yayboost')}</SelectItem>
-                    <SelectItem value="Anonymous">{__('Anonymous', 'yayboost')}</SelectItem>
+                    <SelectItem value="anonymous">{__('Anonymous', 'yayboost')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

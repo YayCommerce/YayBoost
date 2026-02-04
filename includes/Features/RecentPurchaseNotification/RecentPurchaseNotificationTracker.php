@@ -22,9 +22,10 @@ class RecentPurchaseNotificationTracker {
     const CACHE_TTL = 30;
 
     /**
-     * Cache key prefix for purchases data
+     * Cache key prefix for purchases list
      */
-    const CACHE_KEY_PREFIX = 'recent_purchase_data_';
+    const CACHE_KEY_PREFIX = 'recent_purchase_list_';
+
 
     /**
      * Customer names
@@ -55,63 +56,315 @@ class RecentPurchaseNotificationTracker {
     }
 
     /**
-     * Get visitor count for current product page
+     * Get normalized purchase list for AJAX
+     *
+     * @param int      $page_id  Page ID.
+     * @param int      $limit    Max purchases to return.
+     * @param int|null $after_id For delta fetch: only orders with ID > after_id.
+     * @return array{ purchases: array, last_order_id: int|null }
+     */
+    public function get_purchase_list( int $page_id, int $limit = 20, ?int $after_id = null ): array {
+        $tracking_mode = $this->feature->get( 'tracking_mode' );
+
+        if ( 'simulated' === $tracking_mode ) {
+            return $this->get_simulated_purchase_list( $page_id );
+        }
+
+        return $this->get_real_purchase_list( $page_id, $limit, $after_id );
+    }
+
+    /**
+     * Get simulated purchase list (cached)
+     *
+     * @param int $page_id Page ID.
+     * @return array{ purchases: array, last_order_id: null }
+     */
+    private function get_simulated_purchase_list( int $page_id ): array {
+        $cache_key = self::CACHE_KEY_PREFIX . 'sim_' . $page_id;
+
+        $purchases = Cache::remember(
+            $cache_key,
+            self::CACHE_TTL,
+            function () {
+                $list = [];
+                for ( $i = 0; $i < 3; $i++ ) {
+                    $product = $this->get_random_product_for_display();
+                    if ( $product ) {
+                        $list[] = [
+                            'id'             => 'sim_' . uniqid( '', true ),
+                            'order_id'       => 0,
+                            'customer_name'  => $this->get_random_customer_name(),
+                            'product_url'    => $product['url'],
+                            'product_image'  => $product['image'],
+                            'product_name'   => $product['name'],
+                            'product_price'  => $product['price'],
+                            'product_rating' => $product['rating'],
+                            'time_ago'       => $this->get_random_time_ago(),
+                        ];
+                    }
+                }
+                return $list;
+            }
+        );
+
+        return [
+            'purchases'     => $purchases,
+            'last_order_id' => null,
+        ];
+    }
+
+    /**
+     * Get real purchase list (cached for initial, delta bypasses cache)
+     *
+     * @param int      $page_id  Page ID.
+     * @param int      $limit    Max purchases.
+     * @param int|null $after_id For delta fetch.
+     * @return array{ purchases: array, last_order_id: int|null }
+     */
+    private function get_real_purchase_list( int $page_id, int $limit, ?int $after_id ): array {
+        $is_delta = $after_id > 0;
+
+        if ( $is_delta ) {
+            $orders    = $this->query_orders( $limit, $after_id );
+            $purchases = $this->normalize_orders_to_purchases( $orders );
+            $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
+            return [
+                'purchases'     => $purchases,
+                'last_order_id' => $last,
+            ];
+        }
+
+        $cache_key = self::CACHE_KEY_PREFIX . $page_id;
+        $result    = Cache::remember(
+            $cache_key,
+            self::CACHE_TTL,
+            function () use ( $limit ) {
+                $orders    = $this->query_orders( $limit, null );
+                $purchases = $this->normalize_orders_to_purchases( $orders );
+                $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
+                return [
+                    'purchases'     => $purchases,
+                    'last_order_id' => $last,
+                ];
+            }
+        );
+
+        return $result;
+    }
+
+    /**
+     * Query orders (real mode) with optional after_id for delta
+     *
+     * @param int      $limit   Limit.
+     * @param int|null $after_id Exclude orders with ID <= after_id.
+     * @return array
+     */
+    private function query_orders( int $limit, ?int $after_id ): array {
+        $args = [
+            'limit'      => $limit,
+            'meta_query' => [
+                [
+                    'key'     => '_yayboost_recent_purchase_notification_order',
+                    'value'   => 'true',
+                    'compare' => '=',
+                ],
+            ],
+            'orderby'    => 'date',
+            'order'      => 'DESC',
+        ];
+
+        if ( version_compare( WC_VERSION, '7.0', '<' ) ) {
+            $wp_args = [
+                'post_type'      => 'shop_order',
+                'posts_per_page' => $after_id > 0 ? $limit + 50 : $limit,
+                'meta_key'       => '_yayboost_recent_purchase_notification_order',
+                'meta_value'     => true,
+                'orderby'        => 'date',
+                'order'          => 'DESC',
+            ];
+            $posts   = get_posts( $wp_args );
+            $orders  = array_filter(
+                array_map( fn( $p ) => wc_get_order( $p->ID ), $posts ),
+                fn( $o ) => $o instanceof \WC_Order
+            );
+            if ( $after_id > 0 ) {
+                $orders = array_values( array_filter( $orders, fn( $o ) => $this->get_order_id( $o ) > $after_id ) );
+                return array_slice( $orders, 0, $limit );
+            }
+            return array_values( $orders );
+        }
+
+        $orders = wc_get_orders( $args );
+        if ( $after_id > 0 && ! empty( $orders ) ) {
+            $orders = array_values( array_filter( $orders, fn( $o ) => $this->get_order_id( $o ) > $after_id ) );
+            $orders = array_slice( $orders, 0, $limit );
+        }
+        return $orders;
+    }
+
+    /**
+     * Get order ID from order object
+     *
+     * @param \WC_Order|object $order Order.
+     * @return int
+     */
+    private function get_order_id( $order ): int {
+        if ( $order instanceof \WC_Order ) {
+            return (int) $order->get_id();
+        }
+        return isset( $order->ID ) ? (int) $order->ID : 0;
+    }
+
+    /**
+     * Normalize WC orders to display format
+     *
+     * @param array $orders WC_Order objects.
+     * @return array
+     */
+    private function normalize_orders_to_purchases( array $orders ): array {
+        $purchases = [];
+        foreach ( $orders as $order ) {
+            if ( ! $order instanceof \WC_Order ) {
+                continue;
+            }
+            $items      = $order->get_items();
+            $first_item = reset( $items );
+            if ( ! $first_item instanceof \WC_Order_Item_Product ) {
+                continue;
+            }
+            $product = $first_item->get_product();
+            if ( ! $product || ! $product->is_visible() ) {
+                continue;
+            }
+            $purchases[] = [
+                'id'             => (string) $order->get_id(),
+                'order_id'       => (int) $order->get_id(),
+                'product_url'    => $product->get_permalink(),
+                'product_image'  => $this->get_product_image_url( $product ),
+                'product_name'   => $product->get_name(),
+                'product_price'  => $this->get_product_price_plain( $product ),
+                'product_rating' => (float) $product->get_average_rating(),
+                'time_ago'       => $this->human_time_diff( $order->get_date_created() ),
+            ];
+        }//end foreach
+        return $purchases;
+    }
+
+    /**
+     * Get product price as plain text for display (avoids raw HTML in notification)
+     *
+     * @param \WC_Product $product Product.
+     * @return string
+     */
+    private function get_product_price_plain( \WC_Product $product ): string {
+        if ( $product->is_on_sale() ) {
+            $regular = wc_price( $product->get_regular_price() );
+            $sale    = wc_price( $product->get_price() );
+            $html    = $regular . ' → ' . $sale;
+        } else {
+            $html = wc_price( $product->get_price() );
+        }
+        $plain = html_entity_decode( wp_strip_all_tags( $html ), ENT_QUOTES, get_bloginfo( 'charset' ) );
+        return trim( preg_replace( '/\s+/', ' ', $plain ) );
+    }
+
+    /**
+     * Get product image URL
+     *
+     * @param \WC_Product $product Product.
+     * @return string
+     */
+    private function get_product_image_url( \WC_Product $product ): string {
+        $image_id = $product->get_image_id();
+        if ( $image_id ) {
+            $url = wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' );
+            if ( $url ) {
+                return $url;
+            }
+        }
+        return wc_placeholder_img_src( 'woocommerce_thumbnail' );
+    }
+
+    /**
+     * Human time diff (e.g. "5 minutes")
+     *
+     * @param \WC_DateTime|null $date Date.
+     * @return string
+     */
+    private function human_time_diff( $date ): string {
+        if ( ! $date ) {
+            return '0';
+        }
+        $ts = $date->getTimestamp();
+        return human_time_diff( $ts, time() );
+    }
+
+    /**
+     * Get random customer name
+     *
+     * @return string
+     */
+    private function get_random_customer_name(): string {
+        return self::CUSTOMER_NAMES[ array_rand( self::CUSTOMER_NAMES ) ];
+    }
+
+    /**
+     * Get random product for simulated display
+     *
+     * @return array{ url: string, image: string, name: string }|null
+     */
+    private function get_random_product_for_display(): ?array {
+        $products = get_posts(
+            [
+                'post_type'      => 'product',
+                'post_status'    => 'publish',
+                'posts_per_page' => 50,
+            ]
+        );
+        if ( empty( $products ) ) {
+            return null;
+        }
+        $post    = $products[ array_rand( $products ) ];
+        $product = wc_get_product( $post->ID );
+        if ( ! $product ) {
+            return null;
+        }
+        return [
+            'url'    => $product->get_permalink(),
+            'image'  => $this->get_product_image_url( $product ),
+            'name'   => $product->get_name(),
+            'price'  => $this->get_product_price_plain( $product ),
+            'rating' => (float) $product->get_average_rating(),
+        ];
+    }
+
+    /**
+     * Random time ago string for simulated (e.g. "5 minutes", "20 minutes")
+     *
+     * @return string
+     */
+    private function get_random_time_ago(): string {
+        $mins = wp_rand( 1, 20 );
+
+        return sprintf(
+            /* translators: %d: number of minutes */
+            _n( '%d minute', '%d minutes', $mins, 'yayboost' ),
+            $mins
+        );
+    }
+
+    /**
+     * Get visitor count for current product page (legacy, kept for compatibility)
      *
      * @return array Purchases data.
      */
     public function get_purchases_data(): array {
-        if ( ! function_exists( 'is_product' ) || ! is_product() ) {
-            return [];
-        }
-
         $page_id = $this->get_current_page_id();
         if ( ! $page_id ) {
             return [];
         }
-
-        $tracking_mode = $this->feature->get( 'tracking_mode' );
-
-        if ( 'simulated' === $tracking_mode ) {
-            return $this->get_simulated_data( $page_id );
-        }
-
-        return $this->get_real_data( $page_id );
-    }
-
-    /**
-     * Get simulated purchases data (cached random)
-     *
-     * @param int $page_id Page ID.
-     * @return array Simulated data.
-     */
-    private function get_simulated_data( int $page_id ): int {
-        $purchases_data = [];
-        // random purchases data
-        $purchases_data = [
-            'customer_name' => $this->get_random_customer_name(),
-            'product'       => $this->get_random_product(),
-            'time'          => $this->get_random_time(),
-        ];
-
-        return Cache::remember(
-            self::CACHE_KEY_PREFIX . $page_id,
-            self::CACHE_TTL,
-            fn() => $purchases_data
-        );
-    }
-
-    /**
-     * Get real visitor count from database
-     *
-     * @param int $page_id Page ID.
-     * @return array Real data.
-     */
-    private function get_real_data( int $page_id ): array {
-        return Cache::remember(
-            self::CACHE_KEY_PREFIX . $page_id,
-            self::CACHE_TTL,
-            fn() => $this->get_recent_purchases_data( $page_id )
-        );
+        $result = $this->get_purchase_list( $page_id, 20, null );
+        return $result['purchases'] ?? [];
     }
 
     /**
@@ -204,42 +457,5 @@ class RecentPurchaseNotificationTracker {
      */
     public function set_cached_data( int $page_id, array $data ): bool {
         return Cache::set( self::CACHE_KEY_PREFIX . $page_id, $data, self::CACHE_TTL );
-    }
-
-    /**
-     * Get random customer name
-     *
-     * @return string Random customer name.
-     */
-    private function get_random_customer_name(): string {
-        return self::CUSTOMER_NAMES[ array_rand( self::CUSTOMER_NAMES ) ];
-    }
-
-    /**
-     * Get random product
-     *
-     * @return array Random product.
-     */
-    private function get_random_product(): array {
-        // Get all products
-        $products   = get_posts(
-            [
-                'post_type'      => 'product',
-                'post_status'    => 'publish',
-                'posts_per_page' => -1,
-            ]
-        );
-        $product_id = $products[ array_rand( $products ) ]->ID ?? 0;
-
-        return [ wc_get_product( $product_id ) ];
-    }
-
-    /**
-     * Get random time
-     *
-     * @return string Random time.
-     */
-    private function get_random_time(): string {
-        return gmdate( 'Y-m-d H:i:s', time() - wp_rand( 60, 900 ) );
     }
 }

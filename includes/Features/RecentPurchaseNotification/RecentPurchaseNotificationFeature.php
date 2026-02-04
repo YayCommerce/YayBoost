@@ -105,7 +105,10 @@ class RecentPurchaseNotificationFeature extends AbstractFeature {
         if ( ! $this->is_enabled() ) {
             return;
         }
-
+        // Enqueue assets early (wp_footer prints scripts before running actions)
+        add_action( 'wp_enqueue_scripts', [ $this, 'maybe_enqueue_assets' ] );
+        // Render content in footer
+        add_action( 'wp_footer', [ $this, 'maybe_render_content' ] );
         // WC new order hook
         add_action( 'woocommerce_new_order', [ $this, 'handle_new_order' ] );
     }
@@ -123,7 +126,41 @@ class RecentPurchaseNotificationFeature extends AbstractFeature {
 
 
     /**
-     * Render visitor count content (delegated to renderer)
+     * Check if we're on a WooCommerce page where notifications should show
+     *
+     * @return bool
+     */
+    private function is_woocommerce_page(): bool {
+        if ( ! function_exists( 'is_shop' ) ) {
+            return false;
+        }
+        return is_shop() || is_product() || is_product_category();
+    }
+
+    /**
+     * Conditionally enqueue assets only on WooCommerce pages
+     *
+     * @return void
+     */
+    public function maybe_enqueue_assets(): void {
+        if ( $this->is_woocommerce_page() ) {
+            $this->renderer->enqueue_assets();
+        }
+    }
+
+    /**
+     * Conditionally render content only on WooCommerce pages
+     *
+     * @return void
+     */
+    public function maybe_render_content(): void {
+        if ( $this->is_woocommerce_page() ) {
+            $this->renderer->render();
+        }
+    }
+
+    /**
+     * Render recent purchase notification content
      *
      * @return void
      */
@@ -168,6 +205,7 @@ class RecentPurchaseNotificationFeature extends AbstractFeature {
                 'timing'        => [
                     'delay'            => 10,
                     'interval_between' => 10,
+                    'duration'         => 5,
                 ],
                 'display'       => [
                     'customer_name'   => 'full-name',
