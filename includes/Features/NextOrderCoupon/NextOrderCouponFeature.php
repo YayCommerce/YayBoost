@@ -11,6 +11,7 @@ namespace YayBoost\Features\NextOrderCoupon;
 
 use YayBoost\Features\AbstractFeature;
 use YayBoost\Utils\CodeGenerator;
+use YayBoost\Analytics\AnalyticsTracker;
 
 /**
  * Next Order Coupon feature implementation
@@ -80,6 +81,20 @@ class NextOrderCouponFeature extends AbstractFeature {
     private const META_KEY_COUPON_ID = '_yayboost_next_order_coupon_id';
 
     /**
+     * Meta key for original order ID (coupon meta)
+     *
+     * @var string
+     */
+    public const COUPON_META_ORIGINAL_ORDER_ID = '_yayboost_noc_original_order_id';
+
+    /**
+     * Meta key for marking order as tracked for purchase analytics
+     *
+     * @var string
+     */
+    private const ORDER_TRACKED_META_KEY = '_yayboost_noc_purchase_tracked';
+
+    /**
      * Salt for hash generation (keep codes unique to this feature)
      *
      * @var string
@@ -105,6 +120,9 @@ class NextOrderCouponFeature extends AbstractFeature {
 
         // Generate coupon when order is completed
         add_action( 'woocommerce_order_status_completed', [ $this, 'generate_coupon_for_order' ], 10, 2 );
+
+        // Track purchase when order is completed
+        add_action( 'woocommerce_order_status_completed', [ $this, 'track_coupon_usage' ], 10, 2 );
 
         // Handle cancelled orders
         // add_action( 'woocommerce_order_status_cancelled', [ $this, 'handle_order_cancelled_or_refunded' ], 10, 2 );
@@ -212,6 +230,10 @@ class NextOrderCouponFeature extends AbstractFeature {
         if (is_wp_error( $coupon_id )) {
             return;
         }
+
+        // Store original order ID in coupon meta for fast lookup
+        $coupon->update_meta_data( self::COUPON_META_ORIGINAL_ORDER_ID, $order_id );
+        $coupon->save();
 
         // Store coupon code in order meta
         $order->update_meta_data( self::META_KEY_COUPON_CODE, $coupon_code );
@@ -534,7 +556,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $this->display_before_order_table( $order );
+        $this->display_before_order_table( $order, 'thank_you_page' );
     }
 
     /**
@@ -556,16 +578,17 @@ class NextOrderCouponFeature extends AbstractFeature {
             return;
         }
 
-        $this->display_before_order_table( $order );
+        $this->display_before_order_table( $order, 'my_account' );
     }
 
     /**
-     * Display coupon before order table in my account orders
+     * Display coupon before order table (thank you page or my account).
      *
      * @param \WC_Order $order Order object. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound.
+     * @param string    $location Display location: 'thank_you_page' or 'my_account'.
      * @return void
      */
-    public function display_before_order_table(\WC_Order $order): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+    public function display_before_order_table(\WC_Order $order, string $location): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
         $settings = $this->get_settings();
 
         $coupon_info = $this->get_coupon_from_order( $order );
@@ -590,7 +613,30 @@ class NextOrderCouponFeature extends AbstractFeature {
             }
         }
 
-        $headline = $settings['thank_you_headline'];
+        // Track impression
+        $meta_key = '_yayboost_noc_impression_tracked_' . $location;
+        if ( ! $order->get_meta( $meta_key )) {
+            AnalyticsTracker::log(
+                AnalyticsTracker::FEATURE_NEXT_ORDER,
+                AnalyticsTracker::EVENT_IMPRESSION,
+                [
+                    'order_id'   => $order->get_id(),
+                    'product_id' => 0,
+                    'metadata'   => [
+                        'location'       => $location,
+                        'coupon_code'    => $coupon_code,
+                        'discount_type'  => $settings['discount_type'],
+                        'discount_value' => $settings['discount_value'] ?? 0,
+                        'expiry_date'    => $expiry_date,
+                    ],
+                ]
+            );
+            $order->update_meta_data( $meta_key, time() );
+            $order->save();
+        }
+
+        // Show headline only on thank you page
+        $headline = ( $location === 'thank_you_page' ) ? ( $settings['thank_you_headline'] ?? '' ) : '';
 
         $message = $this->format_coupon_message(
             $settings['thank_you_message'],
@@ -649,6 +695,28 @@ class NextOrderCouponFeature extends AbstractFeature {
             if ($date_expires) {
                 $expiry_date = date_i18n( get_option( 'date_format' ), $date_expires->getTimestamp() );
             }
+        }
+
+        // Track impression for email
+        $meta_key = '_yayboost_noc_impression_tracked_order_email';
+        if ( ! $order->get_meta( $meta_key )) {
+            AnalyticsTracker::log(
+                AnalyticsTracker::FEATURE_NEXT_ORDER,
+                AnalyticsTracker::EVENT_IMPRESSION,
+                [
+                    'order_id'   => $order->get_id(),
+                    'product_id' => 0,
+                    'metadata'   => [
+                        'location'       => 'order_email',
+                        'coupon_code'    => $coupon_code,
+                        'discount_type'  => $settings['discount_type'],
+                        'discount_value' => $settings['discount_value'] ?? 0,
+                        'expiry_date'    => $expiry_date,
+                    ],
+                ]
+            );
+            $order->update_meta_data( $meta_key, time() );
+            $order->save();
         }
 
         $email_content = $this->format_coupon_message(
@@ -782,6 +850,97 @@ class NextOrderCouponFeature extends AbstractFeature {
     protected function get_order_coupon_id(\WC_Order $order): ?int { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
         $coupon_id = $order->get_meta( self::META_KEY_COUPON_ID );
         return ! empty( $coupon_id ) ? (int) $coupon_id : null;
+    }
+
+    /**
+     * Track coupon usage when order completes
+     *
+     * @param int       $order_id Order ID.
+     * @param \WC_Order $order    Order object (optional, may not be passed).
+     * @return void
+     */
+    public function track_coupon_usage( $order_id, $order = null ): void {
+        // Get order if not provided
+        if ( ! $order instanceof \WC_Order ) {
+            $order = wc_get_order( $order_id );
+        }
+
+        if ( ! $order ) {
+            return;
+        }
+
+        // Early exit: Check if already tracked
+        if ( $order->get_meta( self::ORDER_TRACKED_META_KEY ) ) {
+            return;
+        }
+
+        // Early exit: Check if has coupon codes
+        $coupon_codes = $order->get_coupon_codes();
+        if ( empty( $coupon_codes ) ) {
+            return;
+        }
+
+        // Check each coupon code
+        foreach ( $coupon_codes as $code ) {
+            // Get coupon ID from code
+            $coupon_id = wc_get_coupon_id_by_code( $code );
+            if ( ! $coupon_id ) {
+                continue;
+            }
+
+            // Get original order ID from coupon meta (FAST - no database query)
+            $original_order_id = $this->get_original_order_id_from_coupon_id( $coupon_id );
+            if ( ! $original_order_id ) {
+                continue;
+            }
+
+            // Calculate discount and revenue
+            $discount_total = $order->get_total_discount();
+            $order_total    = $order->get_total();
+            $order_subtotal = $order->get_subtotal();
+
+            // Track purchase event
+            AnalyticsTracker::purchase(
+                AnalyticsTracker::FEATURE_NEXT_ORDER,
+                $order_id,
+                0,
+                // product_id
+                0,
+                // related_product_id
+                1,
+                // quantity
+                (float) $order_total,
+                // revenue
+                [
+                    'original_order_id' => $original_order_id,
+                    'coupon_code'       => $code,
+                    'discount_amount'   => (float) $discount_total,
+                    'order_total'       => (float) $order_total,
+                    'order_subtotal'    => (float) $order_subtotal,
+                ]
+            );
+
+            // Mark as tracked and break (only track once per order)
+            $order->update_meta_data( self::ORDER_TRACKED_META_KEY, time() );
+            $order->save();
+            break;
+        }//end foreach
+    }
+
+    /**
+     * Get original order ID from coupon meta
+     *
+     * @param int $coupon_id Coupon ID.
+     * @return int|null
+     */
+    protected function get_original_order_id_from_coupon_id( int $coupon_id ): ?int {
+        $coupon = new \WC_Coupon( $coupon_id );
+        if ( ! $coupon->get_id() ) {
+            return null;
+        }
+
+        $order_id = $coupon->get_meta( self::COUPON_META_ORIGINAL_ORDER_ID, true );
+        return ! empty( $order_id ) ? (int) $order_id : null;
     }
 
     /**
