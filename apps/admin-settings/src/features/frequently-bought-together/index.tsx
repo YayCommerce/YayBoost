@@ -270,15 +270,18 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               control={form.control}
               name="max_products"
               render={({ field }) => (
-                <FormItem className="w-60">
+                <FormItem>
                   <Label>{__('Maximum products to show', 'yayboost')}</Label>
                   <FormControl>
-                    <InputNumber
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      min={1}
-                      max={20}
-                    />
+                    <div className='w-fit'>
+                      <InputNumber
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        min={1}
+                        max={20}
+                        className="w-24"
+                        />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -289,15 +292,18 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               control={form.control}
               name="min_order_threshold"
               render={({ field }) => (
-                <FormItem className="w-60">
+                <FormItem>
                   <Label>{__('Minimum Order Threshold', 'yayboost')}</Label>
                   <FormControl>
-                    <InputNumber
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      min={0}
-                      max={100}
-                    />
+                    <div className='w-fit'>
+                      <InputNumber
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        min={0}
+                        max={100}
+                        className="w-24"
+                        />
+                    </div>
                   </FormControl>
                   <FormDescription>
                     {__('Recommend products appear in at least', 'yayboost')}{' '}

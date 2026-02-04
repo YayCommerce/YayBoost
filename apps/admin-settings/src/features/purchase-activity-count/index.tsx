@@ -39,7 +39,7 @@ import UnavailableFeature from '@/components/unavailable-feature';
 import { FeatureComponentProps } from '..';
 
 // Allowed positions for this feature
-const ALLOWED_POSITIONS = ['below_product_title', 'below_price', 'below_add_to_cart_button'];
+const ALLOWED_POSITIONS = ['below_product_title', 'below_add_to_cart_button'];
 
 const ALLOWED_COUNT_FROM = [
   'all',
@@ -252,6 +252,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
                     value={field.value}
                     onValueChange={field.onChange}
                     allowedPositions={ALLOWED_POSITIONS}
+                    includeUseBlock
                   />
                 </FormControl>
                 <FormMessage />
@@ -417,15 +418,6 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               </div>
             </CardContent>
           </Card>
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {__(
-                'Gutenberg block "Purchase Activity Count" is not supported in this version.',
-                'yayboost',
-              )}
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
     </Form>

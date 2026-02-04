@@ -85,7 +85,7 @@ export function FBTBackfillCard() {
         {/* Batch Size Input */}
         {!state.isRunning && !state.isPaused && (
           <div className="space-y-2">
-            <div className="w-40">
+            <div className="w-24">
               <label className="mb-1 block text-sm font-medium">
                 {__('Batch size', 'yayboost')}
               </label>

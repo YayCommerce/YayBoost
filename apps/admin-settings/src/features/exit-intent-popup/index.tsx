@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { Eye } from 'lucide-react';
+import { CircleQuestionMark, Eye } from 'lucide-react';
 import z from 'zod';
 
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
@@ -28,6 +28,7 @@ import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Settings schema
 const settingsSchema = z.object({
@@ -247,6 +248,26 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <div className="space-y-1">
                           <label htmlFor="free-shipping">{__('Free shipping', 'yayboost')}</label>
                         </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <CircleQuestionMark className="h-4 w-4 cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right">
+                            <p>
+                              {__('Requires a', 'yayboost')}{' '}
+                              <a
+                                href="https://woocommerce.com/document/free-shipping/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:text-primary underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {__('free shipping method', 'yayboost')}
+                              </a>{' '}
+                              {__('configured in your shipping zone. See setup guide.', 'yayboost')}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -270,9 +291,9 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         </FormControl>
                         <FormMessage />
                       </div>
-                      <div>
+                      <FormDescription>
                         {__('Preview:', 'yayboost')} {previewCouponCode}
-                      </div>
+                      </FormDescription>
                     </FormItem>
                   )}
                 />
@@ -362,7 +383,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <FormDescription>
-                    {__('Available placeholders:', 'yayboost')} {'{amount}'}
+                    {__('Available placeholders:', 'yayboost')} {'{amount}'}. {__('Just use them for percentage & fixed discount type')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

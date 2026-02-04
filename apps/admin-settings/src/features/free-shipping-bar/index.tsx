@@ -407,6 +407,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               <p className="text-muted-foreground text-xs">
                 {__('Configure where the free shipping bar should be displayed', 'yayboost')}
               </p>
+              <p className="text-muted-foreground text-xs">{__('Note: Uncheck in places where you want to use Gutenberg block', 'yayboost')}</p>
             </div>
             <FormField
               control={form.control}
@@ -611,83 +612,85 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               )}
             /> */}
           </SettingsCard>
-          {/* Gutenberg Block Info Section */}
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <div className="space-y-1 text-sm">
-                <p className="text-blue-900 dark:text-blue-100">
-                  Use the <strong className="font-bold">"Free Shipping Bar"</strong> block in
-                  Gutenberg editor to place the bar anywhere on your site.
-                </p>
-                <p className="text-blue-700 dark:text-blue-300">
-                  {__(
-                    'Block inherits style settings from above, or override per block.',
-                    'yayboost',
-                  )}
-                </p>
-              </div>
-            </AlertDescription>
-          </Alert>
         </div>
 
         {/* Preview Panel */}
         <div className="space-y-6">
-          <Card className="sticky top-6">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
-              </div>
-              <CardDescription>
-                {__('See how the bar will look on your store', 'yayboost')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Preview controls */}
-              <div>
-                <label className="text-sm font-medium">
-                  {__('Simulate Cart Value', 'yayboost')} ({currencySymbol})
-                </label>
-                <Slider
-                  value={[previewValue]}
-                  onValueChange={(value) => setPreviewValue(value[0])}
-                  className="mt-2"
-                />
-                <div className="text-muted-foreground mt-1 flex justify-between text-xs">
-                  <span>{currencySymbol}0</span>
-                  <span className="font-medium">
-                    {currencySymbol}
-                    {previewValue.toFixed(2)}
-                  </span>
-                  <span>
-                    {currencySymbol}
-                    {(MOCK_THRESHOLD).toFixed(2)}
-                  </span>
+          <div className="sticky top-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
                 </div>
-              </div>
-
-              {/* Preview states */}
-              <div className="space-y-4">
+                <CardDescription>
+                  {__('See how the bar will look on your store', 'yayboost')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Preview controls */}
                 <div>
-                  <p className="mb-2 text-sm font-medium">{__('Current State:', 'yayboost')}</p>
-                  <ShippingBarPreview settings={watchedValues} cartValue={previewValue} />
+                  <label className="text-sm font-medium">
+                    {__('Simulate Cart Value', 'yayboost')} ({currencySymbol})
+                  </label>
+                  <Slider
+                    value={[previewValue]}
+                    onValueChange={(value) => setPreviewValue(value[0])}
+                    className="mt-2"
+                  />
+                  <div className="text-muted-foreground mt-1 flex justify-between text-xs">
+                    <span>{currencySymbol}0</span>
+                    <span className="font-medium">
+                      {currencySymbol}
+                      {previewValue.toFixed(2)}
+                    </span>
+                    <span>
+                      {currencySymbol}
+                      {(MOCK_THRESHOLD).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
 
-                <div>
-                  <p className="mb-2 text-sm font-medium">
-                    {__('Progress State (example):', 'yayboost')}
+                {/* Preview states */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-sm font-medium">{__('Current State:', 'yayboost')}</p>
+                    <ShippingBarPreview settings={watchedValues} cartValue={previewValue} />
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium">
+                      {__('Progress State (example):', 'yayboost')}
+                    </p>
+                    <ShippingBarPreview settings={watchedValues} cartValue={60} />
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
+                    <ShippingBarPreview settings={watchedValues} cartValue={110} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* Gutenberg Block Info Section */}
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-1 text-sm">
+                  <p className="text-blue-900 dark:text-blue-100">
+                    Use the <strong className="font-bold">"Free Shipping Bar"</strong> block in
+                    Gutenberg editor to place the bar anywhere on your site.
                   </p>
-                  <ShippingBarPreview settings={watchedValues} cartValue={60} />
+                  <p className="text-blue-700 dark:text-blue-300">
+                    {__(
+                      'Block inherits style settings from above, or override per block.',
+                      'yayboost',
+                    )}
+                  </p>
                 </div>
-
-                <div>
-                  <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
-                  <ShippingBarPreview settings={watchedValues} cartValue={110} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </AlertDescription>
+            </Alert>
+          </div>
         </div>
       </div>
     </Form>
