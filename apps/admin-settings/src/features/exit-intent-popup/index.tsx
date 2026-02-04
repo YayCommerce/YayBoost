@@ -455,7 +455,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                       </p>
                       <button
                         type="button"
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-md px-6 py-3 text-sm font-semibold transition-colors"
+                        className="inline-flex h-11 cursor-pointer items-center justify-center rounded-lg border-none bg-black px-6 text-sm font-medium text-white transition-opacity hover:opacity-85"
                       >
                         {previewButtonText || __('Button text', 'yayboost')}
                       </button>
