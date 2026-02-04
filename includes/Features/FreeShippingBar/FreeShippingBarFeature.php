@@ -123,7 +123,7 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         if ( $this->is_enabled() ) {
             new FreeShippingBarBlock( $this );
-            new FreeShippingBarSlotFill( $this );
+            // new FreeShippingBarSlotFill( $this );
         }
     }
 
@@ -290,7 +290,8 @@ class FreeShippingBarFeature extends AbstractFeature {
 
         AnalyticsTracker::impression(
             AnalyticsTracker::FEATURE_FREE_SHIPPING,
-            0, // No specific product for this feature
+            0,
+            // No specific product for this feature
             $metadata
         );
     }
@@ -381,7 +382,7 @@ class FreeShippingBarFeature extends AbstractFeature {
     protected function build_minimal_text_html(array $data): string {
         $templates     = $this->get_html_templates();
         $achieved      = $data['achieved'] && ! $data['show_coupon_message'];
-        $primary_color = $this->get('primary_color');
+        $primary_color = $this->get( 'primary_color' );
         $bg_color      = $achieved ? $primary_color : $this->apply_opacity( $primary_color );
         $text_color    = $achieved ? '#ffffff' : $primary_color;
 
@@ -408,7 +409,7 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     protected function build_progress_bar_html(array $data): string {
         $templates        = $this->get_html_templates();
-        $primary_color    = $this->get('primary_color');
+        $primary_color    = $this->get( 'primary_color' );
         $bar_color        = $primary_color;
         $background_color = $this->apply_opacity( $primary_color );
         $text_color       = $primary_color;
@@ -438,7 +439,7 @@ class FreeShippingBarFeature extends AbstractFeature {
     protected function build_full_detail_html(array $data): string {
         $templates        = $this->get_html_templates();
         $achieved         = $data['achieved'] && ! $data['show_coupon_message'];
-        $primary_color    = $this->get('primary_color');
+        $primary_color    = $this->get( 'primary_color' );
         $bar_color        = $primary_color;
         $background_color = $this->apply_opacity( $primary_color );
         $bg_color         = $achieved ? $primary_color : $background_color;
@@ -488,7 +489,7 @@ class FreeShippingBarFeature extends AbstractFeature {
             return '';
         }
 
-        $display_style = $this->get('display_style');
+        $display_style = $this->get( 'display_style' );
 
         // Route to appropriate method based on display style
         if ($display_style === 'minimal_text') {
@@ -869,7 +870,7 @@ class FreeShippingBarFeature extends AbstractFeature {
         }
 
         // Use session-based tracking to prevent duplicates
-        $session_key = 'yayboost_fsb_achieved_' . md5( WC()->session->get_customer_id() . '_' . $threshold );
+        $session_key     = 'yayboost_fsb_achieved_' . md5( WC()->session->get_customer_id() . '_' . $threshold );
         $already_tracked = get_transient( $session_key );
 
         if ( $already_tracked ) {
@@ -977,21 +978,21 @@ class FreeShippingBarFeature extends AbstractFeature {
      */
     public function apply_opacity(string $hex, float $opacity = 0.75): string {
         $hex = ltrim( $hex, '#' );
-    
+
         // Handle shorthand hex (#fff)
         if ( strlen( $hex ) === 3 ) {
             $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
         }
-        
+
         $r = hexdec( substr( $hex, 0, 2 ) );
         $g = hexdec( substr( $hex, 2, 2 ) );
         $b = hexdec( substr( $hex, 4, 2 ) );
-        
+
         // Blend with white
         $r = round( $r + ( 255 - $r ) * $opacity );
         $g = round( $g + ( 255 - $g ) * $opacity );
         $b = round( $b + ( 255 - $b ) * $opacity );
-        
+
         return sprintf( '#%02x%02x%02x', $r, $g, $b );
     }
 
@@ -1023,18 +1024,18 @@ class FreeShippingBarFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'            => true,
-                'message_progress'   => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                'message_achieved'   => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
-                'message_coupon'     => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
-                'primary_color'      => '#4CAF50',
-                'display_positions'  => [
+                'enabled'                => true,
+                'message_progress'       => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
+                'message_achieved'       => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
+                'message_coupon'         => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
+                'primary_color'          => '#4CAF50',
+                'display_positions'      => [
                     'cart'     => [ 'before_cart_table' ],
                     'checkout' => [ 'before_checkout_form' ],
                 ],
-                'show_on_mini_cart'  => false,
-                'show_progress_bar'  => true,
-                'display_style'      => 'minimal_text',
+                'show_on_mini_cart'      => false,
+                'show_progress_bar'      => true,
+                'display_style'          => 'minimal_text',
                 'behavior_when_unlocked' => 'show_message',
             ]
         );
