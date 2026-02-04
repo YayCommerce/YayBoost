@@ -26,6 +26,11 @@ class RecentPurchaseNotificationTracker {
      */
     const CACHE_KEY_PREFIX = 'recent_purchase_list_';
 
+    /**
+     * Max orders to fetch when applying minimum_order_required filter (need enough to count per product)
+     */
+    const QUERY_LIMIT_FOR_MIN_ORDERS = 300;
+
 
     /**
      * Customer names
@@ -122,6 +127,35 @@ class RecentPurchaseNotificationTracker {
      * @return array{ purchases: array, last_order_id: int|null }
      */
     private function get_real_purchase_list( int $page_id, int $limit, ?int $after_id ): array {
+        $min_orders = (int) $this->feature->get( 'real_orders.minimum_order_required' );
+        $min_orders = $min_orders >= 1 ? $min_orders : 1;
+        $apply_min  = $min_orders > 1;
+
+        if ( $apply_min ) {
+            $cache_key = self::CACHE_KEY_PREFIX . $page_id;
+            $result    = Cache::remember(
+                $cache_key,
+                self::CACHE_TTL,
+                function () use ( $limit, $min_orders ) {
+                    $orders    = $this->query_orders( self::QUERY_LIMIT_FOR_MIN_ORDERS, null );
+                    $purchases = $this->normalize_orders_to_purchases( $orders );
+                    $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
+                    $last = null;
+                    foreach ( $purchases as $p ) {
+                        $oid = (int) ( $p['order_id'] ?? 0 );
+                        if ( $oid > 0 && ( $last === null || $oid > $last ) ) {
+                            $last = $oid;
+                        }
+                    }
+                    return [
+                        'purchases'     => $purchases,
+                        'last_order_id' => $last,
+                    ];
+                }
+            );
+            return $result;
+        }
+
         $is_delta = $after_id > 0;
 
         if ( $is_delta ) {
@@ -289,6 +323,7 @@ class RecentPurchaseNotificationTracker {
             $purchases[] = [
                 'id'             => (string) $order->get_id(),
                 'order_id'       => (int) $order->get_id(),
+                'product_id'     => (int) $product->get_id(),
                 'product_url'    => $product->get_permalink(),
                 'product_image'  => $this->get_product_image_url( $product ),
                 'product_name'   => $product->get_name(),
@@ -298,6 +333,49 @@ class RecentPurchaseNotificationTracker {
             ];
         }//end foreach
         return $purchases;
+    }
+
+    /**
+     * Filter purchases to only products bought at least $min_orders times; return at most one (most recent) per product.
+     *
+     * @param array $purchases List of purchase rows (must include product_id).
+     * @param int   $min_orders Minimum number of purchases per product to qualify.
+     * @param int   $limit Max number of purchases to return.
+     * @return array Filtered purchases (one per qualifying product, most recent first).
+     */
+    private function filter_purchases_by_minimum_order_required( array $purchases, int $min_orders, int $limit ): array {
+        if ( $min_orders <= 1 || empty( $purchases ) ) {
+            return array_slice( $purchases, 0, $limit );
+        }
+
+        $count_by_product = [];
+        foreach ( $purchases as $p ) {
+            $pid = (int) ( $p['product_id'] ?? 0 );
+            if ( $pid > 0 ) {
+                $count_by_product[ $pid ] = ( $count_by_product[ $pid ] ?? 0 ) + 1;
+            }
+        }
+
+        $qualifying_ids = array_keys( array_filter( $count_by_product, fn( $c ) => $c >= $min_orders ) );
+        if ( empty( $qualifying_ids ) ) {
+            return [];
+        }
+
+        $qualifying_ids   = array_flip( $qualifying_ids );
+        $seen_product_ids = [];
+        $result           = [];
+        foreach ( $purchases as $p ) {
+            $pid = (int) ( $p['product_id'] ?? 0 );
+            if ( ! isset( $qualifying_ids[ $pid ] ) || isset( $seen_product_ids[ $pid ] ) ) {
+                continue;
+            }
+            $seen_product_ids[ $pid ] = true;
+            $result[]                = $p;
+            if ( count( $result ) >= $limit ) {
+                break;
+            }
+        }
+        return $result;
     }
 
     /**
