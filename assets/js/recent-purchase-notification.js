@@ -164,6 +164,29 @@
     }
 
     /**
+     * Fire-and-forget tracking when a notification is shown.
+     */
+    trackShown(purchase) {
+      const formData = new FormData();
+      formData.append("action", "yayboost_recent_purchase_shown");
+      formData.append("nonce", this.settings.nonce);
+      if (this.settings.pageId) {
+        formData.append("page_id", this.settings.pageId);
+      }
+      if (purchase && purchase.id) {
+        formData.append("purchase_id", purchase.id);
+      }
+
+      fetch(this.settings.ajaxUrl, {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+      }).catch(() => {
+        /* silent */
+      });
+    }
+
+    /**
      * Schedule delta fetch every 1 minute (real-orders only). Called once from init.
      */
     scheduleDeltaFetch() {
@@ -259,6 +282,9 @@
       }
 
       this.markAsShown(purchase.id);
+      if (this.settings.trackingMode !== "simulated") {
+        this.trackShown(purchase);
+      }
       this.container.innerHTML = this.buildPopupHtml(purchase);
       this.container.classList.add(
         "yayboost-recent-purchase-notification--visible",

@@ -27,6 +27,21 @@ class RecentPurchaseNotificationTracker {
     const CACHE_KEY_PREFIX = 'recent_purchase_list_';
 
     /**
+     * User meta key for logged-in users
+     */
+    const META_KEY = '_yayboost_recent_purchase';
+
+    /**
+     * Cookie name for guest token
+     */
+    const COOKIE_NAME = 'yayboost_recent_purchase_token';
+
+    /**
+     * Transient prefix for guest state
+     */
+    const TRANSIENT_PREFIX = 'yayboost_recent_purchase_guest_';
+
+    /**
      * Customer names
      */
     const CUSTOMER_NAMES = [
@@ -46,12 +61,257 @@ class RecentPurchaseNotificationTracker {
     private $feature;
 
     /**
+     * Cached state to avoid repeated lookups
+     *
+     * @var array|null
+     */
+    private $cached_state = null;
+
+    /**
      * Constructor
      *
      * @param RecentPurchaseNotificationFeature $feature Feature instance.
      */
     public function __construct( RecentPurchaseNotificationFeature $feature ) {
         $this->feature = $feature;
+    }
+
+    /**
+     * Get current notification state
+     *
+     * @return array|null
+     */
+    public function get_state(): ?array {
+        if ( null !== $this->cached_state ) {
+            return $this->cached_state;
+        }
+
+        $state = is_user_logged_in()
+            ? $this->get_user_state()
+            : $this->get_guest_state();
+
+        if ( $state && ! empty( $state['expires_at'] ) && time() > (int) $state['expires_at'] ) {
+            $this->clear_state();
+            $state = null;
+        }
+
+        $this->cached_state = $state;
+        return $state;
+    }
+
+    /**
+     * Whether to persist "notification shown" state (user meta / cookie).
+     * False when tracking mode is simulated.
+     *
+     * @return bool
+     */
+    public function should_persist_shown_state(): bool {
+        return $this->feature->get( 'tracking_mode' ) !== 'simulated';
+    }
+
+    /**
+     * Max number of shown purchase IDs to keep in state (avoid bloat)
+     */
+    const SHOWN_IDS_MAX = 100;
+
+    /**
+     * Mark notification as shown (persists for logged-in users or guests)
+     *
+     * @param string $purchase_id Purchase identifier shown.
+     * @param int    $page_id     Page ID where shown.
+     * @return void
+     */
+    public function mark_notification_shown( string $purchase_id, int $page_id ): void {
+        $state                     = $this->get_state() ?? [];
+        $state['last_shown_at']    = time();
+        $state['last_purchase_id'] = sanitize_text_field( $purchase_id );
+        if ( $page_id > 0 ) {
+            $state['page_id'] = absint( $page_id );
+        }
+        $state['expires_at'] = $state['expires_at'] ?? $this->get_storage_expiry();
+
+        $shown_ids = $state['shown_ids'] ?? [];
+        $id_to_add = $state['last_purchase_id'];
+        if ( $id_to_add !== '' && ! in_array( $id_to_add, $shown_ids, true ) ) {
+            $shown_ids[]        = $id_to_add;
+            $state['shown_ids'] = array_slice( $shown_ids, -self::SHOWN_IDS_MAX );
+        }
+
+        $this->set_state( $state );
+    }
+
+    /**
+     * Get purchase IDs already shown to this visitor (from user meta or guest cookie).
+     * Used to exclude them from the purchase list.
+     *
+     * @return string[]
+     */
+    public function get_shown_purchase_ids(): array {
+        if ( ! $this->should_persist_shown_state() ) {
+            return [];
+        }
+        $state = $this->get_state();
+        if ( ! $state || empty( $state['shown_ids'] ) ) {
+            return [];
+        }
+        return array_values( (array) $state['shown_ids'] );
+    }
+
+    /**
+     * Clear persisted state
+     *
+     * @return void
+     */
+    public function clear_state(): void {
+        if ( is_user_logged_in() ) {
+            delete_user_meta( get_current_user_id(), self::META_KEY );
+        } else {
+            $token = $this->get_guest_token();
+            if ( $token ) {
+                delete_transient( self::TRANSIENT_PREFIX . md5( $token ) );
+            }
+        }
+
+        $this->cached_state = null;
+    }
+
+    /**
+     * Set state for current visitor (user meta or guest transient)
+     *
+     * @param array $data State data.
+     * @return void
+     */
+    private function set_state( array $data ): void {
+        if ( empty( $data['expires_at'] ) ) {
+            $data['expires_at'] = $this->get_storage_expiry();
+        }
+
+        if ( is_user_logged_in() ) {
+            $this->set_user_state( $data );
+        } else {
+            $this->set_guest_state( $data );
+        }
+
+        $this->cached_state = $data;
+    }
+
+    /**
+     * Get state for logged-in user
+     *
+     * @return array|null
+     */
+    private function get_user_state(): ?array {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return null;
+        }
+
+        $data = get_user_meta( $user_id, self::META_KEY, true );
+        return is_array( $data ) ? $data : null;
+    }
+
+    /**
+     * Set state for logged-in user
+     *
+     * @param array $data State data.
+     * @return void
+     */
+    private function set_user_state( array $data ): void {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return;
+        }
+
+        update_user_meta( $user_id, self::META_KEY, $data );
+    }
+
+    /**
+     * Get state for guest visitor
+     *
+     * @return array|null
+     */
+    private function get_guest_state(): ?array {
+        $token = $this->get_guest_token();
+        if ( ! $token ) {
+            return null;
+        }
+
+        $key  = self::TRANSIENT_PREFIX . md5( $token );
+        $data = get_transient( $key );
+        return is_array( $data ) ? $data : null;
+    }
+
+    /**
+     * Set state for guest visitor (transient + HttpOnly cookie)
+     *
+     * @param array $data State data.
+     * @return void
+     */
+    private function set_guest_state( array $data ): void {
+        $token = $this->get_guest_token();
+        if ( ! $token ) {
+            $token = $this->generate_guest_token();
+            $this->set_guest_token( $token, $data['expires_at'] ?? $this->get_storage_expiry() );
+        }
+
+        $key = self::TRANSIENT_PREFIX . md5( $token );
+        $ttl = max( HOUR_IN_SECONDS, ( $data['expires_at'] ?? $this->get_storage_expiry() ) - time() );
+        set_transient( $key, $data, $ttl );
+    }
+
+    /**
+     * Get guest token from cookie
+     *
+     * @return string|null
+     */
+    private function get_guest_token(): ?string {
+        return isset( $_COOKIE[ self::COOKIE_NAME ] )
+            ? sanitize_text_field( wp_unslash( $_COOKIE[ self::COOKIE_NAME ] ) )
+            : null;
+    }
+
+    /**
+     * Set guest token cookie
+     *
+     * @param string $token  Token value.
+     * @param int    $expiry Expiration timestamp.
+     * @return void
+     */
+    private function set_guest_token( string $token, int $expiry ): void {
+        $secure = is_ssl();
+        setcookie(
+            self::COOKIE_NAME,
+            $token,
+            [
+                'expires'  => $expiry,
+                'path'     => COOKIEPATH,
+                'domain'   => COOKIE_DOMAIN,
+                'secure'   => $secure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]
+        );
+
+        // Make available immediately in current request.
+        $_COOKIE[ self::COOKIE_NAME ] = $token;
+    }
+
+    /**
+     * Generate random token for guest visitor
+     *
+     * @return string
+     */
+    private function generate_guest_token(): string {
+        return bin2hex( random_bytes( 16 ) );
+    }
+
+    /**
+     * Get storage expiry timestamp (30 days)
+     *
+     * @return int
+     */
+    private function get_storage_expiry(): int {
+        return time() + ( 30 * DAY_IN_SECONDS );
     }
 
     /**
@@ -66,10 +326,12 @@ class RecentPurchaseNotificationTracker {
         $tracking_mode = $this->feature->get( 'tracking_mode' );
 
         if ( 'simulated' === $tracking_mode ) {
-            return $this->get_simulated_purchase_list( $page_id );
+            $result = $this->get_simulated_purchase_list( $page_id );
+        } else {
+            $result = $this->get_real_purchase_list( $page_id, $limit, $after_id );
         }
 
-        return $this->get_real_purchase_list( $page_id, $limit, $after_id );
+        return $result;
     }
 
     /**
@@ -121,11 +383,11 @@ class RecentPurchaseNotificationTracker {
      * @return array{ purchases: array, last_order_id: int|null }
      */
     private function get_real_purchase_list( int $page_id, int $limit, ?int $after_id ): array {
-        $is_delta = $after_id > 0;
-
+        $is_delta  = $after_id > 0;
+        $shown_ids = $this->get_shown_purchase_ids();
         if ( $is_delta ) {
             $orders    = $this->query_orders( $limit, $after_id );
-            $purchases = $this->normalize_orders_to_purchases( $orders );
+            $purchases = $this->normalize_orders_to_purchases( $orders, $shown_ids );
             $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
             return [
                 'purchases'     => $purchases,
@@ -137,9 +399,9 @@ class RecentPurchaseNotificationTracker {
         $result    = Cache::remember(
             $cache_key,
             self::CACHE_TTL,
-            function () use ( $limit ) {
+            function () use ( $limit, $shown_ids ) {
                 $orders    = $this->query_orders( $limit, null );
-                $purchases = $this->normalize_orders_to_purchases( $orders );
+                $purchases = $this->normalize_orders_to_purchases( $orders, $shown_ids );
                 $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
                 return [
                     'purchases'     => $purchases,
@@ -253,7 +515,7 @@ class RecentPurchaseNotificationTracker {
      * @param array $orders WC_Order objects.
      * @return array
      */
-    private function normalize_orders_to_purchases( array $orders ): array {
+    private function normalize_orders_to_purchases( array $orders, array $shown_ids ): array {
         $purchases = [];
         foreach ( $orders as $order ) {
             if ( ! $order instanceof \WC_Order ) {
@@ -268,8 +530,12 @@ class RecentPurchaseNotificationTracker {
                 if ( ! $product || ! $product->is_visible() ) {
                     continue;
                 }
+                $id = $order->get_id() . '_' . $product->get_id();
+                if ( in_array( $id, $shown_ids, true ) ) {
+                    continue;
+                }
                 $purchases[] = [
-                    'id'             => (string) $order->get_id() . '_' . $product->get_id(),
+                    'id'             => (string) $id,
                     'customer_name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
                     'order_id'       => (int) $order->get_id(),
                     'product_id'     => (int) $product->get_id(),
