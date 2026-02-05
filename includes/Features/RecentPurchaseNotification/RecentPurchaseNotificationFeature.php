@@ -184,9 +184,7 @@ class RecentPurchaseNotificationFeature extends AbstractFeature {
                 'enabled'       => true,
                 'tracking_mode' => 'real-orders',
                 'real_orders'   => [
-                    'order_time_range'       => 'last-7-days',
-                    'order_status'           => [ 'completed', 'processing' ],
-                    'minimum_order_required' => 3,
+                    'order_time_range' => 'last-7-days',
                 ],
                 'timing'        => [
                     'delay'            => 10,

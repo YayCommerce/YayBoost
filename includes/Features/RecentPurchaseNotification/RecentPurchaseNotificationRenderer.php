@@ -109,18 +109,18 @@ class RecentPurchaseNotificationRenderer {
                 'yayboost-recent-purchase',
                 'yayboostRecentPurchase',
                 [
-                    'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
-                    'nonce'                => wp_create_nonce( RecentPurchaseNotificationAjaxHandler::NONCE_ACTION ),
-                    'pageId'               => $page_id,
-                    'text'                 => [
+                    'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+                    'nonce'           => wp_create_nonce( RecentPurchaseNotificationAjaxHandler::NONCE_ACTION ),
+                    'pageId'          => $page_id,
+                    'text'            => [
                         'bought' => __( 'bought this product', 'yayboost' ),
                         'ago'    => __( 'ago', 'yayboost' ),
                     ],
-                    'initialDelay'         => $this->feature->get( 'timing.delay' ),
-                    'intervalBetween'      => $this->feature->get( 'timing.interval_between' ),
-                    'minimumOrderRequired' => $this->feature->get( 'real_orders.minimum_order_required' ),
-                    'customerName'         => $this->feature->get( 'display.customer_name' ),
-                    'productDetails'       => $this->feature->get( 'display.product_details' ),
+                    'trackingMode'    => $this->feature->get( 'tracking_mode' ),
+                    'initialDelay'    => $this->feature->get( 'timing.delay' ),
+                    'intervalBetween' => $this->feature->get( 'timing.interval_between' ),
+                    'customerName'    => $this->feature->get( 'display.customer_name' ),
+                    'productDetails'  => $this->feature->get( 'display.product_details' ),
                 ]
             );
         }//end if

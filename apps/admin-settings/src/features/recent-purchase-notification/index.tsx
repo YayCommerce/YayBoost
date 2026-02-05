@@ -40,8 +40,6 @@ const settingsSchema = z.object({
   tracking_mode: z.enum(['real-orders', 'simulated']),
   real_orders: z.object({
     order_time_range: z.enum(['last-24-hours', 'last-7-days', 'last-30-days', 'all-time']),
-    order_status: z.array(z.enum(['completed', 'processing', 'on-hold'])),
-    minimum_order_required: z.number().min(1),
   }),
   timing: z.object({
     delay: z.number().min(1),
@@ -194,101 +192,6 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
                           <SelectItem value="all-time">All time</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="real_orders.order_status"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col gap-2">
-                      <Label>{__('Order status to include', 'yayboost')}</Label>
-                      <FormControl>
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="order-status-completed"
-                              checked={field.value?.includes('completed')}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value ?? [];
-                                if (checked) {
-                                  field.onChange([...currentValue, 'completed']);
-                                } else {
-                                  field.onChange(currentValue.filter((v) => v !== 'completed'));
-                                }
-                              }}
-                            />
-                            <Label htmlFor="product-details-title" className="text-sm font-normal">
-                              {__('Completed', 'yayboost')}
-                            </Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="order-status-processing"
-                              checked={field.value?.includes('processing')}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value ?? [];
-                                if (checked) {
-                                  field.onChange([...currentValue, 'processing']);
-                                } else {
-                                  field.onChange(currentValue.filter((v) => v !== 'processing'));
-                                }
-                              }}
-                            />
-                            <Label
-                              htmlFor="order-status-processing"
-                              className="text-sm font-normal"
-                            >
-                              {__('Processing', 'yayboost')}
-                            </Label>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="order-status-on-hold"
-                              checked={field.value?.includes('on-hold')}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value ?? [];
-                                if (checked) {
-                                  field.onChange([...currentValue, 'on-hold']);
-                                } else {
-                                  field.onChange(currentValue.filter((v) => v !== 'on-hold'));
-                                }
-                              }}
-                            />
-                            <Label htmlFor="order-status-on-hold" className="text-sm font-normal">
-                              {__('On hold', 'yayboost')}
-                            </Label>
-                          </div>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="real_orders.minimum_order_required"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="minimum-order-required">
-                        {__('Minimum order required', 'yayboost')}
-                      </Label>
-                      <FormControl>
-                        <div className="w-fit">
-                          <InputNumber
-                            {...field}
-                            id="minimum-order-required"
-                            min={1}
-                            onValueChange={(value) => field.onChange(value || 1)}
-                            value={parseInt(field.value?.toString() ?? '1', 10)}
-                            className="w-24"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormDescription>
-                        {__('If fewer orders exist, notifications will be hidden.', 'yayboost')}
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

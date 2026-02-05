@@ -27,12 +27,6 @@ class RecentPurchaseNotificationTracker {
     const CACHE_KEY_PREFIX = 'recent_purchase_list_';
 
     /**
-     * Max orders to fetch when applying minimum_order_required filter (need enough to count per product)
-     */
-    const QUERY_LIMIT_FOR_MIN_ORDERS = 300;
-
-
-    /**
      * Customer names
      */
     const CUSTOMER_NAMES = [
@@ -92,7 +86,7 @@ class RecentPurchaseNotificationTracker {
             self::CACHE_TTL,
             function () {
                 $list = [];
-                for ( $i = 0; $i < 3; $i++ ) {
+                for ( $i = 0; $i < 5; $i++ ) {
                     $product = $this->get_random_product_for_display();
                     if ( $product ) {
                         $list[] = [
@@ -127,41 +121,11 @@ class RecentPurchaseNotificationTracker {
      * @return array{ purchases: array, last_order_id: int|null }
      */
     private function get_real_purchase_list( int $page_id, int $limit, ?int $after_id ): array {
-        $min_orders = (int) $this->feature->get( 'real_orders.minimum_order_required' );
-        $min_orders = $min_orders >= 1 ? $min_orders : 1;
-        $apply_min  = $min_orders > 1;
-
-        if ( $apply_min ) {
-            $cache_key = self::CACHE_KEY_PREFIX . $page_id;
-            $result    = Cache::remember(
-                $cache_key,
-                self::CACHE_TTL,
-                function () use ( $limit, $min_orders ) {
-                    $orders    = $this->query_orders( self::QUERY_LIMIT_FOR_MIN_ORDERS, null );
-                    $purchases = $this->normalize_orders_to_purchases( $orders );
-                    $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
-                    $last      = null;
-                    foreach ( $purchases as $p ) {
-                        $oid = (int) ( $p['order_id'] ?? 0 );
-                        if ( $oid > 0 && ( $last === null || $oid > $last ) ) {
-                            $last = $oid;
-                        }
-                    }
-                    return [
-                        'purchases'     => $purchases,
-                        'last_order_id' => $last,
-                    ];
-                }
-            );
-            return $result;
-        }//end if
-
         $is_delta = $after_id > 0;
 
         if ( $is_delta ) {
             $orders    = $this->query_orders( $limit, $after_id );
             $purchases = $this->normalize_orders_to_purchases( $orders );
-            $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
             $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
             return [
                 'purchases'     => $purchases,
@@ -173,10 +137,9 @@ class RecentPurchaseNotificationTracker {
         $result    = Cache::remember(
             $cache_key,
             self::CACHE_TTL,
-            function () use ( $limit, $min_orders ) {
+            function () use ( $limit ) {
                 $orders    = $this->query_orders( $limit, null );
                 $purchases = $this->normalize_orders_to_purchases( $orders );
-                $purchases = $this->filter_purchases_by_minimum_order_required( $purchases, $min_orders, $limit );
                 $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
                 return [
                     'purchases'     => $purchases,
@@ -197,21 +160,14 @@ class RecentPurchaseNotificationTracker {
      */
     private function query_orders( int $limit, ?int $after_id ): array {
         $order_time_range = $this->feature->get( 'real_orders.order_time_range' );
-        $order_status     = $this->feature->get( 'real_orders.order_status' );
-        $order_status     = is_array( $order_status ) ? $order_status : [];
-        $wc_statuses      = ! empty( $order_status )
-            ? array_map( fn( $s ) => ( strpos( (string) $s, 'wc-' ) === 0 ? $s : 'wc-' . $s ), $order_status )
-            : [];
+        $order_status     = [ 'wc-processing', 'wc-completed', 'wc-on-hold' ];
 
         $args = [
+            'status'  => $order_status,
             'limit'   => $limit,
             'orderby' => 'date',
             'order'   => 'DESC',
         ];
-
-        if ( ! empty( $wc_statuses ) ) {
-            $args['status'] = $wc_statuses;
-        }
 
         $since_ts = $this->get_order_time_range_since_timestamp( $order_time_range );
         if ( $since_ts !== null ) {
@@ -224,10 +180,9 @@ class RecentPurchaseNotificationTracker {
                 'posts_per_page' => $after_id > 0 ? $limit + 50 : $limit,
                 'orderby'        => 'date',
                 'order'          => 'DESC',
+                'post_status'    => $order_status,
             ];
-            if ( ! empty( $wc_statuses ) ) {
-                $wp_args['post_status'] = $wc_statuses;
-            }
+
             if ( $since_ts !== null ) {
                 $wp_args['date_query'] = [
                     [
@@ -304,72 +259,31 @@ class RecentPurchaseNotificationTracker {
             if ( ! $order instanceof \WC_Order ) {
                 continue;
             }
-            $items      = $order->get_items();
-            $first_item = reset( $items );
-            if ( ! $first_item instanceof \WC_Order_Item_Product ) {
-                continue;
-            }
-            $product = $first_item->get_product();
-            if ( ! $product || ! $product->is_visible() ) {
-                continue;
-            }
-            $purchases[] = [
-                'id'             => (string) $order->get_id(),
-                'customer_name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-                'order_id'       => (int) $order->get_id(),
-                'product_id'     => (int) $product->get_id(),
-                'product_url'    => $product->get_permalink(),
-                'product_image'  => $this->get_product_image_url( $product ),
-                'product_name'   => $product->get_name(),
-                'product_price'  => $this->get_product_price_plain( $product ),
-                'product_rating' => (float) $product->get_average_rating(),
-                'time_ago'       => $this->human_time_diff( $order->get_date_created() ),
-            ];
+            $items = $order->get_items();
+            foreach ( $items as $item ) {
+                if ( ! $item instanceof \WC_Order_Item_Product ) {
+                    continue;
+                }
+                $product = $item->get_product();
+                if ( ! $product || ! $product->is_visible() ) {
+                    continue;
+                }
+                $purchases[] = [
+                    'id'             => (string) $order->get_id() . '_' . $product->get_id(),
+                    'customer_name'  => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+                    'order_id'       => (int) $order->get_id(),
+                    'product_id'     => (int) $product->get_id(),
+                    'product_url'    => $product->get_permalink(),
+                    'product_image'  => $this->get_product_image_url( $product ),
+                    'product_name'   => $product->get_name(),
+                    'product_price'  => $this->get_product_price_plain( $product ),
+                    'product_rating' => (float) $product->get_average_rating(),
+                    'time_ago'       => $this->human_time_diff( $order->get_date_created() ),
+                ];
+            }//end foreach
+
         }//end foreach
         return $purchases;
-    }
-
-    /**
-     * Filter purchases to only products bought at least $min_orders times; return at most one (most recent) per product.
-     *
-     * @param array $purchases List of purchase rows (must include product_id).
-     * @param int   $min_orders Minimum number of purchases per product to qualify.
-     * @param int   $limit Max number of purchases to return.
-     * @return array Filtered purchases (one per qualifying product, most recent first).
-     */
-    private function filter_purchases_by_minimum_order_required( array $purchases, int $min_orders, int $limit ): array {
-        if ( $min_orders <= 1 || empty( $purchases ) ) {
-            return array_slice( $purchases, 0, $limit );
-        }
-
-        $count_by_product = [];
-        foreach ( $purchases as $p ) {
-            $pid = (int) ( $p['product_id'] ?? 0 );
-            if ( $pid > 0 ) {
-                $count_by_product[ $pid ] = ( $count_by_product[ $pid ] ?? 0 ) + 1;
-            }
-        }
-
-        $qualifying_ids = array_keys( array_filter( $count_by_product, fn( $c ) => $c >= $min_orders ) );
-        if ( empty( $qualifying_ids ) ) {
-            return [];
-        }
-
-        $qualifying_ids   = array_flip( $qualifying_ids );
-        $seen_product_ids = [];
-        $result           = [];
-        foreach ( $purchases as $p ) {
-            $pid = (int) ( $p['product_id'] ?? 0 );
-            if ( ! isset( $qualifying_ids[ $pid ] ) || isset( $seen_product_ids[ $pid ] ) ) {
-                continue;
-            }
-            $seen_product_ids[ $pid ] = true;
-            $result[]                 = $p;
-            if ( count( $result ) >= $limit ) {
-                break;
-            }
-        }
-        return $result;
     }
 
     /**
@@ -436,13 +350,21 @@ class RecentPurchaseNotificationTracker {
      * @return array{ url: string, image: string, name: string }|null
      */
     private function get_random_product_for_display(): ?array {
-        $products = get_posts(
-            [
-                'post_type'      => 'product',
-                'post_status'    => 'publish',
-                'posts_per_page' => 50,
-            ]
-        );
+        // Get simple products (product type is taxonomy, not meta)
+        $args     = [
+            'post_type'      => 'product',
+            'post_status'    => 'publish',
+            'posts_per_page' => 50,
+            'tax_query'      => [
+                [
+                    'taxonomy' => 'product_type',
+                    'field'    => 'slug',
+                    'terms'    => 'simple',
+                ],
+            ],
+        ];
+        $products = get_posts( $args );
+
         if ( empty( $products ) ) {
             return null;
         }

@@ -16,10 +16,10 @@
     nonce,
     pageId,
     text,
+    trackingMode,
     customerName,
     initialDelay,
     intervalBetween,
-    minimumOrderRequired,
     productDetails,
   } = yayboostRecentPurchase;
 
@@ -31,17 +31,22 @@
 
   const i18n = text || { ago: "ago", bought: "bought this product" };
 
+  /** Delay before fetching new data when purchase list is empty (1 minute) */
+  const REFILL_DELAY_MS = 60 * 1000;
+
+  /** Interval for delta fetch when real-orders (1 minute) */
+  const DELTA_FETCH_INTERVAL_MS = 60 * 1000;
+
   class RecentPurchaseNotificationPopup {
     constructor() {
       this.settings = {
         ajaxUrl,
         nonce,
         pageId,
+        trackingMode,
         customerName,
         initialDelay: initialDelay || 10,
         intervalBetween: (intervalBetween || 10) * 1000,
-        minimumOrderRequired: minimumOrderRequired || 3,
-        duration: 5000, // 5 seconds
         productDetails: productDetails || ["title", "price"],
       };
       this.purchaseList = [];
@@ -51,6 +56,7 @@
       this.hideTimeout = null;
       this.nextTimeout = null;
       this.refreshTimeout = null;
+      this.deltaTimeout = null;
       this.lastRefreshTime = 0;
       this.shownIds = this.getShownIds();
       this.isPaused = false;
@@ -80,25 +86,24 @@
     }
 
     /**
-     * Get next unshown purchase from purchaseList (from AJAX)
+     * Get and remove the first purchase from the list (queue). Returns null if list empty.
      */
-    getNextUnshownPurchase() {
-      for (let i = 0; i < this.purchaseList.length; i++) {
-        const purchase = this.purchaseList[i];
-        if (purchase && !this.shownIds.includes(String(purchase.id))) {
-          return purchase;
-        }
-      }
-      return null;
+    takeNextPurchase() {
+      if (this.purchaseList.length === 0) return null;
+      return this.purchaseList.shift();
     }
 
     /**
-     * Initial fetch (AJAX)
+     * Initial fetch (AJAX). Optionally filter out already-shown ids so we don't re-show after refill.
      */
-    fetchInitialPurchases() {
+    fetchInitialPurchases(filterShown = false) {
       return this.ajaxFetch(null).then((data) => {
         if (data && data.purchases && Array.isArray(data.purchases)) {
-          this.purchaseList = data.purchases;
+          this.purchaseList = filterShown
+            ? data.purchases.filter(
+                (p) => p && !this.shownIds.includes(String(p.id)),
+              )
+            : data.purchases;
           this.lastOrderId = data.last_order_id;
           this.lastRefreshTime = Date.now();
         }
@@ -159,20 +164,22 @@
     }
 
     /**
-     * Staggered refresh - random 0-30s
+     * Schedule delta fetch every 1 minute (real-orders only). Called once from init.
      */
-    getStaggeredDelay() {
-      return Math.floor(Math.random() * 30001);
-    }
-
-    /**
-     * Check if refresh is due (interval + random 0-30s)
-     */
-    isRefreshDue() {
-      const elapsed = Date.now() - this.lastRefreshTime;
-      const minInterval =
-        this.settings.intervalBetween + this.getStaggeredDelay();
-      return elapsed >= minInterval;
+    scheduleDeltaFetch() {
+      if (this.isPaused || this.settings.trackingMode !== "real-orders") {
+        return;
+      }
+      // add random 0-30 seconds to the delay
+      const randomDelay = Math.floor(Math.random() * 30000);
+      const delay = DELTA_FETCH_INTERVAL_MS + randomDelay;
+      this.deltaTimeout = setTimeout(() => {
+        this.deltaTimeout = null;
+        if (this.isPaused) return;
+        this.fetchDeltaPurchases().finally(() => {
+          this.scheduleDeltaFetch();
+        });
+      }, delay);
     }
 
     /**
@@ -180,13 +187,15 @@
      */
     setupVisibilityListener() {
       document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
+        if (document.visibilityState === "hidden") {
           this.isPaused = true;
           this.clearTimeouts();
-        } else {
+        } else if (document.visibilityState === "visible") {
           this.isPaused = false;
-          this.lastRefreshTime = Date.now();
           this.scheduleNext();
+          if (this.settings.trackingMode === "real-orders") {
+            this.scheduleDeltaFetch();
+          }
         }
       });
     }
@@ -195,9 +204,11 @@
       clearTimeout(this.hideTimeout);
       clearTimeout(this.nextTimeout);
       clearTimeout(this.refreshTimeout);
+      clearTimeout(this.deltaTimeout);
       this.hideTimeout = null;
       this.nextTimeout = null;
       this.refreshTimeout = null;
+      this.deltaTimeout = null;
     }
 
     init() {
@@ -209,9 +220,12 @@
 
       this.setupVisibilityListener();
 
-      // Initial fetch (AJAX), then start notification loop
+      // Initial fetch (AJAX) once on load, then start notification loop
       this.fetchInitialPurchases().then(() => {
         if (this.isPaused) return;
+        if (this.settings.trackingMode === "real-orders") {
+          this.scheduleDeltaFetch();
+        }
         this.nextTimeout = setTimeout(() => {
           this.showNext();
         }, this.settings.initialDelay * 1000);
@@ -220,31 +234,14 @@
 
     scheduleNext() {
       if (this.isPaused) return;
-
-      const run = () => {
-        if (this.isPaused) return;
-        if (this.isRefreshDue()) {
-          this.fetchDeltaPurchases().then(() => {
-            if (this.isPaused) return;
-            this.nextTimeout = setTimeout(
-              () => this.showNext(),
-              this.settings.intervalBetween,
-            );
-          });
-        } else {
-          this.nextTimeout = setTimeout(
-            () => this.showNext(),
-            this.settings.intervalBetween,
-          );
-        }
-      };
-
-      this.nextTimeout = setTimeout(run, this.settings.intervalBetween);
+      this.nextTimeout = setTimeout(
+        () => this.showNext(),
+        this.settings.intervalBetween,
+      );
     }
 
     showNext() {
       if (this.isPaused) return;
-      if (this.shownCount >= this.settings.minimumOrderRequired) return;
       if (
         sessionStorage.getItem("yayboost_recent_purchase_popup_dismissed") ===
         "1"
@@ -252,9 +249,12 @@
         return;
       }
 
-      const purchase = this.getNextUnshownPurchase();
-      if (!purchase) {
-        this.scheduleNext();
+      let purchase = this.takeNextPurchase();
+      while (purchase && this.shownIds.includes(String(purchase.id))) {
+        purchase = this.takeNextPurchase();
+      }
+      if (!purchase && this.settings.trackingMode === "real-orders") {
+        this.refillAndScheduleNext();
         return;
       }
 
@@ -268,7 +268,26 @@
 
       this.hideTimeout = setTimeout(() => {
         this.hide();
-      }, this.settings.duration);
+      }, 5000);
+    }
+
+    /**
+     * When purchase list is empty: wait 1 minute, then delta fetch (real-orders), then schedule next show.
+     */
+    refillAndScheduleNext() {
+      // add random 0-30 seconds to the delay
+      const randomDelay = Math.floor(Math.random() * 30000);
+      const delay = REFILL_DELAY_MS + randomDelay;
+      this.nextTimeout = setTimeout(() => {
+        if (this.isPaused) return;
+        this.fetchDeltaPurchases().then(() => {
+          if (this.isPaused) return;
+          this.nextTimeout = setTimeout(
+            () => this.showNext(),
+            this.settings.intervalBetween,
+          );
+        });
+      }, delay);
     }
 
     buildStarRating(rating) {
