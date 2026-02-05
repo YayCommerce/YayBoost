@@ -31,6 +31,7 @@ class AnalyticsTracker {
     const FEATURE_NEXT_ORDER      = 'next_order_coupon';
     const FEATURE_RECOMMENDATIONS = 'smart_recommendations';
     const FEATURE_ORDER_BUMP      = 'order_bump';
+    const FEATURE_EXIT_INTENT     = 'exit_intent_popup';
 
     /**
      * Session ID (cached for request)

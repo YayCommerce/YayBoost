@@ -9,6 +9,7 @@
 
 namespace YayBoost\Features\ExitIntentPopup;
 
+use YayBoost\Analytics\AnalyticsTracker;
 use YayBoost\Utils\CodeGenerator;
 
 defined( 'ABSPATH' ) || exit;
@@ -170,6 +171,19 @@ class ExitIntentPopupAjaxHandler {
             // Validate coupon is still usable (not expired, not used up)
             if ( $this->is_coupon_valid( $existing_code ) ) {
                 $this->apply_coupon_to_cart( $existing_code );
+
+                // Track click event
+                if ( AnalyticsTracker::is_enabled() ) {
+                    AnalyticsTracker::click(
+                        AnalyticsTracker::FEATURE_EXIT_INTENT,
+                        0,
+                        null,
+                        [
+                            'coupon_code' => $existing_code,
+                        ]
+                    );
+                }
+
                 wp_send_json_success(
                     [
                         'code'     => $existing_code,
@@ -209,6 +223,18 @@ class ExitIntentPopupAjaxHandler {
         $this->tracker->mark_used( $code );
 
         $this->apply_coupon_to_cart( $code );
+
+        // Track click event
+        if ( AnalyticsTracker::is_enabled() ) {
+            AnalyticsTracker::click(
+                AnalyticsTracker::FEATURE_EXIT_INTENT,
+                0,
+                null,
+                [
+                    'coupon_code' => $code,
+                ]
+            );
+        }
 
         wp_send_json_success( [ 'code' => $code ] );
     }

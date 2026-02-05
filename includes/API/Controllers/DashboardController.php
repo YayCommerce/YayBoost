@@ -304,11 +304,13 @@ class DashboardController extends BaseController {
             'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost' ),
             'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost' ),
             'next_order_coupon' => __( 'Next Order Coupon', 'yayboost' ),
+            'exit_intent_popup' => __( 'Exit-Intent Popup', 'yayboost' ),
         ];
 
         // Event type labels
         $event_labels = [
             'purchase'          => __( 'Purchase', 'yayboost' ),
+            'click'             => __( 'Click', 'yayboost' ),
             'add_to_cart'       => __( 'Added to cart', 'yayboost' ),
             'threshold_reached' => __( 'Free shipping unlocked', 'yayboost' ),
         ];
