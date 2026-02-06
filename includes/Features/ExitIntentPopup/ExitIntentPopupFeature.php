@@ -9,6 +9,7 @@
 
 namespace YayBoost\Features\ExitIntentPopup;
 
+use YayBoost\Analytics\AnalyticsTracker;
 use YayBoost\Features\AbstractFeature;
 
 defined( 'ABSPATH' ) || exit;
@@ -61,6 +62,20 @@ class ExitIntentPopupFeature extends AbstractFeature {
     protected $priority = 2;
 
     /**
+     * Meta key for marking order as tracked for coupon applied analytics
+     *
+     * @var string
+     */
+    private const ORDER_COUPON_APPLIED_TRACKED_META_KEY = '_yayboost_eip_coupon_applied_tracked';
+
+    /**
+     * Meta key for marking order as tracked for purchase analytics
+     *
+     * @var string
+     */
+    private const ORDER_PURCHASE_TRACKED_META_KEY = '_yayboost_eip_purchase_tracked';
+
+    /**
      * Tracker instance
      *
      * @var ExitIntentPopupTracker
@@ -107,6 +122,9 @@ class ExitIntentPopupFeature extends AbstractFeature {
 
         // Add cart fragments for AJAX cart updates
         add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_cart_fragments' ] );
+
+        // Track coupon applied when order is processed
+        add_action( 'woocommerce_checkout_order_processed', [ $this, 'handle_order_coupon_applied' ], 10, 3 );
 
         // Conversion tracking
         add_action( 'woocommerce_payment_complete', [ $this, 'handle_payment_complete' ] );
@@ -377,6 +395,76 @@ class ExitIntentPopupFeature extends AbstractFeature {
     }
 
     /**
+     * Handle order processed event (checkout completed)
+     *
+     * Tracks when a new order is created with exit intent coupon.
+     *
+     * @param int      $order_id    Order ID.
+     * @param array    $posted_data Posted data from checkout.
+     * @param WC_Order $order       Order object.
+     * @return void
+     */
+    public function handle_order_coupon_applied( int $order_id, array $posted_data = [], $order = null ): void {
+        if ( ! $this->is_enabled() ) {
+            return;
+        }
+
+        if ( ! $order ) {
+            $order = wc_get_order( $order_id );
+        }
+
+        if ( ! $order ) {
+            return;
+        }
+
+        // Check if already tracked
+        if ( $order->get_meta( self::ORDER_COUPON_APPLIED_TRACKED_META_KEY ) ) {
+            return;
+        }
+
+        $user_id = $order->get_user_id();
+
+        // Migrate guest state to user if applicable
+        if ( $user_id ) {
+            $this->migrate_guest_to_user( $user_id );
+        }
+
+        // Get current tracker state
+        $state = $this->tracker->get_state();
+        if ( ! $state || empty( $state['coupon_code'] ) ) {
+            return;
+        }
+
+        // Check if this order used the exit intent coupon
+        $exit_coupon   = strtolower( $state['coupon_code'] );
+        $order_coupons = $order->get_coupon_codes();
+
+        foreach ( $order_coupons as $coupon ) {
+            if ( strtolower( $coupon ) === $exit_coupon ) {
+                // Track coupon applied event (using add_to_cart event type)
+                if ( AnalyticsTracker::is_enabled() ) {
+                    AnalyticsTracker::log(
+                        AnalyticsTracker::FEATURE_EXIT_INTENT,
+                        AnalyticsTracker::EVENT_ADD_TO_CART,
+                        [
+                            'order_id'   => $order_id,
+                            'product_id' => 0,
+                            'metadata'   => [
+                                'coupon_code' => $coupon,
+                            ],
+                        ]
+                    );
+                }
+
+                // Mark as tracked
+                $order->update_meta_data( self::ORDER_COUPON_APPLIED_TRACKED_META_KEY, time() );
+                $order->save();
+                break;
+            }
+        }
+    }
+
+    /**
      * Handle payment complete event
      *
      * Checks if order used exit intent coupon and marks converted.
@@ -432,6 +520,29 @@ class ExitIntentPopupFeature extends AbstractFeature {
 
         foreach ( $order_coupons as $coupon ) {
             if ( strtolower( $coupon ) === $exit_coupon ) {
+                // Check if purchase already tracked
+                if ( ! $order->get_meta( self::ORDER_PURCHASE_TRACKED_META_KEY ) ) {
+                    // Track purchase event with revenue
+                    if ( AnalyticsTracker::is_enabled() ) {
+                        AnalyticsTracker::purchase(
+                            AnalyticsTracker::FEATURE_EXIT_INTENT,
+                            $order_id,
+                            0,
+                            0,
+                            1,
+                            (float) $order->get_total(),
+                            [
+                                'coupon_code' => $coupon,
+                                'metadata'    => [],
+                            ]
+                        );
+                    }
+
+                    // Mark as tracked
+                    $order->update_meta_data( self::ORDER_PURCHASE_TRACKED_META_KEY, time() );
+                    $order->save();
+                }
+
                 $this->tracker->mark_converted( $order_id );
                 break;
             }
