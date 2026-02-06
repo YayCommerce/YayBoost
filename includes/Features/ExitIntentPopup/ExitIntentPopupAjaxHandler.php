@@ -179,7 +179,12 @@ class ExitIntentPopupAjaxHandler {
                         0,
                         null,
                         [
-                            'coupon_code' => $existing_code,
+                            'coupon_code'  => $existing_code,
+                            'event_message' => sprintf(
+                                /* translators: %s: coupon code */
+                                __( 'Clicked popup – coupon %s applied', 'yayboost' ),
+                                $existing_code
+                            ),
                         ]
                     );
                 }
@@ -230,9 +235,14 @@ class ExitIntentPopupAjaxHandler {
                 AnalyticsTracker::FEATURE_EXIT_INTENT,
                 0,
                 null,
-                [
-                    'coupon_code' => $code,
-                ]
+                        [
+                            'coupon_code'  => $code,
+                            'event_message' => sprintf(
+                                /* translators: %s: coupon code */
+                                __( 'Clicked popup – coupon %s applied', 'yayboost' ),
+                                $code
+                            ),
+                        ]
             );
         }
 

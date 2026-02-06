@@ -245,6 +245,7 @@ class AnalyticsEventsTable {
                     order_id,
                     quantity,
                     revenue,
+                    metadata,
                     created_at
                  FROM {$table_name}
                  WHERE event_type IN ({$placeholders})

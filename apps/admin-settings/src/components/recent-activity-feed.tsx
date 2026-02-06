@@ -125,9 +125,15 @@ function ActivityItemRow({
           </span>
         </div>
 
-        {/* Product info */}
-        {productInfo && (
-          <p className="mt-0.5 truncate text-sm font-medium text-foreground">{productInfo}</p>
+        {/* Custom event message or product info */}
+        {activity.event_message ? (
+          <p className="mt-0.5 truncate text-sm font-medium text-foreground">
+            {activity.event_message}
+          </p>
+        ) : (
+          productInfo && (
+            <p className="mt-0.5 truncate text-sm font-medium text-foreground">{productInfo}</p>
+          )
         )}
 
         {/* Meta row: feature name + revenue */}
