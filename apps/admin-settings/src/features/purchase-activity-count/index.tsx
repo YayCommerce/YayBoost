@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
-import { AlertCircle, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import z from 'zod';
 
 import { DisplayPositionSelect, getPositionValues, PAGE_PRODUCT } from '@/lib/display-position';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { useProductCategories, useProducts } from '@/hooks/use-product-data';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -33,6 +32,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { ProductPreview } from '@/components/product-preview';
 import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
@@ -109,6 +109,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
   const displayText = form.watch('display.text');
   const applyTo = form.watch('target_products.apply');
   const countFrom = form.watch('count_from');
+  const displayPosition = form.watch('display.position');
 
   if (isLoading || isFetching) {
     return (
@@ -413,9 +414,11 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="yayboost-pac inline-flex items-center gap-1.5 text-sm">
-                <span> {displayText.replace('{count}', '12')}</span>
-              </div>
+              <ProductPreview currentPosition={displayPosition}>
+                <div className="yayboost-pac inline-flex items-center gap-1.5 text-sm">
+                  <span> {displayText.replace('{count}', '12')}</span>
+                </div>
+              </ProductPreview>
             </CardContent>
           </Card>
         </div>

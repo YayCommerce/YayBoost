@@ -5,12 +5,8 @@ import { AlertCircle, Eye } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
 import { z } from 'zod';
 
+import { DisplayPositionSelect, getPositionValues, PAGE_PRODUCT } from '@/lib/display-position';
 import { __ } from '@/lib/utils';
-import {
-  DisplayPositionSelect,
-  PAGE_PRODUCT,
-  getPositionValues,
-} from '@/lib/display-position';
 import { useProductCategories, useProducts } from '@/hooks/use-product-data';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +29,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { ProductPreview } from '@/components/product-preview';
 import { SettingsCard } from '@/components/settings-card';
 
 import { FeatureComponentProps } from '..';
@@ -583,37 +580,39 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col gap-3">
-            {/* Alert Text */}
-            {watchedValues.show_alert_text && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium whitespace-nowrap text-gray-900">
-                  {message}
-                </span>
-              </div>
-            )}
-
-            {/* Progress Bar */}
-            {watchedValues.show_progress_bar && (
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-2 min-w-[200px] overflow-hidden rounded-full"
-                  style={{ backgroundColor: watchedValues.background_color }}
-                >
-                  <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${progress}%`,
-                      backgroundColor: watchedValues.fill_color,
-                    }}
-                  />
+          <ProductPreview currentPosition={watchedValues.position_on_product_page}>
+            <div className="flex flex-col gap-1">
+              {/* Alert Text */}
+              {watchedValues.show_alert_text && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium whitespace-nowrap text-gray-900">
+                    {message}
+                  </span>
                 </div>
-                <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
-                  {SAMPLE_STOCK_LEFT} left
-                </span>
-              </div>
-            )}
-          </div>
+              )}
+
+              {/* Progress Bar */}
+              {watchedValues.show_progress_bar && (
+                <div className="flex items-center gap-3">
+                  <div
+                    className="h-2 min-w-[200px] overflow-hidden rounded-full"
+                    style={{ backgroundColor: watchedValues.background_color }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${progress}%`,
+                        backgroundColor: watchedValues.fill_color,
+                      }}
+                    />
+                  </div>
+                  <span className="shrink-0 text-sm whitespace-nowrap text-gray-600">
+                    {SAMPLE_STOCK_LEFT} left
+                  </span>
+                </div>
+              )}
+            </div>
+          </ProductPreview>
         </CardContent>
       </Card>
       <Alert>
