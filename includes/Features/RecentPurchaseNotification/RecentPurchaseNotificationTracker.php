@@ -377,16 +377,22 @@ class RecentPurchaseNotificationTracker {
     /**
      * Get real purchase list (cached for initial, delta bypasses cache)
      *
+     * When user is logged in, excludes orders belonging to the current user
+     * so they only see purchases from other customers.
+     *
      * @param int      $page_id  Page ID.
      * @param int      $limit    Max purchases.
      * @param int|null $after_id For delta fetch.
      * @return array{ purchases: array, last_order_id: int|null }
      */
     private function get_real_purchase_list( int $page_id, int $limit, ?int $after_id ): array {
-        $is_delta  = $after_id > 0;
-        $shown_ids = $this->get_shown_purchase_ids();
+        $is_delta        = $after_id > 0;
+        $shown_ids       = $this->get_shown_purchase_ids();
+        $current_user_id = get_current_user_id();
+        $exclude_user_id = $current_user_id > 0 ? $current_user_id : null;
+
         if ( $is_delta ) {
-            $orders    = $this->query_orders( $limit, $after_id );
+            $orders    = $this->query_orders( $limit, $after_id, $exclude_user_id );
             $purchases = $this->normalize_orders_to_purchases( $orders, $shown_ids );
             $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
             return [
@@ -395,12 +401,12 @@ class RecentPurchaseNotificationTracker {
             ];
         }
 
-        $cache_key = self::CACHE_KEY_PREFIX . $page_id;
+        $cache_key = self::CACHE_KEY_PREFIX . $page_id . ( $exclude_user_id ? '_u' . $exclude_user_id : '' );
         $result    = Cache::remember(
             $cache_key,
             self::CACHE_TTL,
-            function () use ( $limit, $shown_ids ) {
-                $orders    = $this->query_orders( $limit, null );
+            function () use ( $limit, $shown_ids, $exclude_user_id ) {
+                $orders    = $this->query_orders( $limit, null, $exclude_user_id );
                 $purchases = $this->normalize_orders_to_purchases( $orders, $shown_ids );
                 $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
                 return [
@@ -416,11 +422,12 @@ class RecentPurchaseNotificationTracker {
     /**
      * Query orders (real mode) with optional after_id for delta
      *
-     * @param int      $limit   Limit.
-     * @param int|null $after_id Exclude orders with ID <= after_id.
+     * @param int      $limit              Limit.
+     * @param int|null $after_id           Exclude orders with ID <= after_id.
+     * @param int|null $exclude_customer_id When set (logged-in user), exclude orders from this customer.
      * @return array
      */
-    private function query_orders( int $limit, ?int $after_id ): array {
+    private function query_orders( int $limit, ?int $after_id, ?int $exclude_customer_id = null ): array {
         $order_time_range = $this->feature->get( 'real_orders.order_time_range' );
         $order_status     = [ 'wc-processing', 'wc-completed', 'wc-on-hold' ];
 
@@ -436,10 +443,15 @@ class RecentPurchaseNotificationTracker {
             $args['date_created'] = '>' . $since_ts;
         }
 
+        $fetch_limit = $limit;
+        if ( $exclude_customer_id ) {
+            $fetch_limit = ( $after_id > 0 ? $limit + 50 : $limit ) * 2;
+        }
+
         if ( version_compare( WC_VERSION, '7.0', '<' ) ) {
             $wp_args = [
                 'post_type'      => 'shop_order',
-                'posts_per_page' => $after_id > 0 ? $limit + 50 : $limit,
+                'posts_per_page' => $after_id > 0 ? $fetch_limit + 50 : $fetch_limit,
                 'orderby'        => 'date',
                 'order'          => 'DESC',
                 'post_status'    => $order_status,
@@ -460,17 +472,42 @@ class RecentPurchaseNotificationTracker {
             );
             if ( $after_id > 0 ) {
                 $orders = array_values( array_filter( $orders, fn( $o ) => $this->get_order_id( $o ) > $after_id ) );
-                return array_slice( $orders, 0, $limit );
             }
-            return array_values( $orders );
+            $orders = $this->exclude_customer_orders( $orders, $exclude_customer_id );
+            return array_slice( array_values( $orders ), 0, $limit );
         }//end if
 
-        $orders = wc_get_orders( $args );
+        $args['limit'] = $fetch_limit;
+        $orders        = wc_get_orders( $args );
         if ( $after_id > 0 && ! empty( $orders ) ) {
             $orders = array_values( array_filter( $orders, fn( $o ) => $this->get_order_id( $o ) > $after_id ) );
-            $orders = array_slice( $orders, 0, $limit );
         }
-        return $orders;
+        $orders = $this->exclude_customer_orders( $orders, $exclude_customer_id );
+        return array_slice( array_values( $orders ), 0, $limit );
+    }
+
+    /**
+     * Filter out orders belonging to a specific customer
+     *
+     * @param array    $orders WC_Order objects.
+     * @param int|null $exclude_customer_id Customer ID to exclude (e.g. current logged-in user).
+     * @return array Filtered orders.
+     */
+    private function exclude_customer_orders( array $orders, ?int $exclude_customer_id ): array {
+        if ( ! $exclude_customer_id ) {
+            return $orders;
+        }
+        return array_values(
+            array_filter(
+                $orders,
+                function ( $order ) use ( $exclude_customer_id ) {
+                    if ( ! $order instanceof \WC_Order ) {
+                        return true;
+                    }
+                    return (int) $order->get_customer_id() !== $exclude_customer_id;
+                }
+            )
+        );
     }
 
     /**
@@ -680,26 +717,5 @@ class RecentPurchaseNotificationTracker {
             $page_id = get_queried_object_id() ?? 0;
         }
         return (int) $page_id;
-    }
-
-    /**
-     * Get cached purchases data (for AJAX handler)
-     *
-     * @param int $page_id Page ID.
-     * @return array|false Purchases data or false if not cached.
-     */
-    public function get_cached_data( int $page_id ) {
-        return Cache::get( self::CACHE_KEY_PREFIX . $page_id, false );
-    }
-
-    /**
-     * Set cached purchases data (for AJAX handler)
-     *
-     * @param int   $page_id Page ID.
-     * @param array $data Purchases data.
-     * @return bool Success.
-     */
-    public function set_cached_data( int $page_id, array $data ): bool {
-        return Cache::set( self::CACHE_KEY_PREFIX . $page_id, $data, self::CACHE_TTL );
     }
 }
