@@ -99,7 +99,7 @@ export function ProductPreview({ currentPosition, children, className }: Product
           {renderSlot('above_add_to_cart_button')}
 
           {/* Quantity + Add to cart row - blurred */}
-          <div className="mt-1 flex flex-wrap items-center gap-2">
+          <div className="my-1 flex flex-wrap items-center gap-2">
             <div
               className={cn('border-input bg-muted h-10 w-14 rounded border', blurClass)}
               aria-hidden
@@ -113,7 +113,7 @@ export function ProductPreview({ currentPosition, children, className }: Product
           {renderSlot('below_add_to_cart_button')}
 
           {/* Product meta (SKU, Category, Tags, etc.) - blurred */}
-          <div className="border-border mt-3 flex flex-col gap-1 border-t pt-3">
+          <div className="border-border flex flex-col gap-1 border-t pt-3">
             <div className={cn('bg-muted h-3.5 w-full max-w-[180px] rounded', blurClass)} />
             <div className={cn('bg-muted h-3.5 w-full max-w-[160px] rounded', blurClass)} />
             <div className={cn('bg-muted h-3.5 w-full max-w-[140px] rounded', blurClass)} />
