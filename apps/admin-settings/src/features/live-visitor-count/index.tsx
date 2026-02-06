@@ -39,6 +39,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { ProductPreview } from '@/components/product-preview';
 import { SettingsCard } from '@/components/settings-card';
 import UnavailableFeature from '@/components/unavailable-feature';
 
@@ -175,6 +176,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
   const textColor = form.watch('style.text_color');
   const backgroundColor = form.watch('style.background_color');
   const displayText = form.watch('display.text');
+  const displayPosition = form.watch('display.position');
 
   if (isLoading || isFetching) {
     return (
@@ -600,12 +602,14 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <StylePreview
-                style={style || 'style_1'}
-                textColor={textColor || '#a74c3c'}
-                backgroundColor={backgroundColor || '#fff3f3'}
-                displayText={displayText || '{count} people are viewing this right now'}
-              />
+              <ProductPreview currentPosition={displayPosition}>
+                <StylePreview
+                  style={style || 'style_1'}
+                  textColor={textColor || '#a74c3c'}
+                  backgroundColor={backgroundColor || '#fff3f3'}
+                  displayText={displayText || '{count} people are viewing this right now'}
+                />
+              </ProductPreview>
             </CardContent>
           </Card>
         </div>
