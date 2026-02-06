@@ -30,10 +30,6 @@
   }
 
   const i18n = text || { ago: "ago", bought: "bought this product" };
-
-  /** Delay before fetching new data when purchase list is empty (1 minute) */
-  const REFILL_DELAY_MS = 60 * 1000;
-
   /** Interval for delta fetch when real-orders (1 minute) */
   const DELTA_FETCH_INTERVAL_MS = 60 * 1000;
 
@@ -276,8 +272,7 @@
       while (purchase && this.shownIds.includes(String(purchase.id))) {
         purchase = this.takeNextPurchase();
       }
-      if (!purchase && this.settings.trackingMode === "real-orders") {
-        this.refillAndScheduleNext();
+      if (!purchase) {
         return;
       }
 
@@ -295,25 +290,6 @@
       this.hideTimeout = setTimeout(() => {
         this.hide();
       }, 5000);
-    }
-
-    /**
-     * When purchase list is empty: wait 1 minute, then delta fetch (real-orders), then schedule next show.
-     */
-    refillAndScheduleNext() {
-      // add random 0-30 seconds to the delay
-      const randomDelay = Math.floor(Math.random() * 30000);
-      const delay = REFILL_DELAY_MS + randomDelay;
-      this.nextTimeout = setTimeout(() => {
-        if (this.isPaused) return;
-        this.fetchDeltaPurchases().then(() => {
-          if (this.isPaused) return;
-          this.nextTimeout = setTimeout(
-            () => this.showNext(),
-            this.settings.intervalBetween,
-          );
-        });
-      }, delay);
     }
 
     buildStarRating(rating) {
