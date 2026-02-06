@@ -390,19 +390,16 @@ class RecentPurchaseNotificationTracker {
         $shown_ids       = $this->get_shown_purchase_ids();
         $current_user_id = get_current_user_id();
         $exclude_user_id = $current_user_id > 0 ? $current_user_id : null;
-
+        $cache_key       = self::CACHE_KEY_PREFIX . $page_id . ( $exclude_user_id ? '_u' . $exclude_user_id : '' );
         if ( $is_delta ) {
-            $orders    = $this->query_orders( $limit, $after_id, $exclude_user_id );
-            $purchases = $this->normalize_orders_to_purchases( $orders, $shown_ids );
-            $last      = ! empty( $orders ) ? $this->get_order_id( end( $orders ) ) : null;
-            return [
-                'purchases'     => $purchases,
-                'last_order_id' => $last,
-            ];
+            return $this->get_purchase_list_cache( $cache_key, $limit, $shown_ids, $exclude_user_id );
         }
 
-        $cache_key = self::CACHE_KEY_PREFIX . $page_id . ( $exclude_user_id ? '_u' . $exclude_user_id : '' );
-        $result    = Cache::remember(
+        return $this->get_purchase_list_cache( $cache_key, $limit, $shown_ids, $exclude_user_id );
+    }
+
+    private function get_purchase_list_cache( string $cache_key, int $limit, array $shown_ids, ?int $exclude_user_id = null ): array {
+        $result = Cache::remember(
             $cache_key,
             self::CACHE_TTL,
             function () use ( $limit, $shown_ids, $exclude_user_id ) {
