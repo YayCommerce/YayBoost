@@ -398,6 +398,15 @@ class RecentPurchaseNotificationTracker {
         return $this->get_purchase_list_cache( $cache_key, $limit, $shown_ids, $exclude_user_id );
     }
 
+    /**
+     * Get purchase list cache
+     *
+     * @param string   $cache_key Cache key.
+     * @param int      $limit Limit.
+     * @param array    $shown_ids Shown IDs.
+     * @param int|null $exclude_user_id Exclude user ID.
+     * @return array
+     */
     private function get_purchase_list_cache( string $cache_key, int $limit, array $shown_ids, ?int $exclude_user_id = null ): array {
         $result = Cache::remember(
             $cache_key,
