@@ -1,0 +1,381 @@
+/**
+ * Email Capture Popup Feature Settings
+ *
+ * Show a popup when customers try to leave with items in cart.
+ * Offer discount to complete purchase NOW. Capture emails for follow-up.
+ */
+
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { __ } from '@wordpress/i18n';
+import { Eye, Send } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { InputNumber } from '@/components/ui/input-number';
+import { Label } from '@/components/ui/label';
+import { MultiSelect } from '@/components/ui/multi-select';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
+import { SettingsCard } from '@/components/settings-card';
+import UnavailableFeature from '@/components/unavailable-feature';
+
+import { FeatureComponentProps } from '..';
+
+// Settings schema
+const settingsSchema = z.object({
+  content: z.object({
+    headline: z.string().min(1),
+    message: z.string().min(1),
+    button_text: z.string().min(1),
+  }),
+  email_trigger: z.object({
+    send_after_days: z.number().min(0),
+    subject: z.string().min(1),
+    email_content: z.string().min(1),
+  }),
+});
+
+type SettingsFormData = z.infer<typeof settingsSchema>;
+
+// Default values when backend is not ready
+const defaultSettings: SettingsFormData = {
+  content: {
+    headline: 'Stay in touch!',
+    message: 'Enter your email to receive updates and exclusive offers.',
+    button_text: 'Submit email',
+  },
+  email_trigger: {
+    send_after_days: 1,
+    subject: 'You left something in your cart',
+    email_content:
+      'Your cart items are still waiting for you. Complete your purchase whenever you are ready.',
+  },
+};
+
+// Mock email options for UI (replace with API data later)
+const mockEmailOptions = [
+  { label: 'user1@example.com', value: 'user1@example.com' },
+  { label: 'user2@example.com', value: 'user2@example.com' },
+  { label: 'user3@example.com', value: 'user3@example.com' },
+];
+
+export default function EmailCapturePopupFeature({ featureId }: FeatureComponentProps) {
+  const { data: feature, isLoading, isFetching } = useFeature(featureId);
+  const updateSettings = useUpdateFeatureSettings();
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+
+  const formSettings = (feature?.settings ?? defaultSettings) as SettingsFormData;
+
+  const form = useForm<SettingsFormData>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: formSettings,
+  });
+
+  const contentPreview = form.watch('content');
+  const emailTriggerPreview = form.watch('email_trigger');
+
+  const onSubmit = (data: SettingsFormData) => {
+    updateSettings.mutate(
+      { id: featureId, settings: data },
+      {
+        onSuccess: (updatedFeature) => {
+          form.reset(updatedFeature.settings as SettingsFormData);
+        },
+      },
+    );
+  };
+
+  const handleSendMail = () => {
+    // TODO: Connect to API for manual send
+    console.log('Send mail to:', selectedEmails);
+  };
+
+  if (isLoading || isFetching) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
+    );
+  }
+
+  // Use UnavailableFeature only when feature data exists but has no settings
+  if (feature && !feature?.settings) {
+    return <UnavailableFeature />;
+  }
+
+  return (
+    <Form {...form}>
+      <FeatureLayoutHeader
+        title={feature?.name ?? 'Email Popup'}
+        description={feature?.description}
+      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left column: Settings with Tabs */}
+        <div className="space-y-6">
+          <Tabs defaultValue="settings" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="settings">{__('Settings', 'yayboost')}</TabsTrigger>
+              <TabsTrigger value="email-list">{__('Email list', 'yayboost')}</TabsTrigger>
+            </TabsList>
+
+            {/* Settings tab */}
+            <TabsContent value="settings" className="mt-4">
+              <SettingsCard
+                headless
+                onSave={() => form.handleSubmit(onSubmit)()}
+                onReset={() => form.reset(formSettings)}
+                isSaving={updateSettings.isPending}
+                isDirty={form.formState.isDirty}
+                isLoading={isLoading || isFetching}
+              >
+                {/* Content section */}
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">{__('Content', 'yayboost')}</h3>
+                </div>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="content.headline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Headline:', 'yayboost')}</Label>
+                        <FormControl>
+                          <Input
+                            id="content-headline"
+                            placeholder="Wait! Don't leave"
+                            className="w-full"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="content.message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Message', 'yayboost')}</Label>
+                        <FormControl>
+                          <Textarea
+                            id="content-message"
+                            placeholder="Complete your order now and receive 10% discount"
+                            className="w-full"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="content.button_text"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Button text', 'yayboost')}</Label>
+                        <FormControl>
+                          <Input
+                            id="content-button_text"
+                            placeholder="Submit email"
+                            className="w-full"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Separator />
+
+                {/* Email trigger section */}
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">{__('Email trigger', 'yayboost')}</h3>
+                </div>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="email_trigger.send_after_days"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Send after how many days to capture email', 'yayboost')}</Label>
+                        <FormControl>
+                          <InputNumber
+                            id="email_trigger-send_after_days"
+                            placeholder="1"
+                            min={0}
+                            className="w-24"
+                            value={field.value}
+                            onValueChange={(val) => field.onChange(val ?? 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email_trigger.subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Subject', 'yayboost')}</Label>
+                        <FormControl>
+                          <Input
+                            id="email_trigger-subject"
+                            placeholder="Wait! Don't leave"
+                            className="w-full"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email_trigger.email_content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Email content', 'yayboost')}</Label>
+                        <FormControl>
+                          <Textarea
+                            id="email_trigger-email_content"
+                            placeholder="Complete your order now and receive 10% discount"
+                            className="w-full"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </SettingsCard>
+            </TabsContent>
+
+            {/* Email list tab */}
+            <TabsContent value="email-list" className="mt-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{__('Manual send', 'yayboost')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>{__('Select emails to send', 'yayboost')}</Label>
+                    <MultiSelect
+                      options={mockEmailOptions}
+                      value={selectedEmails}
+                      onChange={setSelectedEmails}
+                      placeholder={__('Select emails...', 'yayboost')}
+                      showSearch
+                      emptyText={__('No captured emails yet', 'yayboost')}
+                    />
+                  </div>
+                  <Button onClick={handleSendMail} disabled={selectedEmails.length === 0}>
+                    <Send className="mr-2 h-4 w-4" />
+                    {__('Send mail', 'yayboost')}
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Right column: Preview with Tabs */}
+        <div className="sticky top-6 h-fit space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="popup" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="popup">{__('Popup content', 'yayboost')}</TabsTrigger>
+                  <TabsTrigger value="email">{__('Email', 'yayboost')}</TabsTrigger>
+                </TabsList>
+
+                {/* Popup content preview - email capture with input + submit */}
+                <TabsContent value="popup" className="mt-4">
+                  <div className="rounded-xl p-4">
+                    <div className="relative mx-auto flex max-w-4xl flex-col overflow-hidden rounded-xl border bg-white shadow-lg md:flex-row">
+                      <div className="flex-1 p-8 md:p-10">
+                        <div className="flex flex-col items-center justify-center gap-4 text-center">
+                          <h4 className="text-3xl leading-tight font-black text-slate-900">
+                            {contentPreview?.headline ||
+                              __('Headline will appear here', 'yayboost')}
+                          </h4>
+                          <p className="text-base leading-relaxed text-slate-700">
+                            {contentPreview?.message || __('Message will appear here', 'yayboost')}
+                          </p>
+                          <div className="flex w-full max-w-sm flex-col gap-3">
+                            <Input
+                              type="email"
+                              placeholder={__('Enter your email', 'yayboost')}
+                              className="h-11"
+                              disabled
+                              readOnly
+                            />
+                            <button
+                              type="button"
+                              className="inline-flex h-11 cursor-pointer items-center justify-center rounded-lg border-none bg-black px-6 text-sm font-medium text-white transition-opacity hover:opacity-85"
+                            >
+                              {contentPreview?.button_text || __('Button text', 'yayboost')}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Email preview */}
+                <TabsContent value="email" className="mt-4">
+                  <div className="rounded-xl border bg-white p-4 shadow-sm">
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-muted-foreground text-xs">
+                          {__('Subject:', 'yayboost')}{' '}
+                        </span>
+                        <span className="font-medium">
+                          {emailTriggerPreview?.subject ||
+                            __('Email subject will appear here', 'yayboost')}
+                        </span>
+                      </div>
+                      <Separator />
+                      <div className="text-sm">
+                        <span className="text-muted-foreground mb-1 block text-xs">
+                          {__('Content:', 'yayboost')}
+                        </span>
+                        <p className="whitespace-pre-wrap text-slate-700">
+                          {emailTriggerPreview?.email_content ||
+                            __('Email content will appear here', 'yayboost')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </Form>
+  );
+}

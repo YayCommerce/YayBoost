@@ -46,6 +46,9 @@ export const featureComponents: Record<
   
   // Exit Intent Popup
   exit_intent_popup: lazy(() => import('./exit-intent-popup')),
+
+  // Email Capture Popup
+  email_capture_popup: lazy(() => import('./email-capture-popup')),
 };
 
 /**
