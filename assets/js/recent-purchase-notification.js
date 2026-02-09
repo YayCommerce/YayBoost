@@ -32,6 +32,8 @@
   const i18n = text || { ago: "ago", bought: "bought this product" };
   /** Interval for delta fetch when real-orders (1 minute) */
   const DELTA_FETCH_INTERVAL_MS = 60 * 1000;
+  /** Delay before auto-hiding the notification */
+  const HIDE_DELAY_MS = 5000;
 
   class RecentPurchaseNotificationPopup {
     constructor() {
@@ -289,7 +291,7 @@
 
       this.hideTimeout = setTimeout(() => {
         this.hide();
-      }, 5000);
+      }, HIDE_DELAY_MS);
     }
 
     buildStarRating(rating) {
@@ -370,6 +372,24 @@
       if (link) {
         link.addEventListener("click", () => this.hide());
       }
+
+      // Pause auto-hide on hover, resume on mouse leave
+      this.container.addEventListener("mouseenter", () => {
+        if (this.hideTimeout) {
+          clearTimeout(this.hideTimeout);
+          this.hideTimeout = null;
+        }
+      });
+      this.container.addEventListener("mouseleave", () => {
+        if (
+          this.container.classList.contains(
+            "yayboost-recent-purchase-notification--visible",
+          ) &&
+          this.hideTimeout === null
+        ) {
+          this.hideTimeout = setTimeout(() => this.hide(), HIDE_DELAY_MS);
+        }
+      });
     }
 
     hide() {
