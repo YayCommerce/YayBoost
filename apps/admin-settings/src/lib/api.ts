@@ -166,10 +166,12 @@ export const entityApi = {
   create: async (
     featureId: string,
     entity: Partial<Omit<Entity, 'id' | 'created_at' | 'updated_at'>>,
+    entityType?: string,
   ): Promise<Entity> => {
     const { data } = await api.post<ApiResponse<{ entity: Entity }>>(
       `/features/${featureId}/entities`,
       entity,
+      { params: entityType ? { entity_type: entityType } : undefined },
     );
     return data.data.entity;
   },
@@ -178,10 +180,12 @@ export const entityApi = {
     featureId: string,
     entityId: number,
     entity: Partial<Omit<Entity, 'id' | 'created_at' | 'updated_at'>>,
+    entityType?: string,
   ): Promise<Entity> => {
     const { data } = await api.patch<ApiResponse<{ entity: Entity }>>(
       `/features/${featureId}/entities/${entityId}`,
       entity,
+      { params: entityType ? { entity_type: entityType } : undefined },
     );
     return data.data.entity;
   },

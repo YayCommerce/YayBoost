@@ -59,13 +59,6 @@ class OrderBumpFeature extends AbstractFeature {
     protected $priority = 100;
 
     /**
-     * Feature status
-     *
-     * @var string
-     */
-    protected $status = 'coming_soon';
-
-    /**
      * Bump repository
      *
      * @var BumpRepository
@@ -81,4 +74,19 @@ class OrderBumpFeature extends AbstractFeature {
         $this->repository = new BumpRepository();
     }
 
+    /**
+     * Get default settings
+     *
+     * @return array
+     */
+    protected function get_default_settings(): array {
+        return array_merge(
+            parent::get_default_settings(),
+            [
+                'enabled'          => false,
+                'bump_offers'      => [],
+                'max_bump_display' => 2,
+            ]
+        );
+    }
 }
