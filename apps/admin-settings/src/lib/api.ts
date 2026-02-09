@@ -406,9 +406,11 @@ export interface FeatureHealthResponse {
 export interface ActivityItem {
   id: number;
   feature_id: string;
+  name?: string;
   feature_name: string;
-  event_type: 'purchase' | 'add_to_cart' | 'threshold_reached';
+  event_type: 'purchase' | 'click' | 'add_to_cart' | 'threshold_reached';
   event_label: string;
+  event_message?: string | null;
   product_id: number | null;
   product_name: string | null;
   order_id: number | null;

@@ -304,11 +304,13 @@ class DashboardController extends BaseController {
             'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost' ),
             'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost' ),
             'next_order_coupon' => __( 'Next Order Coupon', 'yayboost' ),
+            'exit_intent_popup' => __( 'Exit-Intent Popup', 'yayboost' ),
         ];
 
         // Event type labels
         $event_labels = [
             'purchase'          => __( 'Purchase', 'yayboost' ),
+            'click'             => __( 'Click', 'yayboost' ),
             'add_to_cart'       => __( 'Added to cart', 'yayboost' ),
             'threshold_reached' => __( 'Free shipping unlocked', 'yayboost' ),
         ];
@@ -323,18 +325,28 @@ class DashboardController extends BaseController {
                 }
             }
 
+            // Extract custom message from metadata for activity feed
+            $event_message = null;
+            if ( ! empty( $event['metadata'] ) ) {
+                $meta = is_string( $event['metadata'] ) ? json_decode( $event['metadata'], true ) : $event['metadata'];
+                if ( is_array( $meta ) && ! empty( $meta['event_message'] ) ) {
+                    $event_message = sanitize_text_field( $meta['event_message'] );
+                }
+            }
+
             $activities[] = [
-                'id'           => (int) $event['id'],
-                'feature_id'   => $event['feature_id'],
-                'feature_name' => $feature_names[ $event['feature_id'] ] ?? $event['feature_id'],
-                'event_type'   => $event['event_type'],
-                'event_label'  => $event_labels[ $event['event_type'] ] ?? $event['event_type'],
-                'product_id'   => $event['product_id'] ? (int) $event['product_id'] : null,
-                'product_name' => $product_name,
-                'order_id'     => $event['order_id'] ? (int) $event['order_id'] : null,
-                'quantity'     => (int) $event['quantity'],
-                'revenue'      => (float) $event['revenue'],
-                'created_at'   => $event['created_at'],
+                'id'            => (int) $event['id'],
+                'feature_id'    => $event['feature_id'],
+                'feature_name'  => $feature_names[ $event['feature_id'] ] ?? $event['feature_id'],
+                'event_type'    => $event['event_type'],
+                'event_label'   => $event_labels[ $event['event_type'] ] ?? $event['event_type'],
+                'event_message' => $event_message,
+                'product_id'    => $event['product_id'] ? (int) $event['product_id'] : null,
+                'product_name'  => $product_name,
+                'order_id'      => $event['order_id'] ? (int) $event['order_id'] : null,
+                'quantity'      => (int) $event['quantity'],
+                'revenue'       => (float) $event['revenue'],
+                'created_at'    => $event['created_at'],
             ];
         }
 

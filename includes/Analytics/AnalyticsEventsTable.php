@@ -230,7 +230,7 @@ class AnalyticsEventsTable {
         $table_name = self::get_table_name();
 
         // Event types we want to show in activity feed
-        $event_types  = [ 'purchase', 'threshold_reached', 'add_to_cart' ];
+        $event_types  = [ 'purchase', 'threshold_reached', 'add_to_cart', 'click' ];
         $placeholders = implode( ',', array_fill( 0, count( $event_types ), '%s' ) );
 
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -245,6 +245,7 @@ class AnalyticsEventsTable {
                     order_id,
                     quantity,
                     revenue,
+                    metadata,
                     created_at
                  FROM {$table_name}
                  WHERE event_type IN ({$placeholders})
