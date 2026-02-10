@@ -52,8 +52,9 @@ function getBumpProductName(entity: Entity): string {
 
 function getBumpPrice(entity: Entity): string {
   const s = entity.settings as BumpSettings | undefined;
+  // Prefer numeric price + frontend currency symbol so symbol always renders correctly (no HTML entities)
+  if (typeof s?.price === 'number') return `${currencySymbol}${s.price.toFixed(2)}`;
   if (s?.price_display) return String(s.price_display);
-  if (typeof s?.price === 'number') return `${currencySymbol}${s.price}`;
   return '—';
 }
 
@@ -62,14 +63,21 @@ const settingsSchema = z.object({
   enabled: z.boolean(),
   bump_offers: z.array(
     z.object({
+      name: z.string(),
+      status: z.enum(['active', 'inactive']),
       product_id: z.string(),
-      discount_type: z.enum(['percent', 'fixed_cart', 'free_shipping']),
-      discount_value: z.number().min(0),
-      prefix: z.string().min(1),
-      expires: z.number().min(1),
+      pricing_type: z.enum(['no_discount', 'percent', 'fixed_amount', 'fixed_price', 'free']),
+      pricing_value: z.number().min(0),
+      show_when: z.enum(['always', 'match_conditions']),
+      conditions: z.array(z.object({ has: z.string(), type: z.string(), value: z.string() })),
+      position: z.enum(['after_order_summary', 'before_payment_methods', 'before_place_order']),
+      style: z.enum(['simple_checkbox', 'card_with_image', 'highlighted_box']),
+      headline: z.string(),
+      description: z.string(),
+      checkbox_label: z.string(),
+      behavior: z.enum(['hide', 'show']),
     }),
   ),
-  max_bump_display: z.number().min(1),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -295,7 +303,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         </div>
 
         {bumps.length > 0 && (
-          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <p className="text-muted-foreground mb-4 flex items-center gap-1.5 text-xs">
             <GripVertical className="h-4 w-4" />
             {__('Drag to reorder', 'yayboost')}
           </p>
