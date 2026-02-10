@@ -90,24 +90,10 @@ class EmailCapturePopupFeature extends AbstractFeature {
 
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_action( 'wp_footer', [ $this, 'render_popup' ] );
-        add_filter( 'woocommerce_add_to_cart_fragments', [ $this, 'add_cart_fragments' ] );
-    }
-
-    /**
-     * Check if popup should be shown (cart has items)
-     *
-     * @return bool
-     */
-    private function should_show_popup(): bool {
-        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-            return false;
-        }
-        return WC()->cart->get_cart_contents_count() > 0;
     }
 
     /**
      * Check if user is eligible (guest only, not on cart page)
-     * Cart items check is done via data-has-items and fragment sync
      *
      * @return bool
      */
@@ -163,18 +149,10 @@ class EmailCapturePopupFeature extends AbstractFeature {
             return;
         }
 
-        $deps = [ 'jquery' ];
-        if ( wp_script_is( 'wc-cart-fragments', 'registered' ) ) {
-            if ( ! wp_script_is( 'wc-cart-fragments', 'enqueued' ) ) {
-                wp_enqueue_script( 'wc-cart-fragments' );
-            }
-            $deps[] = 'wc-cart-fragments';
-        }
-
         wp_enqueue_script(
             'yayboost-email-capture-popup',
             YAYBOOST_URL . 'assets/js/email-capture-popup.js',
-            $deps,
+            [ 'jquery' ],
             YAYBOOST_VERSION,
             true
         );
@@ -228,7 +206,6 @@ class EmailCapturePopupFeature extends AbstractFeature {
 
         $settings  = $this->get_settings();
         $content   = $settings['content'] ?? [];
-        $has_items = $this->should_show_popup();
 
         $headline    = $content['headline'] ?? \__( 'Stay in touch!', 'yayboost' );
         $message     = $content['message'] ?? \__( 'Enter your email to receive updates and exclusive offers.', 'yayboost' );
@@ -236,9 +213,7 @@ class EmailCapturePopupFeature extends AbstractFeature {
         $placeholder = \__( 'Enter your email', 'yayboost' );
 
         ?>
-        <!-- Hidden element for WooCommerce cart fragment replacement (data-has-items synced via fragments) -->
-        <span id="yayboost-email-capture-popup-state" class="yayboost-email-capture-cart-state" data-has-items="<?php echo $has_items ? '1' : '0'; ?>" aria-hidden="true" style="display:none!important"></span>
-        <div id="yayboost-email-capture-popup" class="yayboost-email-capture-popup" style="display: none;" data-has-items="<?php echo $has_items ? '1' : '0'; ?>">
+        <div id="yayboost-email-capture-popup" class="yayboost-email-capture-popup" style="display: none;">
             <div class="yayboost-email-capture-popup__overlay"></div>
             <div class="yayboost-email-capture-popup__content">
                 <button class="yayboost-email-capture-popup__close" aria-label="<?php esc_attr_e( 'Close', 'yayboost' ); ?>">&times;</button>
@@ -249,35 +224,6 @@ class EmailCapturePopupFeature extends AbstractFeature {
             </div>
         </div>
         <?php
-    }
-
-    /**
-     * Add cart fragments for popup state sync.
-     * Uses WooCommerce cart fragments API - no separate AJAX needed.
-     *
-     * @param array $fragments Existing cart fragments.
-     * @return array Modified cart fragments.
-     */
-    public function add_cart_fragments( array $fragments ): array {
-        if ( ! $this->is_enabled() ) {
-            return $fragments;
-        }
-
-        $has_items = $this->should_show_popup();
-        $data_attr = $has_items ? '1' : '0';
-
-        // HTML fragment: WooCommerce replaces #yayboost-email-capture-popup-state in DOM
-        $fragments['#yayboost-email-capture-popup-state'] = sprintf(
-            '<span id="yayboost-email-capture-popup-state" class="yayboost-email-capture-cart-state" data-has-items="%s" aria-hidden="true" style="display:none!important"></span>',
-            esc_attr( $data_attr )
-        );
-
-        // Object for added_to_cart / removed_from_cart events (fragments passed to JS)
-        $fragments['yayboost_email_capture_popup_state'] = [
-            'has_items' => $has_items,
-        ];
-
-        return $fragments;
     }
 
     /**

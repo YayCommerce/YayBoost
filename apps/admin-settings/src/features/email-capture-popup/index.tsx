@@ -20,9 +20,9 @@ import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
+import { QuillEditor } from '@/components/ui/quill-editor';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { QuillEditor } from '@/components/ui/quill-editor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
@@ -73,6 +73,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('settings');
 
   const formSettings = (feature?.settings ?? defaultSettings) as SettingsFormData;
 
@@ -124,7 +125,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left column: Settings with Tabs */}
         <div className="space-y-6">
-          <Tabs defaultValue="settings" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="settings">{__('Settings', 'yayboost')}</TabsTrigger>
               <TabsTrigger value="email-list">{__('Email list', 'yayboost')}</TabsTrigger>
@@ -298,7 +299,11 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
         </div>
 
         {/* Right column: Preview with Tabs */}
-        <div className="sticky top-6 h-fit space-y-6">
+        <div
+          className={`sticky top-6 h-fit space-y-6 transition-opacity duration-300 ${
+            activeTab === 'email-list' ? 'opacity-40 pointer-events-none' : 'opacity-100'
+          }`}
+        >
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -351,14 +356,14 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                 <TabsContent value="email" className="mt-4 space-y-4">
                   <div className="mx-auto max-w-md space-y-4 rounded-lg border-2 border-blue-500 p-4">
                     <div className="text-muted-foreground space-y-2 border-b pb-4">
-                      <h2 className="text-lg font-semibold text-foreground">
+                      <h2 className="text-foreground text-lg font-semibold">
                         {emailTriggerPreview?.subject ||
                           __('Email subject will appear here', 'yayboost')}
                       </h2>
                       <p className="text-sm">{__('Hello,', 'yayboost')}</p>
                     </div>
                     <div
-                      className="text-slate-700 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-primary [&_a]:underline"
+                      className="[&_a]:text-primary text-slate-700 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
                       dangerouslySetInnerHTML={{
                         __html:
                           emailTriggerPreview?.email_content ||
