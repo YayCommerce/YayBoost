@@ -204,6 +204,7 @@ export default function BumpEditor() {
   const headline = form.watch('headline');
   const description = form.watch('description');
   const checkboxLabel = form.watch('checkbox_label');
+  const style = form.watch('style');
   const pricingType = form.watch('pricing_type');
   const pricingValue = form.watch('pricing_value');
   const regularPrice =
@@ -753,56 +754,133 @@ export default function BumpEditor() {
               <CardTitle>{__('Preview', 'yayboost')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-white p-4 shadow-sm">
-                <div className="flex gap-4">
-                  <div className="bg-muted flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md">
-                    {selectedProduct?.image ? (
-                      <img
-                        src={selectedProduct.image}
-                        alt={productLabel || selectedProduct.label}
-                        className="h-24 w-24 rounded-md object-cover"
+              {style === 'simple_checkbox' && (
+                <div className="rounded-lg border bg-white p-3 shadow-sm">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="-mt-0.5 h-4 w-4 shrink-0 rounded border"
                       />
-                    ) : (
-                      <span className="text-muted-foreground text-xs">
-                        {__('No image', 'yayboost')}
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
-                    <p className="text-sm">{productLabel}</p>
-                    <p
-                      className="text-muted-foreground text-sm"
-                      dangerouslySetInnerHTML={{
-                        __html: description || '',
-                      }}
-                    />
-                    <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="font-semibold">
-                        {currencySymbol}
-                        {previewBumpPrice.toFixed(2)}
-                      </span>
+                      {checkboxLabel || 'Yes! Add this to my order.'}
+                    </label>
+                    <span className="text-muted-foreground text-sm">
+                      {productLabel ? (
+                        <span className="font-medium text-foreground">{productLabel} · </span>
+                      ) : null}
+                      {currencySymbol}
+                      {previewBumpPrice.toFixed(2)}
                       {previewBumpPrice < regularPrice && (
                         <>
-                          <span className="text-muted-foreground line-through">
+                          {' '}
+                          <span className="line-through">
                             {currencySymbol}
                             {regularPrice.toFixed(2)}
                           </span>
                           {pricingType === 'percent' && (
-                            <span className="text-sm text-green-600">
+                            <span className="text-green-600">
                               ({__('Save', 'yayboost')} {pricingValue}%)
                             </span>
                           )}
                         </>
                       )}
-                    </div>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" className="rounded border" />
-                      {checkboxLabel || 'Yes! Add this to my order.'}
-                    </label>
+                    </span>
                   </div>
                 </div>
-              </div>
+              )}
+              {style === 'highlighted_box' && (
+                <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
+                  <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
+                  <p className="text-muted-foreground mt-0.5 text-sm">{productLabel}</p>
+                  {description && (
+                    <p
+                      className="text-muted-foreground mt-1 text-sm"
+                      dangerouslySetInnerHTML={{ __html: description }}
+                    />
+                  )}
+                  <div className="mt-2 flex flex-wrap items-baseline gap-2">
+                    <span className="font-semibold">
+                      {currencySymbol}
+                      {previewBumpPrice.toFixed(2)}
+                    </span>
+                    {previewBumpPrice < regularPrice && (
+                      <>
+                        <span className="text-muted-foreground line-through">
+                          {currencySymbol}
+                          {regularPrice.toFixed(2)}
+                        </span>
+                        {pricingType === 'percent' && (
+                          <span className="text-sm text-green-600">
+                            ({__('Save', 'yayboost')} {pricingValue}%)
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <label className="mt-2 flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="-mt-0.5 h-4 w-4 shrink-0 rounded border"
+                    />
+                    {checkboxLabel || 'Yes! Add this to my order.'}
+                  </label>
+                </div>
+              )}
+              {style === 'card_with_image' && (
+                <div className="rounded-lg border bg-white p-4 shadow-sm">
+                  <div className="flex gap-4">
+                    <div className="bg-muted flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                      {selectedProduct?.image ? (
+                        <img
+                          src={selectedProduct.image}
+                          alt={productLabel || selectedProduct.label}
+                          className="h-24 w-24 rounded-md object-cover"
+                        />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          {__('No image', 'yayboost')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
+                      <p className="text-sm">{productLabel}</p>
+                      <p
+                        className="text-muted-foreground text-sm"
+                        dangerouslySetInnerHTML={{
+                          __html: description || '',
+                        }}
+                      />
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <span className="font-semibold">
+                          {currencySymbol}
+                          {previewBumpPrice.toFixed(2)}
+                        </span>
+                        {previewBumpPrice < regularPrice && (
+                          <>
+                            <span className="text-muted-foreground line-through">
+                              {currencySymbol}
+                              {regularPrice.toFixed(2)}
+                            </span>
+                            {pricingType === 'percent' && (
+                              <span className="text-sm text-green-600">
+                                ({__('Save', 'yayboost')} {pricingValue}%)
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          className="-mt-0.5 h-4 w-4 shrink-0 rounded border"
+                        />
+                        {checkboxLabel || 'Yes! Add this to my order.'}
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="bg-primary/5 text-primary border-primary/20 rounded-md border p-3 text-sm">
                 {__(
                   'This preview shows how your offer will appear to customers when they are checkouting.',
