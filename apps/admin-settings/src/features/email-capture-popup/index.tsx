@@ -89,8 +89,13 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
     updateSettings.mutate(
       { id: featureId, settings: data },
       {
-        onSuccess: (updatedFeature) => {
-          form.reset(updatedFeature.settings as SettingsFormData);
+        onSuccess: () => {
+          // Reset with deep copy of submitted data to clear dirty state
+          // (avoids reference sharing and QuillEditor HTML mismatch from API)
+          const resetData = JSON.parse(JSON.stringify(data)) as SettingsFormData;
+          setTimeout(() => {
+            form.reset(resetData, { keepDefaultValues: false });
+          }, 0);
         },
       },
     );
@@ -136,7 +141,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
               <SettingsCard
                 headless
                 onSave={() => form.handleSubmit(onSubmit)()}
-                onReset={() => form.reset(formSettings)}
+                onReset={() => form.reset(formSettings, { keepDefaultValues: false })}
                 isSaving={updateSettings.isPending}
                 isDirty={form.formState.isDirty}
                 isLoading={isLoading || isFetching}
