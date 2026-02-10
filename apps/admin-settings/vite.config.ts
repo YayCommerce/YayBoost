@@ -73,6 +73,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['react-quill', 'quill'],
+  },
   build: {
     minify: 'terser',
     sourcemap: false,
@@ -106,6 +109,10 @@ export default defineConfig({
           // Form libraries (react-hook-form + zod)
           if (id.includes('node_modules/react-hook-form') || id.includes('node_modules/zod') || id.includes('node_modules/@hookform')) {
             return 'vendor-forms';
+          }
+          // Quill rich text editor
+          if (id.includes('node_modules/react-quill') || id.includes('node_modules/quill')) {
+            return 'vendor-quill';
           }
         },
       },

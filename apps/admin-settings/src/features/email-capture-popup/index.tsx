@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { QuillEditor } from '@/components/ui/quill-editor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
@@ -252,11 +253,12 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                       <FormItem>
                         <Label>{__('Email content', 'yayboost')}</Label>
                         <FormControl>
-                          <Textarea
-                            id="email_trigger-email_content"
-                            placeholder="Complete your order now and receive 10% discount"
-                            className="w-full"
-                            {...field}
+                          <QuillEditor
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            placeholder={__('Enter email content...', 'yayboost')}
+                            className="min-h-64 [&_.ql-editor]:min-h-56"
                           />
                         </FormControl>
                         <FormMessage />
@@ -345,30 +347,24 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                   </div>
                 </TabsContent>
 
-                {/* Email preview */}
-                <TabsContent value="email" className="mt-4">
-                  <div className="rounded-xl border bg-white p-4 shadow-sm">
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-muted-foreground text-xs">
-                          {__('Subject:', 'yayboost')}{' '}
-                        </span>
-                        <span className="font-medium">
-                          {emailTriggerPreview?.subject ||
-                            __('Email subject will appear here', 'yayboost')}
-                        </span>
-                      </div>
-                      <Separator />
-                      <div className="text-sm">
-                        <span className="text-muted-foreground mb-1 block text-xs">
-                          {__('Content:', 'yayboost')}
-                        </span>
-                        <p className="whitespace-pre-wrap text-slate-700">
-                          {emailTriggerPreview?.email_content ||
-                            __('Email content will appear here', 'yayboost')}
-                        </p>
-                      </div>
+                {/* Email preview - styled like next-order-coupon, without order content */}
+                <TabsContent value="email" className="mt-4 space-y-4">
+                  <div className="mx-auto max-w-md space-y-4 rounded-lg border-2 border-blue-500 p-4">
+                    <div className="text-muted-foreground space-y-2 border-b pb-4">
+                      <h2 className="text-lg font-semibold text-foreground">
+                        {emailTriggerPreview?.subject ||
+                          __('Email subject will appear here', 'yayboost')}
+                      </h2>
+                      <p className="text-sm">{__('Hello,', 'yayboost')}</p>
                     </div>
+                    <div
+                      className="text-slate-700 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-primary [&_a]:underline"
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          emailTriggerPreview?.email_content ||
+                          __('Email content will appear here', 'yayboost'),
+                      }}
+                    />
                   </div>
                 </TabsContent>
               </Tabs>
