@@ -43,6 +43,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import FeatureLayoutHeader from '@/components/feature-layout-header';
 import { SettingsCard } from '@/components/settings-card';
 
 const BUMP_ENTITY_TYPE = 'bump';
@@ -232,24 +233,12 @@ export default function BumpEditor() {
 
   return (
     <Form {...form}>
-      <div className="mb-6 flex flex-col gap-1">
-        <Link
-          to="/features/$featureId"
-          params={{ featureId: featureId ?? '' }}
-          className="text-muted-foreground hover:text-foreground mb-1 inline-flex items-center gap-1 text-sm"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {__('Back to Order Bumps', 'yayboost')}
-        </Link>
-        <h1 className="text-2xl font-semibold">
-          {isNew ? __('New Bump', 'yayboost') : __('Edit Bump', 'yayboost')}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {__('Configure your order bump settings.', 'yayboost')}
-        </p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
+      <FeatureLayoutHeader
+        title={isNew ? __('New Bump', 'yayboost') : __('Edit Bump', 'yayboost')}
+        description={__('Configure your order bump settings.', 'yayboost')}
+        goBackRoute="/features/order_bump"
+      />
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Left: Form */}
         <SettingsCard
           headless
