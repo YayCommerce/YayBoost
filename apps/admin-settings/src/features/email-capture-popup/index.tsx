@@ -75,11 +75,9 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>('settings');
 
-  const formSettings = (feature?.settings ?? defaultSettings) as SettingsFormData;
-
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
-    defaultValues: formSettings,
+    defaultValues: feature?.settings as SettingsFormData,
   });
 
   const contentPreview = form.watch('content');
@@ -89,13 +87,9 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
     updateSettings.mutate(
       { id: featureId, settings: data },
       {
-        onSuccess: () => {
-          // Reset with deep copy of submitted data to clear dirty state
-          // (avoids reference sharing and QuillEditor HTML mismatch from API)
-          const resetData = JSON.parse(JSON.stringify(data)) as SettingsFormData;
-          setTimeout(() => {
-            form.reset(resetData, { keepDefaultValues: false });
-          }, 0);
+        onSuccess: (updatedFeature) => {
+          // Reset form with updated values to clear dirty state
+          form.reset(updatedFeature.settings as SettingsFormData);
         },
       },
     );
@@ -141,7 +135,9 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
               <SettingsCard
                 headless
                 onSave={() => form.handleSubmit(onSubmit)()}
-                onReset={() => form.reset(formSettings, { keepDefaultValues: false })}
+                onReset={() => {
+                  form.reset(feature?.settings as SettingsFormData);
+                }}
                 isSaving={updateSettings.isPending}
                 isDirty={form.formState.isDirty}
                 isLoading={isLoading || isFetching}
@@ -306,7 +302,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
         {/* Right column: Preview with Tabs */}
         <div
           className={`sticky top-6 h-fit space-y-6 transition-opacity duration-300 ${
-            activeTab === 'email-list' ? 'opacity-40 pointer-events-none' : 'opacity-100'
+            activeTab === 'email-list' ? 'pointer-events-none opacity-40' : 'opacity-100'
           }`}
         >
           <Card>
