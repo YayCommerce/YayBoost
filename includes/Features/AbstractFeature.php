@@ -238,7 +238,7 @@ abstract class AbstractFeature implements FeatureInterface {
             } elseif (is_float( $value )) {
                 $sanitized[ $key ] = (float) $value;
             } else {
-                $sanitized[ $key ] = wp_kses_post( (string) $value );
+                $sanitized[ $key ] = sanitize_text_field( (string) $value );
             }
         }
 
