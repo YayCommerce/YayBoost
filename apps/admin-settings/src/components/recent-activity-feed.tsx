@@ -10,14 +10,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  Clock,
-  Package,
-  ShoppingBag,
-  ShoppingCart,
-  Sparkles,
-  Truck,
-} from 'lucide-react';
+import { BarChart3, Clock, Package, ShoppingBag, ShoppingCart, Sparkles, Truck } from 'lucide-react';
 
 import { dashboardApi, ActivityFeedResponse, ActivityItem } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,6 +32,12 @@ const EVENT_CONFIG: Record<
     color: 'text-primary',
     bgColor: 'bg-primary/10',
     label: __('Add to Cart', 'yayboost'),
+  },
+  click: {
+    icon: <BarChart3 className="h-3.5 w-3.5" />,
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
+    label: __('Click', 'yayboost'),
   },
   threshold_reached: {
     icon: <Truck className="h-3.5 w-3.5" />,
@@ -126,9 +125,15 @@ function ActivityItemRow({
           </span>
         </div>
 
-        {/* Product info */}
-        {productInfo && (
-          <p className="mt-0.5 truncate text-sm font-medium text-foreground">{productInfo}</p>
+        {/* Custom event message or product info */}
+        {activity.event_message ? (
+          <p className="mt-0.5 truncate text-sm font-medium text-foreground">
+            {activity.event_message}
+          </p>
+        ) : (
+          productInfo && (
+            <p className="mt-0.5 truncate text-sm font-medium text-foreground">{productInfo}</p>
+          )
         )}
 
         {/* Meta row: feature name + revenue */}
