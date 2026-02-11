@@ -73,7 +73,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  optimizeDeps: {},
   build: {
     minify: 'terser',
     sourcemap: false,

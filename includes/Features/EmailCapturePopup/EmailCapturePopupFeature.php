@@ -184,12 +184,12 @@ class EmailCapturePopupFeature extends AbstractFeature {
                 'headline'         => $content['headline'] ?? $default_settings['content']['headline'],
                 'message'          => $content['message'] ?? $default_settings['content']['message'],
                 'buttonText'       => $content['button_text'] ?? $default_settings['content']['button_text'],
-                'inputPlaceholder' => \__( 'Enter your email', 'yayboost' ),
+                'inputPlaceholder' => __( 'Enter your email', 'yayboost' ),
             ],
             'isEligible' => $this->is_eligible(),
             'messages'   => [
-                'invalidEmail' => \__( 'Please enter a valid email address.', 'yayboost' ),
-                'error'        => \__( 'Something went wrong. Please try again.', 'yayboost' ),
+                'invalidEmail' => __( 'Please enter a valid email address.', 'yayboost' ),
+                'error'        => __( 'Something went wrong. Please try again.', 'yayboost' ),
             ],
         ];
     }
@@ -204,13 +204,13 @@ class EmailCapturePopupFeature extends AbstractFeature {
             return;
         }
 
-        $settings  = $this->get_settings();
-        $content   = $settings['content'] ?? [];
+        $settings = $this->get_settings();
+        $content  = $settings['content'] ?? [];
 
-        $headline    = $content['headline'] ?? \__( 'Stay in touch!', 'yayboost' );
-        $message     = $content['message'] ?? \__( 'Enter your email to receive updates and exclusive offers.', 'yayboost' );
-        $button_text = $content['button_text'] ?? \__( 'Submit email', 'yayboost' );
-        $placeholder = \__( 'Enter your email', 'yayboost' );
+        $headline    = $content['headline'] ?? __( 'Stay in touch!', 'yayboost' );
+        $message     = $content['message'] ?? __( 'Enter your email to receive updates and exclusive offers.', 'yayboost' );
+        $button_text = $content['button_text'] ?? __( 'Submit email', 'yayboost' );
+        $placeholder = __( 'Enter your email', 'yayboost' );
 
         ?>
         <div id="yayboost-email-capture-popup" class="yayboost-email-capture-popup" style="display: none;">
@@ -237,15 +237,15 @@ class EmailCapturePopupFeature extends AbstractFeature {
             [
                 'enabled'       => false,
                 'content'       => [
-                    'headline'    => \__( 'Stay in touch!', 'yayboost' ),
-                    'message'     => \__( 'Enter your email to receive updates and exclusive offers.', 'yayboost' ),
-                    'button_text' => \__( 'Submit email', 'yayboost' ),
+                    'headline'    => __( 'Stay in touch!', 'yayboost' ),
+                    'message'     => __( 'Enter your email to receive updates and exclusive offers.', 'yayboost' ),
+                    'button_text' => __( 'Submit email', 'yayboost' ),
                 ],
                 'email_trigger' => [
                     'send_after_days' => 1,
-                    'subject'         => \__( 'You left something in your cart', 'yayboost' ),
-                    'email_heading'   => \__( 'You left something in your cart', 'yayboost' ),
-                    'email_content'   => \__( 'Your cart items are still waiting for you. Complete your purchase whenever you are ready.', 'yayboost' ),
+                    'subject'         => __( 'You left something in your cart', 'yayboost' ),
+                    'email_heading'   => __( 'You left something in your cart', 'yayboost' ),
+                    'email_content'   => __( 'Your cart items are still waiting for you. Complete your purchase whenever you are ready.', 'yayboost' ),
                 ],
             ]
         );

@@ -56,12 +56,12 @@ class EmailCapturePopupAjaxHandler {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
 
         if ( ! $this->feature->is_enabled() ) {
-            wp_send_json_error( [ 'message' => \__( 'Feature disabled.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Feature disabled.', 'yayboost' ) ], 400 );
         }
 
         $email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
         if ( empty( $email ) || ! is_email( $email ) ) {
-            wp_send_json_error( [ 'message' => \__( 'Invalid email address.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Invalid email address.', 'yayboost' ) ], 400 );
         }
 
         // TODO: Save email to DB / subscribe - to be implemented in a follow-up plan
