@@ -378,7 +378,6 @@
 
       // Pause auto-hide on hover, resume on mouse leave
       this.container.addEventListener("mouseenter", () => {
-        console.log("mouseenter");
         if (this.hideTimeout) {
           this.remainingTime = this.getTimeLeft();
           clearTimeout(this.hideTimeout);
