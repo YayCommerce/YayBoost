@@ -58,6 +58,8 @@
       this.lastRefreshTime = 0;
       this.shownIds = this.getShownIds();
       this.isPaused = false;
+      this.startShowTime = null;
+      this.remainingTime = 0;
     }
 
     getShownIds() {
@@ -282,6 +284,7 @@
       if (this.settings.trackingMode !== "simulated") {
         this.trackShown(purchase);
       }
+      this.startShowTime = Date.now();
       this.container.innerHTML = this.buildPopupHtml(purchase);
       this.container.classList.add(
         "yayboost-recent-purchase-notification--visible",
@@ -375,7 +378,9 @@
 
       // Pause auto-hide on hover, resume on mouse leave
       this.container.addEventListener("mouseenter", () => {
+        console.log("mouseenter");
         if (this.hideTimeout) {
+          this.remainingTime = this.getTimeLeft();
           clearTimeout(this.hideTimeout);
           this.hideTimeout = null;
         }
@@ -387,7 +392,10 @@
           ) &&
           this.hideTimeout === null
         ) {
-          this.hideTimeout = setTimeout(() => this.hide(), HIDE_DELAY_MS);
+          this.hideTimeout = setTimeout(
+            () => this.hide(),
+            this.remainingTime || HIDE_DELAY_MS,
+          );
         }
       });
     }
@@ -395,6 +403,8 @@
     hide() {
       clearTimeout(this.hideTimeout);
       this.hideTimeout = null;
+      this.startShowTime = null;
+      this.remainingTime = 0;
       this.container.classList.remove(
         "yayboost-recent-purchase-notification--visible",
       );
@@ -404,6 +414,8 @@
     dismiss() {
       sessionStorage.setItem("yayboost_recent_purchase_popup_dismissed", "1");
       this.clearTimeouts();
+      this.startShowTime = null;
+      this.remainingTime = 0;
       this.container.classList.remove(
         "yayboost-recent-purchase-notification--visible",
       );
@@ -443,6 +455,13 @@
         default:
           return name;
       }
+    }
+
+    getTimeLeft() {
+      const elapsed = Date.now() - this.startShowTime;
+      const remaining = HIDE_DELAY_MS - elapsed;
+      // Ensure the remaining time is not negative, as the function might be in the event queue
+      return Math.max(0, remaining);
     }
   }
 
