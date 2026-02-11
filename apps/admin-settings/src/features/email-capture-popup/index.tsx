@@ -277,7 +277,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                           <Textarea
                             id="email_trigger-email_content"
                             placeholder={__('Enter email content...', 'yayboost')}
-                            className="min-h-56 resize-y"
+                            className="min-h-16 resize-y"
                             {...field}
                           />
                         </FormControl>
