@@ -20,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
-import { QuillEditor } from '@/components/ui/quill-editor';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +40,7 @@ const settingsSchema = z.object({
   email_trigger: z.object({
     send_after_days: z.number().min(0),
     subject: z.string().min(1),
+    email_heading: z.string().min(1),
     email_content: z.string().min(1),
   }),
 });
@@ -57,6 +57,7 @@ const defaultSettings: SettingsFormData = {
   email_trigger: {
     send_after_days: 1,
     subject: 'You left something in your cart',
+    email_heading: 'You left something in your cart',
     email_content:
       'Your cart items are still waiting for you. Complete your purchase whenever you are ready.',
   },
@@ -250,17 +251,34 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                   />
                   <FormField
                     control={form.control}
+                    name="email_trigger.email_heading"
+                    render={({ field }) => (
+                      <FormItem>
+                        <Label>{__('Email heading', 'yayboost')}</Label>
+                        <FormControl>
+                          <Input
+                            id="email_trigger-email_heading"
+                            placeholder="Wait! Don't leave"
+                            className="w-full"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
                     name="email_trigger.email_content"
                     render={({ field }) => (
                       <FormItem>
                         <Label>{__('Email content', 'yayboost')}</Label>
                         <FormControl>
-                          <QuillEditor
-                            value={field.value || ''}
-                            onChange={field.onChange}
-                            onBlur={field.onBlur}
+                          <Textarea
+                            id="email_trigger-email_content"
                             placeholder={__('Enter email content...', 'yayboost')}
-                            className="min-h-64 [&_.ql-editor]:min-h-56"
+                            className="min-h-56 resize-y"
+                            {...field}
                           />
                         </FormControl>
                         <FormMessage />
@@ -358,19 +376,15 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                   <div className="mx-auto max-w-md space-y-4 rounded-lg border-2 border-blue-500 p-4">
                     <div className="text-muted-foreground space-y-2 border-b pb-4">
                       <h2 className="text-foreground text-lg font-semibold">
-                        {emailTriggerPreview?.subject ||
-                          __('Email subject will appear here', 'yayboost')}
+                        {emailTriggerPreview?.email_heading ||
+                          __('Email heading will appear here', 'yayboost')}
                       </h2>
                       <p className="text-sm">{__('Hello,', 'yayboost')}</p>
                     </div>
-                    <div
-                      className="[&_a]:text-primary text-slate-700 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          emailTriggerPreview?.email_content ||
-                          __('Email content will appear here', 'yayboost'),
-                      }}
-                    />
+                    <p className="whitespace-pre-wrap text-slate-700">
+                      {emailTriggerPreview?.email_content ||
+                        __('Email content will appear here', 'yayboost')}
+                    </p>
                   </div>
                 </TabsContent>
               </Tabs>

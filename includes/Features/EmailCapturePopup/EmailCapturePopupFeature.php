@@ -244,6 +244,7 @@ class EmailCapturePopupFeature extends AbstractFeature {
                 'email_trigger' => [
                     'send_after_days' => 1,
                     'subject'         => \__( 'You left something in your cart', 'yayboost' ),
+                    'email_heading'   => \__( 'You left something in your cart', 'yayboost' ),
                     'email_content'   => \__( 'Your cart items are still waiting for you. Complete your purchase whenever you are ready.', 'yayboost' ),
                 ],
             ]
