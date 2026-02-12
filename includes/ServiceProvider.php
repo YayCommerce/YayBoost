@@ -18,6 +18,8 @@ use YayBoost\Features\NextOrderCoupon\NextOrderCouponFeature;
 use YayBoost\Features\LiveVisitorCount\LiveVisitorCountFeature;
 use YayBoost\Features\PurchaseActivityCount\PurchaseActivityCountFeature;
 use YayBoost\Features\ExitIntentPopup\ExitIntentPopupFeature;
+use YayBoost\Features\RecentPurchaseNotification\RecentPurchaseNotificationFeature;
+use YayBoost\Features\EmailCapturePopup\EmailCapturePopupFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -143,6 +145,7 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.purchase_activity_count';
+
         // Register Exit Intent Popup Feature
         $container->register(
             'feature.exit_intent_popup',
@@ -151,6 +154,23 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.exit_intent_popup';
+
+        // Register Recent Purchase Notification Feature
+        $container->register(
+            'feature.recent_purchase_notification',
+            function ( $c ) {
+                return new RecentPurchaseNotificationFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.recent_purchase_notification';
+        // Register Email Capture Popup Feature
+        $container->register(
+            'feature.email_capture_popup',
+            function ( $c ) {
+                return new EmailCapturePopupFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.email_capture_popup';
 
         // Register feature registry
         $container->register(

@@ -43,9 +43,14 @@ export const featureComponents: Record<
 
   // Purchase Activity Count
   purchase_activity_count: lazy(() => import('./purchase-activity-count')),
-  
+
   // Exit Intent Popup
   exit_intent_popup: lazy(() => import('./exit-intent-popup')),
+
+  // Recent Purchase Notification
+  recent_purchase_notification: lazy(() => import('./recent-purchase-notification')),
+  // Email Capture Popup
+  email_capture_popup: lazy(() => import('./email-capture-popup')),
 };
 
 /**
