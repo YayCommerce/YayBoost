@@ -7,6 +7,7 @@
 
 namespace YayBoost\Database;
 
+use YayBoost\Features\EmailCapturePopup\EmailCaptureTable;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTRelationshipTable;
 use YayBoost\Features\FrequentlyBoughtTogether\FBTProductStatsTable;
 use YayBoost\Features\LiveVisitorCount\LiveVisitorTable;
@@ -25,7 +26,7 @@ class Migrator {
 	/**
 	 * Current DB version
 	 */
-	const CURRENT_VERSION = '1.0.0';
+	const CURRENT_VERSION = '1.1.0';
 
 	/**
 	 * Run migrations only if needed
@@ -67,6 +68,7 @@ class Migrator {
 		// Create core tables
 		EntityTable::create();
 		LiveVisitorTable::create();
+		EmailCaptureTable::create();
 		FBTRelationshipTable::create();
 		FBTProductStatsTable::create();
 		AnalyticsEventsTable::create();
@@ -113,6 +115,7 @@ class Migrator {
 	public static function reset(): void {
 		EntityTable::drop();
 		LiveVisitorTable::drop();
+		EmailCaptureTable::drop();
 		FBTRelationshipTable::drop();
 		FBTProductStatsTable::drop();
 		AnalyticsEventsTable::drop();

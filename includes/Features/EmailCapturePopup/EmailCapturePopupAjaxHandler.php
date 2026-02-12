@@ -48,7 +48,7 @@ class EmailCapturePopupAjaxHandler {
     }
 
     /**
-     * Handle AJAX: submit email (placeholder - DB logic to be implemented later)
+     * Handle AJAX: submit email - save to DB, schedule follow-up, store for checkout prefill
      *
      * @return void
      */
@@ -64,7 +64,36 @@ class EmailCapturePopupAjaxHandler {
             wp_send_json_error( [ 'message' => __( 'Invalid email address.', 'yayboost' ) ], 400 );
         }
 
-        // TODO: Save email to DB / subscribe - to be implemented in a follow-up plan
-        wp_send_json_success( [ 'saved' => true ] );
+        // Already has pending record - treat as success (avoid duplicate sends)
+        $existing = EmailCaptureRepository::find_pending_by_email( $email );
+        if ( $existing ) {
+            EmailCaptureStorage::store( $email );
+            wp_send_json_success( [ 'saved' => true ] );
+        }
+
+        $settings     = $this->feature->get_settings();
+        $email_trigger = $settings['email_trigger'] ?? [];
+        $send_after   = (int) ( $email_trigger['send_after_days'] ?? 1 );
+        $send_after   = max( 1, min( 30, $send_after ) );
+
+        $captured_at  = current_time( 'mysql' );
+        $scheduled_at = gmdate( 'Y-m-d H:i:s', strtotime( "+{$send_after} days", strtotime( $captured_at ) ) );
+        $session_id   = ( function_exists( 'WC' ) && WC()->session ) ? WC()->session->get_customer_id() : null;
+
+        $row_id = EmailCaptureRepository::insert( [
+            'email'        => $email,
+            'status'       => EmailCaptureRepository::STATUS_PENDING,
+            'captured_at'  => $captured_at,
+            'scheduled_at' => $scheduled_at,
+            'source'       => 'email_capture_popup',
+            'session_id'   => $session_id,
+        ] );
+
+        if ( $row_id ) {
+            EmailCaptureCron::schedule( $row_id, $scheduled_at );
+            EmailCaptureStorage::store( $email );
+        }
+
+        wp_send_json_success( [ 'saved' => (bool) $row_id ] );
     }
 }

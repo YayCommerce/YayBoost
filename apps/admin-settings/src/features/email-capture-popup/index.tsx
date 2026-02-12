@@ -10,9 +10,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { __ } from '@wordpress/i18n';
 import { Eye, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import { emailCaptureApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
@@ -47,18 +49,33 @@ const settingsSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
-// Mock email options for UI (replace with API data later)
-const mockEmailOptions = [
-  { label: 'user1@example.com', value: 'user1@example.com' },
-  { label: 'user2@example.com', value: 'user2@example.com' },
-  { label: 'user3@example.com', value: 'user3@example.com' },
-];
+const statusLabels: Record<string, string> = {
+  pending: __('Pending', 'yayboost'),
+  sent: __('Sent', 'yayboost'),
+  skipped: __('Skipped', 'yayboost'),
+  account_created: __('Account created', 'yayboost'),
+  failed: __('Failed', 'yayboost'),
+};
 
 export default function EmailCapturePopupFeature({ featureId }: FeatureComponentProps) {
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
-  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>('settings');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const queryClient = useQueryClient();
+  const { data: emailList, isLoading: listLoading } = useQuery({
+    queryKey: ['email-capture-list', activeTab],
+    queryFn: () => emailCaptureApi.getList({ page: 1, per_page: 50 }),
+    enabled: activeTab === 'email-list',
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: (id: number) => emailCaptureApi.sendFollowup(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-capture-list'] });
+    },
+  });
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -80,10 +97,18 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
     );
   };
 
-  const handleSendMail = () => {
-    // TODO: Connect to API for manual send
-    console.log('Send mail to:', selectedEmails);
+  const handleSendMail = async () => {
+    for (const id of selectedIds) {
+      await sendMutation.mutateAsync(Number(id));
+    }
+    setSelectedIds([]);
   };
+
+  const emailOptions =
+    emailList?.items?.map((row) => ({
+      label: `${row.email} (${statusLabels[row.status] ?? row.status})`,
+      value: String(row.id),
+    })) ?? [];
 
   if (isLoading || isFetching) {
     return (
@@ -284,16 +309,23 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>{__('Select emails to send', 'yayboost')}</Label>
-                    <MultiSelect
-                      options={mockEmailOptions}
-                      value={selectedEmails}
-                      onChange={setSelectedEmails}
-                      placeholder={__('Select emails...', 'yayboost')}
-                      showSearch
-                      emptyText={__('No captured emails yet', 'yayboost')}
-                    />
+                    {listLoading ? (
+                      <Skeleton className="h-24 w-full" />
+                    ) : (
+                      <MultiSelect
+                        options={emailOptions}
+                        value={selectedIds}
+                        onChange={setSelectedIds}
+                        placeholder={__('Select emails...', 'yayboost')}
+                        showSearch
+                        emptyText={__('No captured emails yet', 'yayboost')}
+                      />
+                    )}
                   </div>
-                  <Button onClick={handleSendMail} disabled={selectedEmails.length === 0}>
+                  <Button
+                    onClick={() => handleSendMail()}
+                    disabled={selectedIds.length === 0 || sendMutation.isPending}
+                  >
                     <Send className="h-4 w-4" />
                     {__('Send mail', 'yayboost')}
                   </Button>

@@ -76,6 +76,9 @@ class EmailCapturePopupFeature extends AbstractFeature {
         parent::__construct( $container );
         $this->ajax_handler = new EmailCapturePopupAjaxHandler( $this );
         $this->ajax_handler->register_hooks();
+
+        add_filter( 'woocommerce_email_classes', [ $this, 'register_email_class' ] );
+        EmailCaptureLifecycleHandler::register();
     }
 
     /**
@@ -90,6 +93,18 @@ class EmailCapturePopupFeature extends AbstractFeature {
 
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_action( 'wp_footer', [ $this, 'render_popup' ] );
+        EmailCaptureCheckoutPrefill::register();
+    }
+
+    /**
+     * Register WC_Email class for follow-up emails
+     *
+     * @param array $classes
+     * @return array
+     */
+    public function register_email_class( array $classes ): array {
+        $classes['yayboost_email_capture_followup'] = new Emails\EmailCaptureFollowUp();
+        return $classes;
     }
 
     /**
