@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
@@ -61,23 +62,7 @@ function getBumpPrice(entity: Entity): string {
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
-  bump_offers: z.array(
-    z.object({
-      name: z.string(),
-      status: z.enum(['active', 'inactive']),
-      product_id: z.string(),
-      pricing_type: z.enum(['no_discount', 'percent', 'fixed_amount', 'fixed_price', 'free']),
-      pricing_value: z.number().min(0),
-      show_when: z.enum(['always', 'match_conditions']),
-      conditions: z.array(z.object({ has: z.string(), type: z.string(), value: z.string() })),
-      position: z.enum(['after_order_summary', 'before_payment_methods', 'before_place_order']),
-      style: z.enum(['simple_checkbox', 'card_with_image', 'highlighted_box']),
-      headline: z.string(),
-      description: z.string(),
-      checkbox_label: z.string(),
-      behavior: z.enum(['hide', 'show']),
-    }),
-  ),
+  max_bump_display: z.number().optional(),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -97,18 +82,28 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
     defaultValues: feature?.settings as SettingsFormData,
   });
 
-  const onSubmit = (data: SettingsFormData) => {
-    updateSettings.mutate(
-      { id: featureId, settings: data },
-      {
-        onSuccess: (updatedFeature) => {
-          form.reset(updatedFeature.settings as SettingsFormData);
-        },
-      },
-    );
-  };
+  const serverBumps = entitiesData?.items ?? [];
+  const [localBumps, setLocalBumps] = useState<Entity[]>([]);
+  const [isSavingAll, setIsSavingAll] = useState(false);
 
-  const bumps = entitiesData?.items ?? [];
+  useEffect(() => {
+    if (serverBumps.length > 0) {
+      setLocalBumps([...serverBumps]);
+    }
+  }, [entitiesData?.items]);
+
+  const bumpsDirty = useMemo(() => {
+    if (localBumps.length === 0) return false;
+    if (localBumps.length !== serverBumps.length) return true;
+    const serverById = Object.fromEntries(serverBumps.map((e) => [e.id, e]));
+    const orderChanged = localBumps.some((b, i) => serverBumps[i]?.id !== b.id);
+    const statusChanged = localBumps.some(
+      (b) => serverById[b.id] && serverById[b.id].status !== b.status,
+    );
+    return orderChanged || statusChanged;
+  }, [localBumps, serverBumps]);
+
+  const bumps = localBumps.length > 0 ? localBumps : serverBumps;
 
   const handleReorder = (index: number, direction: 'up' | 'down') => {
     const from = direction === 'up' ? index - 1 : index;
@@ -117,19 +112,60 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
     const reordered = [...bumps];
     const [removed] = reordered.splice(from, 1);
     reordered.splice(to, 0, removed);
-    const order: Record<number, number> = {};
-    reordered.forEach((e, i) => {
-      order[e.id] = (i + 1) * 10;
-    });
-    reorderMutation.mutate({ order, entityType: BUMP_ENTITY_TYPE });
+    setLocalBumps(reordered);
   };
 
   const handleStatusChange = (entityId: number, checked: boolean) => {
-    updateEntity.mutate({
-      entityId,
-      entity: { status: checked ? 'active' : 'inactive' },
-      entityType: BUMP_ENTITY_TYPE,
-    });
+    const next = bumps.map((e) =>
+      e.id === entityId
+        ? { ...e, status: (checked ? 'active' : 'inactive') as Entity['status'] }
+        : e,
+    );
+    setLocalBumps(next);
+  };
+
+  const onSubmit = async (data: SettingsFormData) => {
+    setIsSavingAll(true);
+    try {
+      if (bumpsDirty) {
+        const serverItems = entitiesData?.items ?? [];
+        const orderChanged =
+          bumps.length !== serverItems.length || bumps.some((b, i) => serverItems[i]?.id !== b.id);
+        if (orderChanged) {
+          const order: Record<number, number> = {};
+          bumps.forEach((e, i) => {
+            order[e.id] = (i + 1) * 10;
+          });
+          await reorderMutation.mutateAsync({ order, entityType: BUMP_ENTITY_TYPE });
+        }
+        const serverById = Object.fromEntries(serverItems.map((e) => [e.id, e]));
+        const statusUpdates = bumps.filter(
+          (b) => serverById[b.id] && serverById[b.id].status !== b.status,
+        );
+        await Promise.all(
+          statusUpdates.map((b) =>
+            updateEntity.mutateAsync({
+              entityId: b.id,
+              entity: { status: b.status },
+              entityType: BUMP_ENTITY_TYPE,
+            }),
+          ),
+        );
+      }
+      const updatedFeature = await updateSettings.mutateAsync({
+        id: featureId,
+        settings: data,
+      });
+      form.reset(updatedFeature.settings as SettingsFormData);
+      setLocalBumps(bumps);
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
+
+  const handleReset = () => {
+    form.reset(feature?.settings as SettingsFormData);
+    setLocalBumps([...serverBumps]);
   };
 
   if (isLoading || isFetching) {
@@ -166,11 +202,9 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         onSave={() => {
           form.handleSubmit(onSubmit)();
         }}
-        onReset={() => {
-          form.reset(feature?.settings as SettingsFormData);
-        }}
-        isSaving={updateSettings.isPending}
-        isDirty={form.formState.isDirty}
+        onReset={handleReset}
+        isSaving={updateSettings.isPending || isSavingAll}
+        isDirty={form.formState.isDirty || bumpsDirty}
         isLoading={isLoading || isFetching}
       >
         <div className="space-y-1">
@@ -271,7 +305,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                           <button
                             type="button"
                             onClick={() => handleReorder(index, 'up')}
-                            disabled={index === 0 || reorderMutation.isPending}
+                            disabled={index === 0 || isSavingAll}
                             className="text-muted-foreground hover:text-foreground -mb-0.5 text-xs disabled:opacity-40"
                             aria-label={__('Move up', 'yayboost')}
                           >
@@ -280,7 +314,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                           <button
                             type="button"
                             onClick={() => handleReorder(index, 'down')}
-                            disabled={index === bumps.length - 1 || reorderMutation.isPending}
+                            disabled={index === bumps.length - 1 || isSavingAll}
                             className="text-muted-foreground hover:text-foreground -mt-0.5 text-xs disabled:opacity-40"
                             aria-label={__('Move down', 'yayboost')}
                           >
@@ -306,7 +340,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                         size="sm"
                         checked={entity.status === 'active'}
                         onCheckedChange={(checked) => handleStatusChange(entity.id, checked)}
-                        disabled={updateEntity.isPending}
+                        disabled={isSavingAll}
                       />
                     </TableCell>
                   </TableRow>
