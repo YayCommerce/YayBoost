@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
@@ -46,22 +46,6 @@ const settingsSchema = z.object({
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
-
-// Default values when backend is not ready
-const defaultSettings: SettingsFormData = {
-  content: {
-    headline: 'Stay in touch!',
-    message: 'Enter your email to receive updates and exclusive offers.',
-    button_text: 'Submit email',
-  },
-  email_trigger: {
-    send_after_days: 1,
-    subject: 'You left something in your cart',
-    email_heading: 'You left something in your cart',
-    email_content:
-      'Your cart items are still waiting for you. Complete your purchase whenever you are ready.',
-  },
-};
 
 // Mock email options for UI (replace with API data later)
 const mockEmailOptions = [
@@ -216,17 +200,19 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                     name="email_trigger.send_after_days"
                     render={({ field }) => (
                       <FormItem>
-                        <Label>{__('Send after how many days to capture email', 'yayboost')}</Label>
+                        <Label>{__('Send email after (days)', 'yayboost')}</Label>
                         <FormControl>
-                          <InputNumber
-                            id="email_trigger-send_after_days"
-                            placeholder="1"
-                            min={0}
-                            className="w-24"
-                            value={field.value}
-                            onValueChange={(val) => field.onChange(val ?? 0)}
-                          />
+                          <div className='w-24'>
+                            <InputNumber
+                              id="email_trigger-send_after_days"
+                              placeholder="1"
+                              min={0}
+                              value={field.value}
+                              onValueChange={(val) => field.onChange(val ?? 0)}
+                            />
+                          </div>
                         </FormControl>
+                        <FormDescription>{__("Number of days to wait after submission before sending the email")}</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -308,7 +294,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                     />
                   </div>
                   <Button onClick={handleSendMail} disabled={selectedEmails.length === 0}>
-                    <Send className="mr-2 h-4 w-4" />
+                    <Send className="h-4 w-4" />
                     {__('Send mail', 'yayboost')}
                   </Button>
                 </CardContent>
@@ -319,9 +305,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
 
         {/* Right column: Preview with Tabs */}
         <div
-          className={`sticky top-6 h-fit space-y-6 transition-opacity duration-300 ${
-            activeTab === 'email-list' ? 'pointer-events-none opacity-40' : 'opacity-100'
-          }`}
+          className="sticky top-6 h-fit space-y-6 transition-opacity duration-300"
         >
           <Card>
             <CardHeader>
@@ -379,7 +363,6 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                         {emailTriggerPreview?.email_heading ||
                           __('Email heading will appear here', 'yayboost')}
                       </h2>
-                      <p className="text-sm">{__('Hello,', 'yayboost')}</p>
                     </div>
                     <p className="whitespace-pre-wrap text-slate-700">
                       {emailTriggerPreview?.email_content ||
