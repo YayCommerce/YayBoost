@@ -84,7 +84,6 @@ class OrderBumpFeature extends AbstractFeature {
             parent::get_default_settings(),
             [
                 'enabled'          => false,
-                'bump_offers'      => [],
                 'max_bump_display' => 2,
             ]
         );

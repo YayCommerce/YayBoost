@@ -2,7 +2,7 @@
  * Edit Bump page – two-column layout: left = form, right = preview.
  */
 
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
@@ -85,7 +85,7 @@ function toFormData(entity: {
     conditions: Array.isArray(s.conditions)
       ? (s.conditions as BumpEditorFormData['conditions'])
       : ([{ has: 'cart', type: 'product', value: '' }] as BumpEditorFormData['conditions']),
-    position: (s.position as BumpEditorFormData['position']) ?? 'after_order_summary',
+    position: (s.position as BumpEditorFormData['position']) ?? 'before_place_order',
     style: (s.style as BumpEditorFormData['style']) ?? 'card_with_image',
     headline: (s.headline as string) ?? '⚡ SPECIAL OFFER',
     description: (s.description as string) ?? '',
@@ -120,7 +120,7 @@ const DEFAULT_FORM_VALUES: BumpEditorFormData = {
   pricing_value: 20,
   show_when: 'match_conditions',
   conditions: [{ has: 'cart', type: 'product', value: '' }],
-  position: 'after_order_summary',
+  position: 'before_place_order',
   style: 'card_with_image',
   headline: '⚡ SPECIAL OFFER',
   description: '',
@@ -223,6 +223,20 @@ export default function BumpEditor() {
     return regularPrice;
   }, [pricingType, pricingValue, regularPrice]);
 
+  const getPreviewPrice = useCallback(
+    (price: number) => {
+      if (pricingType === 'percent') {
+        const pct = pricingValue / 100;
+        return price * (1 - pct);
+      }
+      if (pricingType === 'fixed_amount') return Math.max(0, price - pricingValue);
+      if (pricingType === 'fixed_price') return pricingValue;
+      if (pricingType === 'free') return 0;
+      return price;
+    },
+    [pricingType, pricingValue],
+  );
+
   if (!isNew && (entityLoading || !entity)) {
     return (
       <div className="space-y-4">
@@ -251,9 +265,11 @@ export default function BumpEditor() {
           onReset={() => {
             form.reset(toFormData(entity));
           }}
+          disabled={!isNew}
           isSaving={updateEntity.isPending}
           isDirty={form.formState.isDirty}
           isLoading={createEntity.isPending || updateEntity.isPending}
+          buttonText={isNew ? __('Add New', 'yayboost') : __('Save Changes', 'yayboost')}
         >
           {/* General */}
           <div className="space-y-1">
@@ -440,8 +456,8 @@ export default function BumpEditor() {
                 <FormMessage />
                 <FormDescription>
                   {__('Regular:', 'yayboost')} {currencySymbol}
-                  {regularPrice.toFixed(2)} → {__('Bump price:', 'yayboost')} {currencySymbol}
-                  {previewBumpPrice.toFixed(2)}
+                  {100} → {__('Bump price:', 'yayboost')} {currencySymbol}
+                  {getPreviewPrice(100)}
                 </FormDescription>
               </FormItem>
             )}
@@ -589,86 +605,6 @@ export default function BumpEditor() {
 
           <Separator />
 
-          {/* Display */}
-          <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('Display', 'yayboost')}</h3>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="position"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{__('Position on checkout', 'yayboost')}</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="after_order_summary" id="pos-after" />
-                      <Label htmlFor="pos-after" className="font-normal">
-                        {__('After order summary', 'yayboost')}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="before_payment_methods" id="pos-payment" />
-                      <Label htmlFor="pos-payment" className="font-normal">
-                        {__('Before payment methods', 'yayboost')}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="before_place_order" id="pos-place" />
-                      <Label htmlFor="pos-place" className="font-normal">
-                        {__('Before place order button', 'yayboost')}
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="style"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{__('Style', 'yayboost')}</FormLabel>
-                <FormControl>
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="simple_checkbox" id="style-simple" />
-                      <Label htmlFor="style-simple" className="font-normal">
-                        {__('Simple checkbox', 'yayboost')}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="card_with_image" id="style-card" />
-                      <Label htmlFor="style-card" className="font-normal">
-                        {__('Card with image', 'yayboost')}
-                      </Label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <RadioGroupItem value="highlighted_box" id="style-highlight" />
-                      <Label htmlFor="style-highlight" className="font-normal">
-                        {__('Highlighted box', 'yayboost')}
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <Separator />
-
           {/* Content */}
           <div className="space-y-1">
             <h3 className="mb-2 text-sm font-medium">{__('Content', 'yayboost')}</h3>
@@ -754,133 +690,56 @@ export default function BumpEditor() {
               <CardTitle>{__('Preview', 'yayboost')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {style === 'simple_checkbox' && (
-                <div className="rounded-lg border bg-white p-3 shadow-sm">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        className="-mt-0.5 h-4 w-4 shrink-0 rounded border"
+              <div className="rounded-lg border bg-white p-4 shadow-sm">
+                <div className="flex gap-4">
+                  <div className="bg-muted flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                    {selectedProduct?.image ? (
+                      <img
+                        src={selectedProduct.image}
+                        alt={productLabel || selectedProduct.label}
+                        className="h-24 w-24 rounded-md object-cover"
                       />
-                      {checkboxLabel || 'Yes! Add this to my order.'}
-                    </label>
-                    <span className="text-muted-foreground text-sm">
-                      {productLabel ? (
-                        <span className="font-medium text-foreground">{productLabel} · </span>
-                      ) : null}
-                      {currencySymbol}
-                      {previewBumpPrice.toFixed(2)}
+                    ) : (
+                      <span className="text-muted-foreground text-xs">
+                        {__('No image', 'yayboost')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
+                    <p className="text-sm">{productLabel}</p>
+                    <p
+                      className="text-muted-foreground text-sm"
+                      dangerouslySetInnerHTML={{
+                        __html: description || '',
+                      }}
+                    />
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <span className="font-semibold">
+                        {currencySymbol}
+                        {previewBumpPrice.toFixed(2)}
+                      </span>
                       {previewBumpPrice < regularPrice && (
                         <>
-                          {' '}
-                          <span className="line-through">
+                          <span className="text-muted-foreground line-through">
                             {currencySymbol}
                             {regularPrice.toFixed(2)}
                           </span>
                           {pricingType === 'percent' && (
-                            <span className="text-green-600">
+                            <span className="text-sm text-green-600">
                               ({__('Save', 'yayboost')} {pricingValue}%)
                             </span>
                           )}
                         </>
                       )}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {style === 'highlighted_box' && (
-                <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
-                  <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
-                  <p className="text-muted-foreground mt-0.5 text-sm">{productLabel}</p>
-                  {description && (
-                    <p
-                      className="text-muted-foreground mt-1 text-sm"
-                      dangerouslySetInnerHTML={{ __html: description }}
-                    />
-                  )}
-                  <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                    <span className="font-semibold">
-                      {currencySymbol}
-                      {previewBumpPrice.toFixed(2)}
-                    </span>
-                    {previewBumpPrice < regularPrice && (
-                      <>
-                        <span className="text-muted-foreground line-through">
-                          {currencySymbol}
-                          {regularPrice.toFixed(2)}
-                        </span>
-                        {pricingType === 'percent' && (
-                          <span className="text-sm text-green-600">
-                            ({__('Save', 'yayboost')} {pricingValue}%)
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  <label className="mt-2 flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="-mt-0.5 h-4 w-4 shrink-0 rounded border"
-                    />
-                    {checkboxLabel || 'Yes! Add this to my order.'}
-                  </label>
-                </div>
-              )}
-              {style === 'card_with_image' && (
-                <div className="rounded-lg border bg-white p-4 shadow-sm">
-                  <div className="flex gap-4">
-                    <div className="bg-muted flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md">
-                      {selectedProduct?.image ? (
-                        <img
-                          src={selectedProduct.image}
-                          alt={productLabel || selectedProduct.label}
-                          className="h-24 w-24 rounded-md object-cover"
-                        />
-                      ) : (
-                        <span className="text-muted-foreground text-xs">
-                          {__('No image', 'yayboost')}
-                        </span>
-                      )}
                     </div>
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
-                      <p className="text-sm">{productLabel}</p>
-                      <p
-                        className="text-muted-foreground text-sm"
-                        dangerouslySetInnerHTML={{
-                          __html: description || '',
-                        }}
-                      />
-                      <div className="flex flex-wrap items-baseline gap-2">
-                        <span className="font-semibold">
-                          {currencySymbol}
-                          {previewBumpPrice.toFixed(2)}
-                        </span>
-                        {previewBumpPrice < regularPrice && (
-                          <>
-                            <span className="text-muted-foreground line-through">
-                              {currencySymbol}
-                              {regularPrice.toFixed(2)}
-                            </span>
-                            {pricingType === 'percent' && (
-                              <span className="text-sm text-green-600">
-                                ({__('Save', 'yayboost')} {pricingValue}%)
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          className="-mt-0.5 h-4 w-4 shrink-0 rounded border"
-                        />
-                        {checkboxLabel || 'Yes! Add this to my order.'}
-                      </label>
-                    </div>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" className="-mt-0.5 h-4 w-4 shrink-0 rounded border" />
+                      {checkboxLabel || 'Yes! Add this to my order.'}
+                    </label>
                   </div>
                 </div>
-              )}
+              </div>
               <div className="bg-primary/5 text-primary border-primary/20 rounded-md border p-3 text-sm">
                 {__(
                   'This preview shows how your offer will appear to customers when they are checkouting.',

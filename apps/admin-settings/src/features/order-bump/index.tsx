@@ -242,7 +242,21 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
               ) : bumps.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
-                    {__('No order bumps yet. Add one to get started.', 'yayboost')}
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <p className="text-muted-foreground text-sm">
+                        {__('No order bumps yet. Add one to get started.', 'yayboost')}
+                      </p>
+                      <Link
+                        to="/features/$featureId/new"
+                        params={{ featureId }}
+                        className="hover:text-primary font-medium underline-offset-2 hover:underline"
+                      >
+                        <Button size="sm">
+                          <Plus className="h-4 w-4" />
+                          {__('Add New', 'yayboost')}
+                        </Button>
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
