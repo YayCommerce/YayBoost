@@ -112,7 +112,7 @@ class RecentPurchaseNotificationRenderer {
                     'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
                     'nonce'           => wp_create_nonce( RecentPurchaseNotificationAjaxHandler::NONCE_ACTION ),
                     'pageId'          => $page_id,
-                    'text'            => [
+                    'i18n'            => [
                         'bought' => __( 'bought this product', 'yayboost' ),
                         'ago'    => __( 'ago', 'yayboost' ),
                     ],

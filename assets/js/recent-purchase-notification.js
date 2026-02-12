@@ -15,7 +15,6 @@
     ajaxUrl,
     nonce,
     pageId,
-    text,
     trackingMode,
     customerName,
     initialDelay,
@@ -29,7 +28,7 @@
     return;
   }
 
-  const i18n = text || { ago: "ago", bought: "bought this product" };
+  const i18n = yayboostRecentPurchase.i18n || { ago: "ago", bought: "bought this product" };
   /** Interval for delta fetch when real-orders (1 minute) */
   const DELTA_FETCH_INTERVAL_MS = 60 * 1000;
   /** Delay before auto-hiding the notification */
