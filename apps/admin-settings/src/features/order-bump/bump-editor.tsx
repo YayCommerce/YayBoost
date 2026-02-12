@@ -266,9 +266,8 @@ export default function BumpEditor() {
             form.reset(toFormData(entity));
           }}
           disabled={!isNew}
-          isSaving={updateEntity.isPending}
+          isSaving={createEntity.isPending || updateEntity.isPending}
           isDirty={form.formState.isDirty}
-          isLoading={createEntity.isPending || updateEntity.isPending}
           buttonText={isNew ? __('Add New', 'yayboost') : __('Save Changes', 'yayboost')}
         >
           {/* General */}

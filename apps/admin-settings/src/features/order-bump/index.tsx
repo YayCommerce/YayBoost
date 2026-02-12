@@ -104,14 +104,18 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
 
   const bumps = localBumps.length > 0 ? localBumps : serverBumps;
 
-  const handleReorder = (index: number, direction: 'up' | 'down') => {
-    const from = direction === 'up' ? index - 1 : index;
-    const to = direction === 'up' ? index : index + 1;
-    if (from < 0 || to >= bumps.length) return;
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  const handleDragStart = (index: number) => setDraggedIndex(index);
+  const handleDragEnd = () => setDraggedIndex(null);
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault();
+  const handleDrop = (toIndex: number) => {
+    if (draggedIndex === null || draggedIndex === toIndex) return;
     const reordered = [...bumps];
-    const [removed] = reordered.splice(from, 1);
-    reordered.splice(to, 0, removed);
+    const [removed] = reordered.splice(draggedIndex, 1);
+    reordered.splice(toIndex, 0, removed);
     setLocalBumps(reordered);
+    setDraggedIndex(null);
   };
 
   const handleStatusChange = (entityId: number, checked: boolean) => {
@@ -262,7 +266,9 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                 <TableHead className="font-semibold">{__('Name', 'yayboost')}</TableHead>
                 <TableHead className="font-semibold">{__('Product', 'yayboost')}</TableHead>
                 <TableHead className="font-semibold">{__('Price', 'yayboost')}</TableHead>
-                <TableHead className="font-semibold">{__('Status', 'yayboost')}</TableHead>
+                <TableHead className="text-center font-semibold">
+                  {__('Status', 'yayboost')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -294,33 +300,29 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                 </TableRow>
               ) : (
                 bumps.map((entity, index) => (
-                  <TableRow key={entity.id}>
+                  <TableRow
+                    key={entity.id}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(index)}
+                    className={draggedIndex === index ? 'opacity-50' : undefined}
+                  >
                     <TableCell className="w-10">
-                      <div className="flex items-center gap-0.5">
-                        <span className="text-muted-foreground cursor-grab touch-none">
-                          <GripVertical className="h-4 w-4" />
-                        </span>
-                        <div className="flex flex-col">
-                          <button
-                            type="button"
-                            onClick={() => handleReorder(index, 'up')}
-                            disabled={index === 0 || isSavingAll}
-                            className="text-muted-foreground hover:text-foreground -mb-0.5 text-xs disabled:opacity-40"
-                            aria-label={__('Move up', 'yayboost')}
-                          >
-                            ▲
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleReorder(index, 'down')}
-                            disabled={index === bumps.length - 1 || isSavingAll}
-                            className="text-muted-foreground hover:text-foreground -mt-0.5 text-xs disabled:opacity-40"
-                            aria-label={__('Move down', 'yayboost')}
-                          >
-                            ▼
-                          </button>
-                        </div>
-                      </div>
+                      <span
+                        style={{ verticalAlign: '-0.17rem' }}
+                        role="button"
+                        tabIndex={0}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', String(index));
+                          handleDragStart(index);
+                        }}
+                        onDragEnd={handleDragEnd}
+                        className="text-muted-foreground inline-flex cursor-grab touch-none active:cursor-grabbing"
+                        aria-label={__('Drag to reorder', 'yayboost')}
+                      >
+                        <GripVertical className="h-4 w-4" />
+                      </span>
                     </TableCell>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
@@ -334,13 +336,15 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                     </TableCell>
                     <TableCell>{getBumpProductName(entity)}</TableCell>
                     <TableCell>{getBumpPrice(entity)}</TableCell>
-                    <TableCell>
-                      <Switch
-                        size="sm"
-                        checked={entity.status === 'active'}
-                        onCheckedChange={(checked) => handleStatusChange(entity.id, checked)}
-                        disabled={isSavingAll}
-                      />
+                    <TableCell className="text-center">
+                      <div className="flex justify-center">
+                        <Switch
+                          size="sm"
+                          checked={entity.status === 'active'}
+                          onCheckedChange={(checked) => handleStatusChange(entity.id, checked)}
+                          disabled={isSavingAll}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
