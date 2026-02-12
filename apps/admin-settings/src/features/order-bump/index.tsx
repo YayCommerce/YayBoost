@@ -10,7 +10,6 @@ import { useEntities, useReorderEntities, useUpdateEntity } from '@/hooks/use-en
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage, useForm } from '@/components/ui/form';
-import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
 import {
   Select,
