@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
 import { GripVertical, Info, Plus } from 'lucide-react';
 import z from 'zod';
@@ -8,6 +8,15 @@ import z from 'zod';
 import type { Entity } from '@/lib/api';
 import { useEntities, useReorderEntities, useUpdateEntity } from '@/hooks/use-entities';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormMessage, useForm } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -66,7 +75,10 @@ const settingsSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
+type PendingNavigate = { to: string; params: Record<string, string> };
+
 export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
+  const navigate = useNavigate();
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
   const { data: entitiesData, isLoading: entitiesLoading } = useEntities({
@@ -105,6 +117,38 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
   const bumps = localBumps.length > 0 ? localBumps : serverBumps;
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [pendingNavigate, setPendingNavigate] = useState<PendingNavigate | null>(null);
+  const [isSavingThenLeaving, setIsSavingThenLeaving] = useState(false);
+
+  const isDirty = form.formState.isDirty || bumpsDirty;
+
+  const handleNavigateClick = (e: React.MouseEvent, to: string, params: Record<string, string>) => {
+    if (!isDirty) return;
+    e.preventDefault();
+    setPendingNavigate({ to, params });
+  };
+
+  const handleLeaveWithoutSaving = () => {
+    if (!pendingNavigate) return;
+    handleReset();
+    navigate({ to: pendingNavigate.to, params: pendingNavigate.params });
+    setPendingNavigate(null);
+  };
+
+  const handleSaveAndContinue = () => {
+    if (!pendingNavigate) return;
+    setIsSavingThenLeaving(true);
+    form.handleSubmit(
+      (data) =>
+        onSubmit(data)
+          .then(() => {
+            navigate({ to: pendingNavigate.to, params: pendingNavigate.params });
+            setPendingNavigate(null);
+          })
+          .finally(() => setIsSavingThenLeaving(false)),
+      () => setIsSavingThenLeaving(false),
+    )();
+  };
 
   const handleDragStart = (index: number) => setDraggedIndex(index);
   const handleDragEnd = () => setDraggedIndex(null);
@@ -192,7 +236,12 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         description={feature.description}
         goBackRoute="/features"
         actions={[
-          <Link key="add" to="/features/$featureId/new" params={{ featureId }}>
+          <Link
+            key="add"
+            to="/features/$featureId/new"
+            params={{ featureId }}
+            onClick={(e) => handleNavigateClick(e, '/features/$featureId/new', { featureId })}
+          >
             <Button size="sm">
               <Plus className="h-4 w-4" />
               {__('Add New', 'yayboost')}
@@ -207,7 +256,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         }}
         onReset={handleReset}
         isSaving={updateSettings.isPending || isSavingAll}
-        isDirty={form.formState.isDirty || bumpsDirty}
+        isDirty={isDirty}
         isLoading={isLoading || isFetching}
       >
         <div className="space-y-1">
@@ -289,6 +338,9 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                         to="/features/$featureId/new"
                         params={{ featureId }}
                         className="hover:text-primary font-medium underline-offset-2 hover:underline"
+                        onClick={(e) =>
+                          handleNavigateClick(e, '/features/$featureId/new', { featureId })
+                        }
                       >
                         <Button size="sm">
                           <Plus className="h-4 w-4" />
@@ -330,6 +382,12 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                         to="/features/$featureId/$entityId"
                         params={{ featureId, entityId: String(entity.id) }}
                         className="hover:text-primary font-medium underline-offset-2 hover:underline"
+                        onClick={(e) =>
+                          handleNavigateClick(e, '/features/$featureId/$entityId', {
+                            featureId,
+                            entityId: String(entity.id),
+                          })
+                        }
                       >
                         {entity.name || '—'}
                       </Link>
@@ -360,6 +418,37 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
           </p>
         )}
       </SettingsCard>
+
+      <AlertDialog
+        open={!!pendingNavigate}
+        onOpenChange={(open) => !open && setPendingNavigate(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{__('Unsaved changes', 'yayboost')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {__('You have unsaved changes. Do you want to save before leaving?', 'yayboost')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex justify-end gap-2">
+            <AlertDialogCancel disabled={isSavingThenLeaving}>
+              {__('Cancel', 'yayboost')}
+            </AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={handleLeaveWithoutSaving}
+              disabled={isSavingThenLeaving}
+            >
+              {__('Leave without saving', 'yayboost')}
+            </Button>
+            <Button onClick={handleSaveAndContinue} disabled={isSavingThenLeaving}>
+              {isSavingThenLeaving
+                ? __('Saving…', 'yayboost')
+                : __('Save and continue', 'yayboost')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Form>
   );
 }
