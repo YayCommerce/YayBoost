@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Eye,
   MessageSquare,
+  Mail,
   ShoppingCart,
   Sparkles,
   SquareArrowOutUpRight,
@@ -39,6 +40,7 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
   order_bump: <Zap className="h-4 w-4" />,
   live_visitor_count: <Users className="h-4 w-4" />,
   exit_intent_popup: <SquareArrowOutUpRight className="h-4 w-4" />,
+  email_capture_popup: <Mail className="h-4 w-4" />,
   purchase_activity_count: <Activity className="h-4 w-4" />,
   recent_purchase_notification: <MessageSquare className="h-4 w-4" />,
 };

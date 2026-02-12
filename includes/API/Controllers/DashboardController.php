@@ -112,7 +112,8 @@ class DashboardController extends BaseController {
             }
 
             // Determine health status
-            $health = 'gray'; // Default: disabled
+            $health = 'gray';
+            // Default: disabled
             if ( $is_enabled ) {
                 $health = $impressions > 0 ? 'green' : 'yellow';
             }
@@ -126,15 +127,17 @@ class DashboardController extends BaseController {
                 'impressions' => $impressions,
                 'path'        => '/features/' . $feature_id,
             ];
-        }
+        }//end foreach
 
-        return $this->success( [
-            'features'   => $health_data,
-            'date_range' => [
-                'start' => $start_date,
-                'end'   => $end_date,
-            ],
-        ] );
+        return $this->success(
+            [
+                'features'   => $health_data,
+                'date_range' => [
+                    'start' => $start_date,
+                    'end'   => $end_date,
+                ],
+            ]
+        );
     }
 
     /**
@@ -148,10 +151,12 @@ class DashboardController extends BaseController {
 
         // If dismissed, return minimal response
         if ( $dismissed ) {
-            return $this->success( [
-                'dismissed' => true,
-                'steps'     => [],
-            ] );
+            return $this->success(
+                [
+                    'dismissed' => true,
+                    'steps'     => [],
+                ]
+            );
         }
 
         // Check each step completion
@@ -164,11 +169,13 @@ class DashboardController extends BaseController {
             true
         );
 
-        return $this->success( [
-            'dismissed'    => false,
-            'all_complete' => $all_complete,
-            'steps'        => $steps,
-        ] );
+        return $this->success(
+            [
+                'dismissed'    => false,
+                'all_complete' => $all_complete,
+                'steps'        => $steps,
+            ]
+        );
     }
 
     /**
@@ -180,10 +187,12 @@ class DashboardController extends BaseController {
     public function dismiss_onboarding( WP_REST_Request $request ) {
         update_option( self::ONBOARDING_DISMISSED_OPTION, true );
 
-        return $this->success( [
-            'dismissed' => true,
-            'message'   => __( 'Onboarding dismissed.', 'yayboost' ),
-        ] );
+        return $this->success(
+            [
+                'dismissed' => true,
+                'message'   => __( 'Onboarding dismissed.', 'yayboost' ),
+            ]
+        );
     }
 
     /**
@@ -219,7 +228,8 @@ class DashboardController extends BaseController {
                 'title'       => __( 'Wait for first analytics data', 'yayboost' ),
                 'description' => __( 'Analytics will appear once customers interact with your features.', 'yayboost' ),
                 'completed'   => $this->has_analytics_data(),
-                'action'      => null, // No action, auto-completes
+                'action'      => null,
+            // No action, auto-completes
             ],
         ];
     }
@@ -294,17 +304,19 @@ class DashboardController extends BaseController {
      * @return \WP_REST_Response|\WP_Error
      */
     public function get_recent_activity( WP_REST_Request $request ) {
-        $limit  = $request->get_param( 'limit' ) ?? 10;
-        $limit  = min( max( (int) $limit, 1 ), 50 ); // Clamp 1-50
+        $limit = $request->get_param( 'limit' ) ?? 10;
+        $limit = min( max( (int) $limit, 1 ), 50 );
+        // Clamp 1-50
         $events = AnalyticsEventsTable::get_recent_activity( $limit );
 
         // Map feature IDs for display
         $feature_names = [
-            'fbt'               => __( 'Frequently Bought Together', 'yayboost' ),
-            'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost' ),
-            'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost' ),
-            'next_order_coupon' => __( 'Next Order Coupon', 'yayboost' ),
-            'exit_intent_popup' => __( 'Exit-Intent Popup', 'yayboost' ),
+            'fbt'                 => __( 'Frequently Bought Together', 'yayboost' ),
+            'free_shipping_bar'   => __( 'Free Shipping Bar', 'yayboost' ),
+            'stock_scarcity'      => __( 'Stock Scarcity', 'yayboost' ),
+            'next_order_coupon'   => __( 'Next Order Coupon', 'yayboost' ),
+            'exit_intent_popup'   => __( 'Exit-Intent Popup', 'yayboost' ),
+            'email_capture_popup' => __( 'Email Popup', 'yayboost' ),
         ];
 
         // Event type labels
@@ -348,11 +360,13 @@ class DashboardController extends BaseController {
                 'revenue'       => (float) $event['revenue'],
                 'created_at'    => $event['created_at'],
             ];
-        }
+        }//end foreach
 
-        return $this->success( [
-            'activities' => $activities,
-            'count'      => count( $activities ),
-        ] );
+        return $this->success(
+            [
+                'activities' => $activities,
+                'count'      => count( $activities ),
+            ]
+        );
     }
 }
