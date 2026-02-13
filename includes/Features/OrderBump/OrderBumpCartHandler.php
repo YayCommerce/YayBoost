@@ -173,14 +173,25 @@ class OrderBumpCartHandler {
         if ( did_action( 'woocommerce_before_calculate_totals' ) >= 2 ) {
             return;
         }
+
         foreach ( $cart->get_cart() as $cart_item ) {
             if ( empty( $cart_item[ self::CART_ITEM_BUMP_KEY ] ) || ! isset( $cart_item[ self::CART_ITEM_PRICE_KEY ] ) ) {
                 continue;
             }
-            $price = (float) $cart_item[ self::CART_ITEM_PRICE_KEY ];
-            if ( isset( $cart_item['data'] ) && is_object( $cart_item['data'] ) ) {
-                $cart_item['data']->set_price( $price );
+            // Re-validate bump. Check current bump offer has changed. If so, update the price.
+            $bump_price = $this->renderer->get_bump_price_for_product( $cart_item['product_id'], $cart_item['variation_id'] );
+            if ( $bump_price !== null ) {
+                $cart_item[ self::CART_ITEM_PRICE_KEY ] = $bump_price;
+                $price                                  = (float) $bump_price;
+                if ( isset( $cart_item['data'] ) && is_object( $cart_item['data'] ) ) {
+                    $cart_item['data']->set_price( $price );
+                }
+            } else {
+                // Remove the cart item.
+                $cart_item_key = $cart_item['key'];
+                $cart->remove_cart_item( $cart_item_key );
             }
+
         }
     }
 }
