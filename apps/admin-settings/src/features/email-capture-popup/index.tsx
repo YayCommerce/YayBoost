@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
-import { Eye, Send } from 'lucide-react';
+import { Eye, Loader2, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -31,6 +31,7 @@ import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
@@ -114,10 +115,20 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
   };
 
   const handleSendMail = async () => {
-    for (const id of selectedIds) {
-      await sendMutation.mutateAsync(Number(id));
+    const count = selectedIds.length;
+    try {
+      for (const id of selectedIds) {
+        await sendMutation.mutateAsync(Number(id));
+      }
+      setSelectedIds([]);
+      toast.success(
+        count === 1
+          ? __('Email sent successfully.', 'yayboost')
+          : __('Emails sent successfully.', 'yayboost'),
+      );
+    } catch {
+      toast.error(__('Failed to send email(s).', 'yayboost'));
     }
-    setSelectedIds([]);
   };
 
   const allItems = emailListData?.pages?.flatMap((page) => page.items) ?? [];
@@ -347,8 +358,14 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                     onClick={() => handleSendMail()}
                     disabled={selectedIds.length === 0 || sendMutation.isPending}
                   >
-                    <Send className="h-4 w-4" />
-                    {__('Send mail', 'yayboost')}
+                    {sendMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {sendMutation.isPending
+                      ? __('Sending...', 'yayboost')
+                      : __('Send mail', 'yayboost')}
                   </Button>
                 </CardContent>
               </Card>

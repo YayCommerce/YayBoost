@@ -12,6 +12,36 @@
   window.yayboostEmailCapturePopupInitialized = true;
   const config = yayboostEmailCapturePopup;
 
+  const STORAGE_KEY = "yayboost_email_capture_dismissed_at";
+  const COOLDOWN_MS = (config.dismiss_cooldown_days ?? 7) * 24 * 60 * 60 * 1000;
+
+  /**
+   * Check if cooldown is active (user closed popup within cooldown period)
+   * @returns {boolean}
+   */
+  function isCooldownActive() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return false;
+      const timestamp = parseInt(stored, 10);
+      if (isNaN(timestamp)) return false;
+      return Date.now() - timestamp < COOLDOWN_MS;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Save dismissed timestamp to localStorage (per visitor)
+   */
+  function saveDismissedTimestamp() {
+    try {
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+    } catch (e) {
+      // Ignore storage errors (e.g. private mode)
+    }
+  }
+
   /**
    * Normalize URL for comparison (strip hash, trailing slash variations)
    * @param {string} url - URL to normalize
@@ -41,7 +71,11 @@
     if (!link || !link.href || !config.cartUrl) return false;
     const linkNorm = normalizeUrl(link.href);
     const cartNorm = normalizeUrl(config.cartUrl);
-    return linkNorm === cartNorm || linkNorm.startsWith(cartNorm + "?") || linkNorm.startsWith(cartNorm + "&");
+    return (
+      linkNorm === cartNorm ||
+      linkNorm.startsWith(cartNorm + "?") ||
+      linkNorm.startsWith(cartNorm + "&")
+    );
   }
 
   function initEmailCapturePopup() {
@@ -79,7 +113,9 @@
 
     function hidePopup() {
       $content.find(".yayboost-email-capture-popup__error").remove();
-      $submitBtn.prop("disabled", false).removeClass("yayboost-email-capture-popup__button--loading");
+      $submitBtn
+        .prop("disabled", false)
+        .removeClass("yayboost-email-capture-popup__button--loading");
       const origText = $submitBtn.attr("data-original-text");
       if (origText) {
         $submitBtn.text(origText);
@@ -90,7 +126,9 @@
 
     function showError(msg) {
       $content.find(".yayboost-email-capture-popup__error").remove();
-      $content.append($("<div>").addClass("yayboost-email-capture-popup__error").text(msg));
+      $content.append(
+        $("<div>").addClass("yayboost-email-capture-popup__error").text(msg),
+      );
     }
 
     function handleSubmit() {
@@ -102,13 +140,20 @@
 
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!re.test(email)) {
-        showError(config.messages?.invalidEmail || "Please enter a valid email.");
+        showError(
+          config.messages?.invalidEmail || "Please enter a valid email.",
+        );
         return;
       }
 
-      $submitBtn.prop("disabled", true).attr("data-original-text", $submitBtn.text());
+      $submitBtn
+        .prop("disabled", true)
+        .attr("data-original-text", $submitBtn.text());
       $submitBtn.addClass("yayboost-email-capture-popup__button--loading");
-      $submitBtn.html('<span class="yayboost-ecp-button-spinner"></span> ' + ($submitBtn.attr("data-original-text") || ""));
+      $submitBtn.html(
+        '<span class="yayboost-ecp-button-spinner"></span> ' +
+          ($submitBtn.attr("data-original-text") || ""),
+      );
 
       $content.find(".yayboost-email-capture-popup__error").remove();
 
@@ -124,37 +169,59 @@
           if (data && data.success) {
             redirectToCart();
           } else {
-            showError(data?.data?.message || config.messages?.error || "Something went wrong. Please try again.");
+            showError(
+              data?.data?.message ||
+                config.messages?.error ||
+                "Something went wrong. Please try again.",
+            );
             resetSubmitBtn();
           }
         },
         error: function (xhr, status, err) {
           console.error("[YayBoost] Email capture submit failed:", err);
-          showError(config.messages?.error || "Something went wrong. Please try again.");
+          showError(
+            config.messages?.error || "Something went wrong. Please try again.",
+          );
           resetSubmitBtn();
         },
       });
     }
 
     function resetSubmitBtn() {
-      $submitBtn.prop("disabled", false).removeClass("yayboost-email-capture-popup__button--loading");
-      $submitBtn.text($submitBtn.attr("data-original-text") || config.content?.buttonText || "Submit email");
+      $submitBtn
+        .prop("disabled", false)
+        .removeClass("yayboost-email-capture-popup__button--loading");
+      $submitBtn.text(
+        $submitBtn.attr("data-original-text") ||
+          config.content?.buttonText ||
+          "Submit email",
+      );
     }
 
     function handleClose() {
+      saveDismissedTimestamp();
       hidePopup();
       redirectToCart();
     }
 
     $(document).on("click", function (e) {
       const $link = $(e.target).closest("a[href]");
-      if (!$link.length || $link.attr("target") === "_blank" || $link.attr("download")) return;
+      if (
+        !$link.length ||
+        $link.attr("target") === "_blank" ||
+        $link.attr("download")
+      )
+        return;
 
       const link = $link[0];
       if (isCartLink(link)) {
         e.preventDefault();
         e.stopPropagation();
-        showPopup(link.href);
+        if (isCooldownActive()) {
+          window.location.href = link.href || config.cartUrl;
+        } else {
+          showPopup(link.href);
+        }
       }
     });
 

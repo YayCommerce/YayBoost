@@ -10,7 +10,6 @@ namespace YayBoost\API\Controllers;
 use WP_REST_Request;
 use WP_REST_Server;
 use YayBoost\Features\EmailCapturePopup\EmailCaptureRepository;
-use YayBoost\Features\EmailCapturePopup\EmailCaptureCron;
 use YayBoost\Features\EmailCapturePopup\Emails\EmailCaptureFollowUp;
 
 /**

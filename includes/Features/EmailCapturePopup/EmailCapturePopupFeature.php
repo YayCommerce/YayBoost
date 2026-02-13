@@ -191,18 +191,22 @@ class EmailCapturePopupFeature extends AbstractFeature {
 
         $cart_url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : '';
 
+        $dismiss_days = (int) ( $settings['dismiss_cooldown_days'] ?? $default_settings['dismiss_cooldown_days'] ?? 7 );
+        $dismiss_days = max( 1, min( 30, $dismiss_days ) );
+
         return [
-            'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-            'nonce'      => wp_create_nonce( EmailCapturePopupAjaxHandler::NONCE_ACTION ),
-            'cartUrl'    => $cart_url,
-            'content'    => [
+            'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+            'nonce'                 => wp_create_nonce( EmailCapturePopupAjaxHandler::NONCE_ACTION ),
+            'cartUrl'               => $cart_url,
+            'dismiss_cooldown_days' => $dismiss_days,
+            'content'               => [
                 'headline'         => $content['headline'] ?? $default_settings['content']['headline'],
                 'message'          => $content['message'] ?? $default_settings['content']['message'],
                 'buttonText'       => $content['button_text'] ?? $default_settings['content']['button_text'],
                 'inputPlaceholder' => __( 'Enter your email', 'yayboost' ),
             ],
-            'isEligible' => $this->is_eligible(),
-            'messages'   => [
+            'isEligible'            => $this->is_eligible(),
+            'messages'              => [
                 'invalidEmail' => __( 'Please enter a valid email address.', 'yayboost' ),
                 'error'        => __( 'Something went wrong. Please try again.', 'yayboost' ),
             ],
@@ -250,13 +254,14 @@ class EmailCapturePopupFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'       => false,
-                'content'       => [
+                'enabled'               => false,
+                'dismiss_cooldown_days' => 7,
+                'content'               => [
                     'headline'    => __( 'Stay in touch!', 'yayboost' ),
                     'message'     => __( 'Enter your email to receive updates and exclusive offers.', 'yayboost' ),
                     'button_text' => __( 'Submit email', 'yayboost' ),
                 ],
-                'email_trigger' => [
+                'email_trigger'         => [
                     'send_after_days' => 1,
                     'subject'         => __( 'You\'re almost there ! Complete your account or start shopping', 'yayboost' ),
                     'email_heading'   => __( 'Welcome aboard!', 'yayboost' ),
