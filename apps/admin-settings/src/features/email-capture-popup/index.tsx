@@ -7,17 +7,24 @@
 
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { __ } from '@wordpress/i18n';
 import { Eye, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { emailCaptureApi } from '@/lib/api';
+import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
@@ -64,16 +71,25 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const queryClient = useQueryClient();
-  const { data: emailList, isLoading: listLoading } = useQuery({
+  const {
+    data: emailListData,
+    isLoading: listLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['email-capture-list', activeTab],
-    queryFn: () => emailCaptureApi.getList({ page: 1, per_page: 50 }),
+    queryFn: ({ pageParam }) => emailCaptureApi.getList({ page: pageParam, per_page: 50 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
     enabled: activeTab === 'email-list',
   });
 
   const sendMutation = useMutation({
     mutationFn: (id: number) => emailCaptureApi.sendFollowup(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['email-capture-list'] });
+      queryClient.invalidateQueries({ queryKey: ['email-capture-list', activeTab] });
     },
   });
 
@@ -104,11 +120,11 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
     setSelectedIds([]);
   };
 
-  const emailOptions =
-    emailList?.items?.map((row) => ({
-      label: `${row.email} (${statusLabels[row.status] ?? row.status})`,
-      value: String(row.id),
-    })) ?? [];
+  const allItems = emailListData?.pages?.flatMap((page) => page.items) ?? [];
+  const emailOptions = allItems.map((row) => ({
+    label: `${row.email} (${statusLabels[row.status] ?? row.status})`,
+    value: String(row.id),
+  }));
 
   if (isLoading || isFetching) {
     return (
@@ -227,7 +243,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                       <FormItem>
                         <Label>{__('Send email after (days)', 'yayboost')}</Label>
                         <FormControl>
-                          <div className='w-24'>
+                          <div className="w-24">
                             <InputNumber
                               id="email_trigger-send_after_days"
                               placeholder="1"
@@ -237,7 +253,9 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                             />
                           </div>
                         </FormControl>
-                        <FormDescription>{__("Number of days to wait after submission before sending the email")}</FormDescription>
+                        <FormDescription>
+                          {__('Number of days to wait after submission before sending the email')}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -319,6 +337,9 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                         placeholder={__('Select emails...', 'yayboost')}
                         showSearch
                         emptyText={__('No captured emails yet', 'yayboost')}
+                        hasMore={hasNextPage ?? false}
+                        onLoadMore={() => fetchNextPage()}
+                        isLoading={isFetchingNextPage}
                       />
                     )}
                   </div>
@@ -336,9 +357,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
         </div>
 
         {/* Right column: Preview with Tabs */}
-        <div
-          className="sticky top-6 h-fit space-y-6 transition-opacity duration-300"
-        >
+        <div className="sticky top-6 h-fit space-y-6 transition-opacity duration-300">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
