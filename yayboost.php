@@ -40,6 +40,17 @@ function yayboost_is_woocommerce_active() {
 }
 
 /**
+ * Enable compatible HPOS for the plugin
+ */
+if ( ! function_exists( 'yayboost_enable_compatible_hpos' ) ) {
+    function yayboost_enable_compatible_hpos() {
+        if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+            \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+        }
+    }
+}
+
+/**
  * Initialize the plugin
  */
 function yayboost_init() {
@@ -47,6 +58,8 @@ function yayboost_init() {
         add_action( 'admin_notices', 'yayboost_woocommerce_missing_notice' );
         return;
     }
+
+    add_action( 'before_woocommerce_init', 'yayboost_enable_compatible_hpos' );
 
     // Register FBT backfill cron hooks
     \YayBoost\Features\FrequentlyBoughtTogether\FBTBackfillCron::register();
