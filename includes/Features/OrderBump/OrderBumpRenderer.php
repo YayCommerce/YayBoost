@@ -124,7 +124,7 @@ class OrderBumpRenderer {
             if ( count( $filtered ) >= $max ) {
                 break;
             }
-        }
+        }//end foreach
 
         return $filtered;
     }
@@ -170,7 +170,7 @@ class OrderBumpRenderer {
             if ( ! $matches ) {
                 return false;
             }
-        }
+        }//end foreach
 
         return true;
     }
@@ -425,7 +425,7 @@ class OrderBumpRenderer {
             return 0;
         }
         $data_store = \WC_Data_Store::load( 'product' );
-        $vid       = $data_store->find_matching_product_variation( $product, $attrs );
+        $vid        = $data_store->find_matching_product_variation( $product, $attrs );
         return $vid ? (int) $vid : 0;
     }
 
@@ -592,10 +592,10 @@ class OrderBumpRenderer {
         $variation_attributes = is_array( $variation_attributes ) ? $variation_attributes : [];
         $default_variation_id = isset( $display['default_variation_id'] ) ? (int) $display['default_variation_id'] : 0;
 
-        $bump_price_raw = isset( $display['bump_price'] ) ? (float) $display['bump_price'] : 0;
-        $wrapper_class  = 'yayboost-order-bump yayboost-order-bump--' . esc_attr( $style );
+        $bump_price_raw  = isset( $display['bump_price'] ) ? (float) $display['bump_price'] : 0;
+        $wrapper_class   = 'yayboost-order-bump yayboost-order-bump--' . esc_attr( $style );
         $is_bump_in_cart = $this->is_bump_product_in_cart( $product_id, $default_variation_id );
-        $checked_attr   = $is_bump_in_cart ? ' checked="checked"' : '';
+        $checked_attr    = $is_bump_in_cart ? ' checked="checked"' : '';
         ?>
         <div class="<?php echo esc_attr( $wrapper_class ); ?>" data-bump-id="<?php echo esc_attr( (string) ( $bump['id'] ?? '' ) ); ?>" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>" data-default-variation-id="<?php echo esc_attr( (string) $default_variation_id ); ?>" data-bump-price="<?php echo esc_attr( (string) $bump_price_raw ); ?>" data-variation-attributes="<?php echo esc_attr( wp_json_encode( $variation_attributes ) ); ?>">
             <?php if ( $style === 'card_with_image' || $style === 'highlighted_box' ) : ?>
