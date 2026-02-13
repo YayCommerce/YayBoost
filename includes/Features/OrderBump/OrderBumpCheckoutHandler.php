@@ -54,7 +54,7 @@ class OrderBumpCheckoutHandler {
      * Add checked bump products as order line items with bump price.
      *
      * @param \WC_Order $order   Order being created.
-     * @param array    $data    Checkout form data.
+     * @param array     $data    Checkout form data.
      * @return void
      */
     public function add_bump_line_items_to_order( $order, $data ): void {
@@ -84,7 +84,7 @@ class OrderBumpCheckoutHandler {
         foreach ( $bump_ids as $product_id ) {
             $variation_id = $this->renderer->get_default_variation_id_for_product( $product_id );
             $product      = $variation_id > 0 ? wc_get_product( $variation_id ) : wc_get_product( $product_id );
-            
+
             if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
                 continue;
             }
@@ -94,54 +94,27 @@ class OrderBumpCheckoutHandler {
                 continue;
             }
 
-            // Do not add if this product/variation is already in the order (from cart).
-            if ( $this->order_contains_product( $order, $product_id, $variation_id ) ) {
-                continue;
-            }
-
             // Create order item manually for better control
             $item = new \WC_Order_Item_Product();
             $item->set_product( $product );
             $item->set_quantity( 1 );
-            
+
             // Set prices (subtotal and total should be the same for bump items)
             $item->set_subtotal( $bump_price );
             $item->set_total( $bump_price );
-            
+
             // Mark as order bump item
             $item->add_meta_data( self::ORDER_ITEM_META_BUMP, 1, true );
-            
+
             // Add item to order
             $order->add_item( $item );
-            $added_count++;
-        }
+            ++$added_count;
+        }//end foreach
 
         if ( $added_count > 0 ) {
             // Recalculate totals after adding bump items
             // Note: WooCommerce will save the order after this hook completes
             $order->calculate_totals();
         }
-    }
-
-    /**
-     * Check if the order already contains a line item for this product/variation.
-     *
-     * @param \WC_Order $order        Order.
-     * @param int       $product_id   Product ID.
-     * @param int       $variation_id Variation ID or 0.
-     * @return bool
-     */
-    protected function order_contains_product( $order, int $product_id, int $variation_id ): bool {
-        foreach ( $order->get_items( 'line_item' ) as $item ) {
-            if ( ! is_a( $item, 'WC_Order_Item_Product' ) ) {
-                continue;
-            }
-            $item_product_id   = (int) $item->get_product_id();
-            $item_variation_id = (int) $item->get_variation_id();
-            if ( $item_product_id === $product_id && $item_variation_id === $variation_id ) {
-                return true;
-            }
-        }
-        return false;
     }
 }
