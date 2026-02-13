@@ -48,9 +48,6 @@ function yayboost_init() {
         return;
     }
 
-    // Run database migrations
-    \YayBoost\Database\Migrator::run();
-
     // Register FBT backfill cron hooks
     \YayBoost\Features\FrequentlyBoughtTogether\FBTBackfillCron::register();
 
