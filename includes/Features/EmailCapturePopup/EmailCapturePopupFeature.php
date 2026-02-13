@@ -103,7 +103,7 @@ class EmailCapturePopupFeature extends AbstractFeature {
      * @return array
      */
     public function register_email_class( array $classes ): array {
-        $classes['yayboost_email_capture_followup'] = new Emails\EmailCaptureFollowUp();
+        $classes['yayboost_email_capture_followup'] = new Emails\EmailCaptureFollowUp( $this );
         return $classes;
     }
 

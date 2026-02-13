@@ -19,9 +19,19 @@ if ( ! class_exists( 'WC_Email' ) ) {
 class EmailCaptureFollowUp extends \WC_Email {
 
     /**
-     * Constructor
+     * Feature instance
+     *
+     * @var \YayBoost\Features\EmailCapturePopup\EmailCapturePopupFeature
      */
-    public function __construct() {
+    private $feature;
+
+    /**
+     * Constructor
+     *
+     * @param \YayBoost\Features\EmailCapturePopup\EmailCapturePopupFeature $feature Feature instance.
+     */
+    public function __construct( \YayBoost\Features\EmailCapturePopup\EmailCapturePopupFeature $feature ) {
+        $this->feature        = $feature;
         $this->id             = 'yayboost_email_capture_followup';
         $this->title          = __( 'Email Capture Follow-up', 'yayboost' );
         $this->description    = __( 'Follow-up email sent to guests who captured their email via the popup.', 'yayboost' );
@@ -39,13 +49,9 @@ class EmailCaptureFollowUp extends \WC_Email {
      * @return string
      */
     public function get_default_subject(): string {
-        $feature = $this->get_feature_instance();
-        if ( $feature ) {
-            $settings      = $feature->get_settings();
-            $email_trigger = $settings['email_trigger'] ?? [];
-            return $email_trigger['subject'] ?? __( "You're almost there! Complete your account or start shopping", 'yayboost' );
-        }
-        return __( "You're almost there! Complete your account or start shopping", 'yayboost' );
+        $settings      = $this->feature->get_settings();
+        $email_trigger = $settings['email_trigger'] ?? [];
+        return $email_trigger['subject'] ?? __( "You're almost there! Complete your account or start shopping", 'yayboost' );
     }
 
     /**
@@ -54,31 +60,9 @@ class EmailCaptureFollowUp extends \WC_Email {
      * @return string
      */
     public function get_default_heading(): string {
-        $feature = $this->get_feature_instance();
-        if ( $feature ) {
-            $settings      = $feature->get_settings();
-            $email_trigger = $settings['email_trigger'] ?? [];
-            return $email_trigger['email_heading'] ?? __( 'Welcome aboard!', 'yayboost' );
-        }
-        return __( 'Welcome aboard!', 'yayboost' );
-    }
-
-    /**
-     * Get feature instance from container
-     *
-     * @return \YayBoost\Features\EmailCapturePopup\EmailCapturePopupFeature|null
-     */
-    private function get_feature_instance() {
-        $container = \YayBoost\Bootstrap::get_container_static();
-        if ( ! $container ) {
-            return null;
-        }
-
-        try {
-            return $container->resolve( 'feature.email_capture_popup' );
-        } catch ( \Throwable $e ) {
-            return null;
-        }
+        $settings      = $this->feature->get_settings();
+        $email_trigger = $settings['email_trigger'] ?? [];
+        return $email_trigger['email_heading'] ?? __( 'Welcome aboard!', 'yayboost' );
     }
 
     /**
