@@ -82,18 +82,25 @@ class OrderBumpFeature extends AbstractFeature {
     protected $checkout_handler;
 
     /**
+     * Cart handler (add/remove bump on checkbox toggle, apply bump price).
+     *
+     * @var OrderBumpCartHandler
+     */
+    protected $cart_handler;
+
+    /**
      * Initialize the feature
      *
      * @return void
      */
     public function init(): void {
-        $this->repository = new BumpRepository();
-        $this->renderer   = new OrderBumpRenderer( $this, $this->repository );
-        $this->checkout_handler = new OrderBumpCheckoutHandler( $this->renderer );
+        $this->repository   = new BumpRepository();
+        $this->renderer     = new OrderBumpRenderer( $this, $this->repository );
+        $this->cart_handler = new OrderBumpCartHandler( $this->renderer );
 
         if ( $this->is_enabled() ) {
             $this->register_checkout_hooks();
-            $this->checkout_handler->register();
+            $this->cart_handler->register();
             add_action( 'wp_enqueue_scripts', [ $this, 'maybe_enqueue_checkout_assets' ] );
         }
     }
@@ -139,11 +146,23 @@ class OrderBumpFeature extends AbstractFeature {
             wp_enqueue_script(
                 'yayboost-order-bump',
                 defined( 'YAYBOOST_URL' ) ? YAYBOOST_URL . 'assets/js/order-bump.js' : '',
-                [],
+                [ 'jquery' ],
                 defined( 'YAYBOOST_VERSION' ) ? YAYBOOST_VERSION : '1.0.0',
                 true
             );
-        }
+            wp_localize_script(
+                'yayboost-order-bump',
+                'yayboost_order_bump',
+                [
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'yayboost_order_bump' ),
+                    'actions'  => [
+                        'add'    => \YayBoost\Features\OrderBump\OrderBumpCartHandler::AJAX_ACTION_ADD,
+                        'remove' => \YayBoost\Features\OrderBump\OrderBumpCartHandler::AJAX_ACTION_REMOVE,
+                    ],
+                ]
+            );
+        }//end if
     }
 
     /**

@@ -481,11 +481,29 @@ class OrderBumpRenderer {
     }
 
     /**
-     * Render bumps for a given position
+     * Check if this product is already in the cart as an order bump item.
      *
-     * @param string $position Position key.
-     * @return void
+     * @param int $product_id   Product ID.
+     * @param int $variation_id Variation ID or 0.
+     * @return bool
      */
+    protected function is_bump_product_in_cart( int $product_id, int $variation_id ): bool {
+        if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+            return false;
+        }
+        foreach ( WC()->cart->get_cart() as $cart_item ) {
+            if ( empty( $cart_item[ OrderBumpCartHandler::CART_ITEM_BUMP_KEY ] ) ) {
+                continue;
+            }
+            $pid = (int) ( $cart_item['product_id'] ?? 0 );
+            $vid = (int) ( $cart_item['variation_id'] ?? 0 );
+            if ( $pid === $product_id && $vid === $variation_id ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Whether the hidden bump-ids input has already been output (once per request).
      *
@@ -493,6 +511,12 @@ class OrderBumpRenderer {
      */
     protected static $bump_ids_input_rendered = false;
 
+    /**
+     * Render bumps for a given position
+     *
+     * @param string $position Position key.
+     * @return void
+     */
     public function render( string $position ): void {
         $bumps = $this->get_bumps_for_position( $position );
 
@@ -568,9 +592,12 @@ class OrderBumpRenderer {
         $variation_attributes = is_array( $variation_attributes ) ? $variation_attributes : [];
         $default_variation_id = isset( $display['default_variation_id'] ) ? (int) $display['default_variation_id'] : 0;
 
-        $wrapper_class = 'yayboost-order-bump yayboost-order-bump--' . esc_attr( $style );
+        $bump_price_raw = isset( $display['bump_price'] ) ? (float) $display['bump_price'] : 0;
+        $wrapper_class  = 'yayboost-order-bump yayboost-order-bump--' . esc_attr( $style );
+        $is_bump_in_cart = $this->is_bump_product_in_cart( $product_id, $default_variation_id );
+        $checked_attr   = $is_bump_in_cart ? ' checked="checked"' : '';
         ?>
-        <div class="<?php echo esc_attr( $wrapper_class ); ?>" data-bump-id="<?php echo esc_attr( (string) ( $bump['id'] ?? '' ) ); ?>" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>" data-default-variation-id="<?php echo esc_attr( (string) $default_variation_id ); ?>" data-variation-attributes="<?php echo esc_attr( wp_json_encode( $variation_attributes ) ); ?>">
+        <div class="<?php echo esc_attr( $wrapper_class ); ?>" data-bump-id="<?php echo esc_attr( (string) ( $bump['id'] ?? '' ) ); ?>" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>" data-default-variation-id="<?php echo esc_attr( (string) $default_variation_id ); ?>" data-bump-price="<?php echo esc_attr( (string) $bump_price_raw ); ?>" data-variation-attributes="<?php echo esc_attr( wp_json_encode( $variation_attributes ) ); ?>">
             <?php if ( $style === 'card_with_image' || $style === 'highlighted_box' ) : ?>
                 <div class="yayboost-order-bump__inner">
                     <?php if ( $image_html && ( $style === 'card_with_image' || $style === 'highlighted_box' ) ) : ?>
@@ -588,7 +615,7 @@ class OrderBumpRenderer {
                         </p>
                         <p class="yayboost-order-bump__price"><?php echo wp_kses_post( $price_html ); ?></p>
                         <label class="yayboost-order-bump__checkbox-wrap">
-                            <input type="checkbox" name="yayboost_bump[]" value="<?php echo esc_attr( (string) $product_id ); ?>" class="yayboost-order-bump__checkbox" />
+                            <input type="checkbox" name="yayboost_bump[]" value="<?php echo esc_attr( (string) $product_id ); ?>" class="yayboost-order-bump__checkbox"<?php echo $checked_attr; ?> />
                             <span class="yayboost-order-bump__checkbox-label"><?php echo esc_html( $checkbox_label ); ?></span>
                         </label>
                     </div>
@@ -596,7 +623,7 @@ class OrderBumpRenderer {
             <?php else : ?>
                 <div class="yayboost-order-bump__inner yayboost-order-bump__inner--simple">
                     <label class="yayboost-order-bump__checkbox-wrap">
-                        <input type="checkbox" name="yayboost_bump[]" value="<?php echo esc_attr( (string) $product_id ); ?>" class="yayboost-order-bump__checkbox" />
+                        <input type="checkbox" name="yayboost_bump[]" value="<?php echo esc_attr( (string) $product_id ); ?>" class="yayboost-order-bump__checkbox"<?php echo $checked_attr; ?> />
                         <span class="yayboost-order-bump__checkbox-label">
                             <?php echo esc_html( $checkbox_label ); ?>
                             — <a href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( $product_name ); ?></a>
