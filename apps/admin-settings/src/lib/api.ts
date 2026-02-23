@@ -457,12 +457,13 @@ export const emailCaptureApi = {
   },
 
   /**
-   * Manually send follow-up email to a captured email by ID
+   * Schedule batch follow-up emails via Action Scheduler (async)
    */
-  sendFollowup: async (id: number): Promise<{ sent: boolean }> => {
-    const { data } = await api.post<ApiResponse<{ sent: boolean }>>('/email-capture/send', {
-      id,
-    });
+  sendFollowupBatch: async (ids: number[]): Promise<{ scheduled: number }> => {
+    const { data } = await api.post<ApiResponse<{ scheduled: number }>>(
+      '/email-capture/send-batch',
+      { ids },
+    );
     return data.data;
   },
 };

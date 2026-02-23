@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { Eye, Loader2, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -87,8 +87,8 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
     enabled: activeTab === 'email-list',
   });
 
-  const sendMutation = useMutation({
-    mutationFn: (id: number) => emailCaptureApi.sendFollowup(id),
+  const sendBatchMutation = useMutation({
+    mutationFn: (ids: number[]) => emailCaptureApi.sendFollowupBatch(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email-capture-list', activeTab] });
     },
@@ -115,19 +115,21 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
   };
 
   const handleSendMail = async () => {
-    const count = selectedIds.length;
+    const ids = selectedIds.map(Number);
     try {
-      for (const id of selectedIds) {
-        await sendMutation.mutateAsync(Number(id));
-      }
+      const { scheduled } = await sendBatchMutation.mutateAsync(ids);
       setSelectedIds([]);
       toast.success(
-        count === 1
-          ? __('Email sent successfully.', 'yayboost')
-          : __('Emails sent successfully.', 'yayboost'),
+        scheduled === 1
+          ? __('1 email scheduled for delivery.', 'yayboost')
+          : sprintf(
+              /* translators: %d: number of emails */
+              __('%d emails scheduled for delivery.', 'yayboost'),
+              scheduled,
+            ),
       );
     } catch {
-      toast.error(__('Failed to send email(s).', 'yayboost'));
+      toast.error(__('Failed to schedule emails.', 'yayboost'));
     }
   };
 
@@ -356,14 +358,14 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                   </div>
                   <Button
                     onClick={() => handleSendMail()}
-                    disabled={selectedIds.length === 0 || sendMutation.isPending}
+                    disabled={selectedIds.length === 0 || sendBatchMutation.isPending}
                   >
-                    {sendMutation.isPending ? (
+                    {sendBatchMutation.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                    {sendMutation.isPending
+                    {sendBatchMutation.isPending
                       ? __('Sending...', 'yayboost')
                       : __('Send mail', 'yayboost')}
                   </Button>

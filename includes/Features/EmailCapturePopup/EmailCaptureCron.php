@@ -52,6 +52,30 @@ class EmailCaptureCron {
     }
 
     /**
+     * Schedule a follow-up email to run immediately (on next Action Scheduler run)
+     * Unschedule any existing action for the same row to avoid duplicates.
+     *
+     * @param int $row_id Captured email row ID.
+     * @return int|false Action ID or false
+     */
+    public static function schedule_immediate( int $row_id ) {
+        if ( ! function_exists( 'as_schedule_single_action' ) ) {
+            return false;
+        }
+
+        self::unschedule_by_id( $row_id );
+
+        $action_id = as_schedule_single_action(
+            time(),
+            self::ACTION_SEND_FOLLOWUP,
+            [ 'id' => $row_id ],
+            self::GROUP
+        );
+
+        return $action_id ?? false;
+    }
+
+    /**
      * Unschedule all pending follow-up actions for an email address
      *
      * @param string $email

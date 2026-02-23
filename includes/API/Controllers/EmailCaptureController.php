@@ -9,8 +9,8 @@ namespace YayBoost\API\Controllers;
 
 use WP_REST_Request;
 use WP_REST_Server;
+use YayBoost\Features\EmailCapturePopup\EmailCaptureCron;
 use YayBoost\Features\EmailCapturePopup\EmailCaptureRepository;
-use YayBoost\Features\EmailCapturePopup\Emails\EmailCaptureFollowUp;
 
 /**
  * Handles email capture API endpoints
@@ -46,16 +46,18 @@ class EmailCaptureController extends BaseController {
             ]
         );
 
-        // Manually send follow-up to a specific captured email
+        // Schedule batch follow-up emails via Action Scheduler (async)
         $this->register_route(
-            '/email-capture/send',
+            '/email-capture/send-batch',
             WP_REST_Server::CREATABLE,
-            [ $this, 'send_followup' ],
+            [ $this, 'send_batch' ],
             [
                 'args' => [
-                    'id' => [
-                        'type'     => 'integer',
+                    'ids' => [
+                        'type'     => 'array',
                         'required' => true,
+                        'items'    => [ 'type' => 'integer' ],
+                        'minItems' => 1,
                     ],
                 ],
             ]
@@ -96,47 +98,43 @@ class EmailCaptureController extends BaseController {
     }
 
     /**
-     * Manually send follow-up email
+     * Schedule batch follow-up emails via Action Scheduler (async)
      *
      * @param WP_REST_Request $request
      * @return \WP_REST_Response|\WP_Error
      */
-    public function send_followup( WP_REST_Request $request ) {
-        $id = (int) $request->get_param( 'id' );
-        if ( $id <= 0 ) {
-            return $this->error( __( 'Invalid ID.', 'yayboost' ), 400 );
+    public function send_batch( WP_REST_Request $request ) {
+        if ( ! function_exists( 'as_schedule_single_action' ) ) {
+            return $this->error( __( 'Action Scheduler is not available.', 'yayboost' ), 500 );
         }
 
-        $row = EmailCaptureRepository::find_by_id( $id );
-        if ( ! $row ) {
-            return $this->error( __( 'Email not found.', 'yayboost' ), 404 );
+        $ids = array_map( 'intval', (array) $request->get_param( 'ids' ) );
+        $ids = array_values( array_filter( $ids, fn( $id ) => $id > 0 ) );
+
+        if ( empty( $ids ) ) {
+            return $this->error( __( 'Invalid IDs.', 'yayboost' ), 400 );
         }
+
+        $ids = array_slice( $ids, 0, 100 );
 
         $feature = $this->container->resolve( 'feature.email_capture_popup' );
         if ( ! $feature->is_enabled() ) {
             return $this->error( __( 'Feature is disabled.', 'yayboost' ), 400 );
         }
 
-        $settings      = $feature->get_settings();
-        $email_trigger = $settings['email_trigger'] ?? [];
-        $subject       = $email_trigger['subject'] ?? __( "You're almost there! Complete your account or start shopping", 'yayboost' );
-        $heading       = $email_trigger['email_heading'] ?? __( 'Welcome aboard!', 'yayboost' );
-        $content       = $email_trigger['email_content'] ?? '';
+        $scheduled = 0;
 
-        $email_class = \WC_Emails::instance()->get_emails();
-        $followup    = $email_class['yayboost_email_capture_followup'] ?? null;
+        foreach ( $ids as $id ) {
+            $row = EmailCaptureRepository::find_by_id( $id );
+            if ( ! $row || $row['status'] !== EmailCaptureRepository::STATUS_PENDING ) {
+                continue;
+            }
 
-        if ( ! $followup || ! ( $followup instanceof EmailCaptureFollowUp ) ) {
-            return $this->error( __( 'Email template not available.', 'yayboost' ), 500 );
+            if ( EmailCaptureCron::schedule_immediate( $id ) ) {
+                ++$scheduled;
+            }
         }
 
-        try {
-            $followup->trigger( $row['email'], $subject, $heading, $content );
-            EmailCaptureRepository::update_status( $id, EmailCaptureRepository::STATUS_SENT, current_time( 'mysql' ) );
-            return $this->success( [ 'sent' => true ] );
-        } catch ( \Throwable $e ) {
-            EmailCaptureRepository::update_status( $id, EmailCaptureRepository::STATUS_FAILED );
-            return $this->error( __( 'Failed to send email.', 'yayboost' ), 500, [ 'error' => $e->getMessage() ] );
-        }
+        return $this->success( [ 'scheduled' => $scheduled ] );
     }
 }
