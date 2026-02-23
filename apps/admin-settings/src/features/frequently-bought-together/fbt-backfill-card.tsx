@@ -27,18 +27,18 @@ export function FBTBackfillCard() {
 
   const getStatusText = () => {
     if (state.isRunning) {
-      const errorText = state.errors > 0 ? `, ${state.errors} ${__('error(s)', 'yayboost')}` : '';
+      const errorText = state.errors > 0 ? `, ${state.errors} ${__('error(s)', 'yayboost-sales-booster-for-woocommerce')}` : '';
       return __(
         `Processing batch ${state.currentBatch}/${state.totalBatches}... (${state.processed}/${state.total} orders${errorText})`,
-        'yayboost',
+        'yayboost-sales-booster-for-woocommerce',
       );
     }
     if (state.isPaused) {
-      return __('Paused', 'yayboost');
+      return __('Paused', 'yayboost-sales-booster-for-woocommerce');
     }
     if (state.total > 0 && state.remaining === 0) {
-      const errorText = state.errors > 0 ? ` (${state.errors} ${__('error(s)', 'yayboost')})` : '';
-      return __('Completed!', 'yayboost') + errorText;
+      const errorText = state.errors > 0 ? ` (${state.errors} ${__('error(s)', 'yayboost-sales-booster-for-woocommerce')})` : '';
+      return __('Completed!', 'yayboost-sales-booster-for-woocommerce') + errorText;
     }
     return '';
   };
@@ -48,12 +48,12 @@ export function FBTBackfillCard() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Database className="h-5 w-5" />
-          <CardTitle>{__('Build Relationships from Historical Orders', 'yayboost')}</CardTitle>
+          <CardTitle>{__('Build Relationships from Historical Orders', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
         </div>
         <CardDescription>
           {__(
             'Scan your completed orders to build product relationship data. This helps improve recommendations based on what customers actually buy together.',
-            'yayboost',
+            'yayboost-sales-booster-for-woocommerce',
           )}
         </CardDescription>
       </CardHeader>
@@ -62,20 +62,20 @@ export function FBTBackfillCard() {
         {statusData && !state.isRunning && !state.isPaused && (
           <div>
             <div>
-              <span className="text-gray-500">{__('Total orders:', 'yayboost')}</span>{' '}
+              <span className="text-gray-500">{__('Total orders:', 'yayboost-sales-booster-for-woocommerce')}</span>{' '}
               <strong>{statusData.total.toLocaleString()}</strong>
             </div>
             <div>
-              <span className="text-gray-500">{__('Already processed:', 'yayboost')}</span>{' '}
+              <span className="text-gray-500">{__('Already processed:', 'yayboost-sales-booster-for-woocommerce')}</span>{' '}
               <strong>{statusData.already_processed.toLocaleString()}</strong>
             </div>
             <div>
-              <span className="text-gray-500">{__('Pending:', 'yayboost')}</span>{' '}
+              <span className="text-gray-500">{__('Pending:', 'yayboost-sales-booster-for-woocommerce')}</span>{' '}
               <strong className="text-orange-600">{statusData.unprocessed.toLocaleString()}</strong>
             </div>
             {state.errors > 0 && (
               <div>
-                <span className="text-gray-500">{__('Errors:', 'yayboost')}</span>{' '}
+                <span className="text-gray-500">{__('Errors:', 'yayboost-sales-booster-for-woocommerce')}</span>{' '}
                 <strong className="text-red-600">{state.errors.toLocaleString()}</strong>
               </div>
             )}
@@ -87,7 +87,7 @@ export function FBTBackfillCard() {
           <div className="space-y-2">
             <div className="w-24">
               <label className="mb-1 block text-sm font-medium">
-                {__('Batch size', 'yayboost')}
+                {__('Batch size', 'yayboost-sales-booster-for-woocommerce')}
               </label>
               <InputNumber
                 value={batchSize}
@@ -100,7 +100,7 @@ export function FBTBackfillCard() {
             <p className="text-muted-foreground">
               {__(
                 'Orders processed per request. Higher = faster but uses more server resources.',
-                'yayboost',
+                'yayboost-sales-booster-for-woocommerce',
               )}
             </p>
           </div>
@@ -129,7 +129,7 @@ export function FBTBackfillCard() {
           <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800">
             {__(
               `${state.errors.toLocaleString()} order(s) encountered errors during processing. Check server logs for details.`,
-              'yayboost',
+              'yayboost-sales-booster-for-woocommerce',
             )}
           </div>
         )}
@@ -145,12 +145,12 @@ export function FBTBackfillCard() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {__('Starting...', 'yayboost')}
+                  {__('Starting...', 'yayboost-sales-booster-for-woocommerce')}
                 </>
               ) : (
                 <>
                   <Play className="mr-2 h-4 w-4" />
-                  {__('Start Processing', 'yayboost')}
+                  {__('Start Processing', 'yayboost-sales-booster-for-woocommerce')}
                 </>
               )}
             </Button>
@@ -159,7 +159,7 @@ export function FBTBackfillCard() {
           {state.isRunning && (
             <Button type="button" variant="outline" onClick={pause}>
               <Pause className="mr-2 h-4 w-4" />
-              {__('Pause', 'yayboost')}
+              {__('Pause', 'yayboost-sales-booster-for-woocommerce')}
             </Button>
           )}
 
@@ -167,7 +167,7 @@ export function FBTBackfillCard() {
             <>
               <Button type="button" onClick={resume}>
                 <Play className="mr-2 h-4 w-4" />
-                {__('Resume', 'yayboost')}
+                {__('Resume', 'yayboost-sales-booster-for-woocommerce')}
               </Button>
               <Button
                 type="button"
@@ -178,12 +178,12 @@ export function FBTBackfillCard() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {__('Starting...', 'yayboost')}
+                    {__('Starting...', 'yayboost-sales-booster-for-woocommerce')}
                   </>
                 ) : (
                   <>
                     <Play className="mr-2 h-4 w-4" />
-                    {__('Start Over', 'yayboost')}
+                    {__('Start Over', 'yayboost-sales-booster-for-woocommerce')}
                   </>
                 )}
               </Button>

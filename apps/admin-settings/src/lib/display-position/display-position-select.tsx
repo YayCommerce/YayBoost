@@ -82,7 +82,7 @@ export function DisplayPositionSelect({
   return (
     <Select value={value} onValueChange={onValueChange} disabled={disabled}>
       <SelectTrigger className={className} size={size}>
-        <SelectValue placeholder={placeholder || __('Select position', 'yayboost')} />
+        <SelectValue placeholder={placeholder || __('Select position', 'yayboost-sales-booster-for-woocommerce')} />
       </SelectTrigger>
       <SelectContent>
         {positions.map((position) => (

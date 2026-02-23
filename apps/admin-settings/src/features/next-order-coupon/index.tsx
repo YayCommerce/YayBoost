@@ -68,9 +68,9 @@ const settingsSchema = z.object({
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
 const displayLocationOptions = [
-  { id: 'thank_you_page', label: __('Thank you page', 'yayboost') },
-  { id: 'order_email', label: __('Order confirmation email', 'yayboost') },
-  { id: 'my_account', label: __('My account → Orders', 'yayboost') },
+  { id: 'thank_you_page', label: __('Thank you page', 'yayboost-sales-booster-for-woocommerce') },
+  { id: 'order_email', label: __('Order confirmation email', 'yayboost-sales-booster-for-woocommerce') },
+  { id: 'my_account', label: __('My account → Orders', 'yayboost-sales-booster-for-woocommerce') },
 ];
 
 // Helper function to format discount display
@@ -82,7 +82,7 @@ function formatDiscountDisplay(discountType: string, discountValue?: number): st
     return `${currencySymbol}${(discountValue || 0).toFixed(2)}`;
   }
   if (discountType === 'free_shipping') {
-    return __('Free shipping', 'yayboost');
+    return __('Free shipping', 'yayboost-sales-booster-for-woocommerce');
   }
   return '';
 }
@@ -155,7 +155,7 @@ function CouponDisplay({
             textTransform: 'uppercase',
           }}
         >
-          {__('Coupon code:', 'yayboost')}
+          {__('Coupon code:', 'yayboost-sales-booster-for-woocommerce')}
         </div>
         <div
           style={{
@@ -175,9 +175,9 @@ function CouponDisplay({
 function ThankYouHeadingPlaceholder() {
   return (
     <div className="text-muted-foreground opacity-50">
-      <h2 className="mb-2 text-2xl font-semibold">{__('Thanks for your order', 'yayboost')}</h2>
+      <h2 className="mb-2 text-2xl font-semibold">{__('Thanks for your order', 'yayboost-sales-booster-for-woocommerce')}</h2>
       <p className="text-sm">
-        {__('We have received your order and will begin processing it right away.', 'yayboost')}
+        {__('We have received your order and will begin processing it right away.', 'yayboost-sales-booster-for-woocommerce')}
       </p>
     </div>
   );
@@ -188,17 +188,17 @@ function OrderTablePlaceholder() {
     <div className="text-muted-foreground rounded-lg border p-4 opacity-50">
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
-          <span>{__('Product', 'yayboost')}</span>
-          <span>{__('Total', 'yayboost')}</span>
+          <span>{__('Product', 'yayboost-sales-booster-for-woocommerce')}</span>
+          <span>{__('Total', 'yayboost-sales-booster-for-woocommerce')}</span>
         </div>
         <div className="border-t pt-2">
           <div className="flex justify-between text-sm">
-            <span>{__('Sample Product × 1', 'yayboost')}</span>
+            <span>{__('Sample Product × 1', 'yayboost-sales-booster-for-woocommerce')}</span>
             <span>{currencySymbol}29.99</span>
           </div>
         </div>
         <div className="flex justify-between border-t pt-2 font-semibold">
-          <span>{__('Total:', 'yayboost')}</span>
+          <span>{__('Total:', 'yayboost-sales-booster-for-woocommerce')}</span>
           <span>{currencySymbol}29.99</span>
         </div>
       </div>
@@ -209,10 +209,10 @@ function OrderTablePlaceholder() {
 function EmailHeaderPlaceholder() {
   return (
     <div className="text-muted-foreground space-y-2 border-b pb-4 opacity-50">
-      <h2 className="text-lg font-semibold">{__('Order Confirmation', 'yayboost')}</h2>
-      <p className="text-sm">{__('Hello,', 'yayboost')}</p>
+      <h2 className="text-lg font-semibold">{__('Order Confirmation', 'yayboost-sales-booster-for-woocommerce')}</h2>
+      <p className="text-sm">{__('Hello,', 'yayboost-sales-booster-for-woocommerce')}</p>
       <p className="text-sm">
-        {__('Your order has been received and is now being processed.', 'yayboost')}
+        {__('Your order has been received and is now being processed.', 'yayboost-sales-booster-for-woocommerce')}
       </p>
     </div>
   );
@@ -222,21 +222,21 @@ function AddressSectionPlaceholder() {
   return (
     <div className="text-muted-foreground grid grid-cols-2 gap-4 opacity-50">
       <div>
-        <h3 className="mb-2 font-semibold">{__('Shipping address', 'yayboost')}</h3>
+        <h3 className="mb-2 font-semibold">{__('Shipping address', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <div className="rounded border border-gray-300 bg-white p-3 text-sm">
-          <div>{__('John Doe', 'yayboost')}</div>
-          <div>{__('123 Main St', 'yayboost')}</div>
-          <div>{__('City', 'yayboost')}</div>
-          <div>{__('0901234567', 'yayboost')}</div>
+          <div>{__('John Doe', 'yayboost-sales-booster-for-woocommerce')}</div>
+          <div>{__('123 Main St', 'yayboost-sales-booster-for-woocommerce')}</div>
+          <div>{__('City', 'yayboost-sales-booster-for-woocommerce')}</div>
+          <div>{__('0901234567', 'yayboost-sales-booster-for-woocommerce')}</div>
         </div>
       </div>
       <div>
-        <h3 className="mb-2 font-semibold">{__('Billing address', 'yayboost')}</h3>
+        <h3 className="mb-2 font-semibold">{__('Billing address', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <div className="rounded border border-gray-300 bg-white p-3 text-sm">
-          <div>{__('John Doe', 'yayboost')}</div>
-          <div>{__('123 Main St', 'yayboost')}</div>
-          <div>{__('City', 'yayboost')}</div>
-          <div>{__('0901234567', 'yayboost')}</div>
+          <div>{__('John Doe', 'yayboost-sales-booster-for-woocommerce')}</div>
+          <div>{__('123 Main St', 'yayboost-sales-booster-for-woocommerce')}</div>
+          <div>{__('City', 'yayboost-sales-booster-for-woocommerce')}</div>
+          <div>{__('0901234567', 'yayboost-sales-booster-for-woocommerce')}</div>
         </div>
       </div>
     </div>
@@ -295,8 +295,8 @@ function NextOrderCouponPreview({ settings }: { settings: SettingsFormData }) {
   return (
     <Tabs defaultValue="thank-you" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="thank-you">{__('Thank You Page', 'yayboost')}</TabsTrigger>
-        <TabsTrigger value="email">{__('Email', 'yayboost')}</TabsTrigger>
+        <TabsTrigger value="thank-you">{__('Thank You Page', 'yayboost-sales-booster-for-woocommerce')}</TabsTrigger>
+        <TabsTrigger value="email">{__('Email', 'yayboost-sales-booster-for-woocommerce')}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="thank-you" className="mt-4 space-y-4">
@@ -383,9 +383,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
           >
             {/* Coupon Settings Section */}
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Coupon settings', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Coupon settings', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Configure the discount type and coupon code settings', 'yayboost')}
+                {__('Configure the discount type and coupon code settings', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
 
@@ -394,7 +394,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="discount_type"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Discount type', 'yayboost')}</Label>
+                  <Label>{__('Discount type', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -404,7 +404,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="percent" id="discount-percentage" />
                         <label htmlFor="discount-percentage" className="flex items-center gap-2">
-                          {__('Percentage off', 'yayboost')}
+                          {__('Percentage off', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                         {field.value === 'percent' && (
                           <FormField
@@ -429,7 +429,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="fixed_cart" id="discount-fixed" />
                         <label htmlFor="discount-fixed" className="flex items-center gap-2">
-                          {__('Fixed amount off', 'yayboost')}
+                          {__('Fixed amount off', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                         {field.value === 'fixed_cart' && (
                           <FormField
@@ -452,7 +452,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="free_shipping" id="discount-shipping" />
-                        <label htmlFor="discount-shipping">{__('Free shipping', 'yayboost')}</label>
+                        <label htmlFor="discount-shipping">{__('Free shipping', 'yayboost-sales-booster-for-woocommerce')}</label>
 
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -460,7 +460,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                           </TooltipTrigger>
                           <TooltipContent side="right">
                             <p>
-                              {__('Requires a', 'yayboost')}{' '}
+                              {__('Requires a', 'yayboost-sales-booster-for-woocommerce')}{' '}
                               <a
                                 href="https://woocommerce.com/document/free-shipping/"
                                 target="_blank"
@@ -468,9 +468,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                                 className="hover:text-primary underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {__('free shipping method', 'yayboost')}
+                                {__('free shipping method', 'yayboost-sales-booster-for-woocommerce')}
                               </a>{' '}
-                              {__('configured in your shipping zone. See setup guide.', 'yayboost')}
+                              {__('configured in your shipping zone. See setup guide.', 'yayboost-sales-booster-for-woocommerce')}
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -494,12 +494,12 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
 
                 return (
                   <FormItem>
-                    <Label htmlFor="coupon_prefix">{__('Coupon prefix', 'yayboost')}</Label>
+                    <Label htmlFor="coupon_prefix">{__('Coupon prefix', 'yayboost-sales-booster-for-woocommerce')}</Label>
                     <FormControl>
                       <Input id="coupon_prefix" className="w-64" {...field} />
                     </FormControl>
                     <FormDescription>
-                      {__('Preview:', 'yayboost')} {previewCode}
+                      {__('Preview:', 'yayboost-sales-booster-for-woocommerce')} {previewCode}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -512,7 +512,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="expires_after"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="expires_after">{__('Expires after', 'yayboost')}</Label>
+                  <Label htmlFor="expires_after">{__('Expires after', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Select
@@ -530,7 +530,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                           ))}
                         </SelectContent>
                       </Select>
-                      <span className="text-sm">{__('days from purchase', 'yayboost')}</span>
+                      <span className="text-sm">{__('days from purchase', 'yayboost-sales-booster-for-woocommerce')}</span>
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -542,9 +542,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
 
             {/* Generate Condition Section */}
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Generate condition', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Generate condition', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Specify when coupons should be generated', 'yayboost')}
+                {__('Specify when coupons should be generated', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
 
@@ -554,9 +554,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               render={({ field }) => (
                 <FormItem>
                   <Label htmlFor="minimum_order_total">
-                    {__('Only generate coupon when:', 'yayboost')}
+                    {__('Only generate coupon when:', 'yayboost-sales-booster-for-woocommerce')}
                   </Label>
-                  <FormDescription>{__('Order total is at least:', 'yayboost')}</FormDescription>
+                  <FormDescription>{__('Order total is at least:', 'yayboost-sales-booster-for-woocommerce')}</FormDescription>
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <span>{currencySymbol}</span>
@@ -578,7 +578,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="customer_type"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Who will get the coupon:', 'yayboost')}</Label>
+                  <Label>{__('Who will get the coupon:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -587,18 +587,18 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="all" id="customer-all" />
-                        <label htmlFor="customer-all">{__('All customers', 'yayboost')}</label>
+                        <label htmlFor="customer-all">{__('All customers', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="first_time" id="customer-first-time" />
                         <label htmlFor="customer-first-time">
-                          {__('First-time customers only', 'yayboost')}
+                          {__('First-time customers only', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="returning" id="customer-returning" />
                         <label htmlFor="customer-returning">
-                          {__('Returning customers only', 'yayboost')}
+                          {__('Returning customers only', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                       </div>
                     </RadioGroup>
@@ -613,7 +613,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="on_cancel_refund_action"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('When order is cancelled or refunded:', 'yayboost')}</Label>
+                  <Label>{__('When order is cancelled or refunded:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -623,13 +623,13 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="delete_and_reset" id="cancel-delete" />
                         <label htmlFor="cancel-delete">
-                          {__('Delete coupon and reset order count', 'yayboost')}
+                          {__('Delete coupon and reset order count', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="keep_and_count" id="cancel-keep" />
                         <label htmlFor="cancel-keep">
-                          {__('Keep coupon and count as ordered', 'yayboost')}
+                          {__('Keep coupon and count as ordered', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                       </div>
                     </RadioGroup>
@@ -643,9 +643,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
 
             {/* Usage Restriction Section */}
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Usage restriction', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Usage restriction', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Configure restrictions for using the generated coupon', 'yayboost')}
+                {__('Configure restrictions for using the generated coupon', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
 
@@ -655,7 +655,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               render={({ field }) => (
                 <FormItem>
                   <Label htmlFor="minimum_spend_to_use">
-                    {__('Minimum next order spend to use coupon:', 'yayboost')}
+                    {__('Minimum next order spend to use coupon:', 'yayboost-sales-booster-for-woocommerce')}
                   </Label>
                   <FormControl>
                     <div className="flex items-center gap-2">
@@ -678,7 +678,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="exclude_sale_items"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Exclude sale items', 'yayboost')}</Label>
+                  <Label>{__('Exclude sale items', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value ? 'yes' : 'no'}
@@ -687,11 +687,11 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="yes" id="exclude-yes" />
-                        <label htmlFor="exclude-yes">{__('Yes', 'yayboost')}</label>
+                        <label htmlFor="exclude-yes">{__('Yes', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="no" id="exclude-no" />
-                        <label htmlFor="exclude-no">{__('No', 'yayboost')}</label>
+                        <label htmlFor="exclude-no">{__('No', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -704,9 +704,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
 
             {/* Display Location Section */}
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Display location', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Display location', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Choose where to display the coupon information', 'yayboost')}
+                {__('Choose where to display the coupon information', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
             <FormField
@@ -750,9 +750,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
 
             {/* Thank You Page Display Section */}
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Thank you page display', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Thank you page display', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Customize the content shown on the thank you page', 'yayboost')}
+                {__('Customize the content shown on the thank you page', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
 
@@ -761,7 +761,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="thank_you_headline"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="thank_you_headline">{__('Headline', 'yayboost')}</Label>
+                  <Label htmlFor="thank_you_headline">{__('Headline', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Input
                       id="thank_you_headline"
@@ -779,7 +779,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="thank_you_message"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="thank_you_message">{__('Message', 'yayboost')}</Label>
+                  <Label htmlFor="thank_you_message">{__('Message', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Textarea
                       id="thank_you_message"
@@ -789,7 +789,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <FormDescription>
-                    {__('Available placeholders:', 'yayboost')} {'{coupon_code}'}, {'{discount}'},{' '}
+                    {__('Available placeholders:', 'yayboost-sales-booster-for-woocommerce')} {'{coupon_code}'}, {'{discount}'},{' '}
                     {'{expiry}'}
                   </FormDescription>
                   <FormMessage />
@@ -801,9 +801,9 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
 
             {/* Email Content Section */}
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Email content', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Email content', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Customize the email content sent to customers', 'yayboost')}
+                {__('Customize the email content sent to customers', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
 
@@ -812,7 +812,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
               name="email_content"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="email_content">{__('Section text', 'yayboost')}</Label>
+                  <Label htmlFor="email_content">{__('Section text', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Textarea
                       id="email_content"
@@ -822,7 +822,7 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <FormDescription>
-                    {__('Available placeholders:', 'yayboost')} {'{coupon_code}'}, {'{discount}'},{' '}
+                    {__('Available placeholders:', 'yayboost-sales-booster-for-woocommerce')} {'{coupon_code}'}, {'{discount}'},{' '}
                     {'{expiry}'}
                   </FormDescription>
                   <FormMessage />
@@ -838,10 +838,10 @@ export default function NextOrderCouponFeature({ featureId }: FeatureComponentPr
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
               </div>
               <CardDescription>
-                {__('See how the coupon will appear to customers', 'yayboost')}
+                {__('See how the coupon will appear to customers', 'yayboost-sales-booster-for-woocommerce')}
               </CardDescription>
             </CardHeader>
             <CardContent>

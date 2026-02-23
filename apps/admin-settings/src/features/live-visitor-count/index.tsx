@@ -209,9 +209,9 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
           isLoading={isLoading || isFetching}
         >
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Tracking Mode', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Tracking Mode', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('Configure how visitor counts are tracked and displayed.', 'yayboost')}
+              {__('Configure how visitor counts are tracked and displayed.', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <FormField
@@ -224,18 +224,18 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="real-tracking" id="real-tracking" />
                       <div className="space-y-1">
-                        <Label htmlFor="real-tracking">{__('Real Tracking', 'yayboost')}</Label>
+                        <Label htmlFor="real-tracking">{__('Real Tracking', 'yayboost-sales-booster-for-woocommerce')}</Label>
                         <FormDescription>
-                          {__('Track actual visitors viewing the product.', 'yayboost')}
+                          {__('Track actual visitors viewing the product.', 'yayboost-sales-booster-for-woocommerce')}
                         </FormDescription>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="simulated" id="simulated" />
                       <div className="space-y-1">
-                        <Label htmlFor="simulated">{__('Simulated', 'yayboost')}</Label>
+                        <Label htmlFor="simulated">{__('Simulated', 'yayboost-sales-booster-for-woocommerce')}</Label>
                         <FormDescription>
-                          {__('Display randomized visitor counts.', 'yayboost')}
+                          {__('Display randomized visitor counts.', 'yayboost-sales-booster-for-woocommerce')}
                         </FormDescription>
                       </div>
                     </div>
@@ -248,21 +248,21 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
           {/* Real Tracking Settings */}
           {trackingMode === 'real-tracking' && (
             <div className="space-y-4">
-              <Label>{__('Real Tracking Settings', 'yayboost')}</Label>
+              <Label>{__('Real Tracking Settings', 'yayboost-sales-booster-for-woocommerce')}</Label>
               <div className="space-y-4 pt-2">
                 <FormField
                   control={form.control}
                   name="real_tracking.active_window"
                   render={({ field }) => (
                     <FormItem>
-                      <Label>{__('Active Window (minutes)', 'yayboost')}</Label>
+                      <Label>{__('Active Window (minutes)', 'yayboost-sales-booster-for-woocommerce')}</Label>
                       <Select
                         value={field.value?.toString() ?? '5'}
                         onValueChange={(value) => field.onChange(parseInt(value, 10))}
                       >
                         <FormControl>
                           <SelectTrigger className="w-24">
-                            <SelectValue placeholder={__('Select active window', 'yayboost')} />
+                            <SelectValue placeholder={__('Select active window', 'yayboost-sales-booster-for-woocommerce')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -273,7 +273,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        {__('Count visitors active within this time period', 'yayboost')}
+                        {__('Count visitors active within this time period', 'yayboost-sales-booster-for-woocommerce')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -286,7 +286,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                   render={({ field }) => (
                     <FormItem>
                       <Label htmlFor="minimum-count-display">
-                        {__('Minimum Count to Display', 'yayboost')}
+                        {__('Minimum Count to Display', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                       <FormControl>
                         <div className="w-fit">
@@ -303,7 +303,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                       <FormDescription>
                         {__(
                           'Hide counter if visitors below this number (0 = always show)',
-                          'yayboost',
+                          'yayboost-sales-booster-for-woocommerce',
                         )}
                       </FormDescription>
                       <FormMessage />
@@ -317,14 +317,14 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
           {/* Simulated Settings */}
           {trackingMode === 'simulated' && (
             <div className="space-y-4">
-              <Label>{__('Simulated Settings', 'yayboost')}</Label>
+              <Label>{__('Simulated Settings', 'yayboost-sales-booster-for-woocommerce')}</Label>
               <div className="space-y-4 pt-2">
                 <FormField
                   control={form.control}
                   name="simulated.min"
                   render={({ field }) => (
                     <FormItem>
-                      <Label htmlFor="minimum-count">{__('Minimum Count', 'yayboost')}</Label>
+                      <Label htmlFor="minimum-count">{__('Minimum Count', 'yayboost-sales-booster-for-woocommerce')}</Label>
                       <FormControl>
                         <div className="w-fit">
                           <InputNumber
@@ -347,7 +347,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                   name="simulated.max"
                   render={({ field }) => (
                     <FormItem>
-                      <Label htmlFor="maximum-count">{__('Maximum Count', 'yayboost')}</Label>
+                      <Label htmlFor="maximum-count">{__('Maximum Count', 'yayboost-sales-booster-for-woocommerce')}</Label>
                       <FormControl>
                         <div className="w-fit">
                           <InputNumber
@@ -361,7 +361,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                         </div>
                       </FormControl>
                       <FormDescription>
-                        {__('Random count will be between min and max', 'yayboost')}
+                        {__('Random count will be between min and max', 'yayboost-sales-booster-for-woocommerce')}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -372,9 +372,9 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
           )}
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('Configure how the visitor count is displayed.', 'yayboost')}
+              {__('Configure how the visitor count is displayed.', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <FormField
@@ -382,7 +382,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             name="display.text"
             render={({ field }) => (
               <FormItem>
-                <Label htmlFor="display-text">{__('Display Text', 'yayboost')}</Label>
+                <Label htmlFor="display-text">{__('Display Text', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <FormControl>
                   <Input
                     {...field}
@@ -392,7 +392,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                   />
                 </FormControl>
                 <FormDescription>
-                  {__('Use {count} as placeholder for the number of visitors', 'yayboost')}
+                  {__('Use {count} as placeholder for the number of visitors', 'yayboost-sales-booster-for-woocommerce')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -404,7 +404,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             name="display.position"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Position on Product Page', 'yayboost')}</Label>
+                <Label>{__('Position on Product Page', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <FormControl>
                   <DisplayPositionSelect
                     pageType={PAGE_PRODUCT}
@@ -418,7 +418,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                   <FormDescription>
                     {__(
                       'Drag and drop the block "Live Visitor Count" block directly into the single product page editor to display the number of users currently visiting.',
-                      'yayboost',
+                      'yayboost-sales-booster-for-woocommerce',
                     )}
                   </FormDescription>
                 )}
@@ -428,9 +428,9 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
           />
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Style Settings', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Style Settings', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('Configure the style of the visitor count.', 'yayboost')}
+              {__('Configure the style of the visitor count.', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <div className="space-y-6">
@@ -439,7 +439,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               name="style.style"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Choose Style', 'yayboost')}</Label>
+                  <Label>{__('Choose Style', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -449,19 +449,19 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="style_1" id="style-1" />
                         <div className="space-y-1">
-                          <label htmlFor="style-1">{__('Text only', 'yayboost')}</label>
+                          <label htmlFor="style-1">{__('Text only', 'yayboost-sales-booster-for-woocommerce')}</label>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="style_2" id="style-2" />
                         <div className="space-y-1">
-                          <label htmlFor="style-2">{__('Badge style', 'yayboost')}</label>
+                          <label htmlFor="style-2">{__('Badge style', 'yayboost-sales-booster-for-woocommerce')}</label>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="style_3" id="style-3" />
                         <div className="space-y-1">
-                          <label htmlFor="style-3">{__('Bubble style', 'yayboost')}</label>
+                          <label htmlFor="style-3">{__('Bubble style', 'yayboost-sales-booster-for-woocommerce')}</label>
                         </div>
                       </div>
                     </RadioGroup>
@@ -476,7 +476,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               name="style.text_color"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Text Color', 'yayboost')}</Label>
+                  <Label>{__('Text Color', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <ColorPicker
                       value={field.value}
@@ -494,7 +494,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
                 name="style.background_color"
                 render={({ field }) => (
                   <FormItem>
-                    <Label>{__('Background Color', 'yayboost')}</Label>
+                    <Label>{__('Background Color', 'yayboost-sales-booster-for-woocommerce')}</Label>
                     <FormControl>
                       <ColorPicker
                         value={field.value}
@@ -510,11 +510,11 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
           </div>
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Product targeting', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Product targeting', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
               {__(
                 'Configure which products and categories the visitor count should be displayed on.',
-                'yayboost',
+                'yayboost-sales-booster-for-woocommerce',
               )}
             </p>
           </div>
@@ -523,20 +523,20 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             name="apply_on.apply"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Show On', 'yayboost')}</Label>
+                <Label>{__('Show On', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-46">
-                      <SelectValue placeholder={__('Select apply on', 'yayboost')} />
+                      <SelectValue placeholder={__('Select apply on', 'yayboost-sales-booster-for-woocommerce')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="all">{__('All Products', 'yayboost')}</SelectItem>
+                    <SelectItem value="all">{__('All Products', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
                     <SelectItem value="specific_categories">
-                      {__('Specific Categories', 'yayboost')}
+                      {__('Specific Categories', 'yayboost-sales-booster-for-woocommerce')}
                     </SelectItem>
                     <SelectItem value="specific_products">
-                      {__('Specific Products', 'yayboost')}
+                      {__('Specific Products', 'yayboost-sales-booster-for-woocommerce')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -550,7 +550,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               name="apply_on.categories"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Specific Categories', 'yayboost')}</Label>
+                  <Label>{__('Specific Categories', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <MultiSelect
                       options={categories ?? []}
@@ -572,7 +572,7 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
               name="apply_on.products"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Specific Products', 'yayboost')}</Label>
+                  <Label>{__('Specific Products', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <MultiSelect
                       options={products ?? []}
@@ -595,10 +595,10 @@ export default function LiveVisitorCountFeature({ featureId }: FeatureComponentP
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
               </div>
               <CardDescription>
-                {__('See how the section will look on your store', 'yayboost')}
+                {__('See how the section will look on your store', 'yayboost-sales-booster-for-woocommerce')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

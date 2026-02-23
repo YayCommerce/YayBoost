@@ -24,9 +24,9 @@ function FeatureHeader({ activeCount, totalCount }: { activeCount: number; total
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{__('Features', 'yayboost')}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{__('Features', 'yayboost-sales-booster-for-woocommerce')}</h1>
         <p className="mt-1 text-muted-foreground">
-          {__('Boost your sales with powerful conversion tools', 'yayboost')}
+          {__('Boost your sales with powerful conversion tools', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
 
@@ -36,12 +36,12 @@ function FeatureHeader({ activeCount, totalCount }: { activeCount: number; total
           <div className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5">
             <span className="h-2 w-2 rounded-full bg-success" />
             <span className="text-sm font-medium text-success">
-              {activeCount} {__('Active', 'yayboost')}
+              {activeCount} {__('Active', 'yayboost-sales-booster-for-woocommerce')}
             </span>
           </div>
           <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5">
             <span className="text-sm text-muted-foreground">
-              {totalCount} {__('Total', 'yayboost')}
+              {totalCount} {__('Total', 'yayboost-sales-booster-for-woocommerce')}
             </span>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function FeatureContainer() {
 
   // Build tabs dynamically from categories
   const tabs = [
-    { value: 'all', label: __('All', 'yayboost'), icon: null, count: totalCount },
+    { value: 'all', label: __('All', 'yayboost-sales-booster-for-woocommerce'), icon: null, count: totalCount },
     ...(categories || []).map((category: FeatureCategory) => ({
       value: category.id,
       label: category.name,
@@ -143,7 +143,7 @@ export default function FeatureContainer() {
       {error && (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>{__('Failed to load features', 'yayboost')}</EmptyTitle>
+            <EmptyTitle>{__('Failed to load features', 'yayboost-sales-booster-for-woocommerce')}</EmptyTitle>
             <EmptyDescription>{error.message}</EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -153,9 +153,9 @@ export default function FeatureContainer() {
       {!isLoading && !error && !hasFeatures && (
         <Empty>
           <EmptyHeader>
-            <EmptyTitle>{__('No features available', 'yayboost')}</EmptyTitle>
+            <EmptyTitle>{__('No features available', 'yayboost-sales-booster-for-woocommerce')}</EmptyTitle>
             <EmptyDescription>
-              {__('Features will appear here once configured.', 'yayboost')}
+              {__('Features will appear here once configured.', 'yayboost-sales-booster-for-woocommerce')}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -200,7 +200,7 @@ export default function FeatureContainer() {
               </InputPrefix>
               <Input
                 type="search"
-                placeholder={__('Search features...', 'yayboost')}
+                placeholder={__('Search features...', 'yayboost-sales-booster-for-woocommerce')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-card pl-9"
@@ -224,12 +224,12 @@ export default function FeatureContainer() {
                       <Sparkles className="h-6 w-6 text-muted-foreground" />
                     </div>
                     <p className="text-sm font-medium text-foreground">
-                      {__('No features found', 'yayboost')}
+                      {__('No features found', 'yayboost-sales-booster-for-woocommerce')}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {searchQuery
-                        ? __('Try adjusting your search', 'yayboost')
-                        : __('Features will appear here', 'yayboost')}
+                        ? __('Try adjusting your search', 'yayboost-sales-booster-for-woocommerce')
+                        : __('Features will appear here', 'yayboost-sales-booster-for-woocommerce')}
                     </p>
                   </div>
                 )}

@@ -36,7 +36,7 @@ class FBTAjaxHandler {
         if ( ! check_ajax_referer( 'yayboost_fbt_add_to_cart', 'nonce', false ) ) {
             wp_send_json_error(
                 [
-                    'message' => __( 'Security check failed.', 'yayboost' ),
+                    'message' => __( 'Security check failed.', 'yayboost-sales-booster-for-woocommerce' ),
                 ],
                 403
             );
@@ -57,7 +57,7 @@ class FBTAjaxHandler {
         if ( empty( $product_ids ) ) {
             wp_send_json_error(
                 [
-                    'message' => __( 'No products selected.', 'yayboost' ),
+                    'message' => __( 'No products selected.', 'yayboost-sales-booster-for-woocommerce' ),
                 ],
                 400
             );
@@ -73,7 +73,7 @@ class FBTAjaxHandler {
             if ( ! $product ) {
                 $errors[] = sprintf(
                     /* translators: %d: product ID */
-                    __( 'Product #%d not found.', 'yayboost' ),
+                    __( 'Product #%d not found.', 'yayboost-sales-booster-for-woocommerce' ),
                     $product_id
                 );
                 continue;
@@ -83,7 +83,7 @@ class FBTAjaxHandler {
             if ( ! $product->is_purchasable() ) {
                 $errors[] = sprintf(
                     /* translators: %s: product name */
-                    __( '%s cannot be purchased.', 'yayboost' ),
+                    __( '%s cannot be purchased.', 'yayboost-sales-booster-for-woocommerce' ),
                     $product->get_name()
                 );
                 continue;
@@ -93,7 +93,7 @@ class FBTAjaxHandler {
             if ( ! $product->is_in_stock() ) {
                 $errors[] = sprintf(
                     /* translators: %s: product name */
-                    __( '%s is out of stock.', 'yayboost' ),
+                    __( '%s is out of stock.', 'yayboost-sales-booster-for-woocommerce' ),
                     $product->get_name()
                 );
                 continue;
@@ -132,7 +132,7 @@ class FBTAjaxHandler {
             } else {
                 $errors[] = sprintf(
                     /* translators: %s: product name */
-                    __( 'Failed to add %s to cart.', 'yayboost' ),
+                    __( 'Failed to add %s to cart.', 'yayboost-sales-booster-for-woocommerce' ),
                     $product->get_name()
                 );
             }//end if
@@ -142,7 +142,7 @@ class FBTAjaxHandler {
         if ( empty( $added ) ) {
             wp_send_json_error(
                 [
-                    'message' => __( 'Failed to add products to cart.', 'yayboost' ),
+                    'message' => __( 'Failed to add products to cart.', 'yayboost-sales-booster-for-woocommerce' ),
                     'errors'  => $errors,
                 ],
                 400
@@ -157,7 +157,7 @@ class FBTAjaxHandler {
                         '%d product added to cart.',
                         '%d products added to cart.',
                         count( $added ),
-                        'yayboost'
+                        'yayboost-sales-booster-for-woocommerce'
                     ),
                     count( $added )
                 ),

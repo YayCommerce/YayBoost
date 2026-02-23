@@ -144,7 +144,7 @@ class Bootstrap {
      * @return array The plugin action links
      */
     public function add_plugin_action_links( $links ) {
-        array_unshift( $links, '<a href="' . admin_url( 'admin.php?page=yayboost' ) . '">' . __( 'Settings', 'yayboost' ) . '</a>' );
+        array_unshift( $links, '<a href="' . admin_url( 'admin.php?page=yayboost' ) . '">' . __( 'Settings', 'yayboost-sales-booster-for-woocommerce' ) . '</a>' );
         return $links;
     }
 
@@ -157,8 +157,8 @@ class Bootstrap {
      */
     public function add_plugin_author_links( $links, $file ) {
         if ( YAYBOOST_BASENAME === $file ) {
-            $links[] = '<a href="https://docs.yaycommerce.com/yayboost/getting-started/introduction" target="_blank">' . __( 'Docs', 'yayboost' ) . '</a>';
-            $links[] = '<a href="https://yaycommerce.com/support/" target="_blank">' . __( 'Support', 'yayboost' ) . '</a>';
+            $links[] = '<a href="https://docs.yaycommerce.com/yayboost/getting-started/introduction" target="_blank">' . __( 'Docs', 'yayboost-sales-booster-for-woocommerce' ) . '</a>';
+            $links[] = '<a href="https://yaycommerce.com/support/" target="_blank">' . __( 'Support', 'yayboost-sales-booster-for-woocommerce' ) . '</a>';
         }
         return $links;
     }

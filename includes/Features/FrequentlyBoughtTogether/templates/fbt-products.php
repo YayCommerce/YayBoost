@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$section_title    = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost' );
+$section_title    = $settings['section_title'] ?? __( 'Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce' );
 $main_product     = $product_id ? wc_get_product( $product_id ) : null;
 $display_products = $main_product ? array_merge( [ $main_product ], $products ) : $products;
 
@@ -45,11 +45,11 @@ $svg_check = '<svg class="fbt-checkbox__icon" viewBox="0 0 24 24" fill="none" st
         </div>
         <div class="fbt-summary">
             <div class="fbt-summary__total-price">
-                <p class="fbt-summary__total"><?php esc_html_e( 'Total price', 'yayboost' ); ?></p>
+                <p class="fbt-summary__total"><?php esc_html_e( 'Total price', 'yayboost-sales-booster-for-woocommerce' ); ?></p>
                 <p class="fbt-summary__price yayboost-fbt__total-price"></p>
             </div>
             <button type="button" class="yayboost-fbt__add-btn fbt-add-btn">
-                <?php esc_html_e( 'Add all to basket', 'yayboost' ); ?>
+                <?php esc_html_e( 'Add all to basket', 'yayboost-sales-booster-for-woocommerce' ); ?>
             </button>
         </div>
     </div>
@@ -79,7 +79,7 @@ $svg_check = '<svg class="fbt-checkbox__icon" viewBox="0 0 24 24" fill="none" st
                 <div class="fbt-item__content">
                     <p class="fbt-item__name">
                         <?php if ( $is_first ) : ?>
-                            <span class="fbt-item__badge"><?php esc_html_e( 'This item:', 'yayboost' ); ?></span>
+                            <span class="fbt-item__badge"><?php esc_html_e( 'This item:', 'yayboost-sales-booster-for-woocommerce' ); ?></span>
                         <?php endif; ?>
                         <a href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( $name ); ?></a>
                     </p>

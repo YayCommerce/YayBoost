@@ -14,8 +14,8 @@ import {
   Activity,
   ChevronRight,
   Eye,
-  MessageSquare,
   Mail,
+  MessageSquare,
   ShoppingCart,
   Sparkles,
   SquareArrowOutUpRight,
@@ -50,20 +50,20 @@ const HEALTH_CONFIG = {
   green: {
     color: 'bg-success',
     ringColor: 'ring-success/30',
-    label: __('Active', 'yayboost'),
-    description: __('Receiving impressions', 'yayboost'),
+    label: __('Active', 'yayboost-sales-booster-for-woocommerce'),
+    description: __('Receiving impressions', 'yayboost-sales-booster-for-woocommerce'),
   },
   yellow: {
     color: 'bg-warning',
     ringColor: 'ring-warning/30',
-    label: __('No Data', 'yayboost'),
-    description: __('Enabled but no impressions yet', 'yayboost'),
+    label: __('No Data', 'yayboost-sales-booster-for-woocommerce'),
+    description: __('Enabled but no impressions yet', 'yayboost-sales-booster-for-woocommerce'),
   },
   gray: {
     color: 'bg-muted-foreground/40',
     ringColor: 'ring-muted-foreground/20',
-    label: __('Disabled', 'yayboost'),
-    description: __('Feature is turned off', 'yayboost'),
+    label: __('Disabled', 'yayboost-sales-booster-for-woocommerce'),
+    description: __('Feature is turned off', 'yayboost-sales-booster-for-woocommerce'),
   },
 };
 
@@ -106,9 +106,13 @@ export function FeatureHealthGrid() {
             <Activity className="text-muted-foreground h-4 w-4" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold">{__('Feature Health', 'yayboost')}</h3>
+            <h3 className="text-sm font-semibold">
+              {__('Feature Health', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
             {data?.date_range && (
-              <p className="text-muted-foreground text-xs">{__('Last 7 days', 'yayboost')}</p>
+              <p className="text-muted-foreground text-xs">
+                {__('Last 7 days', 'yayboost-sales-booster-for-woocommerce')}
+              </p>
             )}
           </div>
         </div>
@@ -139,7 +143,7 @@ export function FeatureHealthGrid() {
               <Sparkles className="text-muted-foreground h-6 w-6" />
             </div>
             <p className="text-muted-foreground text-sm">
-              {__('No features available', 'yayboost')}
+              {__('No features available', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
         ) : (
@@ -202,7 +206,9 @@ export function FeatureHealthGrid() {
                             : 'bg-muted text-muted-foreground',
                         )}
                       >
-                        {feature.enabled ? __('Enabled', 'yayboost') : __('Disabled', 'yayboost')}
+                        {feature.enabled
+                          ? __('Enabled', 'yayboost-sales-booster-for-woocommerce')
+                          : __('Disabled', 'yayboost-sales-booster-for-woocommerce')}
                       </span>
 
                       {feature.enabled && feature.impressions > 0 && (
