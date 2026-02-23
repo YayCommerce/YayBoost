@@ -25,8 +25,8 @@ class AdminMenu {
     }
 
     public function admin_body_class( $classes ) {
-        if ( strpos( $classes, 'yayboost-ui' ) === false ) {
-            $classes .= ' yayboost-ui';
+        if ( strpos( $classes, 'yay-ui' ) === false ) {
+            $classes .= ' yay-ui';
         }
         return $classes;
     }
@@ -77,12 +77,6 @@ class AdminMenu {
 
     public function render_page() {
         ?>
-            <style>
-                #wpcontent .notice,
-                .error, .updated {
-                    display: none;
-                }
-            </style>
             <div id="yayboost"></div>
         <?php
     }

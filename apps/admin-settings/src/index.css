@@ -8,6 +8,6 @@
 @import 'tailwindcss/preflight.css';
 @import './styles/preflight.css';
 
-.yayboost-ui {
+.yay-ui {
   @import 'tailwindcss/utilities.css';
 }
