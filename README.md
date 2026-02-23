@@ -137,7 +137,7 @@ This will:
 - Install production dependencies
 - Build frontend assets
 - Create a clean plugin copy
-- Generate a zip file in `release/yayboost-{version}.zip`
+- Generate a zip file in `release/yayboost-sales-booster-for-woocommerce-{version}.zip`
 - Create a SHA-256 checksum
 
 For detailed release instructions, see [RELEASE.md](RELEASE.md).
