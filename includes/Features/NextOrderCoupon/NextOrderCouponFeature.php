@@ -769,7 +769,7 @@ class NextOrderCouponFeature extends AbstractFeature {
         // Plain text version for email
         if ($plain_text) {
             echo "\n\n" . esc_html( $message ) . "\n";
-            echo esc_html( __( 'Coupon code:', 'yayboost' ) ) . ' ' . esc_html( $coupon_code ) . "\n";
+            echo esc_html( __( 'Coupon code:', 'yayboost-sales-booster-for-woocommerce' ) ) . ' ' . esc_html( $coupon_code ) . "\n";
             return;
         }
 
@@ -787,7 +787,7 @@ class NextOrderCouponFeature extends AbstractFeature {
 
             <div style="margin: 0; padding: 12px; background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">
                 <div style="margin: 0 0 6px 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">
-                    <?php echo esc_html( __( 'Coupon code:', 'yayboost' ) ); ?>
+                    <?php echo esc_html( __( 'Coupon code:', 'yayboost-sales-booster-for-woocommerce' ) ); ?>
                 </div>
                 <div style="margin: 0; font-size: 18px; font-weight: 700;">
                     <?php echo esc_html( $coupon_code ); ?>
@@ -813,7 +813,7 @@ class NextOrderCouponFeature extends AbstractFeature {
             case 'fixed_cart':
                 return $currency_symbol . number_format( $discount_value, 2 );
             case 'free_shipping':
-                return __( 'Free shipping', 'yayboost' );
+                return __( 'Free shipping', 'yayboost-sales-booster-for-woocommerce' );
             default:
                 return '';
         }
@@ -965,9 +965,9 @@ class NextOrderCouponFeature extends AbstractFeature {
                 'minimum_spend_to_use' => 0,
                 'exclude_sale_items'   => false,
                 'display_locations'    => [ 'thank_you_page', 'order_email', 'my_account' ],
-                'thank_you_headline'   => __( "🎁 Here's a gift for your next order!", 'yayboost' ),
-                'thank_you_message'    => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires in {expiry}.', 'yayboost' ),
-                'email_content'        => __( "As a thank you, here's {discount} off your next order!. Expires in {expiry}", 'yayboost' ),
+                'thank_you_headline'   => __( "🎁 Here's a gift for your next order!", 'yayboost-sales-booster-for-woocommerce' ),
+                'thank_you_message'    => __( 'Use code {coupon_code} to get {discount} off your next purchase. Expires in {expiry}.', 'yayboost-sales-booster-for-woocommerce' ),
+                'email_content'        => __( "As a thank you, here's {discount} off your next order!. Expires in {expiry}", 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }

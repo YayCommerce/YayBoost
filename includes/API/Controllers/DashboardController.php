@@ -112,7 +112,8 @@ class DashboardController extends BaseController {
             }
 
             // Determine health status
-            $health = 'gray'; // Default: disabled
+            $health = 'gray';
+            // Default: disabled
             if ( $is_enabled ) {
                 $health = $impressions > 0 ? 'green' : 'yellow';
             }
@@ -126,15 +127,17 @@ class DashboardController extends BaseController {
                 'impressions' => $impressions,
                 'path'        => '/features/' . $feature_id,
             ];
-        }
+        }//end foreach
 
-        return $this->success( [
-            'features'   => $health_data,
-            'date_range' => [
-                'start' => $start_date,
-                'end'   => $end_date,
-            ],
-        ] );
+        return $this->success(
+            [
+                'features'   => $health_data,
+                'date_range' => [
+                    'start' => $start_date,
+                    'end'   => $end_date,
+                ],
+            ]
+        );
     }
 
     /**
@@ -148,10 +151,12 @@ class DashboardController extends BaseController {
 
         // If dismissed, return minimal response
         if ( $dismissed ) {
-            return $this->success( [
-                'dismissed' => true,
-                'steps'     => [],
-            ] );
+            return $this->success(
+                [
+                    'dismissed' => true,
+                    'steps'     => [],
+                ]
+            );
         }
 
         // Check each step completion
@@ -164,11 +169,13 @@ class DashboardController extends BaseController {
             true
         );
 
-        return $this->success( [
-            'dismissed'    => false,
-            'all_complete' => $all_complete,
-            'steps'        => $steps,
-        ] );
+        return $this->success(
+            [
+                'dismissed'    => false,
+                'all_complete' => $all_complete,
+                'steps'        => $steps,
+            ]
+        );
     }
 
     /**
@@ -180,10 +187,12 @@ class DashboardController extends BaseController {
     public function dismiss_onboarding( WP_REST_Request $request ) {
         update_option( self::ONBOARDING_DISMISSED_OPTION, true );
 
-        return $this->success( [
-            'dismissed' => true,
-            'message'   => __( 'Onboarding dismissed.', 'yayboost' ),
-        ] );
+        return $this->success(
+            [
+                'dismissed' => true,
+                'message'   => __( 'Onboarding dismissed.', 'yayboost-sales-booster-for-woocommerce' ),
+            ]
+        );
     }
 
     /**
@@ -195,31 +204,32 @@ class DashboardController extends BaseController {
         return [
             [
                 'id'          => 'enable_feature',
-                'title'       => __( 'Enable at least one feature', 'yayboost' ),
-                'description' => __( 'Activate a boost feature to start increasing sales.', 'yayboost' ),
+                'title'       => __( 'Enable at least one feature', 'yayboost-sales-booster-for-woocommerce' ),
+                'description' => __( 'Activate a boost feature to start increasing sales.', 'yayboost-sales-booster-for-woocommerce' ),
                 'completed'   => $this->has_enabled_feature(),
                 'action'      => [
-                    'label' => __( 'Go to Features', 'yayboost' ),
+                    'label' => __( 'Go to Features', 'yayboost-sales-booster-for-woocommerce' ),
                     'path'  => '/features',
                 ],
             ],
             [
                 'id'          => 'configure_shipping',
-                'title'       => __( 'Configure Free Shipping Bar', 'yayboost' ),
-                'description' => __( 'Set up your free shipping threshold to encourage larger orders.', 'yayboost' ),
+                'title'       => __( 'Configure Free Shipping Bar', 'yayboost-sales-booster-for-woocommerce' ),
+                'description' => __( 'Set up your free shipping threshold to encourage larger orders.', 'yayboost-sales-booster-for-woocommerce' ),
                 'completed'   => $this->is_free_shipping_configured(),
                 'action'      => [
-                    'label' => __( 'Configure', 'yayboost' ),
+                    'label' => __( 'Configure', 'yayboost-sales-booster-for-woocommerce' ),
                     'path'  => '/features/free_shipping_bar',
                 ],
             ],
             // Backfill now runs automatically on plugin activation
             [
                 'id'          => 'wait_analytics',
-                'title'       => __( 'Wait for first analytics data', 'yayboost' ),
-                'description' => __( 'Analytics will appear once customers interact with your features.', 'yayboost' ),
+                'title'       => __( 'Wait for first analytics data', 'yayboost-sales-booster-for-woocommerce' ),
+                'description' => __( 'Analytics will appear once customers interact with your features.', 'yayboost-sales-booster-for-woocommerce' ),
                 'completed'   => $this->has_analytics_data(),
-                'action'      => null, // No action, auto-completes
+                'action'      => null,
+            // No action, auto-completes
             ],
         ];
     }
@@ -294,25 +304,26 @@ class DashboardController extends BaseController {
      * @return \WP_REST_Response|\WP_Error
      */
     public function get_recent_activity( WP_REST_Request $request ) {
-        $limit  = $request->get_param( 'limit' ) ?? 10;
-        $limit  = min( max( (int) $limit, 1 ), 50 ); // Clamp 1-50
+        $limit = $request->get_param( 'limit' ) ?? 10;
+        $limit = min( max( (int) $limit, 1 ), 50 );
+        // Clamp 1-50
         $events = AnalyticsEventsTable::get_recent_activity( $limit );
 
         // Map feature IDs for display
         $feature_names = [
-            'fbt'               => __( 'Frequently Bought Together', 'yayboost' ),
-            'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost' ),
-            'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost' ),
-            'next_order_coupon' => __( 'Next Order Coupon', 'yayboost' ),
-            'exit_intent_popup' => __( 'Exit-Intent Popup', 'yayboost' ),
+            'fbt'               => __( 'Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce' ),
+            'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost-sales-booster-for-woocommerce' ),
+            'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost-sales-booster-for-woocommerce' ),
+            'next_order_coupon' => __( 'Next Order Coupon', 'yayboost-sales-booster-for-woocommerce' ),
+            'exit_intent_popup' => __( 'Exit-Intent Popup', 'yayboost-sales-booster-for-woocommerce' ),
         ];
 
         // Event type labels
         $event_labels = [
-            'purchase'          => __( 'Purchase', 'yayboost' ),
-            'click'             => __( 'Click', 'yayboost' ),
-            'add_to_cart'       => __( 'Added to cart', 'yayboost' ),
-            'threshold_reached' => __( 'Free shipping unlocked', 'yayboost' ),
+            'purchase'          => __( 'Purchase', 'yayboost-sales-booster-for-woocommerce' ),
+            'click'             => __( 'Click', 'yayboost-sales-booster-for-woocommerce' ),
+            'add_to_cart'       => __( 'Added to cart', 'yayboost-sales-booster-for-woocommerce' ),
+            'threshold_reached' => __( 'Free shipping unlocked', 'yayboost-sales-booster-for-woocommerce' ),
         ];
 
         $activities = [];
@@ -348,11 +359,13 @@ class DashboardController extends BaseController {
                 'revenue'       => (float) $event['revenue'],
                 'created_at'    => $event['created_at'],
             ];
-        }
+        }//end foreach
 
-        return $this->success( [
-            'activities' => $activities,
-            'count'      => count( $activities ),
-        ] );
+        return $this->success(
+            [
+                'activities' => $activities,
+                'count'      => count( $activities ),
+            ]
+        );
     }
 }

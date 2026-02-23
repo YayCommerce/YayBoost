@@ -102,7 +102,7 @@ class DisplayPositionService {
         if ( $include_use_block ) {
             $options[] = [
                 'value' => self::POSITION_USE_BLOCK,
-                'label' => __( 'Use Gutenberg Block', 'yayboost' ),
+                'label' => __( 'Use Gutenberg Block', 'yayboost-sales-booster-for-woocommerce' ),
             ];
         }
 
@@ -249,10 +249,10 @@ class DisplayPositionService {
      */
     public function get_grouped_options( array $page_types, ?array $filters = null ): array {
         $page_labels = [
-            self::PAGE_PRODUCT  => __( 'Product Page', 'yayboost' ),
-            self::PAGE_SHOP     => __( 'Shop / Category Pages', 'yayboost' ),
-            self::PAGE_CART     => __( 'Cart Page', 'yayboost' ),
-            self::PAGE_CHECKOUT => __( 'Checkout Page', 'yayboost' ),
+            self::PAGE_PRODUCT  => __( 'Product Page', 'yayboost-sales-booster-for-woocommerce' ),
+            self::PAGE_SHOP     => __( 'Shop / Category Pages', 'yayboost-sales-booster-for-woocommerce' ),
+            self::PAGE_CART     => __( 'Cart Page', 'yayboost-sales-booster-for-woocommerce' ),
+            self::PAGE_CHECKOUT => __( 'Checkout Page', 'yayboost-sales-booster-for-woocommerce' ),
         ];
 
         $grouped = [];

@@ -74,7 +74,7 @@ function yayboost_init() {
                 printf(
                     '<div class="notice notice-error"><p>%s</p></div>',
                     /* translators: %s: Error message. */
-                    esc_html( sprintf( __( 'YayBoost Error: %s', 'yayboost' ), $e->getMessage() ) )
+                    esc_html( sprintf( __( 'YayBoost Error: %s', 'yayboost-sales-booster-for-woocommerce' ), $e->getMessage() ) )
                 );
             }
         );
@@ -91,7 +91,7 @@ function yayboost_woocommerce_missing_notice() {
         <p>
             <?php
             echo wp_kses_post(
-                __( '<strong>YayBoost</strong> requires <strong>WooCommerce</strong> to be installed and activated.', 'yayboost' )
+                __( '<strong>YayBoost</strong> requires <strong>WooCommerce</strong> to be installed and activated.', 'yayboost-sales-booster-for-woocommerce' )
             );
             ?>
         </p>
@@ -105,8 +105,8 @@ function yayboost_woocommerce_missing_notice() {
 function yayboost_activate() {
     if ( ! yayboost_is_woocommerce_active()) {
         wp_die(
-            esc_html__( 'YayBoost requires WooCommerce to be installed and activated.', 'yayboost' ),
-            esc_html__( 'Plugin Activation Error', 'yayboost' ),
+            esc_html__( 'YayBoost requires WooCommerce to be installed and activated.', 'yayboost-sales-booster-for-woocommerce' ),
+            esc_html__( 'Plugin Activation Error', 'yayboost-sales-booster-for-woocommerce' ),
             [ 'back_link' => true ]
         );
     }

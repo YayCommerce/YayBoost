@@ -75,22 +75,22 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                                 esc_attr( $download_link ),
                                 esc_attr( $download_link ),
                                 /* translators: %s: Plugin name and version. */
-                                esc_attr( sprintf( _x( 'Install %s now', 'plugin', 'yayboost' ), $name ) ),
-                                __( 'Install Now', 'yayboost' )
+                                esc_attr( sprintf( _x( 'Install %s now', 'plugin', 'yayboost-sales-booster-for-woocommerce' ), $name ) ),
+                                __( 'Install Now', 'yayboost-sales-booster-for-woocommerce' )
                             );
                         } else {
                             $action_links[] = sprintf(
                                 '<button class="install-now button button-primary" data-install-url="%s" aria-label="%s">%s</button>',
                                 esc_attr( $download_link ),
                                 /* translators: %s: Plugin name and version. */
-                                esc_attr( sprintf( _x( 'Install %s now', 'plugin', 'yayboost' ), $name ) ),
-                                __( 'Install Now', 'yayboost' )
+                                esc_attr( sprintf( _x( 'Install %s now', 'plugin', 'yayboost-sales-booster-for-woocommerce' ), $name ) ),
+                                __( 'Install Now', 'yayboost-sales-booster-for-woocommerce' )
                             );
                         }
                     } else {
                         $action_links[] = sprintf(
                             '<button type="button" class="button button-disabled" disabled="disabled">%s</button>',
-                            _x( 'Cannot Install', 'plugin', 'yayboost' )
+                            _x( 'Cannot Install', 'plugin', 'yayboost-sales-booster-for-woocommerce' )
                         );
                     }//end if
                 }//end if
@@ -107,9 +107,9 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                                 esc_attr( $recommended_plugin['slug'] ),
                                 esc_url( $install_status['url'] ),
                                 /* translators: %s: Plugin name and version. */
-                                esc_attr( sprintf( _x( 'Update %s now', 'plugin', 'yayboost' ), $name ) ),
+                                esc_attr( sprintf( _x( 'Update %s now', 'plugin', 'yayboost-sales-booster-for-woocommerce' ), $name ) ),
                                 esc_attr( $name ),
-                                __( 'Update Now', 'yayboost' )
+                                __( 'Update Now', 'yayboost-sales-booster-for-woocommerce' )
                             );
                         } else {
                             $action_links[] = sprintf(
@@ -118,15 +118,15 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                                 esc_attr( $recommended_plugin['slug'] ),
                                 esc_url( $install_status['url'] ),
                                 /* translators: %s: Plugin name and version. */
-                                esc_attr( sprintf( _x( 'Update %s now', 'plugin', 'yayboost' ), $name ) ),
+                                esc_attr( sprintf( _x( 'Update %s now', 'plugin', 'yayboost-sales-booster-for-woocommerce' ), $name ) ),
                                 esc_attr( $name ),
-                                __( 'Update Now', 'yayboost' )
+                                __( 'Update Now', 'yayboost-sales-booster-for-woocommerce' )
                             );
                         }//end if
                     } else {
                         $action_links[] = sprintf(
                             '<button type="button" class="button button-disabled" disabled="disabled">%s</button>',
-                            _x( 'Cannot Update', 'plugin', 'yayboost' )
+                            _x( 'Cannot Update', 'plugin', 'yayboost-sales-booster-for-woocommerce' )
                         );
                     }//end if
                 }//end if
@@ -143,14 +143,14 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                     $plugin_status  = '<span class="plugin-status-active">Active</span>';
                     $action_links[] = sprintf(
                         '<button type="button" class="button button-disabled" disabled="disabled">%s</button>',
-                        _x( 'Activated', 'plugin', 'yayboost' )
+                        _x( 'Activated', 'plugin', 'yayboost-sales-booster-for-woocommerce' )
                     );
                 } elseif ( current_user_can( 'activate_plugin', $install_status['file'] ) ) {
                     $plugin_status = '<span class="plugin-status-inactive" data-plugin-file="' . esc_attr( $install_status['file'] ) . '">Inactive</span>';
                     if ( $compatible_php && $compatible_wp ) {
-                        $button_text = __( 'Activate', 'yayboost' );
+                        $button_text = __( 'Activate', 'yayboost-sales-booster-for-woocommerce' );
                         /* translators: %s: Plugin name. */
-                        $button_label = _x( 'Activate %s', 'plugin', 'yayboost' );
+                        $button_label = _x( 'Activate %s', 'plugin', 'yayboost-sales-booster-for-woocommerce' );
                         $activate_url = add_query_arg(
                             [
                                 '_wpnonce' => wp_create_nonce( 'activate-plugin_' . $install_status['file'] ),
@@ -161,9 +161,9 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                         );
 
                         if ( is_network_admin() ) {
-                            $button_text = __( 'Network Activate', 'yayboost' );
+                            $button_text = __( 'Network Activate', 'yayboost-sales-booster-for-woocommerce' );
                             /* translators: %s: Plugin name. */
-                            $button_label = _x( 'Network Activate %s', 'plugin', 'yayboost' );
+                            $button_label = _x( 'Network Activate %s', 'plugin', 'yayboost-sales-booster-for-woocommerce' );
                             $activate_url = add_query_arg( [ 'networkwide' => 1 ], $activate_url );
                         }
 
@@ -176,13 +176,13 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                     } else {
                         $action_links[] = sprintf(
                             '<button type="button" class="button button-disabled" disabled="disabled">%s</button>',
-                            _x( 'Cannot Activate', 'plugin', 'yayboost' )
+                            _x( 'Cannot Activate', 'plugin', 'yayboost-sales-booster-for-woocommerce' )
                         );
                     }//end if
                 } else {
                     $action_links[] = sprintf(
                         '<button type="button" class="button button-disabled" disabled="disabled">%s</button>',
-                        _x( 'Installed', 'plugin', 'yayboost' )
+                        _x( 'Installed', 'plugin', 'yayboost-sales-booster-for-woocommerce' )
                     );
                 }//end if
                 break;
@@ -212,11 +212,11 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
         if ( ! $compatible_php || ! $compatible_wp ) {
             echo '<div class="notice inline notice-error notice-alt"><p>';
             if ( ! $compatible_php && ! $compatible_wp ) {
-                echo esc_html__( 'This plugin doesn&#8217;t work with your versions of WordPress and PHP.', 'yayboost' );
+                echo esc_html__( 'This plugin doesn&#8217;t work with your versions of WordPress and PHP.', 'yayboost-sales-booster-for-woocommerce' );
                 if ( current_user_can( 'update_core' ) && current_user_can( 'update_php' ) ) {
                     printf(
                         /* translators: 1: URL to WordPress Updates screen, 2: URL to Update PHP page. */
-                        ' ' . esc_html__( '<a href="%1$s">Please update WordPress</a>, and then <a href="%2$s">learn more about updating PHP</a>.', 'yayboost' ),
+                        ' ' . esc_html__( '<a href="%1$s">Please update WordPress</a>, and then <a href="%2$s">learn more about updating PHP</a>.', 'yayboost-sales-booster-for-woocommerce' ),
                         esc_url( self_admin_url( 'update-core.php' ) ),
                         esc_url( wp_get_update_php_url() )
                     );
@@ -224,32 +224,32 @@ foreach ( (array) $recommended_plugins as $recommended_plugin ) {
                 } elseif ( current_user_can( 'update_core' ) ) {
                     printf(
                         /* translators: %s: URL to WordPress Updates screen. */
-                        ' ' . esc_html__( '<a href="%s">Please update WordPress</a>.', 'yayboost' ),
+                        ' ' . esc_html__( '<a href="%s">Please update WordPress</a>.', 'yayboost-sales-booster-for-woocommerce' ),
                         esc_url( self_admin_url( 'update-core.php' ) )
                     );
                 } elseif ( current_user_can( 'update_php' ) ) {
                     printf(
                         /* translators: %s: URL to Update PHP page. */
-                        ' ' . esc_html__( '<a href="%s">Learn more about updating PHP</a>.', 'yayboost' ),
+                        ' ' . esc_html__( '<a href="%s">Learn more about updating PHP</a>.', 'yayboost-sales-booster-for-woocommerce' ),
                         esc_url( wp_get_update_php_url() )
                     );
                     wp_update_php_annotation( '</p><p><em>', '</em>' );
                 }//end if
             } elseif ( ! $compatible_wp ) {
-                echo esc_html__( 'This plugin doesn&#8217;t work with your version of WordPress.', 'yayboost' );
+                echo esc_html__( 'This plugin doesn&#8217;t work with your version of WordPress.', 'yayboost-sales-booster-for-woocommerce' );
                 if ( current_user_can( 'update_core' ) ) {
                     printf(
                         /* translators: %s: URL to WordPress Updates screen. */
-                        ' ' . esc_html__( '<a href="%s">Please update WordPress</a>.', 'yayboost' ),
+                        ' ' . esc_html__( '<a href="%s">Please update WordPress</a>.', 'yayboost-sales-booster-for-woocommerce' ),
                         esc_url( self_admin_url( 'update-core.php' ) )
                     );
                 }
             } elseif ( ! $compatible_php ) {
-                echo esc_html__( 'This plugin doesn&#8217;t work with your version of PHP.', 'yayboost' );
+                echo esc_html__( 'This plugin doesn&#8217;t work with your version of PHP.', 'yayboost-sales-booster-for-woocommerce' );
                 if ( current_user_can( 'update_php' ) ) {
                     printf(
                         /* translators: %s: URL to Update PHP page. */
-                        ' ' . esc_html__( '<a href="%s">Learn more about updating PHP</a>.', 'yayboost' ),
+                        ' ' . esc_html__( '<a href="%s">Learn more about updating PHP</a>.', 'yayboost-sales-booster-for-woocommerce' ),
                         esc_url( wp_get_update_php_url() )
                     );
                     wp_update_php_annotation( '</p><p><em>', '</em>' );

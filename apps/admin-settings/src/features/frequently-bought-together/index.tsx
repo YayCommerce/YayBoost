@@ -64,8 +64,8 @@ const settingsSchema = z.object({
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
 const layoutOptions = [
-  { value: 'grid', label: __('Grid', 'yayboost') },
-  { value: 'list', label: __('List', 'yayboost') },
+  { value: 'grid', label: __('Grid', 'yayboost-sales-booster-for-woocommerce') },
+  { value: 'list', label: __('List', 'yayboost-sales-booster-for-woocommerce') },
 ];
 
 // SVG checkmark for circle checkbox (matches frontend fbt-products.php)
@@ -112,13 +112,13 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
 
   const addButtonText =
     selectedCount === 0
-      ? __('Add all to basket', 'yayboost')
-      : __('Add all', 'yayboost') + ` ${selectedCount} ` + __('to basket', 'yayboost');
+      ? __('Add all to basket', 'yayboost-sales-booster-for-woocommerce')
+      : __('Add all', 'yayboost-sales-booster-for-woocommerce') + ` ${selectedCount} ` + __('to basket', 'yayboost-sales-booster-for-woocommerce');
 
   return (
     <section className="yayboost-fbt fbt-section max-w-full border-t border-gray-200 py-8 font-sans">
       <h2 className="yayboost-fbt__title fbt-section__title mb-6 text-[15px] font-semibold tracking-tight text-black">
-        {settings.section_title || __('Frequently Bought Together', 'yayboost')}
+        {settings.section_title || __('Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce')}
       </h2>
 
       {/* Product images row + summary (matches fbt-products.php) */}
@@ -137,7 +137,7 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
         ))}
         <div className="fbt-summary ml-auto text-right">
           <p className="fbt-summary__total mb-1 text-[13px] text-gray-600">
-            {__('Total price', 'yayboost')}
+            {__('Total price', 'yayboost-sales-booster-for-woocommerce')}
           </p>
           <p className="fbt-summary__price yayboost-fbt__total-price mb-4 text-[22px] font-semibold tracking-tight text-black">
             {formatPrice(totalPrice)}
@@ -189,7 +189,7 @@ function FBTPreview({ settings }: { settings: SettingsFormData }) {
                 <p className="fbt-item__name mb-1 text-sm leading-[1.4] font-normal text-black">
                   {isFirst && (
                     <span className="fbt-item__badge mr-1.5 text-xs font-medium text-gray-600">
-                      {__('This item:', 'yayboost')}
+                      {__('This item:', 'yayboost-sales-booster-for-woocommerce')}
                     </span>
                   )}
                   <span>{product.name}</span>
@@ -262,9 +262,9 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
             }}
           >
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Recommend products', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Recommend products', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Configure product recommendation settings', 'yayboost')}
+                {__('Configure product recommendation settings', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
             <FormField
@@ -272,7 +272,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="max_products"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Maximum products to show', 'yayboost')}</Label>
+                  <Label>{__('Maximum products to show', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <div className='w-fit'>
                       <InputNumber
@@ -294,7 +294,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="min_order_threshold"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Minimum Order Threshold', 'yayboost')}</Label>
+                  <Label>{__('Minimum Order Threshold', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <div className='w-fit'>
                       <InputNumber
@@ -307,8 +307,8 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     </div>
                   </FormControl>
                   <FormDescription>
-                    {__('Recommend products appear in at least', 'yayboost')}{' '}
-                    <strong>{field.value}%</strong> {__('of orders', 'yayboost')}
+                    {__('Recommend products appear in at least', 'yayboost-sales-booster-for-woocommerce')}{' '}
+                    <strong>{field.value}%</strong> {__('of orders', 'yayboost-sales-booster-for-woocommerce')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -316,11 +316,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
             />
             <Separator />
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
                 {__(
                   'Configure how to display frequently bought together products',
-                  'yayboost',
+                  'yayboost-sales-booster-for-woocommerce',
                 )}
               </p>
             </div>
@@ -330,9 +330,9 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="section_title"
               render={({ field }) => (
                 <FormItem className="w-60">
-                  <Label>{__('Section title', 'yayboost')}</Label>
+                  <Label>{__('Section title', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
-                    <Input {...field} placeholder={__('Frequently Bought Together', 'yayboost')} />
+                    <Input {...field} placeholder={__('Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce')} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -340,11 +340,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
             />
             <Separator />
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Behavior', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
                 {__(
                   'Configure how to handle suggested products that are already in cart',
-                  'yayboost',
+                  'yayboost-sales-booster-for-woocommerce',
                 )}
               </p>
             </div>
@@ -353,7 +353,7 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
               name="hide_if_in_cart"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('If suggested product is already in cart:', 'yayboost')}</Label>
+                  <Label>{__('If suggested product is already in cart:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -362,11 +362,11 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="hide" id="hide-if-in-cart" />
-                        <label htmlFor="hide-if-in-cart">{__('Hide it', 'yayboost')}</label>
+                        <label htmlFor="hide-if-in-cart">{__('Hide it', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="show" id="show-if-in-cart" />
-                        <label htmlFor="show-if-in-cart">{__('Still show it', 'yayboost')}</label>
+                        <label htmlFor="show-if-in-cart">{__('Still show it', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -382,10 +382,10 @@ export default function FrequentlyBoughtTogetherFeature({ featureId }: FeatureCo
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
               </div>
               <CardDescription>
-                {__('See how the section will look on your store', 'yayboost')}
+                {__('See how the section will look on your store', 'yayboost-sales-booster-for-woocommerce')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

@@ -37,11 +37,11 @@ export function FeatureCard({ feature }: FeatureCardProps) {
   const FeatureStatusBadge = useMemo(() => {
     switch (feature.status) {
       case 'coming_soon':
-        return () => <Badge variant="primary-soft">{__('Coming Soon', 'yayboost')}</Badge>;
+        return () => <Badge variant="primary-soft">{__('Coming Soon', 'yayboost-sales-booster-for-woocommerce')}</Badge>;
       case 'new':
-        return () => <Badge>{__('New', 'yayboost')}</Badge>;
+        return () => <Badge>{__('New', 'yayboost-sales-booster-for-woocommerce')}</Badge>;
       case 'beta':
-        return () => <Badge variant="outline">{__('Beta', 'yayboost')}</Badge>;
+        return () => <Badge variant="outline">{__('Beta', 'yayboost-sales-booster-for-woocommerce')}</Badge>;
       default:
         return null;
     }
@@ -97,7 +97,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
       {/* Bottom row: Settings Button + Toggle Switch */}
       <CardContent className="relative flex items-center justify-between pt-0">
         {isComingSoon ? (
-          <span className="text-sm text-muted-foreground">{__('Stay tuned!', 'yayboost')}</span>
+          <span className="text-sm text-muted-foreground">{__('Stay tuned!', 'yayboost-sales-booster-for-woocommerce')}</span>
         ) : hasComponent ? (
           feature.enabled ? (
             <Link
@@ -110,7 +110,7 @@ export function FeatureCard({ feature }: FeatureCardProps) {
                 size="sm"
                 className="cursor-pointer gap-1 rounded-lg transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.02]"
               >
-                {__('Settings', 'yayboost')}
+                {__('Settings', 'yayboost-sales-booster-for-woocommerce')}
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 group-hover:translate-x-0.5" />
               </Button>
             </Link>
@@ -121,12 +121,12 @@ export function FeatureCard({ feature }: FeatureCardProps) {
               className="rounded-lg opacity-50"
               disabled
             >
-              {__('Settings', 'yayboost')}
+              {__('Settings', 'yayboost-sales-booster-for-woocommerce')}
             </Button>
           )
         ) : (
           <Button variant="primary" size="sm" className="cursor-pointer rounded-lg">
-            {__('Buy Now', 'yayboost')}
+            {__('Buy Now', 'yayboost-sales-booster-for-woocommerce')}
           </Button>
         )}
 

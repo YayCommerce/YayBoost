@@ -53,7 +53,7 @@ class SettingsController extends BaseController {
 
         return $this->success(
             [
-                'message' => __( 'Settings updated successfully.', 'yayboost' ),
+                'message' => __( 'Settings updated successfully.', 'yayboost-sales-booster-for-woocommerce' ),
                 'data'    => $settings->get_all(),
             ]
         );

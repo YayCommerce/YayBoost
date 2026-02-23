@@ -75,7 +75,7 @@ class RegisterMenu {
 
         $submenus['yaycommerce-help'] = [
             'parent'             => 'yaycommerce',
-            'name'               => __( 'Help', 'yayboost' ),
+            'name'               => __( 'Help', 'yayboost-sales-booster-for-woocommerce' ),
             'capability'         => 'manage_options',
             'render_callback'    => false,
             'load_data_callback' => false,
@@ -112,7 +112,7 @@ class RegisterMenu {
         if ( ! empty( $licensing_plugins_yay_mail ) || ! empty( $licensing_plugins_yay_pricing ) || ! empty( $licensing_plugins_yay_currency ) || ! empty( $licensing_plugins_yay_swatches ) || ! empty( $licensing_plugins_yay_extra ) || ! empty( $licensing_plugins_yay_smtp ) || ! empty( $yay_licensing_plugins ) ) {
             $submenus['yaycommerce-licenses'] = [
                 'parent'             => 'yaycommerce',
-                'name'               => __( 'Licenses', 'yayboost' ),
+                'name'               => __( 'Licenses', 'yayboost-sales-booster-for-woocommerce' ),
                 'capability'         => 'manage_options',
                 'render_callback'    => [ '\YAYDP\Admin\YayCommerceMenu\LicensesMenu', 'render' ],
                 'load_data_callback' => [ '\YAYDP\Admin\YayCommerceMenu\LicensesMenu', 'load_data' ],
@@ -121,7 +121,7 @@ class RegisterMenu {
 
         $submenus['yaycommerce-other-plugins'] = [
             'parent'             => 'yaycommerce',
-            'name'               => __( 'Other plugins', 'yayboost' ),
+            'name'               => __( 'Other plugins', 'yayboost-sales-booster-for-woocommerce' ),
             'capability'         => 'manage_options',
             'render_callback'    => [ '\YAYDP\Admin\YayCommerceMenu\OtherPluginsMenu', 'render' ],
             'load_data_callback' => [ '\YAYDP\Admin\YayCommerceMenu\OtherPluginsMenu', 'load_data' ],
@@ -170,7 +170,7 @@ class RegisterMenu {
             }
         }
         if ( ! $has_plugin_menu ) {
-            add_submenu_page( 'yaycommerce', __( 'YayBoost', 'yayboost' ), __( 'YayBoost', 'yayboost' ), 'manage_woocommerce', 'yayboost', [ $this, 'render_placeholder_menu' ], 0 );
+            add_submenu_page( 'yaycommerce', __( 'YayBoost', 'yayboost-sales-booster-for-woocommerce' ), __( 'YayBoost', 'yayboost-sales-booster-for-woocommerce' ), 'manage_woocommerce', 'yayboost', [ $this, 'render_placeholder_menu' ], 0 );
         }
     }
 

@@ -157,7 +157,7 @@ export function ColorPicker({
               type="button"
               onClick={handleClear}
             >
-              {__('Reset', 'yayboost')}
+              {__('Reset', 'yayboost-sales-booster-for-woocommerce')}
             </Button>
           </div>
         </div>

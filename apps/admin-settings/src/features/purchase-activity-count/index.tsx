@@ -142,9 +142,9 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
           isLoading={isLoading || isFetching}
         >
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('General', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('Configure general settings for purchase activity count.', 'yayboost')}
+              {__('Configure general settings for purchase activity count.', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <FormField
@@ -153,19 +153,19 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
             render={({ field }) => (
               <FormItem>
                 <Label htmlFor="minimum-count-display">
-                  {__('Minimum orders to display', 'yayboost')}
+                  {__('Minimum orders to display', 'yayboost-sales-booster-for-woocommerce')}
                 </Label>
                 <FormControl>
                   <div className="flex items-center gap-2">
                     <InputNumber
                       className="w-24"
                       id="minimum-count-display"
-                      placeholder={__('Minimum orders to display', 'yayboost')}
+                      placeholder={__('Minimum orders to display', 'yayboost-sales-booster-for-woocommerce')}
                       min={1}
                       onValueChange={(val) => field.onChange(val)}
                       value={field.value ?? 0}
                     />
-                    <span className="text-[#6A7282]">{__('orders', 'yayboost')}</span>
+                    <span className="text-[#6A7282]">{__('orders', 'yayboost-sales-booster-for-woocommerce')}</span>
                   </div>
                 </FormControl>
                 <FormMessage />
@@ -177,36 +177,36 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
             name="count_from"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Count from', 'yayboost')}</Label>
+                <Label>{__('Count from', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger className="w-46">
-                        <SelectValue placeholder={__('Select count from', 'yayboost')} />
+                        <SelectValue placeholder={__('Select count from', 'yayboost-sales-booster-for-woocommerce')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="all">{__('All time', 'yayboost')}</SelectItem>
-                      <SelectItem value="past_week">{__('Past week', 'yayboost')}</SelectItem>
-                      <SelectItem value="past_month">{__('Past month', 'yayboost')}</SelectItem>
-                      <SelectItem value="this_week">{__('This week', 'yayboost')}</SelectItem>
-                      <SelectItem value="this_month">{__('This month', 'yayboost')}</SelectItem>
-                      <SelectItem value="this_year">{__('This year', 'yayboost')}</SelectItem>
+                      <SelectItem value="all">{__('All time', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
+                      <SelectItem value="past_week">{__('Past week', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
+                      <SelectItem value="past_month">{__('Past month', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
+                      <SelectItem value="this_week">{__('This week', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
+                      <SelectItem value="this_month">{__('This month', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
+                      <SelectItem value="this_year">{__('This year', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>
                 <FormDescription>
-                  {countFrom === 'all' && __('Count all orders since the beginning.', 'yayboost')}
+                  {countFrom === 'all' && __('Count all orders since the beginning.', 'yayboost-sales-booster-for-woocommerce')}
                   {countFrom === 'past_week' &&
-                    __('Count orders from the last 7 days.', 'yayboost')}
+                    __('Count orders from the last 7 days.', 'yayboost-sales-booster-for-woocommerce')}
                   {countFrom === 'past_month' &&
-                    __('Count orders from the last 30 days.', 'yayboost')}
+                    __('Count orders from the last 30 days.', 'yayboost-sales-booster-for-woocommerce')}
                   {countFrom === 'this_week' &&
-                    __('Count orders from Monday to today (resets every Monday).', 'yayboost')}
+                    __('Count orders from Monday to today (resets every Monday).', 'yayboost-sales-booster-for-woocommerce')}
                   {countFrom === 'this_month' &&
-                    __('Count orders from the 1st of this month (resets monthly).', 'yayboost')}
+                    __('Count orders from the 1st of this month (resets monthly).', 'yayboost-sales-booster-for-woocommerce')}
                   {countFrom === 'this_year' &&
-                    __('Count orders from January 1st (resets yearly).', 'yayboost')}
+                    __('Count orders from January 1st (resets yearly).', 'yayboost-sales-booster-for-woocommerce')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -214,9 +214,9 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
           />
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Display Settings', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('Configure how the purchase activity count is displayed.', 'yayboost')}
+              {__('Configure how the purchase activity count is displayed.', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <FormField
@@ -224,7 +224,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
             name="display.text"
             render={({ field }) => (
               <FormItem>
-                <Label htmlFor="display-text">{__('Display text', 'yayboost')}</Label>
+                <Label htmlFor="display-text">{__('Display text', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <FormControl>
                   <Input
                     {...field}
@@ -234,7 +234,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
                   />
                 </FormControl>
                 <FormDescription>
-                  {__('Use {count} as placeholder for the number of orders', 'yayboost')}
+                  {__('Use {count} as placeholder for the number of orders', 'yayboost-sales-booster-for-woocommerce')}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -246,7 +246,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
             name="display.position"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Display position', 'yayboost')}</Label>
+                <Label>{__('Display position', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <FormControl>
                   <DisplayPositionSelect
                     pageType={PAGE_PRODUCT}
@@ -262,7 +262,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
           />
 
           <div className="flex flex-col gap-2">
-            <Label>{__('Show on', 'yayboost')}</Label>
+            <Label>{__('Show on', 'yayboost-sales-booster-for-woocommerce')}</Label>
             <FormField
               control={form.control}
               name="display.show_on_product_page"
@@ -276,7 +276,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
                     />
                   </FormControl>
                   <Label htmlFor="show-on-product-page" className="text-sm font-normal">
-                    {__('Product page', 'yayboost')}
+                    {__('Product page', 'yayboost-sales-booster-for-woocommerce')}
                   </Label>
                 </FormItem>
               )}
@@ -294,7 +294,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
                     />
                   </FormControl>
                   <Label htmlFor="show-on-shop-page" className="text-sm font-normal">
-                    {__('Shop/Category pages', 'yayboost')}
+                    {__('Shop/Category pages', 'yayboost-sales-booster-for-woocommerce')}
                   </Label>
                 </FormItem>
               )}
@@ -302,9 +302,9 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
           </div>
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Product Targeting', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Product Targeting', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('Select which products show purchase activity count', 'yayboost')}
+              {__('Select which products show purchase activity count', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <FormField
@@ -312,20 +312,20 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
             name="target_products.apply"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('Apply to', 'yayboost')}</Label>
+                <Label>{__('Apply to', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-46">
-                      <SelectValue placeholder={__('Select apply on', 'yayboost')} />
+                      <SelectValue placeholder={__('Select apply on', 'yayboost-sales-booster-for-woocommerce')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="all">{__('All Products', 'yayboost')}</SelectItem>
+                    <SelectItem value="all">{__('All Products', 'yayboost-sales-booster-for-woocommerce')}</SelectItem>
                     <SelectItem value="specific_categories">
-                      {__('Specific Categories', 'yayboost')}
+                      {__('Specific Categories', 'yayboost-sales-booster-for-woocommerce')}
                     </SelectItem>
                     <SelectItem value="specific_products">
-                      {__('Specific Products', 'yayboost')}
+                      {__('Specific Products', 'yayboost-sales-booster-for-woocommerce')}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -339,7 +339,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               name="target_products.categories"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Specific categories', 'yayboost')}</Label>
+                  <Label>{__('Specific categories', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <MultiSelect
                       options={categories ?? []}
@@ -361,7 +361,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               name="target_products.products"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Specific products', 'yayboost')}</Label>
+                  <Label>{__('Specific products', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <MultiSelect
                       options={products ?? []}
@@ -384,7 +384,7 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
               name="target_products.exclude"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Exclude products', 'yayboost')}</Label>
+                  <Label>{__('Exclude products', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <MultiSelect
                       options={products ?? []}
@@ -407,10 +407,10 @@ export default function PurchaseActivityCountFeature({ featureId }: FeatureCompo
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
               </div>
               <CardDescription>
-                {__('See how the section will look on your store', 'yayboost')}
+                {__('See how the section will look on your store', 'yayboost-sales-booster-for-woocommerce')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

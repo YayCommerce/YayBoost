@@ -54,7 +54,7 @@ class OtherPluginsMenu {
             <div class="yay-recommended-plugins-layout">
                 <div class="yay-recommended-plugins-layout-header">
                     <div class="wp-filter yay-recommended-plugins-header">
-                        <h2 class="yay-recommended-plugins-header-title"><?php esc_attr_e( 'Other Plugins', 'yayboost' ); ?></h2>
+                        <h2 class="yay-recommended-plugins-header-title"><?php esc_attr_e( 'Other Plugins', 'yayboost-sales-booster-for-woocommerce' ); ?></h2>
                         <ul class="filter-links">
                             <?php
                             echo wp_kses_post( $featured_tab );
@@ -254,7 +254,7 @@ class OtherPluginsMenu {
             if ( isset( $_POST['tab'] ) ) {
                 $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
                 if ( ! wp_verify_nonce( $nonce, 'yay_recommended_nonce' ) ) {
-                    wp_send_json_error( [ 'mess' => __( 'Nonce is invalid', 'yayboost' ) ] );
+                    wp_send_json_error( [ 'mess' => __( 'Nonce is invalid', 'yayboost-sales-booster-for-woocommerce' ) ] );
                 }
                 require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
                 $tab                 = sanitize_text_field( wp_unslash( $_POST['tab'] ) );
@@ -272,7 +272,7 @@ class OtherPluginsMenu {
                 ob_end_clean();
                 wp_send_json_success(
                     [
-                        'mess' => __( 'Get data success', 'yayboost' ),
+                        'mess' => __( 'Get data success', 'yayboost-sales-booster-for-woocommerce' ),
                         'html' => $html,
                     ]
                 );
@@ -280,7 +280,7 @@ class OtherPluginsMenu {
         } catch ( \Exception $ex ) {
             wp_send_json_error(
                 [
-                    'mess' => __( 'Error exception.', 'yayboost' ),
+                    'mess' => __( 'Error exception.', 'yayboost-sales-booster-for-woocommerce' ),
                     [
                         'error' => $ex,
                     ],
@@ -289,7 +289,7 @@ class OtherPluginsMenu {
         } catch ( \Error $ex ) {
             wp_send_json_error(
                 [
-                    'mess' => __( 'Error.', 'yayboost' ),
+                    'mess' => __( 'Error.', 'yayboost-sales-booster-for-woocommerce' ),
                     [
                         'error' => $ex,
                     ],
@@ -303,7 +303,7 @@ class OtherPluginsMenu {
             if ( isset( $_POST['file'] ) ) {
                 $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
                 if ( ! wp_verify_nonce( $nonce, 'yay_recommended_nonce' ) ) {
-                    wp_send_json_error( [ 'mess' => __( 'Nonce is invalid', 'yayboost' ) ] );
+                    wp_send_json_error( [ 'mess' => __( 'Nonce is invalid', 'yayboost-sales-booster-for-woocommerce' ) ] );
                 }
                 $file   = sanitize_file_name( wp_unslash( $_POST['file'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotUnslashed
                 $result = activate_plugin( $file );
@@ -317,14 +317,14 @@ class OtherPluginsMenu {
                 }
                 wp_send_json_success(
                     [
-                        'mess' => __( 'Activate success', 'yayboost' ),
+                        'mess' => __( 'Activate success', 'yayboost-sales-booster-for-woocommerce' ),
                     ]
                 );
             }//end if
         } catch ( \Exception $ex ) {
             wp_send_json_error(
                 [
-                    'mess' => __( 'Error exception.', 'yayboost' ),
+                    'mess' => __( 'Error exception.', 'yayboost-sales-booster-for-woocommerce' ),
                     [
                         'error' => $ex,
                     ],
@@ -333,7 +333,7 @@ class OtherPluginsMenu {
         } catch ( \Error $ex ) {
             wp_send_json_error(
                 [
-                    'mess' => __( 'Error.', 'yayboost' ),
+                    'mess' => __( 'Error.', 'yayboost-sales-booster-for-woocommerce' ),
                     [
                         'error' => $ex,
                     ],
@@ -351,7 +351,7 @@ class OtherPluginsMenu {
             if ( isset( $_POST['plugin'] ) ) {
                 $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
                 if ( ! wp_verify_nonce( $nonce, 'yay_recommended_nonce' ) ) {
-                    wp_send_json_error( [ 'mess' => __( 'Nonce is invalid', 'yayboost' ) ] );
+                    wp_send_json_error( [ 'mess' => __( 'Nonce is invalid', 'yayboost-sales-booster-for-woocommerce' ) ] );
                 }
                 $plugin   = sanitize_text_field( wp_unslash( $_POST['plugin'] ) );
                 $type     = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'install';
@@ -400,7 +400,7 @@ class OtherPluginsMenu {
                         } else {
                             wp_send_json_success(
                                 [
-                                    'mess' => __( 'Install success', 'yayboost' ),
+                                    'mess' => __( 'Install success', 'yayboost-sales-booster-for-woocommerce' ),
                                 ]
                             );
                         }
@@ -424,7 +424,7 @@ class OtherPluginsMenu {
                         activate_plugin( $plugin );
                         wp_send_json_success(
                             [
-                                'mess'   => __( 'Update success', 'yayboost' ),
+                                'mess'   => __( 'Update success', 'yayboost-sales-booster-for-woocommerce' ),
                                 'active' => $is_active,
                             ]
                         );
@@ -434,7 +434,7 @@ class OtherPluginsMenu {
         } catch ( \Exception $ex ) {
             wp_send_json_error(
                 [
-                    'mess' => __( 'Error exception.', 'yayboost' ),
+                    'mess' => __( 'Error exception.', 'yayboost-sales-booster-for-woocommerce' ),
                     [
                         'error' => $ex,
                     ],
@@ -443,7 +443,7 @@ class OtherPluginsMenu {
         } catch ( \Error $ex ) {
             wp_send_json_error(
                 [
-                    'mess' => __( 'Error.', 'yayboost' ),
+                    'mess' => __( 'Error.', 'yayboost-sales-booster-for-woocommerce' ),
                     [
                         'error' => $ex,
                     ],

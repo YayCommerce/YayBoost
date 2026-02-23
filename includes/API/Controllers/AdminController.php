@@ -26,6 +26,6 @@ class AdminController extends BaseController {
 
     public function mark_reviewed(WP_REST_Request $request) {
         update_option( 'yayboost_has_reviewed', true );
-        return $this->success( [ 'message' => __( 'Reviewed marked successfully.', 'yayboost' ) ] );
+        return $this->success( [ 'message' => __( 'Reviewed marked successfully.', 'yayboost-sales-booster-for-woocommerce' ) ] );
     }
 }

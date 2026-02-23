@@ -124,8 +124,8 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
           isLoading={isLoading || isFetching}
         >
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Trigger', 'yayboost')}</h3>
-            <p className="text-muted-foreground text-xs">{__('Show popup when:', 'yayboost')}</p>
+            <h3 className="text-sm font-medium">{__('Trigger', 'yayboost-sales-booster-for-woocommerce')}</h3>
+            <p className="text-muted-foreground text-xs">{__('Show popup when:', 'yayboost-sales-booster-for-woocommerce')}</p>
           </div>
           <div className="flex flex-col gap-2">
             <FormField
@@ -141,7 +141,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <Label htmlFor="trigger-leaves-viewport" className="text-sm font-normal">
-                    {__('Leaves viewport', 'yayboost')}
+                    {__('Leaves viewport', 'yayboost-sales-booster-for-woocommerce')}
                   </Label>
                 </FormItem>
               )}
@@ -159,7 +159,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <Label htmlFor="trigger-back-button-pressed" className="text-sm font-normal">
-                    {__('Back button pressed', 'yayboost')}
+                    {__('Back button pressed', 'yayboost-sales-booster-for-woocommerce')}
                   </Label>
                 </FormItem>
               )}
@@ -167,7 +167,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
           </div>
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Offer', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Offer', 'yayboost-sales-booster-for-woocommerce')}</h3>
           </div>
           <div className="space-y-6">
             <FormField
@@ -175,7 +175,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
               name="offer.type"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Discount type:', 'yayboost')}</Label>
+                  <Label>{__('Discount type:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -186,14 +186,14 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <RadioGroupItem value="no_discount" id="no-discount" />
                         <div className="space-y-1">
                           <label htmlFor="no-discount">
-                            {__('No discount (just reminder)', 'yayboost')}
+                            {__('No discount (just reminder)', 'yayboost-sales-booster-for-woocommerce')}
                           </label>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="percent" id="percent" />
                         <div className="flex items-center gap-2 space-y-1">
-                          <label htmlFor="percent">{__('Percentage off', 'yayboost')}</label>
+                          <label htmlFor="percent">{__('Percentage off', 'yayboost-sales-booster-for-woocommerce')}</label>
                           {offerType === 'percent' && (
                             <FormField
                               control={form.control}
@@ -220,7 +220,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="fixed_amount" id="fixed-amount" />
                         <div className="flex items-center gap-2 space-y-1">
-                          <label htmlFor="fixed-amount">{__('Fixed amount off', 'yayboost')}</label>
+                          <label htmlFor="fixed-amount">{__('Fixed amount off', 'yayboost-sales-booster-for-woocommerce')}</label>
                           {offerType === 'fixed_amount' && (
                             <FormField
                               control={form.control}
@@ -246,7 +246,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="free_shipping" id="free-shipping" />
                         <div className="space-y-1">
-                          <label htmlFor="free-shipping">{__('Free shipping', 'yayboost')}</label>
+                          <label htmlFor="free-shipping">{__('Free shipping', 'yayboost-sales-booster-for-woocommerce')}</label>
                         </div>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -254,7 +254,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                           </TooltipTrigger>
                           <TooltipContent side="right">
                             <p>
-                              {__('Requires a', 'yayboost')}{' '}
+                              {__('Requires a', 'yayboost-sales-booster-for-woocommerce')}{' '}
                               <a
                                 href="https://woocommerce.com/document/free-shipping/"
                                 target="_blank"
@@ -262,9 +262,9 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                                 className="hover:text-primary underline"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {__('free shipping method', 'yayboost')}
+                                {__('free shipping method', 'yayboost-sales-booster-for-woocommerce')}
                               </a>{' '}
-                              {__('configured in your shipping zone. See setup guide.', 'yayboost')}
+                              {__('configured in your shipping zone. See setup guide.', 'yayboost-sales-booster-for-woocommerce')}
                             </p>
                           </TooltipContent>
                         </Tooltip>
@@ -285,21 +285,21 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                   render={({ field }) => (
                     <FormItem>
                       <div className="flex flex-row gap-2">
-                        <Label>{__('Coupon prefix', 'yayboost')}</Label>
+                        <Label>{__('Coupon prefix', 'yayboost-sales-booster-for-woocommerce')}</Label>
                         <FormControl>
                           <Input id="offer-prefix" placeholder="GO-" className="w-24" {...field} />
                         </FormControl>
                         <FormMessage />
                       </div>
                       <FormDescription>
-                        {__('Preview:', 'yayboost')} {previewCouponCode}
+                        {__('Preview:', 'yayboost-sales-booster-for-woocommerce')} {previewCouponCode}
                       </FormDescription>
                     </FormItem>
                   )}
                 />
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <Label className="text-sm">{__('Expires after', 'yayboost')}</Label>
+                <Label className="text-sm">{__('Expires after', 'yayboost-sales-booster-for-woocommerce')}</Label>
                 <FormField
                   control={form.control}
                   name="offer.expires"
@@ -319,13 +319,13 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                     </FormItem>
                   )}
                 />
-                <div className="text-sm">{__('hours', 'yayboost')}</div>
+                <div className="text-sm">{__('hours', 'yayboost-sales-booster-for-woocommerce')}</div>
               </div>
             </>
           )}
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Content', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Content', 'yayboost-sales-booster-for-woocommerce')}</h3>
           </div>
           <div className="space-y-6">
             <FormField
@@ -333,7 +333,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
               name="content.headline"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Headline:', 'yayboost')}</Label>
+                  <Label>{__('Headline:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Input
                       id="content-headline"
@@ -353,7 +353,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
               name="content.message"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Message:', 'yayboost')}</Label>
+                  <Label>{__('Message:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Textarea
                       id="content-message"
@@ -373,7 +373,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
               name="content.button_text"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Button text:', 'yayboost')}</Label>
+                  <Label>{__('Button text:', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Input
                       id="content-button_text"
@@ -383,7 +383,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <FormDescription>
-                    {__('Available placeholders:', 'yayboost')} {'{amount}'}. {__('Just use them for percentage & fixed discount type')}
+                    {__('Available placeholders:', 'yayboost-sales-booster-for-woocommerce')} {'{amount}'}. {__('Just use them for percentage & fixed discount type')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -392,9 +392,9 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
           </div>
           <Separator />
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+            <h3 className="text-sm font-medium">{__('Behavior', 'yayboost-sales-booster-for-woocommerce')}</h3>
             <p className="text-muted-foreground text-xs">
-              {__('When customer clicks button', 'yayboost')}
+              {__('When customer clicks button', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
           <div className="space-y-6">
@@ -413,7 +413,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <RadioGroupItem value="checkout_page" id="checkout_page" />
                         <div className="space-y-1">
                           <label htmlFor="checkout_page">
-                            {__('Go to checkout page (with applying discount)', 'yayboost')}
+                            {__('Go to checkout page (with applying discount)', 'yayboost-sales-booster-for-woocommerce')}
                           </label>
                         </div>
                       </div>
@@ -421,7 +421,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                         <RadioGroupItem value="cart_page" id="cart_page" />
                         <div className="space-y-1">
                           <label htmlFor="cart_page">
-                            {__('Go to cart page (with applying discount)', 'yayboost')}
+                            {__('Go to cart page (with applying discount)', 'yayboost-sales-booster-for-woocommerce')}
                           </label>
                         </div>
                       </div>
@@ -438,7 +438,7 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Eye className="h-5 w-5" />
-                <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -448,16 +448,16 @@ export default function ExitIntentPopupFeature({ featureId }: FeatureComponentPr
                   <div className="flex-1 p-8 md:p-10">
                     <div className="flex flex-col items-center justify-center gap-4 text-center">
                       <h4 className="text-3xl leading-tight font-black text-slate-900">
-                        {contentPreview?.headline || __('Headline will appear here', 'yayboost')}
+                        {contentPreview?.headline || __('Headline will appear here', 'yayboost-sales-booster-for-woocommerce')}
                       </h4>
                       <p className="text-base leading-relaxed text-slate-700">
-                        {contentPreview?.message || __('Message will appear here', 'yayboost')}
+                        {contentPreview?.message || __('Message will appear here', 'yayboost-sales-booster-for-woocommerce')}
                       </p>
                       <button
                         type="button"
                         className="inline-flex h-11 cursor-pointer items-center justify-center rounded-lg border-none bg-black px-6 text-sm font-medium text-white transition-opacity hover:opacity-85"
                       >
-                        {previewButtonText || __('Button text', 'yayboost')}
+                        {previewButtonText || __('Button text', 'yayboost-sales-booster-for-woocommerce')}
                       </button>
                     </div>
                   </div>
