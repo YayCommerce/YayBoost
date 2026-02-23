@@ -9,6 +9,7 @@
  * Text Domain: yayboost
  * Domain Path: /languages
  * Requires at least: 5.8
+ * Requires Plugins: woocommerce
  * Requires PHP: 7.4
  * Tested up to: 6.9
  * WC requires at least: 8.0
