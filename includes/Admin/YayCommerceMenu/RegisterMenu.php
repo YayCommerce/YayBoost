@@ -54,7 +54,6 @@ class RegisterMenu {
     public function __construct() {
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_yaycommerce_menu_scripts' ] );
         add_action( 'admin_menu', [ $this, 'settings_menu' ] );
-        add_action( 'admin_menu', [ $this, 'add_placeholder_menu' ], 100 );
         OtherPluginsMenu::get_instance();
     }
 
@@ -80,44 +79,6 @@ class RegisterMenu {
             'render_callback'    => false,
             'load_data_callback' => false,
         ];
-
-        /**
-         * Temporarily until all Yay plugins has the same code
-         */
-        if ( function_exists( 'YayMail\\init' ) && class_exists( '\YayMail\License\LicenseHandler' ) ) {
-            $licensing_plugins_yay_mail = \YayMail\License\LicenseHandler::get_licensing_plugins();
-        }
-        if ( function_exists( 'YAYDP\\load_plugin' ) && class_exists( '\YAYDP\License\License_Handler' ) ) {
-            $licensing_plugins_yay_pricing = \YAYDP\License\License_Handler::get_licensing_plugins();
-        }
-
-        if ( function_exists( 'Yay_Currency\\plugin_init' ) && class_exists( '\Yay_Currency\License\LicenseHandler' ) ) {
-            $licensing_plugins_yay_currency = \Yay_Currency\License\LicenseHandler::get_licensing_plugins();
-        }
-
-        if ( function_exists( 'Yay_Swatches\\init' ) && class_exists( '\Yay_Swatches\License\LicenseHandler' ) ) {
-            $licensing_plugins_yay_swatches = \Yay_Swatches\License\LicenseHandler::get_licensing_plugins();
-        }
-        if ( function_exists( 'YayExtra\\plugins_loaded' ) && class_exists( '\YayExtra\License\LicenseHandler' ) ) {
-            $licensing_plugins_yay_extra = \YayExtra\License\LicenseHandler::get_licensing_plugins();
-        }
-
-        if ( function_exists( 'YaySMTP\\init' ) && class_exists( '\YaySMTP\License\LicenseHandler' ) ) {
-            $licensing_plugins_yay_smtp = \YaySMTP\License\LicenseHandler::get_licensing_plugins();
-        }
-        /** -------- */
-
-        $yay_licensing_plugins = apply_filters( 'yaycommerce_licensing_plugins', [] );
-
-        if ( ! empty( $licensing_plugins_yay_mail ) || ! empty( $licensing_plugins_yay_pricing ) || ! empty( $licensing_plugins_yay_currency ) || ! empty( $licensing_plugins_yay_swatches ) || ! empty( $licensing_plugins_yay_extra ) || ! empty( $licensing_plugins_yay_smtp ) || ! empty( $yay_licensing_plugins ) ) {
-            $submenus['yaycommerce-licenses'] = [
-                'parent'             => 'yaycommerce',
-                'name'               => __( 'Licenses', 'yayboost-sales-booster-for-woocommerce' ),
-                'capability'         => 'manage_options',
-                'render_callback'    => [ '\YAYDP\Admin\YayCommerceMenu\LicensesMenu', 'render' ],
-                'load_data_callback' => [ '\YAYDP\Admin\YayCommerceMenu\LicensesMenu', 'load_data' ],
-            ];
-        }
 
         $submenus['yaycommerce-other-plugins'] = [
             'parent'             => 'yaycommerce',
@@ -155,27 +116,6 @@ class RegisterMenu {
 
     public static function delete_yaycommerce_nav() {
         remove_submenu_page( 'yaycommerce', 'yaycommerce' );
-    }
-
-    public function add_placeholder_menu() {
-        global $submenu;
-        if ( ! isset( $submenu['yaycommerce'] ) ) {
-            return;
-        }
-
-        $has_plugin_menu = false;
-        foreach ( $submenu['yaycommerce'] as $item ) {
-            if ( 'yayboost' === $item[2] ) {
-                $has_plugin_menu = true;
-            }
-        }
-        if ( ! $has_plugin_menu ) {
-            add_submenu_page( 'yaycommerce', __( 'YayBoost', 'yayboost-sales-booster-for-woocommerce' ), __( 'YayBoost', 'yayboost-sales-booster-for-woocommerce' ), 'manage_woocommerce', 'yayboost', [ $this, 'render_placeholder_menu' ], 0 );
-        }
-    }
-
-    public function render_placeholder_menu() {
-        wp_safe_redirect( admin_url( 'admin.php?page="yaycommerce-licenses"' ) );
     }
 }
 
