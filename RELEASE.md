@@ -65,7 +65,7 @@ mkdir -p release
 
 # 5. Create zip
 cd release
-zip -r yayboost-1.0.0.zip yayboost/
+zip -r yayboost-sales-booster-for-woocommerce-1.0.0.zip yayboost-sales-booster-for-woocommerce/
 
 # 6. Restore dev dependencies
 composer install

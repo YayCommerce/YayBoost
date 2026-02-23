@@ -151,7 +151,7 @@ YayBoost is built with a modern, maintainable architecture:
 ### Core Components
 
 ```
-yayboost/
+yayboost-sales-booster-for-woocommerce/
 ├── includes/
 │   ├── Bootstrap.php              # Main plugin initialization
 │   ├── ServiceProvider.php        # Service registration

@@ -27,8 +27,8 @@ PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 ADMIN_DIR="$PLUGIN_DIR/apps/admin-settings"
 BLOCKS_DIR="$PLUGIN_DIR/apps/blocks"
 RELEASE_DIR="$PLUGIN_DIR/release"
-PLUGIN_SLUG="yayboost"
-RELEASE_SLUG="yayboost"  # Folder name in ZIP package
+PLUGIN_SLUG="yayboost-sales-booster-for-woocommerce"
+RELEASE_SLUG="yayboost-sales-booster-for-woocommerce"  # Folder name in ZIP package
 MAIN_FILE="$PLUGIN_DIR/$PLUGIN_SLUG.php"
 
 # Validate critical paths
