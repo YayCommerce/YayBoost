@@ -1,6 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useParams } from '@tanstack/react-router';
+import BumpEditor from '@/features/order-bump/bump-editor';
 import RecommendationsEditor from '@/features/smart-recommendations/recommendations-editor';
 
+function NewEntityPage() {
+  const { featureId } = useParams({ strict: false });
+  if (featureId === 'order_bump') {
+    return <BumpEditor />;
+  }
+  return <RecommendationsEditor />;
+}
+
 export const Route = createFileRoute('/features/$featureId/new')({
-  component: RecommendationsEditor,
+  component: NewEntityPage,
 });

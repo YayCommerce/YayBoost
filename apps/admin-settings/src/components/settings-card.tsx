@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
+import { __ } from '@wordpress/i18n';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,10 @@ interface SettingsCardProps {
   isSaving?: boolean;
   isLoading?: boolean;
   isDirty?: boolean;
+  disabled?: boolean;
   headless?: boolean;
+  buttonText?: string;
+  cancelButtonText?: string;
 }
 
 export function SettingsCard({
@@ -29,6 +33,9 @@ export function SettingsCard({
   isLoading = false,
   isDirty = false,
   headless = false,
+  disabled = true,
+  buttonText = __('Save Changes', 'yayboost'),
+  cancelButtonText = __('Cancel', 'yayboost'),
 }: SettingsCardProps) {
   const prevIsSavingRef = useRef(isSaving);
   useEffect(() => {
@@ -74,13 +81,13 @@ export function SettingsCard({
       <CardContent className="space-y-6">
         {children}
         <div className="flex gap-2">
-          <Button onClick={onSave} disabled={isSaving || !isDirty}>
+          <Button onClick={onSave} disabled={disabled && (isSaving || !isDirty)}>
             {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save Changes
+            {buttonText}
           </Button>
           {isDirty && onReset && (
             <Button variant="outline" onClick={onReset} disabled={isSaving}>
-              Cancel
+              {cancelButtonText}
             </Button>
           )}
         </div>

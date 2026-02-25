@@ -115,12 +115,76 @@ class EntityController extends BaseController {
         $entities = $repository->get_all( $args );
         $total    = $repository->count( $args['status'] );
 
+        if ( $feature_id === 'order_bump' && $entity_type === 'bump' ) {
+            $entities = $this->enrich_bump_entities( $entities );
+        }
+
         return $this->success(
             [
                 'items' => $entities,
                 'total' => $total,
             ]
         );
+    }
+
+    /**
+     * Enrich bump entities with product_name and price_display for list display.
+     *
+     * @param array $entities List of bump entities (each with id, name, settings, status, etc.)
+     * @return array
+     */
+    protected function enrich_bump_entities( array $entities ): array {
+        foreach ( $entities as &$entity ) {
+            $settings = isset( $entity['settings'] ) && is_array( $entity['settings'] ) ? $entity['settings'] : [];
+            $product_id = isset( $settings['product_id'] ) ? $settings['product_id'] : null;
+
+            $product_name = null;
+            $regular_price = null;
+
+            if ( $product_id && function_exists( 'wc_get_product' ) ) {
+                $product = wc_get_product( $product_id );
+                if ( $product && is_a( $product, 'WC_Product' ) ) {
+                    $product_name  = $product->get_name();
+                    $regular_price = (float) $product->get_regular_price();
+                    if ( $regular_price === 0.0 && $product->get_regular_price() === '' ) {
+                        $regular_price = (float) $product->get_price();
+                    }
+                }
+            }
+
+            if ( $regular_price === null && isset( $settings['regular_price'] ) ) {
+                $regular_price = (float) $settings['regular_price'];
+            }
+            if ( $regular_price === null ) {
+                $regular_price = 0.0;
+            }
+
+            $settings['product_name'] = $product_name;
+
+            $discount_type  = $settings['pricing_type'] ?? $settings['discount_type'] ?? 'percent';
+            $discount_value = isset( $settings['pricing_value'] ) ? (float) $settings['pricing_value'] : (isset( $settings['discount_value'] ) ? (float) $settings['discount_value'] : 0);
+
+            $bump_price = $regular_price;
+            if ( $discount_type === 'percent' ) {
+                $bump_price = $regular_price * ( 1 - $discount_value / 100 );
+            } elseif ( $discount_type === 'fixed_amount' ) {
+                $bump_price = max( 0, $regular_price - $discount_value );
+            } elseif ( $discount_type === 'fixed_price' ) {
+                $bump_price = $discount_value;
+            } elseif ( $discount_type === 'free' ) {
+                $bump_price = 0;
+            }
+
+            // Decode HTML entities (e.g. &#8363; for ₫) so frontend displays the symbol, not literal entity
+            $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$';
+            $currency = html_entity_decode( $currency, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+            $settings['price_display'] = $currency . number_format( (float) $bump_price, 2 );
+            $settings['price']         = $bump_price;
+
+            $entity['settings'] = $settings;
+        }
+
+        return $entities;
     }
 
     /**
