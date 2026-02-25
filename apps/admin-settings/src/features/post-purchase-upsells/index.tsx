@@ -18,8 +18,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormMessage, useForm } from '@/components/ui/form';
+import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -44,23 +47,23 @@ import UnavailableFeature from '@/components/unavailable-feature';
 
 import { FeatureComponentProps } from '..';
 
-const BUMP_ENTITY_TYPE = 'bump';
+const PURCHASE_ENTITY_TYPE = 'purchase';
 const currencySymbol = window.yayboostData?.currencySymbol ?? '$';
 
-// Bump entity settings may contain product_name, price, etc.
-interface BumpSettings extends Record<string, unknown> {
+// Purchase entity settings may contain product_name, price, etc.
+interface PurchaseSettings extends Record<string, unknown> {
   product_name?: string;
   price?: number;
   price_display?: string;
 }
 
-function getBumpProductName(entity: Entity): string {
-  const s = entity.settings as BumpSettings | undefined;
+function getPurchaseProductName(entity: Entity): string {
+  const s = entity.settings as PurchaseSettings | undefined;
   return s?.product_name ?? (s?.product_id as string) ?? '—';
 }
 
-function getBumpPrice(entity: Entity): string {
-  const s = entity.settings as BumpSettings | undefined;
+function getPurchasePrice(entity: Entity): string {
+  const s = entity.settings as PurchaseSettings | undefined;
   // Prefer numeric price + frontend currency symbol so symbol always renders correctly (no HTML entities)
   if (typeof s?.price === 'number') return `${currencySymbol}${s.price.toFixed(2)}`;
   if (s?.price_display) return String(s.price_display);
@@ -70,20 +73,27 @@ function getBumpPrice(entity: Entity): string {
 // Settings schema
 const settingsSchema = z.object({
   enabled: z.boolean(),
-  max_bump_display: z.number().optional(),
+  display: z.object({
+    mode: z.enum(['all', 'one_time']),
+    max_display: z.number().optional(),
+  }),
+  timing: z.object({
+    show_countdown: z.boolean(),
+    expires_after: z.number().optional(),
+  }),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
 type PendingNavigate = { to: string; params: Record<string, string> };
 
-export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
+export default function PostPurchaseUpsellsFeature({ featureId }: FeatureComponentProps) {
   const navigate = useNavigate();
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
   const { data: entitiesData, isLoading: entitiesLoading } = useEntities({
     featureId,
-    entityType: BUMP_ENTITY_TYPE,
+    entityType: PURCHASE_ENTITY_TYPE,
   });
   const reorderMutation = useReorderEntities(featureId);
   const updateEntity = useUpdateEntity(featureId);
@@ -93,34 +103,34 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
     defaultValues: feature?.settings as SettingsFormData,
   });
 
-  const serverBumps = entitiesData?.items ?? [];
-  const [localBumps, setLocalBumps] = useState<Entity[]>([]);
+  const serverPurchases = entitiesData?.items ?? [];
+  const [localPurchases, setLocalPurchases] = useState<Entity[]>([]);
   const [isSavingAll, setIsSavingAll] = useState(false);
 
   useEffect(() => {
-    if (serverBumps.length > 0) {
-      setLocalBumps([...serverBumps]);
+    if (serverPurchases.length > 0) {
+      setLocalPurchases([...serverPurchases]);
     }
   }, [entitiesData?.items]);
 
-  const bumpsDirty = useMemo(() => {
-    if (localBumps.length === 0) return false;
-    if (localBumps.length !== serverBumps.length) return true;
-    const serverById = Object.fromEntries(serverBumps.map((e) => [e.id, e]));
-    const orderChanged = localBumps.some((b, i) => serverBumps[i]?.id !== b.id);
-    const statusChanged = localBumps.some(
+  const purchasesDirty = useMemo(() => {
+    if (localPurchases.length === 0) return false;
+    if (localPurchases.length !== serverPurchases.length) return true;
+    const serverById = Object.fromEntries(serverPurchases.map((e) => [e.id, e]));
+    const orderChanged = localPurchases.some((b, i) => serverPurchases[i]?.id !== b.id);
+    const statusChanged = localPurchases.some(
       (b) => serverById[b.id] && serverById[b.id].status !== b.status,
     );
     return orderChanged || statusChanged;
-  }, [localBumps, serverBumps]);
+  }, [localPurchases, serverPurchases]);
 
-  const bumps = localBumps.length > 0 ? localBumps : serverBumps;
+  const purchases = localPurchases.length > 0 ? localPurchases : serverPurchases;
 
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [pendingNavigate, setPendingNavigate] = useState<PendingNavigate | null>(null);
   const [isSavingThenLeaving, setIsSavingThenLeaving] = useState(false);
 
-  const isDirty = form.formState.isDirty || bumpsDirty;
+  const isDirty = form.formState.isDirty || purchasesDirty;
 
   const handleNavigateClick = (e: React.MouseEvent, to: string, params: Record<string, string>) => {
     if (!isDirty) return;
@@ -155,38 +165,39 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
   const handleDrop = (toIndex: number) => {
     if (draggedIndex === null || draggedIndex === toIndex) return;
-    const reordered = [...bumps];
+    const reordered = [...purchases];
     const [removed] = reordered.splice(draggedIndex, 1);
     reordered.splice(toIndex, 0, removed);
-    setLocalBumps(reordered);
+    setLocalPurchases(reordered);
     setDraggedIndex(null);
   };
 
   const handleStatusChange = (entityId: number, checked: boolean) => {
-    const next = bumps.map((e) =>
+    const next = purchases.map((e) =>
       e.id === entityId
         ? { ...e, status: (checked ? 'active' : 'inactive') as Entity['status'] }
         : e,
     );
-    setLocalBumps(next);
+    setLocalPurchases(next);
   };
 
   const onSubmit = async (data: SettingsFormData) => {
     setIsSavingAll(true);
     try {
-      if (bumpsDirty) {
+      if (purchasesDirty) {
         const serverItems = entitiesData?.items ?? [];
         const orderChanged =
-          bumps.length !== serverItems.length || bumps.some((b, i) => serverItems[i]?.id !== b.id);
+          purchases.length !== serverItems.length ||
+          purchases.some((b, i) => serverItems[i]?.id !== b.id);
         if (orderChanged) {
           const order: Record<number, number> = {};
-          bumps.forEach((e, i) => {
+          purchases.forEach((e, i) => {
             order[e.id] = (i + 1) * 10;
           });
-          await reorderMutation.mutateAsync({ order, entityType: BUMP_ENTITY_TYPE });
+          await reorderMutation.mutateAsync({ order, entityType: PURCHASE_ENTITY_TYPE });
         }
         const serverById = Object.fromEntries(serverItems.map((e) => [e.id, e]));
-        const statusUpdates = bumps.filter(
+        const statusUpdates = purchases.filter(
           (b) => serverById[b.id] && serverById[b.id].status !== b.status,
         );
         await Promise.all(
@@ -194,7 +205,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
             updateEntity.mutateAsync({
               entityId: b.id,
               entity: { status: b.status },
-              entityType: BUMP_ENTITY_TYPE,
+              entityType: PURCHASE_ENTITY_TYPE,
             }),
           ),
         );
@@ -204,7 +215,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         settings: data,
       });
       form.reset(updatedFeature.settings as SettingsFormData);
-      setLocalBumps(bumps);
+      setLocalPurchases(purchases);
     } finally {
       setIsSavingAll(false);
     }
@@ -212,7 +223,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
 
   const handleReset = () => {
     form.reset(feature?.settings as SettingsFormData);
-    setLocalBumps([...serverBumps]);
+    setLocalPurchases([...serverPurchases]);
   };
 
   if (isLoading || isFetching) {
@@ -244,7 +255,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
           >
             <Button size="sm">
               <Plus className="h-4 w-4" />
-              {__('Add New', 'yayboost')}
+              {__('Add New', 'yayboost-sales-booster-for-woocommerce')}
             </Button>
           </Link>,
         ]}
@@ -260,14 +271,52 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         isLoading={isLoading || isFetching}
       >
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">{__('Global settings', 'yayboost')}</h3>
+          <h3 className="text-sm font-semibold">
+            {__('Display mode', 'yayboost-sales-booster-for-woocommerce')}
+          </h3>
         </div>
 
+        <FormField
+          control={form.control}
+          name="display.mode"
+          render={({ field }) => (
+            <FormItem>
+              <Label>{__('How to show offers:', 'yayboost-sales-booster-for-woocommerce')}</Label>
+              <FormControl>
+                <RadioGroup value={field.value} onValueChange={field.onChange}>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="all" id="all" />
+                    <div className="space-y-1">
+                      <label htmlFor="all">
+                        {__('Show all at once (grid)', 'yayboost-sales-booster-for-woocommerce')}
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="one_time" id="one_time" />
+                    <div className="space-y-1">
+                      <label htmlFor="one_time">
+                        {__(
+                          'Show one at a time (funnel)',
+                          'yayboost-sales-booster-for-woocommerce',
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="flex flex-wrap items-center gap-3">
-          <Label className="text-sm">{__('Maximum bumps to display:', 'yayboost')}</Label>
+          <Label className="text-sm">
+            {__('Maximum offers to show:', 'yayboost-sales-booster-for-woocommerce')}
+          </Label>
           <FormField
             control={form.control}
-            name="max_bump_display"
+            name="display.max_display"
             render={({ field }) => (
               <FormItem className="m-0 w-24">
                 <FormControl>
@@ -296,13 +345,69 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
         <Separator />
 
         <div className="space-y-1">
-          <h3 className="text-sm font-semibold">{__('Your order bumps', 'yayboost')}</h3>
+          <h3 className="text-sm font-semibold">
+            {__('Timing', 'yayboost-sales-booster-for-woocommerce')}
+          </h3>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="timing.show_countdown"
+          render={({ field }) => (
+            <FormItem className="flex items-center">
+              <FormControl>
+                <Checkbox
+                  id="show_countdown"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <Label htmlFor="show_countdown" className="text-sm font-normal">
+                {__('Show countdown timer', 'yayboost-sales-booster-for-woocommerce')}
+              </Label>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Label className="text-sm">
+            {__('Offer expires after:', 'yayboost-sales-booster-for-woocommerce')}
+          </Label>
+          <FormField
+            control={form.control}
+            name="timing.expires_after"
+            render={({ field }) => (
+              <FormItem className="m-0">
+                <FormControl>
+                  <InputNumber
+                    id="expires_after"
+                    placeholder="1"
+                    min={1}
+                    className="w-24"
+                    value={field.value}
+                    onValueChange={(val) => field.onChange(val)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="text-sm">{__('minutes', 'yayboost-sales-booster-for-woocommerce')}</div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold">
+            {__('Your offers', 'yayboost-sales-booster-for-woocommerce')}
+          </h3>
         </div>
 
         <div className="space-y-1">
           <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
             <Info className="h-3.5 w-3.5 shrink-0" />
-            {__('Drag to set priority. First matching bumps shown.', 'yayboost')}
+            {__('Drag to set priority.', 'yayboost-sales-booster-for-woocommerce')}
           </p>
         </div>
 
@@ -312,11 +417,17 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-10" />
                 <TableHead className="font-semibold">#</TableHead>
-                <TableHead className="font-semibold">{__('Name', 'yayboost')}</TableHead>
-                <TableHead className="font-semibold">{__('Product', 'yayboost')}</TableHead>
-                <TableHead className="font-semibold">{__('Price', 'yayboost')}</TableHead>
+                <TableHead className="font-semibold">
+                  {__('Name', 'yayboost-sales-booster-for-woocommerce')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {__('Product', 'yayboost-sales-booster-for-woocommerce')}
+                </TableHead>
+                <TableHead className="font-semibold">
+                  {__('Price', 'yayboost-sales-booster-for-woocommerce')}
+                </TableHead>
                 <TableHead className="text-center font-semibold">
-                  {__('Status', 'yayboost')}
+                  {__('Status', 'yayboost-sales-booster-for-woocommerce')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -324,15 +435,18 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
               {entitiesLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
-                    {__('Loading…', 'yayboost')}
+                    {__('Loading…', 'yayboost-sales-booster-for-woocommerce')}
                   </TableCell>
                 </TableRow>
-              ) : bumps.length === 0 ? (
+              ) : purchases.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <p className="text-muted-foreground text-sm">
-                        {__('No order bumps yet. Add one to get started.', 'yayboost')}
+                        {__(
+                          'No order purchases yet. Add one to get started.',
+                          'yayboost-sales-booster-for-woocommerce',
+                        )}
                       </p>
                       <Link
                         to="/features/$featureId/new"
@@ -344,14 +458,14 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                       >
                         <Button size="sm">
                           <Plus className="h-4 w-4" />
-                          {__('Add New', 'yayboost')}
+                          {__('Add New', 'yayboost-sales-booster-for-woocommerce')}
                         </Button>
                       </Link>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                bumps.map((entity, index) => (
+                purchases.map((entity, index) => (
                   <TableRow
                     key={entity.id}
                     onDragOver={handleDragOver}
@@ -371,7 +485,7 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                         }}
                         onDragEnd={handleDragEnd}
                         className="text-muted-foreground inline-flex cursor-grab touch-none active:cursor-grabbing"
-                        aria-label={__('Drag to reorder', 'yayboost')}
+                        aria-label={__('Drag to reorder', 'yayboost-sales-booster-for-woocommerce')}
                       >
                         <GripVertical className="h-4 w-4" />
                       </span>
@@ -392,8 +506,8 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
                         {entity.name || '—'}
                       </Link>
                     </TableCell>
-                    <TableCell>{getBumpProductName(entity)}</TableCell>
-                    <TableCell>{getBumpPrice(entity)}</TableCell>
+                    <TableCell>{getPurchaseProductName(entity)}</TableCell>
+                    <TableCell>{getPurchasePrice(entity)}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex justify-center">
                         <Switch
@@ -411,10 +525,10 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
           </Table>
         </div>
 
-        {bumps.length > 0 && (
+        {purchases.length > 0 && (
           <p className="text-muted-foreground mb-4 flex items-center gap-1.5 text-xs">
             <GripVertical className="h-4 w-4" />
-            {__('Drag to reorder', 'yayboost')}
+            {__('Drag to reorder', 'yayboost-sales-booster-for-woocommerce')}
           </p>
         )}
       </SettingsCard>
@@ -425,26 +539,31 @@ export default function OrderBumpFeature({ featureId }: FeatureComponentProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{__('Unsaved changes', 'yayboost')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {__('Unsaved changes', 'yayboost-sales-booster-for-woocommerce')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {__('You have unsaved changes. Do you want to save before leaving?', 'yayboost')}
+              {__(
+                'You have unsaved changes. Do you want to save before leaving?',
+                'yayboost-sales-booster-for-woocommerce',
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex justify-end gap-2">
             <AlertDialogCancel disabled={isSavingThenLeaving}>
-              {__('Cancel', 'yayboost')}
+              {__('Cancel', 'yayboost-sales-booster-for-woocommerce')}
             </AlertDialogCancel>
             <Button
               variant="outline"
               onClick={handleLeaveWithoutSaving}
               disabled={isSavingThenLeaving}
             >
-              {__('Leave without saving', 'yayboost')}
+              {__('Leave without saving', 'yayboost-sales-booster-for-woocommerce')}
             </Button>
             <Button onClick={handleSaveAndContinue} disabled={isSavingThenLeaving}>
               {isSavingThenLeaving
-                ? __('Saving…', 'yayboost')
-                : __('Save and continue', 'yayboost')}
+                ? __('Saving…', 'yayboost-sales-booster-for-woocommerce')
+                : __('Save and continue', 'yayboost-sales-booster-for-woocommerce')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -102,17 +102,17 @@ function getBlockColors(
 const COLOR_PRESETS = [
   {
     id: 'blue',
-    name: __('Blue', 'yayboost'),
+    name: __('Blue', 'yayboost-sales-booster-for-woocommerce'),
     primaryColor: '#0061fe',
   },
   {
     id: 'green',
-    name: __('Green', 'yayboost'),
+    name: __('Green', 'yayboost-sales-booster-for-woocommerce'),
     primaryColor: '#4CAF50',
   },
   {
     id: 'black',
-    name: __('Black', 'yayboost'),
+    name: __('Black', 'yayboost-sales-booster-for-woocommerce'),
     primaryColor: '#000000',
   },
 ];
@@ -222,10 +222,10 @@ function FullDetailBar({
           </div>
           <div>
             <div className="text-base font-semibold" style={{ color: primaryColor }}>
-              {__('Free Shipping', 'yayboost')}
+              {__('Free Shipping', 'yayboost-sales-booster-for-woocommerce')}
             </div>
             <div className="text-xs" style={{ color: primaryColor }}>
-              {__('On orders over', 'yayboost')} {currencySymbol}
+              {__('On orders over', 'yayboost-sales-booster-for-woocommerce')} {currencySymbol}
               {threshold.toFixed(2)}
             </div>
           </div>
@@ -236,7 +236,7 @@ function FullDetailBar({
             {cartTotal.toFixed(2)}
           </div>
           <div className="text-xs" style={{ color: primaryColor }}>
-            {__('Cart total', 'yayboost')}
+            {__('Cart total', 'yayboost-sales-booster-for-woocommerce')}
           </div>
         </div>
       </div>
@@ -403,11 +403,11 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
             }}
           >
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Show On', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Show On', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Configure where the free shipping bar should be displayed', 'yayboost')}
+                {__('Configure where the free shipping bar should be displayed', 'yayboost-sales-booster-for-woocommerce')}
               </p>
-              <p className="text-muted-foreground text-xs">{__('Note: Uncheck in places where you want to use Gutenberg block', 'yayboost')}</p>
+              <p className="text-muted-foreground text-xs">{__('Note: Uncheck in places where you want to use Gutenberg block', 'yayboost-sales-booster-for-woocommerce')}</p>
             </div>
             <FormField
               control={form.control}
@@ -430,7 +430,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               )}
             />
             <div>
-              <Label className="text-sm font-medium mb-2">{__('Other places', 'yayboost')}</Label>
+              <Label className="text-sm font-medium mb-2">{__('Other places', 'yayboost-sales-booster-for-woocommerce')}</Label>
               <FormField
                 control={form.control}
                 name="show_on_mini_cart"
@@ -440,7 +440,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <FormLabel className="text-sm font-normal">
-                      {__('Mini Cart', 'yayboost')}
+                      {__('Mini Cart', 'yayboost-sales-booster-for-woocommerce')}
                     </FormLabel>
                   </FormItem>
                 )}
@@ -448,9 +448,9 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
             </div>
             <Separator />
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Style', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Style', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Customize the style of the free shipping bar', 'yayboost')}
+                {__('Customize the style of the free shipping bar', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
             <FormField
@@ -458,7 +458,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               name="display_style"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Display style', 'yayboost')}</Label>
+                  <Label>{__('Display style', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -467,15 +467,15 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="minimal_text" id="style-minimal" />
-                        <label htmlFor="style-minimal">{__('Minimal Text', 'yayboost')}</label>
+                        <label htmlFor="style-minimal">{__('Minimal Text', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="progress_bar" id="style-progress" />
-                        <label htmlFor="style-progress">{__('Progress Bar', 'yayboost')}</label>
+                        <label htmlFor="style-progress">{__('Progress Bar', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="full_detail" id="style-compact" />
-                        <label htmlFor="style-compact">{__('Full Detail', 'yayboost')}</label>
+                        <label htmlFor="style-compact">{__('Full Detail', 'yayboost-sales-booster-for-woocommerce')}</label>
                       </div>
                     </RadioGroup>
                   </FormControl>
@@ -485,9 +485,9 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
             />
             <Separator />
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Messages', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Messages', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Customize messages for the free shipping bar', 'yayboost')}
+                {__('Customize messages for the free shipping bar', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
             <FormField
@@ -495,12 +495,12 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               name="message_progress"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="message-progress">{__('Progress Message', 'yayboost')}</Label>
+                  <Label htmlFor="message-progress">{__('Progress Message', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Input id="message-progress" {...field} />
                   </FormControl>
                   <FormDescription>
-                    {__('Available:', 'yayboost')} {'{remaining}'}, {'{threshold}'}, {'{current}'}
+                    {__('Available:', 'yayboost-sales-booster-for-woocommerce')} {'{remaining}'}, {'{threshold}'}, {'{current}'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -512,12 +512,12 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               name="message_achieved"
               render={({ field }) => (
                 <FormItem>
-                  <Label htmlFor="message-achieved">{__('Achievement Message', 'yayboost')}</Label>
+                  <Label htmlFor="message-achieved">{__('Achievement Message', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <Input id="message-achieved" {...field} />
                   </FormControl>
                   <FormDescription>
-                    {__('Shown when customer qualifies for free shipping', 'yayboost')}
+                    {__('Shown when customer qualifies for free shipping', 'yayboost-sales-booster-for-woocommerce')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -525,14 +525,14 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
             />
             <Separator />
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Appearance', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Appearance', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Customize colors and style of the free shipping bar', 'yayboost')}
+                {__('Customize colors and style of the free shipping bar', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
             {/* Color Presets */}
             <div>
-              <Label className="mb-3">{__('Color Presets', 'yayboost')}</Label>
+              <Label className="mb-3">{__('Color Presets', 'yayboost-sales-booster-for-woocommerce')}</Label>
               <div className="flex flex-wrap gap-5">
                 {COLOR_PRESETS.map((preset) => (
                   <button
@@ -558,7 +558,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               name="primary_color"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('Primary Color', 'yayboost')}</Label>
+                  <Label>{__('Primary Color', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <ColorPicker
                       value={field.value}
@@ -567,7 +567,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                     />
                   </FormControl>
                   <FormDescription>
-                    {__('Background will use 20% opacity of this color', 'yayboost')}
+                    {__('Background will use 20% opacity of this color', 'yayboost-sales-booster-for-woocommerce')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -576,9 +576,9 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
 
             {/* <Separator />
             <div className="space-y-1">
-              <h3 className="text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+              <h3 className="text-sm font-medium">{__('Behavior', 'yayboost-sales-booster-for-woocommerce')}</h3>
               <p className="text-muted-foreground text-xs">
-                {__('Configure behavior of the free shipping bar', 'yayboost')}
+                {__('Configure behavior of the free shipping bar', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
             <FormField
@@ -586,7 +586,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               name="behavior_when_unlocked"
               render={({ field }) => (
                 <FormItem>
-                  <Label>{__('When free shipping unlocked', 'yayboost')}</Label>
+                  <Label>{__('When free shipping unlocked', 'yayboost-sales-booster-for-woocommerce')}</Label>
                   <FormControl>
                     <RadioGroup
                       value={field.value}
@@ -596,13 +596,13 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="show_message" id="behavior-show" />
                         <label htmlFor="behavior-show">
-                          {__('Show success message', 'yayboost')}
+                          {__('Show success message', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="hide_bar" id="behavior-hide" />
                         <label htmlFor="behavior-hide">
-                          {__('Hide bar completely', 'yayboost')}
+                          {__('Hide bar completely', 'yayboost-sales-booster-for-woocommerce')}
                         </label>
                       </div>
                     </RadioGroup>
@@ -621,17 +621,17 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5" />
-                  <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+                  <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
                 </div>
                 <CardDescription>
-                  {__('See how the bar will look on your store', 'yayboost')}
+                  {__('See how the bar will look on your store', 'yayboost-sales-booster-for-woocommerce')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Preview controls */}
                 <div>
                   <label className="text-sm font-medium">
-                    {__('Simulate Cart Value', 'yayboost')} ({currencySymbol})
+                    {__('Simulate Cart Value', 'yayboost-sales-booster-for-woocommerce')} ({currencySymbol})
                   </label>
                   <Slider
                     value={[previewValue]}
@@ -654,19 +654,19 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                 {/* Preview states */}
                 <div className="space-y-4">
                   <div>
-                    <p className="mb-2 text-sm font-medium">{__('Current State:', 'yayboost')}</p>
+                    <p className="mb-2 text-sm font-medium">{__('Current State:', 'yayboost-sales-booster-for-woocommerce')}</p>
                     <ShippingBarPreview settings={watchedValues} cartValue={previewValue} />
                   </div>
 
                   <div>
                     <p className="mb-2 text-sm font-medium">
-                      {__('Progress State (example):', 'yayboost')}
+                      {__('Progress State (example):', 'yayboost-sales-booster-for-woocommerce')}
                     </p>
                     <ShippingBarPreview settings={watchedValues} cartValue={60} />
                   </div>
 
                   <div>
-                    <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost')}</p>
+                    <p className="mb-2 text-sm font-medium">{__('Achieved State:', 'yayboost-sales-booster-for-woocommerce')}</p>
                     <ShippingBarPreview settings={watchedValues} cartValue={110} />
                   </div>
                 </div>
@@ -684,7 +684,7 @@ export default function FreeShippingBarFeature({ featureId }: FeatureComponentPr
                   <p className="text-blue-700 dark:text-blue-300">
                     {__(
                       'Block inherits style settings from above, or override per block.',
-                      'yayboost',
+                      'yayboost-sales-booster-for-woocommerce',
                     )}
                   </p>
                 </div>

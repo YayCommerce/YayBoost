@@ -74,8 +74,13 @@ export function useCreateEntity(featureId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entity: Partial<Omit<Entity, 'id' | 'created_at' | 'updated_at'>>) =>
-      entityApi.create(featureId, entity),
+    mutationFn: ({
+      entity,
+      entityType,
+    }: {
+      entity: Partial<Omit<Entity, 'id' | 'created_at' | 'updated_at'>>;
+      entityType?: string;
+    }) => entityApi.create(featureId, entity, entityType),
     onSuccess: () => {
       // Invalidate entity list to refetch
       queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
@@ -93,10 +98,12 @@ export function useUpdateEntity(featureId: string) {
     mutationFn: ({
       entityId,
       entity,
+      entityType,
     }: {
       entityId: number;
       entity: Partial<Omit<Entity, 'id' | 'created_at' | 'updated_at'>>;
-    }) => entityApi.update(featureId, entityId, entity),
+      entityType?: string;
+    }) => entityApi.update(featureId, entityId, entity, entityType),
     onSuccess: (updatedEntity) => {
       // Update entity in cache
       queryClient.setQueryData(entityKeys.detail(featureId, updatedEntity.id), updatedEntity);

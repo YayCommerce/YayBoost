@@ -13,6 +13,11 @@ export interface ProductOption {
   label: string;
 }
 
+export interface ProductWithPrice extends ProductOption {
+  regular_price: number;
+  image?: string | null;
+}
+
 /**
  * Fetch product categories
  */
@@ -23,6 +28,38 @@ export function useProductCategories(): UseQueryResult<CategoryOption[], Error> 
       const response = await api.get('/product-data/categories');
       return response.data.data as CategoryOption[];
     },
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Fetch product tags (WooCommerce product_tag)
+ */
+export function useProductTags(): UseQueryResult<CategoryOption[], Error> {
+  return useQuery({
+    queryKey: ['product-tags'],
+    queryFn: async () => {
+      const response = await api.get('/product-data/tags');
+      return response.data.data as CategoryOption[];
+    },
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Fetch a single product by ID (includes regular_price for bump pricing)
+ */
+export function useProduct(
+  productId: string | null | undefined
+): UseQueryResult<ProductWithPrice | null, Error> {
+  return useQuery({
+    queryKey: ['product', productId],
+    queryFn: async () => {
+      if (!productId) return null;
+      const response = await api.get(`/product-data/products/${productId}`);
+      return response.data.data as ProductWithPrice;
+    },
+    enabled: !!productId,
     refetchOnWindowFocus: false,
   });
 }

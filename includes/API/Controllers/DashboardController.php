@@ -190,7 +190,7 @@ class DashboardController extends BaseController {
         return $this->success(
             [
                 'dismissed' => true,
-                'message'   => __( 'Onboarding dismissed.', 'yayboost' ),
+                'message'   => __( 'Onboarding dismissed.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }
@@ -204,29 +204,29 @@ class DashboardController extends BaseController {
         return [
             [
                 'id'          => 'enable_feature',
-                'title'       => __( 'Enable at least one feature', 'yayboost' ),
-                'description' => __( 'Activate a boost feature to start increasing sales.', 'yayboost' ),
+                'title'       => __( 'Enable at least one feature', 'yayboost-sales-booster-for-woocommerce' ),
+                'description' => __( 'Activate a boost feature to start increasing sales.', 'yayboost-sales-booster-for-woocommerce' ),
                 'completed'   => $this->has_enabled_feature(),
                 'action'      => [
-                    'label' => __( 'Go to Features', 'yayboost' ),
+                    'label' => __( 'Go to Features', 'yayboost-sales-booster-for-woocommerce' ),
                     'path'  => '/features',
                 ],
             ],
             [
                 'id'          => 'configure_shipping',
-                'title'       => __( 'Configure Free Shipping Bar', 'yayboost' ),
-                'description' => __( 'Set up your free shipping threshold to encourage larger orders.', 'yayboost' ),
+                'title'       => __( 'Configure Free Shipping Bar', 'yayboost-sales-booster-for-woocommerce' ),
+                'description' => __( 'Set up your free shipping threshold to encourage larger orders.', 'yayboost-sales-booster-for-woocommerce' ),
                 'completed'   => $this->is_free_shipping_configured(),
                 'action'      => [
-                    'label' => __( 'Configure', 'yayboost' ),
+                    'label' => __( 'Configure', 'yayboost-sales-booster-for-woocommerce' ),
                     'path'  => '/features/free_shipping_bar',
                 ],
             ],
             // Backfill now runs automatically on plugin activation
             [
                 'id'          => 'wait_analytics',
-                'title'       => __( 'Wait for first analytics data', 'yayboost' ),
-                'description' => __( 'Analytics will appear once customers interact with your features.', 'yayboost' ),
+                'title'       => __( 'Wait for first analytics data', 'yayboost-sales-booster-for-woocommerce' ),
+                'description' => __( 'Analytics will appear once customers interact with your features.', 'yayboost-sales-booster-for-woocommerce' ),
                 'completed'   => $this->has_analytics_data(),
                 'action'      => null,
             // No action, auto-completes
@@ -311,20 +311,19 @@ class DashboardController extends BaseController {
 
         // Map feature IDs for display
         $feature_names = [
-            'fbt'                 => __( 'Frequently Bought Together', 'yayboost' ),
-            'free_shipping_bar'   => __( 'Free Shipping Bar', 'yayboost' ),
-            'stock_scarcity'      => __( 'Stock Scarcity', 'yayboost' ),
-            'next_order_coupon'   => __( 'Next Order Coupon', 'yayboost' ),
-            'exit_intent_popup'   => __( 'Exit-Intent Popup', 'yayboost' ),
-            'email_capture_popup' => __( 'Email Popup', 'yayboost' ),
+            'fbt'               => __( 'Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce' ),
+            'free_shipping_bar' => __( 'Free Shipping Bar', 'yayboost-sales-booster-for-woocommerce' ),
+            'stock_scarcity'    => __( 'Stock Scarcity', 'yayboost-sales-booster-for-woocommerce' ),
+            'next_order_coupon' => __( 'Next Order Coupon', 'yayboost-sales-booster-for-woocommerce' ),
+            'exit_intent_popup' => __( 'Exit-Intent Popup', 'yayboost-sales-booster-for-woocommerce' ),
         ];
 
         // Event type labels
         $event_labels = [
-            'purchase'          => __( 'Purchase', 'yayboost' ),
-            'click'             => __( 'Click', 'yayboost' ),
-            'add_to_cart'       => __( 'Added to cart', 'yayboost' ),
-            'threshold_reached' => __( 'Free shipping unlocked', 'yayboost' ),
+            'purchase'          => __( 'Purchase', 'yayboost-sales-booster-for-woocommerce' ),
+            'click'             => __( 'Click', 'yayboost-sales-booster-for-woocommerce' ),
+            'add_to_cart'       => __( 'Added to cart', 'yayboost-sales-booster-for-woocommerce' ),
+            'threshold_reached' => __( 'Free shipping unlocked', 'yayboost-sales-booster-for-woocommerce' ),
         ];
 
         $activities = [];

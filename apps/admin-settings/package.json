@@ -10,7 +10,7 @@
   "author": "Yay Commerce",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "tsc --noEmit || true && vite build --base=/wp-content/plugins/yayboost/assets/dist/",
+    "build": "tsc --noEmit || true && vite build --base=/wp-content/plugins/yayboost-sales-booster-for-woocommerce/assets/dist/",
     "build:scss": "sass --no-source-map scss/style.scss:../src/style.css",
     "watch:scss": "sass --no-source-map --watch scss/style.scss:../src/style.css",
     "dev": "vite"

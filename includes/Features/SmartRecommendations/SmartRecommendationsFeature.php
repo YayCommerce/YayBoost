@@ -205,9 +205,9 @@ class SmartRecommendationsFeature extends AbstractFeature {
 
         // Get appropriate message
         if ($achieved) {
-            $message = $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost' );
+            $message = $settings['message_achieved'] ?? __( 'You have free shipping!', 'yayboost-sales-booster-for-woocommerce' );
         } else {
-            $message = $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost' );
+            $message = $settings['message_progress'] ?? __( 'Add {remaining} more for free shipping!', 'yayboost-sales-booster-for-woocommerce' );
             $message = str_replace( '{remaining}', wc_price( $remaining ), $message );
             $message = str_replace( '{threshold}', wc_price( $threshold ), $message );
             $message = str_replace( '{current}', wc_price( $cart_total ), $message );
@@ -243,8 +243,8 @@ class SmartRecommendationsFeature extends AbstractFeature {
             parent::get_default_settings(),
             [
                 'threshold'         => 50,
-                'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
+                'message_progress'  => __( 'Add {remaining} more for free shipping!', 'yayboost-sales-booster-for-woocommerce' ),
+                'message_achieved'  => __( '🎉 Congratulations! You have free shipping!', 'yayboost-sales-booster-for-woocommerce' ),
                 'bar_color'         => '#4CAF50',
                 'background_color'  => '#e8f5e9',
                 'text_color'        => '#2e7d32',

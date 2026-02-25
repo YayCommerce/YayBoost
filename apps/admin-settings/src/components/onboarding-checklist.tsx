@@ -109,10 +109,10 @@ export function OnboardingChecklist() {
 
             <div className="space-y-1">
               <h2 className="text-lg font-semibold tracking-tight">
-                {__('Quick Setup', 'yayboost')}
+                {__('Quick Setup', 'yayboost-sales-booster-for-woocommerce')}
               </h2>
               <p className="text-sm text-muted-foreground">
-                {__('Complete these steps to start boosting sales', 'yayboost')}
+                {__('Complete these steps to start boosting sales', 'yayboost-sales-booster-for-woocommerce')}
               </p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export function OnboardingChecklist() {
             disabled={dismissMutation.isPending}
           >
             <X className="h-4 w-4" />
-            <span className="sr-only">{__('Dismiss', 'yayboost')}</span>
+            <span className="sr-only">{__('Dismiss', 'yayboost-sales-booster-for-woocommerce')}</span>
           </Button>
         </div>
 
@@ -183,12 +183,12 @@ export function OnboardingChecklist() {
                 {isNext && (
                   <span className="flex items-center gap-1 text-xs font-medium text-primary">
                     <Sparkles className="h-3 w-3" />
-                    {__('Next', 'yayboost')}
+                    {__('Next', 'yayboost-sales-booster-for-woocommerce')}
                   </span>
                 )}
                 {isCompleted && (
                   <span className="text-xs font-medium text-success">
-                    {__('Done', 'yayboost')}
+                    {__('Done', 'yayboost-sales-booster-for-woocommerce')}
                   </span>
                 )}
               </div>
@@ -228,7 +228,7 @@ export function OnboardingChecklist() {
       <div className="border-t bg-muted/30 px-6 py-3">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {__('You can always access features from the sidebar', 'yayboost')}
+            {__('You can always access features from the sidebar', 'yayboost-sales-booster-for-woocommerce')}
           </p>
           <Button
             variant="link"
@@ -237,7 +237,7 @@ export function OnboardingChecklist() {
             onClick={handleDismiss}
             disabled={dismissMutation.isPending}
           >
-            {__('Skip setup', 'yayboost')}
+            {__('Skip setup', 'yayboost-sales-booster-for-woocommerce')}
             <ArrowRight className="ml-1 h-3 w-3" />
           </Button>
         </div>

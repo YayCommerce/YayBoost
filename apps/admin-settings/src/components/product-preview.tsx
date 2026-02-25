@@ -49,7 +49,7 @@ export function ProductPreview({ currentPosition, children, className }: Product
         'border-border bg-card text-card-foreground min-w-[320px] overflow-hidden rounded-xl border shadow-sm',
         className,
       )}
-      aria-label={__('Product page preview', 'yayboost')}
+      aria-label={__('Product page preview', 'yayboost-sales-booster-for-woocommerce')}
     >
       {/* Two-column layout: gallery left, details right */}
       <div className="grid grid-cols-[minmax(120px,180px)_1fr] gap-4 p-4">

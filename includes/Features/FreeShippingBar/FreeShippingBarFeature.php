@@ -1031,9 +1031,9 @@ class FreeShippingBarFeature extends AbstractFeature {
             parent::get_default_settings(),
             [
                 'enabled'                => true,
-                'message_progress'       => __( 'Add {remaining} more for free shipping!', 'yayboost' ),
-                'message_achieved'       => __( '🎉 Congratulations! You have free shipping!', 'yayboost' ),
-                'message_coupon'         => __( 'Please enter coupon code to receive free shipping', 'yayboost' ),
+                'message_progress'       => __( 'Add {remaining} more for free shipping!', 'yayboost-sales-booster-for-woocommerce' ),
+                'message_achieved'       => __( '🎉 Congratulations! You have free shipping!', 'yayboost-sales-booster-for-woocommerce' ),
+                'message_coupon'         => __( 'Please enter coupon code to receive free shipping', 'yayboost-sales-booster-for-woocommerce' ),
                 'primary_color'          => '#4CAF50',
                 'display_positions'      => [
                     'cart'     => [ 'before_cart_table' ],

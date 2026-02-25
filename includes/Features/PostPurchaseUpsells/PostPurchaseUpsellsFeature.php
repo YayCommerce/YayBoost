@@ -1,34 +1,35 @@
 <?php
 /**
- * Order Bump Feature
+ * Post Purchase Upsells Feature
  *
- * Display upsell offers during checkout that customers can add
- * to their order with a single click.
+ * Display upsell offers when checkout.
  *
  * @package YayBoost
  */
 
-namespace YayBoost\Features\OrderBump;
+namespace YayBoost\Features\PostPurchaseUpsells;
 
 use YayBoost\Features\AbstractFeature;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Order Bump feature implementation
  */
-class OrderBumpFeature extends AbstractFeature {
+class PostPurchaseUpsellsFeature extends AbstractFeature {
     /**
      * Feature ID
      *
      * @var string
      */
-    protected $id = 'order_bump';
+    protected $id = 'post_purchase_upsells';
 
     /**
      * Feature name
      *
      * @var string
      */
-    protected $name = 'Order Bump';
+    protected $name = 'Post-Purchase Upsells';
 
     /**
      * Feature description
@@ -49,19 +50,19 @@ class OrderBumpFeature extends AbstractFeature {
      *
      * @var string
      */
-    protected $icon = 'plus-circle';
+    protected $icon = 'seal-percent';
 
     /**
      * Display priority
      *
      * @var int
      */
-    protected $priority = 100;
+    protected $priority = 90;
 
     /**
-     * Bump repository
+     * Post Purchase Upsells repository
      *
-     * @var BumpRepository
+     * @var PostPurchaseUpsellsRepository
      */
     protected $repository;
 
@@ -71,7 +72,7 @@ class OrderBumpFeature extends AbstractFeature {
      * @return void
      */
     public function init(): void {
-        $this->repository = new BumpRepository();
+        $this->repository = new PostPurchaseUpsellsRepository();
     }
 
     /**
@@ -83,8 +84,15 @@ class OrderBumpFeature extends AbstractFeature {
         return array_merge(
             parent::get_default_settings(),
             [
-                'enabled'          => false,
-                'max_bump_display' => 2,
+                'enabled' => true,
+                'display' => [
+                    'mode'        => 'all',
+                    'max_display' => 2,
+                ],
+                'timing'  => [
+                    'show_countdown' => true,
+                    'expires_after'  => 10,
+                ],
             ]
         );
     }

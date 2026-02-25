@@ -5,6 +5,6 @@
   "version": "1.0.0",
   "title": "Free Shipping Bar Slot",
   "category": "widgets",
-  "textdomain": "yayboost",
+  "textdomain": "yayboost-sales-booster-for-woocommerce",
   "editorScript": "file:./index.js"
 }
