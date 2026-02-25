@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: YayBoost - WooCommerce Conversion Optimization
+ * Plugin Name: YayBoost - Sales Booster for WooCommerce
  * Plugin URI: https://yaycommerce.com/yayboost
  * Description: Boost your WooCommerce sales with intelligent features and recommendations
  * Version: 1.0.0
  * Author: YayCommerce
  * Author URI: https://yaycommerce.com
- * Text Domain: yayboost
+ * Text Domain: yayboost-sales-booster-for-woocommerce
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires Plugins: woocommerce
