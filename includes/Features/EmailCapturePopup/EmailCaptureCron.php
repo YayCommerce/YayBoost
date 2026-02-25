@@ -48,7 +48,7 @@ class EmailCaptureCron {
             self::GROUP
         );
 
-        return $action_id ?: false;
+        return $action_id ?? false;
     }
 
     /**

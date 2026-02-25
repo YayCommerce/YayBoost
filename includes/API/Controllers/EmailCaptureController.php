@@ -78,13 +78,13 @@ class EmailCaptureController extends BaseController {
 
         $items = EmailCaptureRepository::get_all(
             [
-                'status' => $status ?: null,
+                'status' => $status ?? null,
                 'limit'  => $per_page,
                 'offset' => $offset,
             ]
         );
 
-        $total = EmailCaptureRepository::count( $status ?: null );
+        $total = EmailCaptureRepository::count( $status ?? null );
 
         return $this->success(
             [
