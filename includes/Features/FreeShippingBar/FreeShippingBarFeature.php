@@ -894,7 +894,7 @@ class FreeShippingBarFeature extends AbstractFeature {
                     'exceeded'      => $cart_total - $threshold,
                     'event_message' => sprintf(
                         /* translators: %s: formatted cart total at unlock (e.g. $50.00) */
-                        __( 'Free Shipping Bar unlocked (cart: %s)', 'yayboost' ),
+                        __( 'Free shipping unlocked (cart: %s)', 'yayboost' ),
                         html_entity_decode( wp_strip_all_tags( wc_price( $cart_total ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' )
                     ),
                 ],
