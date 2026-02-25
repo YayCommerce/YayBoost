@@ -21,5 +21,4 @@ class BumpRepository extends EntityRepository {
     public function __construct() {
         parent::__construct( 'order_bump', 'bump' );
     }
-
 }
