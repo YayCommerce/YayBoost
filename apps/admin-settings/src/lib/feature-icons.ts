@@ -22,6 +22,7 @@ import {
   PlusCircle,
   Record,
   Scroll,
+  SealPercent,
   ShoppingCart,
   Truck,
   Users,
@@ -48,6 +49,7 @@ export const iconMap: Record<string, Icon> = {
   search: MagnifyingGlass,
   clock: Clock,
   'more-horizontal': DotsThreeOutline,
+  'seal-percent': SealPercent,
 };
 
 /**

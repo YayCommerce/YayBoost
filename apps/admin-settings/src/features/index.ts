@@ -49,8 +49,12 @@ export const featureComponents: Record<
 
   // Recent Purchase Notification
   recent_purchase_notification: lazy(() => import('./recent-purchase-notification')),
+
   // Email Capture Popup
   email_capture_popup: lazy(() => import('./email-capture-popup')),
+
+  // Post Purchase Upsells
+  post_purchase_upsells: lazy(() => import('./post-purchase-upsells')),
 };
 
 /**

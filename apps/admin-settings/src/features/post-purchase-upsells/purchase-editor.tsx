@@ -1,12 +1,12 @@
 /**
- * Edit Bump page – two-column layout: left = form, right = preview.
+ * Edit Post Purchase Upsells page – two-column layout: left = form, right = preview.
  */
 
 import { useCallback, useEffect, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
-import { ArrowLeft, X } from 'lucide-react';
+import { Clock, X, Zap } from 'lucide-react';
 import z from 'zod';
 
 import { useCreateEntity, useEntity, useUpdateEntity } from '@/hooks/use-entities';
@@ -46,10 +46,10 @@ import { Textarea } from '@/components/ui/textarea';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
 import { SettingsCard } from '@/components/settings-card';
 
-const BUMP_ENTITY_TYPE = 'bump';
+const PURCHASE_ENTITY_TYPE = 'purchase';
 const currencySymbol = window.yayboostData?.currencySymbol ?? '$';
 
-const bumpEditorSchema = z.object({
+const purchaseEditorSchema = z.object({
   name: z.string().min(1),
   status: z.enum(['active', 'inactive']),
   product_id: z.string().min(1),
@@ -59,42 +59,41 @@ const bumpEditorSchema = z.object({
   conditions: z
     .array(z.object({ has: z.string(), type: z.string(), value: z.string() }))
     .default([]),
-  position: z.enum(['after_order_summary', 'before_payment_methods', 'before_place_order']),
-  style: z.enum(['simple_checkbox', 'card_with_image', 'highlighted_box']),
   headline: z.string(),
   description: z.string(),
-  checkbox_label: z.string(),
+  accept_button: z.string(),
+  decline_button: z.string(),
   behavior: z.enum(['hide', 'show']),
 });
 
-type BumpEditorFormData = z.infer<typeof bumpEditorSchema>;
+type PurchaseEditorFormData = z.infer<typeof purchaseEditorSchema>;
 
 function toFormData(entity: {
   name: string;
   status: string;
   settings: Record<string, unknown>;
-}): BumpEditorFormData {
+}): PurchaseEditorFormData {
   const s = entity.settings ?? {};
   return {
     name: entity.name ?? '',
     status: (entity.status as 'active' | 'inactive') ?? 'active',
     product_id: (s.product_id as string) ?? '',
-    pricing_type: (s.pricing_type as BumpEditorFormData['pricing_type']) ?? 'percent',
+    pricing_type: (s.pricing_type as PurchaseEditorFormData['pricing_type']) ?? 'percent',
     pricing_value: Number(s.pricing_value ?? 20),
-    show_when: (s.show_when as BumpEditorFormData['show_when']) ?? 'match_conditions',
+    show_when: (s.show_when as PurchaseEditorFormData['show_when']) ?? 'match_conditions',
     conditions: Array.isArray(s.conditions)
-      ? (s.conditions as BumpEditorFormData['conditions'])
-      : ([{ has: 'cart', type: 'product', value: '' }] as BumpEditorFormData['conditions']),
-    position: (s.position as BumpEditorFormData['position']) ?? 'before_place_order',
-    style: (s.style as BumpEditorFormData['style']) ?? 'card_with_image',
-    headline: (s.headline as string) ?? '⚡ SPECIAL OFFER',
+      ? (s.conditions as PurchaseEditorFormData['conditions'])
+      : ([{ has: 'cart', type: 'product', value: '' }] as PurchaseEditorFormData['conditions']),
+
+    headline: (s.headline as string) ?? '⚡ Wait! Exclusive offer just for you',
     description: (s.description as string) ?? '',
-    checkbox_label: (s.checkbox_label as string) ?? 'Yes! Add this to my order.',
-    behavior: (s.behavior as BumpEditorFormData['behavior']) ?? 'hide',
+    accept_button: (s.accept_button as string) ?? 'Add to My Order',
+    decline_button: (s.decline_button as string) ?? 'No, thanks',
+    behavior: (s.behavior as PurchaseEditorFormData['behavior']) ?? 'hide',
   };
 }
 
-function toSettingsPayload(data: BumpEditorFormData): Record<string, unknown> {
+function toSettingsPayload(data: PurchaseEditorFormData): Record<string, unknown> {
   return {
     name: data.name,
     status: data.status,
@@ -103,32 +102,30 @@ function toSettingsPayload(data: BumpEditorFormData): Record<string, unknown> {
     pricing_value: data.pricing_value,
     show_when: data.show_when,
     conditions: data.conditions,
-    position: data.position,
-    style: data.style,
     headline: data.headline,
     description: data.description,
-    checkbox_label: data.checkbox_label,
+    accept_button: data.accept_button,
+    decline_button: data.decline_button,
     behavior: data.behavior,
   };
 }
 
-const DEFAULT_FORM_VALUES: BumpEditorFormData = {
+const DEFAULT_FORM_VALUES: PurchaseEditorFormData = {
   name: '',
   status: 'active',
   product_id: '',
   pricing_type: 'percent',
   pricing_value: 20,
-  show_when: 'match_conditions',
-  conditions: [{ has: 'cart', type: 'product', value: '' }],
-  position: 'before_place_order',
-  style: 'card_with_image',
-  headline: '⚡ SPECIAL OFFER',
+  show_when: 'always',
+  conditions: [],
+  headline: '⚡ Wait! Exclusive offer just for you',
   description: '',
-  checkbox_label: 'Yes! Add this to my order.',
+  accept_button: 'Add to My Order',
+  decline_button: 'No, thanks',
   behavior: 'hide',
 };
 
-export default function BumpEditor() {
+export default function PurchaseEditor() {
   const navigate = useNavigate();
   const { featureId, entityId } = useParams({ strict: false });
   const isNew = !entityId || entityId === 'new';
@@ -137,7 +134,7 @@ export default function BumpEditor() {
   const { data: entity, isLoading: entityLoading } = useEntity(
     featureId ?? '',
     entityIdNum,
-    BUMP_ENTITY_TYPE,
+    PURCHASE_ENTITY_TYPE,
   );
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useProductCategories();
@@ -147,8 +144,8 @@ export default function BumpEditor() {
 
   const defaultValues = useMemo(() => (entity ? toFormData(entity) : undefined), [entity]);
 
-  const form = useForm<BumpEditorFormData>({
-    resolver: zodResolver(bumpEditorSchema),
+  const form = useForm<PurchaseEditorFormData>({
+    resolver: zodResolver(purchaseEditorSchema),
     defaultValues: defaultValues ?? DEFAULT_FORM_VALUES,
   });
 
@@ -160,7 +157,7 @@ export default function BumpEditor() {
   const productId = form.watch('product_id');
   const { data: selectedProduct } = useProduct(productId || null);
 
-  const onSubmit = (data: BumpEditorFormData) => {
+  const onSubmit = (data: PurchaseEditorFormData) => {
     const payload = {
       name: data.name,
       status: data.status,
@@ -168,7 +165,7 @@ export default function BumpEditor() {
     };
     if (isNew) {
       createEntity.mutate(
-        { entity: payload, entityType: BUMP_ENTITY_TYPE },
+        { entity: payload, entityType: PURCHASE_ENTITY_TYPE },
         {
           onSuccess: (created) => {
             navigate({
@@ -183,7 +180,7 @@ export default function BumpEditor() {
         {
           entityId: entityIdNum,
           entity: payload,
-          entityType: BUMP_ENTITY_TYPE,
+          entityType: PURCHASE_ENTITY_TYPE,
         },
         {
           onSuccess: (updated) => {
@@ -203,8 +200,8 @@ export default function BumpEditor() {
 
   const headline = form.watch('headline');
   const description = form.watch('description');
-  const checkboxLabel = form.watch('checkbox_label');
-  const style = form.watch('style');
+  const acceptButton = form.watch('accept_button');
+  const declineButton = form.watch('decline_button');
   const pricingType = form.watch('pricing_type');
   const pricingValue = form.watch('pricing_value');
   const regularPrice =
@@ -212,7 +209,7 @@ export default function BumpEditor() {
   const productLabel =
     selectedProduct?.label ?? products.find((p) => p.value === productId)?.label ?? '';
 
-  const previewBumpPrice = useMemo(() => {
+  const previewPurchasePrice = useMemo(() => {
     if (pricingType === 'percent') {
       const pct = pricingValue / 100;
       return regularPrice * (1 - pct);
@@ -249,16 +246,30 @@ export default function BumpEditor() {
   return (
     <Form {...form}>
       <FeatureLayoutHeader
-        title={isNew ? __('New Bump', 'yayboost') : __('Edit Bump', 'yayboost')}
-        description={__('Configure your order bump settings.', 'yayboost')}
-        goBackRoute="/features/order_bump"
+        title={
+          isNew
+            ? __('New Purchase', 'yayboost-sales-booster-for-woocommerce')
+            : __('Edit Purchase', 'yayboost-sales-booster-for-woocommerce')
+        }
+        description={__(
+          'Configure your purchase settings.',
+          'yayboost-sales-booster-for-woocommerce',
+        )}
+        goBackRoute="/features/post_purchase_upsells"
       />
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Left: Form */}
         <SettingsCard
           headless
-          title={isNew ? __('New Bump', 'yayboost') : __('Edit Bump', 'yayboost')}
-          description={__('Configure your order bump settings.', 'yayboost')}
+          title={
+            isNew
+              ? __('New Purchase', 'yayboost-sales-booster-for-woocommerce')
+              : __('Edit Purchase', 'yayboost-sales-booster-for-woocommerce')
+          }
+          description={__(
+            'Configure your purchase settings.',
+            'yayboost-sales-booster-for-woocommerce',
+          )}
           onSave={() => {
             form.handleSubmit(onSubmit)();
           }}
@@ -268,11 +279,17 @@ export default function BumpEditor() {
           disabled={!isNew}
           isSaving={createEntity.isPending || updateEntity.isPending}
           isDirty={form.formState.isDirty}
-          buttonText={isNew ? __('Add New', 'yayboost') : __('Save Changes', 'yayboost')}
+          buttonText={
+            isNew
+              ? __('Add New', 'yayboost-sales-booster-for-woocommerce')
+              : __('Save Changes', 'yayboost-sales-booster-for-woocommerce')
+          }
         >
           {/* General */}
           <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('General', 'yayboost')}</h3>
+            <h3 className="mb-2 text-sm font-medium">
+              {__('General', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
           </div>
           <FormField
             control={form.control}
@@ -288,13 +305,13 @@ export default function BumpEditor() {
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="active" id="status-active" />
                       <Label htmlFor="status-active" className="font-normal">
-                        {__('Active', 'yayboost')}
+                        {__('Active', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="inactive" id="status-inactive" />
                       <Label htmlFor="status-inactive" className="font-normal">
-                        {__('Inactive', 'yayboost')}
+                        {__('Inactive', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                     </div>
                   </RadioGroup>
@@ -308,17 +325,20 @@ export default function BumpEditor() {
 
           {/* Basic info */}
           <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('Basic info', 'yayboost')}</h3>
+            <h3 className="mb-2 text-sm font-medium">
+              {__('Basic info', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
           </div>
-
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{__('Bump name (internal)', 'yayboost')}</FormLabel>
+                <FormLabel>
+                  {__('Offer name (internal)', 'yayboost-sales-booster-for-woocommerce')}
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="Extended Warranty Offer" {...field} />
+                  <Input placeholder="Case Upsell" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -329,11 +349,15 @@ export default function BumpEditor() {
             name="product_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{__('Product to offer', 'yayboost')}</FormLabel>
+                <FormLabel>
+                  {__('Product to offer', 'yayboost-sales-booster-for-woocommerce')}
+                </FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={__('Select product', 'yayboost')} />
+                      <SelectValue
+                        placeholder={__('Select product', 'yayboost-sales-booster-for-woocommerce')}
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -353,7 +377,9 @@ export default function BumpEditor() {
 
           {/* Pricing */}
           <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('Pricing', 'yayboost')}</h3>
+            <h3 className="mb-2 text-sm font-medium">
+              {__('Pricing', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
           </div>
           <FormField
             control={form.control}
@@ -369,14 +395,17 @@ export default function BumpEditor() {
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="no_discount" id="dt-none" />
                       <Label htmlFor="dt-none" className="font-normal">
-                        {__('No discount (show regular price)', 'yayboost')}
+                        {__(
+                          'No discount (show regular price)',
+                          'yayboost-sales-booster-for-woocommerce',
+                        )}
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="percent" id="dt-percent" />
                       <div className="flex items-center gap-2">
                         <Label htmlFor="dt-percent" className="font-normal">
-                          {__('Percentage off', 'yayboost')}
+                          {__('Percentage off', 'yayboost-sales-booster-for-woocommerce')}
                         </Label>
                         {field.value === 'percent' && (
                           <FormField
@@ -401,7 +430,7 @@ export default function BumpEditor() {
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="fixed_amount" id="dt-fixed-amount" />
                       <Label htmlFor="dt-fixed-amount" className="font-normal">
-                        {__('Fixed amount off', 'yayboost')}
+                        {__('Fixed amount off', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                       {field.value === 'fixed_amount' && (
                         <FormField
@@ -424,7 +453,7 @@ export default function BumpEditor() {
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="fixed_price" id="dt-fixed-price" />
                       <Label htmlFor="dt-fixed-price" className="font-normal">
-                        {__('Fixed price', 'yayboost')}
+                        {__('Fixed price', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                       {field.value === 'fixed_price' && (
                         <FormField
@@ -447,15 +476,16 @@ export default function BumpEditor() {
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="free" id="dt-free" />
                       <Label htmlFor="dt-free" className="font-normal">
-                        {__('Free', 'yayboost')}
+                        {__('Free', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                     </div>
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
-                  {__('Regular:', 'yayboost')} {currencySymbol}
-                  {100} → {__('Bump price:', 'yayboost')} {currencySymbol}
+                  {__('Regular:', 'yayboost-sales-booster-for-woocommerce')} {currencySymbol}
+                  {100} → {__('Offer price:', 'yayboost-sales-booster-for-woocommerce')}{' '}
+                  {currencySymbol}
                   {getPreviewPrice(100)}
                 </FormDescription>
               </FormItem>
@@ -466,7 +496,9 @@ export default function BumpEditor() {
 
           {/* Conditions */}
           <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('Conditions', 'yayboost')}</h3>
+            <h3 className="mb-2 text-sm font-medium">
+              {__('Conditions', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
           </div>
           <FormField
             control={form.control}
@@ -482,13 +514,16 @@ export default function BumpEditor() {
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="always" id="show-always" />
                       <Label htmlFor="show-always" className="font-normal">
-                        {__('Always show', 'yayboost')}
+                        {__('Always show', 'yayboost-sales-booster-for-woocommerce')}
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="match_conditions" id="show-match" />
                       <Label htmlFor="show-match" className="font-normal">
-                        {__('Match conditions below (ALL must match)', 'yayboost')}
+                        {__(
+                          'Match conditions below (ALL must match)',
+                          'yayboost-sales-booster-for-woocommerce',
+                        )}
                       </Label>
                     </div>
                   </RadioGroup>
@@ -509,10 +544,17 @@ export default function BumpEditor() {
                         <FormControl>
                           <Select value={f.value} onValueChange={f.onChange}>
                             <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder={__('Cart has', 'yayboost')} />
+                              <SelectValue
+                                placeholder={__(
+                                  'Cart has',
+                                  'yayboost-sales-booster-for-woocommerce',
+                                )}
+                              />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="cart">{__('Cart has', 'yayboost')}</SelectItem>
+                              <SelectItem value="cart">
+                                {__('Cart has', 'yayboost-sales-booster-for-woocommerce')}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -534,12 +576,23 @@ export default function BumpEditor() {
                             }}
                           >
                             <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder={__('Select type', 'yayboost')} />
+                              <SelectValue
+                                placeholder={__(
+                                  'Select type',
+                                  'yayboost-sales-booster-for-woocommerce',
+                                )}
+                              />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="product">{__('Product', 'yayboost')}</SelectItem>
-                              <SelectItem value="category">{__('Category', 'yayboost')}</SelectItem>
-                              <SelectItem value="tag">{__('Tag', 'yayboost')}</SelectItem>
+                              <SelectItem value="product">
+                                {__('Product', 'yayboost-sales-booster-for-woocommerce')}
+                              </SelectItem>
+                              <SelectItem value="category">
+                                {__('Category', 'yayboost-sales-booster-for-woocommerce')}
+                              </SelectItem>
+                              <SelectItem value="tag">
+                                {__('Tag', 'yayboost-sales-booster-for-woocommerce')}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </FormControl>
@@ -563,7 +616,12 @@ export default function BumpEditor() {
                           <FormControl>
                             <Select value={f.value} onValueChange={f.onChange}>
                               <SelectTrigger>
-                                <SelectValue placeholder={__('Select value', 'yayboost')} />
+                                <SelectValue
+                                  placeholder={__(
+                                    'Select value',
+                                    'yayboost-sales-booster-for-woocommerce',
+                                  )}
+                                />
                               </SelectTrigger>
                               <SelectContent>
                                 {valueOptions.map((opt) => (
@@ -585,7 +643,7 @@ export default function BumpEditor() {
                     size="icon"
                     className="text-muted-foreground hover:text-destructive h-9 w-9 shrink-0"
                     onClick={() => remove(index)}
-                    aria-label={__('Remove condition', 'yayboost')}
+                    aria-label={__('Remove condition', 'yayboost-sales-booster-for-woocommerce')}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -597,7 +655,7 @@ export default function BumpEditor() {
                 className="h-auto p-0 text-sm"
                 onClick={() => append({ has: 'cart', type: 'product', value: '' })}
               >
-                + {__('Add Condition', 'yayboost')}
+                + {__('Add Condition', 'yayboost-sales-booster-for-woocommerce')}
               </Button>
             </div>
           )}
@@ -606,14 +664,16 @@ export default function BumpEditor() {
 
           {/* Content */}
           <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('Content', 'yayboost')}</h3>
+            <h3 className="mb-2 text-sm font-medium">
+              {__('Content', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
           </div>
           <FormField
             control={form.control}
             name="headline"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{__('Headline', 'yayboost')}</FormLabel>
+                <FormLabel>{__('Headline', 'yayboost-sales-booster-for-woocommerce')}</FormLabel>
                 <FormControl>
                   <Input placeholder="⚡ SPECIAL OFFER" {...field} />
                 </FormControl>
@@ -626,9 +686,12 @@ export default function BumpEditor() {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{__('Description', 'yayboost')}</FormLabel>
+                <FormLabel>{__('Description', 'yayboost-sales-booster-for-woocommerce')}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder={__('Enter description', 'yayboost')} {...field} />
+                  <Textarea
+                    placeholder={__('Enter description', 'yayboost-sales-booster-for-woocommerce')}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -636,12 +699,29 @@ export default function BumpEditor() {
           />
           <FormField
             control={form.control}
-            name="checkbox_label"
+            name="accept_button"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{__('Checkbox label', 'yayboost')}</FormLabel>
+                <FormLabel>
+                  {__('Accept button', 'yayboost-sales-booster-for-woocommerce')}
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="Yes! Add this to my order." {...field} />
+                  <Input placeholder="Add to My Order" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="decline_button"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  {__('Decline button', 'yayboost-sales-booster-for-woocommerce')}
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="No, thanks" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -651,7 +731,9 @@ export default function BumpEditor() {
 
           {/* Behavior */}
           <div className="space-y-1">
-            <h3 className="mb-2 text-sm font-medium">{__('Behavior', 'yayboost')}</h3>
+            <h3 className="mb-2 text-sm font-medium">
+              {__('Behavior', 'yayboost-sales-booster-for-woocommerce')}
+            </h3>
             <div className="flex flex-col gap-6"></div>
           </div>
           <FormField
@@ -659,7 +741,9 @@ export default function BumpEditor() {
             name="behavior"
             render={({ field }) => (
               <FormItem>
-                <Label>{__('If product already in cart:', 'yayboost')}</Label>
+                <Label>
+                  {__('If product already in order:', 'yayboost-sales-booster-for-woocommerce')}
+                </Label>
                 <FormControl>
                   <RadioGroup
                     value={field.value}
@@ -668,11 +752,15 @@ export default function BumpEditor() {
                   >
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="hide" id="hide" />
-                      <label htmlFor="hide">{__('Hide this bump', 'yayboost')}</label>
+                      <label htmlFor="hide">
+                        {__('Hide this offer', 'yayboost-sales-booster-for-woocommerce')}
+                      </label>
                     </div>
                     <div className="flex items-center gap-2">
                       <RadioGroupItem value="show" id="show" />
-                      <label htmlFor="show">{__('Still show it', 'yayboost')}</label>
+                      <label htmlFor="show">
+                        {__('Still show it', 'yayboost-sales-booster-for-woocommerce')}
+                      </label>
                     </div>
                   </RadioGroup>
                 </FormControl>
@@ -686,11 +774,39 @@ export default function BumpEditor() {
         <div className="sticky top-6 h-fit space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>{__('Preview', 'yayboost')}</CardTitle>
+              <CardTitle>{__('Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg border bg-white p-4 shadow-sm">
-                <div className="flex gap-4 border-b pb-4">
+              <div className="rounded-lg border bg-white p-5 shadow-sm">
+                {/* Headline – centered with icon */}
+                <p className="mb-2 text-center text-xl font-medium">
+                  {headline || '⚡ Wait! Exclusive offer just for you'}
+                </p>
+                {/* Description */}
+                {description ? (
+                  <p className="text-muted-foreground mb-2 text-center text-sm">{description}</p>
+                ) : (
+                  <p className="text-muted-foreground mb-2 text-center text-sm">
+                    {__(
+                      'Complete your purchase with our best-selling product.',
+                      'yayboost-sales-booster-for-woocommerce',
+                    )}
+                  </p>
+                )}
+                {/* Discount callout (when percent off) */}
+
+                <p className="text-muted-foreground mb-4 text-center text-sm font-medium">
+                  {pricingValue}{' '}
+                  {pricingType === 'percent'
+                    ? '%'
+                    : pricingType === 'fixed_amount'
+                      ? currencySymbol
+                      : ''}{' '}
+                  OFF – {__('Today only!', 'yayboost-sales-booster-for-woocommerce')}
+                </p>
+
+                {/* Product block */}
+                <div className="flex gap-4 rounded-md border p-4">
                   <div className="bg-muted flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md">
                     {selectedProduct?.image ? (
                       <img
@@ -704,45 +820,55 @@ export default function BumpEditor() {
                       </span>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <p className="font-medium">{headline || '⚡ SPECIAL OFFER'}</p>
-                    <p className="text-sm">{productLabel}</p>
-                    <p
-                      className="text-muted-foreground text-sm"
-                      dangerouslySetInnerHTML={{
-                        __html: description || '',
-                      }}
-                    />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="font-medium">
+                      {productLabel ||
+                        __('Premium product', 'yayboost-sales-booster-for-woocommerce')}
+                    </p>
                     <div className="flex flex-wrap items-baseline gap-2">
+                      {regularPrice > 0 && previewPurchasePrice < regularPrice && (
+                        <span className="text-muted-foreground text-sm line-through">
+                          {currencySymbol}
+                          {regularPrice.toFixed(2)}
+                        </span>
+                      )}
                       <span className="font-semibold">
                         {currencySymbol}
-                        {previewBumpPrice.toFixed(2)}
+                        {previewPurchasePrice.toFixed(2)}
                       </span>
-                      {previewBumpPrice < regularPrice && (
-                        <>
-                          <span className="text-muted-foreground line-through">
-                            {currencySymbol}
-                            {regularPrice.toFixed(2)}
+                      {pricingType === 'percent' &&
+                        pricingValue > 0 &&
+                        previewPurchasePrice < regularPrice && (
+                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                            {__('Save', 'yayboost-sales-booster-for-woocommerce')} {pricingValue}%
                           </span>
-                          {pricingType === 'percent' && (
-                            <span className="text-sm text-green-800">
-                              ({__('Save', 'yayboost')} {pricingValue}%)
-                            </span>
-                          )}
-                        </>
-                      )}
+                        )}
                     </div>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" className="-mt-0.5 h-4 w-4 shrink-0 rounded border" />
-                      {checkboxLabel || 'Yes! Add this to my order.'}
-                    </label>
                   </div>
                 </div>
+                {/* Timer placeholder */}
+                <p className="text-muted-foreground mt-4 flex items-center justify-center gap-1.5 text-sm">
+                  <Clock className="h-3.5 w-3.5" />
+                  {__('This offer expires in', 'yayboost-sales-booster-for-woocommerce')} 14:59
+                </p>
+                {/* CTA button */}
+                <Button className="mt-4 w-full" size="lg" type="button">
+                  {acceptButton || __('Add to My Order', 'yayboost-sales-booster-for-woocommerce')}
+                </Button>
+                {/* Decline link */}
+                <p className="mt-2 text-center">
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground text-sm"
+                  >
+                    {declineButton || __('No thanks', 'yayboost-sales-booster-for-woocommerce')}
+                  </button>
+                </p>
               </div>
               <div className="bg-primary/5 text-primary border-primary/20 rounded-md border p-3 text-sm">
                 {__(
-                  'This preview shows how your offer will appear to customers when they are checkouting.',
-                  'yayboost',
+                  'This preview shows how your offer will appear to customers after they complete their purchase.',
+                  'yayboost-sales-booster-for-woocommerce',
                 )}
               </div>
             </CardContent>

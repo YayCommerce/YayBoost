@@ -12,6 +12,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { __ } from '@wordpress/i18n';
 import {
   Activity,
+  BadgePercent,
   ChevronRight,
   Eye,
   Mail,
@@ -43,6 +44,7 @@ const FEATURE_ICONS: Record<string, React.ReactNode> = {
   email_capture_popup: <Mail className="h-4 w-4" />,
   purchase_activity_count: <Activity className="h-4 w-4" />,
   recent_purchase_notification: <MessageSquare className="h-4 w-4" />,
+  post_purchase_upsells: <BadgePercent className="h-4 w-4" />,
 };
 
 // Health indicator config
