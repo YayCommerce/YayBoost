@@ -196,6 +196,58 @@ class AnalyticsEventsTable {
     }
 
     /**
+     * Get order-level purchase totals for a date range.
+     *
+     * Aggregates unique orders that have at least one purchase event.
+     * Revenue is approximated per order using MAX(revenue) across all
+     * purchase events for that order in the given range.
+     *
+     * @param string $start_date Start date (Y-m-d).
+     * @param string $end_date   End date (Y-m-d).
+     * @return array{orders_count:int,orders_revenue:float}
+     */
+    public static function get_purchase_order_totals( string $start_date, string $end_date ): array {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                "SELECT
+                    COUNT(*) AS orders_count,
+                    COALESCE(SUM(order_revenue), 0) AS orders_revenue
+                 FROM (
+                    SELECT
+                        order_id,
+                        MAX(revenue) AS order_revenue
+                    FROM {$table_name}
+                    WHERE event_type = %s
+                      AND order_id IS NOT NULL
+                      AND DATE(created_at) BETWEEN %s AND %s
+                    GROUP BY order_id
+                 ) AS t",
+                'purchase',
+                $start_date,
+                $end_date
+            ),
+            ARRAY_A
+        );
+
+        if ( ! $row ) {
+            return [
+                'orders_count'   => 0,
+                'orders_revenue' => 0.0,
+            ];
+        }
+
+        return [
+            'orders_count'   => (int) $row['orders_count'],
+            'orders_revenue' => (float) $row['orders_revenue'],
+        ];
+    }
+
+    /**
      * Drop the table
      *
      * @return bool
