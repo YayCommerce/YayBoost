@@ -35,8 +35,8 @@ class OtherPluginsMenu {
                 if ( ! ( $screen_id === 'yaycommerce_page_yaycommerce-other-plugins' ) ) {
                     return;
                 }
-                wp_enqueue_script( 'yaycommerce-other-plugins-script', YAYDP_PLUGIN_URL . 'src/YayCommerceMenu/assets/js/other-plugins-main.js', [], '1.0', true );
-                wp_enqueue_style( 'yaycommerce-other-plugins-script', YAYDP_PLUGIN_URL . 'src/YayCommerceMenu/assets/css/other-plugins-main.css', [], '1.0' );
+                wp_enqueue_script( 'yaycommerce-other-plugins-script', YAYBOOST_URL . 'includes/Admin/YayCommerceMenu/assets/js/other-plugins-main.js', [], '1.0', true );
+                wp_enqueue_style( 'yaycommerce-other-plugins-script', YAYBOOST_URL . 'includes/Admin/YayCommerceMenu/assets/css/other-plugins-main.css', [], '1.0' );
             }
         );
     }
@@ -160,6 +160,24 @@ class OtherPluginsMenu {
                 'icon'              => 'https://ps.w.org/yaysmtp/assets/icon-256x256.png',
                 'download_link'     => 'https://downloads.wordpress.org/plugin/yaysmtp.zip',
                 'type'              => [ 'featured', 'marketing' ],
+                'version'           => 0,
+            ],
+            'yayreviews'                => [
+                'slug'              => 'yay-customer-reviews-woocommerce',
+                'name'              => 'YayReviews – Advanced Customer Reviews for WooCommerce',
+                'short_description' => 'YayReviews helps online stores collect, manage, and display authentic customer feedback.',
+                'icon'              => 'https://ps.w.org/yay-customer-reviews-woocommerce/assets/icon-256x256.png',
+                'download_link'     => 'https://downloads.wordpress.org/plugin/yay-customer-reviews-woocommerce.zip',
+                'type'              => [ 'featured', 'woocommerce' ],
+                'version'           => 0,
+            ],
+            'yay-wholesale-b2b'         => [
+                'slug'              => 'yay-wholesale-b2b',
+                'name'              => 'Yay Wholesale B2B for WooCommerce',
+                'short_description' => 'Yay Wholesale & B2B for WooCommerce is a powerful plugin that allows you to sell your products to wholesale customers and businesses.',
+                'icon'              => 'https://ps.w.org/yay-wholesale-b2b/assets/icon-256x256.png',
+                'download_link'     => 'https://downloads.wordpress.org/plugin/yay-wholesale-b2b.zip',
+                'type'              => [ 'featured', 'woocommerce' ],
                 'version'           => 0,
             ],
             'wp-whatsapp'               => [

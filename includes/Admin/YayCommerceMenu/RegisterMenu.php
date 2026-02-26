@@ -84,8 +84,8 @@ class RegisterMenu {
             'parent'             => 'yaycommerce',
             'name'               => __( 'Other plugins', 'yayboost-sales-booster-for-woocommerce' ),
             'capability'         => 'manage_options',
-            'render_callback'    => [ '\YAYDP\Admin\YayCommerceMenu\OtherPluginsMenu', 'render' ],
-            'load_data_callback' => [ '\YAYDP\Admin\YayCommerceMenu\OtherPluginsMenu', 'load_data' ],
+            'render_callback'    => [ '\YAYBOOST\Admin\YayCommerceMenu\OtherPluginsMenu', 'render' ],
+            'load_data_callback' => [ '\YAYBOOST\Admin\YayCommerceMenu\OtherPluginsMenu', 'load_data' ],
         ];
 
         return $submenus;
