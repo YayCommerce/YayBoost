@@ -411,7 +411,7 @@ export default function RecentPurchaseNotificationFeature({ featureId }: Feature
                       <p className="text-foreground text-sm">10$</p>
                     )}
                     {productDetails.includes('rating') && (
-                      <p className="text-sm">{__('★★★★☆', 'yayboost')}</p>
+                      <p className="text-sm text-[#fbbf24]">{__('★★★★☆', 'yayboost')}</p>
                     )}
                   </div>
                 </div>
