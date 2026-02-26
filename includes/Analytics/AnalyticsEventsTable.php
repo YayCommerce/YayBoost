@@ -199,8 +199,9 @@ class AnalyticsEventsTable {
      * Get order-level purchase totals for a date range.
      *
      * Aggregates unique orders that have at least one purchase event.
-     * Revenue is approximated per order using MAX(revenue) across all
-     * purchase events for that order in the given range.
+     * Revenue per order:
+     * - FBT-only orders: SUM(revenue) of all FBT items.
+     * - Mixed orders (FBT + Exit Intent / Next Order): MAX(revenue) to avoid double-counting.
      *
      * @param string $start_date Start date (Y-m-d).
      * @param string $end_date   End date (Y-m-d).
@@ -220,13 +221,17 @@ class AnalyticsEventsTable {
                  FROM (
                     SELECT
                         order_id,
-                        MAX(revenue) AS order_revenue
+                        CASE
+                            WHEN COUNT(DISTINCT feature_id) = 1 AND MAX(feature_id) = %s THEN SUM(revenue)
+                            ELSE MAX(revenue)
+                        END AS order_revenue
                     FROM {$table_name}
                     WHERE event_type = %s
                       AND order_id IS NOT NULL
                       AND DATE(created_at) BETWEEN %s AND %s
                     GROUP BY order_id
                  ) AS t",
+                'fbt',
                 'purchase',
                 $start_date,
                 $end_date

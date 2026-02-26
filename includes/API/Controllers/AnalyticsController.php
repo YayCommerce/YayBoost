@@ -74,6 +74,10 @@ class AnalyticsController extends BaseController {
         ];
 
         foreach ( $features_stats as $feature_id => $stats ) {
+            // Skip _order_totals (order-level aggregates, not per-feature).
+            if ( '_order_totals' === $feature_id ) {
+                continue;
+            }
             $grand_totals['impressions']  += (int) ( $stats['total_impressions'] ?? 0 );
             $grand_totals['clicks']       += (int) ( $stats['total_clicks'] ?? 0 );
             $grand_totals['add_to_carts'] += (int) ( $stats['total_add_to_carts'] ?? 0 );
@@ -81,13 +85,21 @@ class AnalyticsController extends BaseController {
         }
 
         // Global revenue and order count from order-level aggregation (avoids double-counting when multiple features attribute the same order).
-        $order_totals = AnalyticsEventsTable::get_purchase_order_totals(
-            $dates['start'],
-            $dates['end']
-        );
+        // Stored in daily table as feature_id _order_totals; merge today from events if in range (realtime before cron).
+        $order_stats  = AnalyticsDailyTable::get_totals( '_order_totals', $dates['start'], $dates['end'] );
+        $order_totals = [
+            'orders_count'   => (int) ( $order_stats['total_purchases'] ?? 0 ),
+            'orders_revenue' => (float) ( $order_stats['total_revenue'] ?? 0 ),
+        ];
+        $today        = \current_time( 'Y-m-d' );
+        if ( $dates['end'] >= $today ) {
+            $today_totals                    = AnalyticsEventsTable::get_purchase_order_totals( $today, $today );
+            $order_totals['orders_count']   += (int) ( $today_totals['orders_count'] ?? 0 );
+            $order_totals['orders_revenue'] += (float) ( $today_totals['orders_revenue'] ?? 0 );
+        }
 
-        $grand_totals['orders']  = (int) ( $order_totals['orders_count'] ?? 0 );
-        $grand_totals['revenue'] = (float) ( $order_totals['orders_revenue'] ?? 0 );
+        $grand_totals['orders']  = (int) $order_totals['orders_count'];
+        $grand_totals['revenue'] = (float) $order_totals['orders_revenue'];
 
         // Calculate conversion rate
         $conversion_rate       = 0;
@@ -95,6 +107,9 @@ class AnalyticsController extends BaseController {
         if ( $grand_totals['impressions'] > 0 ) {
             $conversion_rate = round( ( $orders_for_conversion / $grand_totals['impressions'] ) * 100, 2 );
         }
+
+        // Exclude _order_totals from features response (internal aggregate, not a displayable feature).
+        unset( $features_stats['_order_totals'] );
 
         return $this->success(
             [

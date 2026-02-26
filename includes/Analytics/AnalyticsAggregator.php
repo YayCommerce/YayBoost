@@ -151,6 +151,22 @@ class AnalyticsAggregator {
             $results['features'][ $feature_id ] = $stats;
         }
 
+        // Store order-level totals for this date (FBT-only SUM, mixed MAX) in daily table with special feature_id.
+        $order_totals = AnalyticsEventsTable::get_purchase_order_totals( $date, $date );
+        AnalyticsDailyTable::upsert(
+            '_order_totals',
+            $date,
+            [
+                'impressions'     => 0,
+                'clicks'          => 0,
+                'add_to_carts'    => 0,
+                'purchases'       => (int) $order_totals['orders_count'],
+                'revenue'         => (float) $order_totals['orders_revenue'],
+                'unique_products' => 0,
+            ]
+        );
+        $results['order_totals'] = $order_totals;
+
         return $results;
     }
 
