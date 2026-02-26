@@ -9,6 +9,8 @@
 
 namespace YayBoost\Features\OrderBump;
 
+use YayBoost\Utils\Price;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -308,9 +310,9 @@ class OrderBumpRenderer {
             return null;
         }
 
-        $regular = (float) $product->get_regular_price();
-        if ( $regular === 0.0 && $product->get_regular_price() === '' ) {
-            $regular = (float) $product->get_price();
+        $regular_price = (float) $product->get_regular_price();
+        if ( $regular_price === 0.0 && $product->get_regular_price() === '' ) {
+            $regular_price = (float) $product->get_price();
         }
 
         $lookup_id = $product->get_parent_id();
@@ -335,18 +337,7 @@ class OrderBumpRenderer {
         $pricing_type  = $settings['pricing_type'] ?? 'percent';
         $pricing_value = isset( $settings['pricing_value'] ) ? (float) $settings['pricing_value'] : 0;
 
-        $bump_price = $regular;
-        if ( $pricing_type === 'percent' ) {
-            $bump_price = $regular * ( 1 - $pricing_value / 100 );
-        } elseif ( $pricing_type === 'fixed_amount' ) {
-            $bump_price = max( 0, $regular - $pricing_value );
-        } elseif ( $pricing_type === 'fixed_price' ) {
-            $bump_price = $pricing_value;
-        } elseif ( $pricing_type === 'free' ) {
-            $bump_price = 0;
-        }
-
-        return (float) $bump_price;
+        return Price::get_discounted_price( $regular_price, $pricing_type, $pricing_value );
     }
 
     /**
@@ -357,25 +348,16 @@ class OrderBumpRenderer {
      * @return array Bump with price_display, price_html, product_name, image_html, etc.
      */
     protected function enrich_bump_for_display( array $bump, \WC_Product $product ): array {
-        $settings = $bump['settings'] ?? [];
-        $regular  = (float) $product->get_regular_price();
-        if ( $regular === 0.0 && $product->get_regular_price() === '' ) {
-            $regular = (float) $product->get_price();
+        $settings      = $bump['settings'] ?? [];
+        $regular_price = (float) $product->get_regular_price();
+        if ( $regular_price === 0.0 && $product->get_regular_price() === '' ) {
+            $regular_price = (float) $product->get_price();
         }
 
         $pricing_type  = $settings['pricing_type'] ?? 'percent';
         $pricing_value = isset( $settings['pricing_value'] ) ? (float) $settings['pricing_value'] : 0;
 
-        $bump_price = $regular;
-        if ( $pricing_type === 'percent' ) {
-            $bump_price = $regular * ( 1 - $pricing_value / 100 );
-        } elseif ( $pricing_type === 'fixed_amount' ) {
-            $bump_price = max( 0, $regular - $pricing_value );
-        } elseif ( $pricing_type === 'fixed_price' ) {
-            $bump_price = $pricing_value;
-        } elseif ( $pricing_type === 'free' ) {
-            $bump_price = 0;
-        }
+        $bump_price = Price::get_discounted_price( $regular_price, $pricing_type, $pricing_value );
 
         $default_variation_id = 0;
         if ( $product->is_type( 'variable' ) ) {
@@ -394,7 +376,7 @@ class OrderBumpRenderer {
             'product_name'         => $product->get_name(),
             'permalink'            => $product->get_permalink(),
             'image_html'           => $product->get_image( 'woocommerce_thumbnail' ),
-            'regular_price'        => $regular,
+            'regular_price'        => $regular_price,
             'bump_price'           => $bump_price,
             'price_html'           => function_exists( 'wc_price' ) ? wc_price( $bump_price ) : ( wp_strip_all_tags( (string) $bump_price ) ),
             'price_html_raw'       => $bump_price,
@@ -427,17 +409,6 @@ class OrderBumpRenderer {
         $data_store = \WC_Data_Store::load( 'product' );
         $vid        = $data_store->find_matching_product_variation( $product, $attrs );
         return $vid ? (int) $vid : 0;
-    }
-
-    /**
-     * Get default variation attributes for a variable product (for Store API add-to-cart).
-     * Returns empty array for simple products. Public for use when adding bump to cart server-side.
-     *
-     * @param \WC_Product $product Product instance.
-     * @return array<string, string> Attribute name => value (e.g. attribute_pa_size => medium).
-     */
-    public function get_default_variation_attributes_public( \WC_Product $product ): array {
-        return $this->get_default_variation_attributes( $product );
     }
 
     /**

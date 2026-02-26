@@ -10,6 +10,7 @@ namespace YayBoost\API\Controllers;
 use WP_REST_Request;
 use WP_REST_Server;
 use YayBoost\Repository\EntityRepository;
+use YayBoost\Utils\Price;
 
 /**
  * Handles entity CRUD API endpoints for features
@@ -116,7 +117,7 @@ class EntityController extends BaseController {
         $total    = $repository->count( $args['status'] );
 
         if ( $feature_id === 'order_bump' && $entity_type === 'bump' ) {
-            $entities = $this->enrich_bump_entities( $entities );
+            $entities = $this->enrich_entities( $entities );
         }
 
         return $this->success(
@@ -128,17 +129,17 @@ class EntityController extends BaseController {
     }
 
     /**
-     * Enrich bump entities with product_name and price_display for list display.
+     * Enrich entities with product_name and price_display for list display.
      *
-     * @param array $entities List of bump entities (each with id, name, settings, status, etc.)
+     * @param array $entities List of entities (each with id, name, settings, status, etc.)
      * @return array
      */
-    protected function enrich_bump_entities( array $entities ): array {
+    protected function enrich_entities( array $entities ): array {
         foreach ( $entities as &$entity ) {
-            $settings = isset( $entity['settings'] ) && is_array( $entity['settings'] ) ? $entity['settings'] : [];
+            $settings   = isset( $entity['settings'] ) && is_array( $entity['settings'] ) ? $entity['settings'] : [];
             $product_id = isset( $settings['product_id'] ) ? $settings['product_id'] : null;
 
-            $product_name = null;
+            $product_name  = null;
             $regular_price = null;
 
             if ( $product_id && function_exists( 'wc_get_product' ) ) {
@@ -161,28 +162,18 @@ class EntityController extends BaseController {
 
             $settings['product_name'] = $product_name;
 
-            $discount_type  = $settings['pricing_type'] ?? $settings['discount_type'] ?? 'percent';
-            $discount_value = isset( $settings['pricing_value'] ) ? (float) $settings['pricing_value'] : (isset( $settings['discount_value'] ) ? (float) $settings['discount_value'] : 0);
-
-            $bump_price = $regular_price;
-            if ( $discount_type === 'percent' ) {
-                $bump_price = $regular_price * ( 1 - $discount_value / 100 );
-            } elseif ( $discount_type === 'fixed_amount' ) {
-                $bump_price = max( 0, $regular_price - $discount_value );
-            } elseif ( $discount_type === 'fixed_price' ) {
-                $bump_price = $discount_value;
-            } elseif ( $discount_type === 'free' ) {
-                $bump_price = 0;
-            }
+            $pricing_type  = $settings['pricing_type'] ?? $settings['discount_type'] ?? 'percent';
+            $pricing_value = isset( $settings['pricing_value'] ) ? (float) $settings['pricing_value'] : (isset( $settings['discount_value'] ) ? (float) $settings['discount_value'] : 0);
+            $entity_price  = Price::get_discounted_price( $regular_price, $pricing_type, $pricing_value );
 
             // Decode HTML entities (e.g. &#8363; for ₫) so frontend displays the symbol, not literal entity
-            $currency = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$';
-            $currency = html_entity_decode( $currency, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-            $settings['price_display'] = $currency . number_format( (float) $bump_price, 2 );
-            $settings['price']         = $bump_price;
+            $currency                  = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$';
+            $currency                  = html_entity_decode( $currency, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+            $settings['price_display'] = $currency . number_format( (float) $entity_price, 2 );
+            $settings['price']         = $entity_price;
 
             $entity['settings'] = $settings;
-        }
+        }//end foreach
 
         return $entities;
     }

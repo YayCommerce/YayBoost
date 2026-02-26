@@ -44,8 +44,6 @@ class OrderBumpCartHandler {
         add_action( 'wp_ajax_' . self::AJAX_ACTION_REMOVE, [ $this, 'ajax_remove_bump_from_cart' ] );
         add_action( 'wp_ajax_nopriv_' . self::AJAX_ACTION_REMOVE, [ $this, 'ajax_remove_bump_from_cart' ] );
 
-        add_filter( 'woocommerce_add_cart_item_data', [ $this, 'add_cart_item_data' ], 10, 3 );
-        add_filter( 'woocommerce_add_cart_item', [ $this, 'persist_cart_item_data' ], 10, 2 );
         add_filter( 'woocommerce_get_item_data', [ $this, 'display_bump_in_cart' ], 10, 2 );
         add_action( 'woocommerce_before_calculate_totals', [ $this, 'apply_bump_price' ], 10, 1 );
     }
@@ -118,29 +116,6 @@ class OrderBumpCartHandler {
         }
 
         wp_send_json_success( [ 'message' => __( 'Not in cart.', 'yayboost' ) ] );
-    }
-
-    /**
-     * Persist bump data when adding to cart (so it survives session).
-     *
-     * @param array $cart_item_data Data passed to add_to_cart.
-     * @param int   $product_id     Product ID.
-     * @param int   $variation_id   Variation ID.
-     * @return array
-     */
-    public function add_cart_item_data( array $cart_item_data, $product_id, $variation_id ): array {
-        return $cart_item_data;
-    }
-
-    /**
-     * Ensure bump keys are on the cart item object.
-     *
-     * @param array  $cart_item     Cart item.
-     * @param string $_cart_item_key Cart item key (unused; required by filter).
-     * @return array
-     */
-    public function persist_cart_item_data( array $cart_item, $_cart_item_key ): array {
-        return $cart_item;
     }
 
     /**
