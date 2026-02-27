@@ -12,6 +12,7 @@ namespace YayBoost\API\Controllers;
 use WP_REST_Request;
 use WP_REST_Server;
 use YayBoost\Analytics\AnalyticsDailyTable;
+use YayBoost\Analytics\AnalyticsEventsTable;
 
 /**
  * Handles analytics API endpoints
@@ -77,13 +78,22 @@ class AnalyticsController extends BaseController {
             $grand_totals['clicks']       += (int) ( $stats['total_clicks'] ?? 0 );
             $grand_totals['add_to_carts'] += (int) ( $stats['total_add_to_carts'] ?? 0 );
             $grand_totals['purchases']    += (int) ( $stats['total_purchases'] ?? 0 );
-            $grand_totals['revenue']      += (float) ( $stats['total_revenue'] ?? 0 );
         }
 
+        // Global revenue and order count from order-level aggregation (avoids double-counting when multiple features attribute the same order).
+        $order_totals = AnalyticsEventsTable::get_purchase_order_totals(
+            $dates['start'],
+            $dates['end']
+        );
+
+        $grand_totals['orders']  = (int) ( $order_totals['orders_count'] ?? 0 );
+        $grand_totals['revenue'] = (float) ( $order_totals['orders_revenue'] ?? 0 );
+
         // Calculate conversion rate
-        $conversion_rate = 0;
+        $conversion_rate       = 0;
+        $orders_for_conversion = (int) ( $grand_totals['orders'] ?? 0 );
         if ( $grand_totals['impressions'] > 0 ) {
-            $conversion_rate = round( ( $grand_totals['purchases'] / $grand_totals['impressions'] ) * 100, 2 );
+            $conversion_rate = round( ( $orders_for_conversion / $grand_totals['impressions'] ) * 100, 2 );
         }
 
         return $this->success(
