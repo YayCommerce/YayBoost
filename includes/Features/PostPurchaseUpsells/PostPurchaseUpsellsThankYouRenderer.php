@@ -68,10 +68,10 @@ class PostPurchaseUpsellsThankYouRenderer {
             return;
         }
 
-        $entities            = array_slice( $entities, 0, $max );
-        $order_product_ids   = $this->get_order_product_ids( $order );
-        $used_entity_ids     = $this->get_used_offer_entity_ids( $order );
-        $offers              = [];
+        $entities          = array_slice( $entities, 0, $max );
+        $order_product_ids = $this->get_order_product_ids( $order );
+        $used_entity_ids   = $this->get_used_offer_entity_ids( $order );
+        $offers            = [];
 
         foreach ( $entities as $entity ) {
             if ( in_array( (int) $entity['id'], $used_entity_ids, true ) ) {
@@ -289,34 +289,40 @@ class PostPurchaseUpsellsThankYouRenderer {
      * @return void
      */
     private function output_html( array $offers, int $expires_at = 0 ): void {
-        $settings   = $this->feature->get_settings();
-        $display    = $settings['display'] ?? [];
-        $mode       = isset( $display['mode'] ) ? (string) $display['mode'] : 'all';
-        $is_grid    = ( $mode === 'all' );
-        $timing     = $settings['timing'] ?? [];
-        $expires_in = isset( $timing['expires_after'] ) ? max( 1, (int) $timing['expires_after'] ) : 10;
-        $show_timer = ! empty( $timing['show_countdown'] );
+        $settings          = $this->feature->get_settings();
+        $display           = $settings['display'] ?? [];
+        $mode              = isset( $display['mode'] ) ? (string) $display['mode'] : 'all';
+        $is_grid           = ( $mode === 'all' );
+        $timing            = $settings['timing'] ?? [];
+        $expires_in        = isset( $timing['expires_after'] ) ? max( 1, (int) $timing['expires_after'] ) : 10;
+        $show_timer        = ! empty( $timing['show_countdown'] );
+        $countdown_initial = '';
+        if ( $show_timer && $expires_at > 0 ) {
+            $remaining         = max( 0, $expires_at - time() );
+            $countdown_initial = sprintf( '%02d:%02d', (int) floor( $remaining / 60 ), (int) ( $remaining % 60 ) );
+        } elseif ( $show_timer ) {
+            $countdown_initial = sprintf( '%02d:%02d', $expires_in, 0 );
+        }
 
-        $offers_style = $is_grid
-            ? 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;'
-            : 'display: grid; gap: 24px;';
-        $card_style = $is_grid
-            ? 'padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;'
-            : 'width: 60%; margin: 0 auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;';
+        wp_enqueue_style(
+            'yayboost-post-purchase-upsells',
+            YAYBOOST_URL . 'assets/css/post-purchase-upsells.css',
+            [],
+            defined( 'YAYBOOST_VERSION' ) ? YAYBOOST_VERSION : '1.0.0'
+        );
+
+        if ( $show_timer && ! empty( $offers ) ) {
+            wp_enqueue_script(
+                'yayboost-post-purchase-upsells',
+                YAYBOOST_URL . 'assets/js/post-purchase-upsells.js',
+                [],
+                defined( 'YAYBOOST_VERSION' ) ? YAYBOOST_VERSION : '1.0.0',
+                true
+            );
+        }
         ?>
-        <div class="yayboost-post-purchase-upsells" style="margin: 24px 0; padding: 0;">
-            <?php if ( $is_grid ) : ?>
-            <style type="text/css">
-                .yayboost-ppu-offers.yayboost-ppu-offers--grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-                @media (max-width: 992px) {
-                    .yayboost-ppu-offers.yayboost-ppu-offers--grid { grid-template-columns: repeat(2, 1fr); }
-                }
-                @media (max-width: 576px) {
-                    .yayboost-ppu-offers.yayboost-ppu-offers--grid { grid-template-columns: 1fr; }
-                }
-            </style>
-            <?php endif; ?>
-            <div class="yayboost-ppu-offers <?php echo $is_grid ? 'yayboost-ppu-offers--grid' : ''; ?>" style="<?php echo esc_attr( $offers_style ); ?>">
+        <div class="yayboost-post-purchase-upsells">
+            <div class="yayboost-ppu-offers <?php echo $is_grid ? 'yayboost-ppu-offers--grid' : ''; ?>">
                 <?php foreach ( $offers as $offer ) : ?>
                     <?php
                     $product  = $offer['product'];
@@ -327,102 +333,53 @@ class PostPurchaseUpsellsThankYouRenderer {
                         $headline = '⚡ ' . $headline;
                     }
                     ?>
-                    <div class="yayboost-ppu-offer yayboost-ppu-modal <?php echo $is_grid ? 'yayboost-ppu-offer--grid' : ''; ?>" style="<?php echo esc_attr( $card_style ); ?>">
-                        <div class="yayboost-ppu-offer-header" style="margin-bottom: 16px;text-align: center;">
+                    <div class="yayboost-ppu-offer yayboost-ppu-modal <?php echo $is_grid ? 'yayboost-ppu-offer--grid' : ''; ?>">
+                        <div class="yayboost-ppu-offer-header">
                             <?php if ( $headline !== '' ) : ?>
-                                <h4 class="yayboost-ppu-offer-headline" style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1a1a1a; line-height: 1.3;">
-                                    <?php echo esc_html( $headline ); ?>
-                                </h4>
+                                <h4 class="yayboost-ppu-offer-headline"><?php echo esc_html( $headline ); ?></h4>
                             <?php endif; ?>
                             <?php if ( ! empty( $offer['description'] ) ) : ?>
-                                <p class="yayboost-ppu-offer-desc" style="margin: 0 0 6px 0; font-size: 14px; color: #4a4a4a; line-height: 1.5;">
-                                    <?php echo esc_html( $offer['description'] ); ?>
-                                </p>
+                                <p class="yayboost-ppu-offer-desc"><?php echo esc_html( $offer['description'] ); ?></p>
                             <?php endif; ?>
                             <?php if ( ! empty( $offer['offer_highlight'] ) ) : ?>
-                                <p class="yayboost-ppu-offer-highlight" style="margin: 0; font-size: 14px; color: #1a1a1a;">
-                                    <?php echo esc_html( $offer['offer_highlight'] ); ?>
-                                </p>
+                                <p class="yayboost-ppu-offer-highlight"><?php echo esc_html( $offer['offer_highlight'] ); ?></p>
                             <?php endif; ?>
                         </div>
 
-                        <div class="yayboost-ppu-product-box" style="display: flex; gap: 16px; padding: 16px; margin-bottom: 16px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
+                        <div class="yayboost-ppu-product-box">
                             <?php if ( $img_url ) : ?>
-                                <div class="yayboost-ppu-offer-image" style="flex-shrink: 0; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; background: #fff;">
-                                    <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
+                                <div class="yayboost-ppu-offer-image">
+                                    <img src="<?php echo esc_url( $img_url ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" loading="lazy" />
                                 </div>
                             <?php endif; ?>
-                            <div class="yayboost-ppu-product-details" style="flex: 1; min-width: 0;">
-                                <div class="yayboost-ppu-offer-name" style="font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 6px;">
-                                    <?php echo esc_html( $product->get_name() ); ?>
-                                </div>
-                                <div class="yayboost-ppu-pricing" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div class="yayboost-ppu-product-details">
+                                <div class="yayboost-ppu-offer-name"><?php echo esc_html( $product->get_name() ); ?></div>
+                                <div class="yayboost-ppu-pricing">
                                     <?php if ( $offer['regular_price'] > $offer['offer_price'] ) : ?>
-                                        <span class="yayboost-ppu-regular-price" style="font-size: 14px; color: #6c757d; text-decoration: line-through;">
-                                            <?php echo wp_kses_post( $offer['regular_price_html'] ); ?>
-                                        </span>
+                                        <span class="yayboost-ppu-regular-price"><?php echo wp_kses_post( $offer['regular_price_html'] ); ?></span>
                                     <?php endif; ?>
-                                    <span class="yayboost-ppu-offer-price" style="font-size: 18px; font-weight: 700; color: #1a1a1a;">
-                                        <?php echo wp_kses_post( $offer['price_html'] ); ?>
-                                    </span>
+                                    <span class="yayboost-ppu-offer-price"><?php echo wp_kses_post( $offer['price_html'] ); ?></span>
                                     <?php if ( $offer['savings_text'] !== '' ) : ?>
-                                        <span class="yayboost-ppu-savings" style="font-size: 14px; color: #1a1a1a;">
-                                            <?php echo wp_kses_post( $offer['savings_text'] ); ?>
-                                        </span>
+                                        <span class="yayboost-ppu-savings"><?php echo wp_kses_post( $offer['savings_text'] ); ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
                         </div>
 
                         <?php if ( $show_timer ) : ?>
-                            <p class="yayboost-ppu-timer" style="margin: 0 0 16px 0; font-size: 13px; color: #6c757d;text-align: center;" <?php echo $expires_at > 0 ? ' data-expires-at="' . (int) $expires_at . '"' : ' data-expires-minutes="' . (int) $expires_in . '"'; ?>>
-                                <span style="display: inline-block; margin-right: 6px; vertical-align: middle;">🕐</span>
-                                <span class="yayboost-ppu-timer-text"><?php echo esc_html( __( 'This offer expires in', 'yayboost-sales-booster-for-woocommerce' ) ); ?> <span class="yayboost-ppu-countdown">--:--</span></span>
+                            <p class="yayboost-ppu-timer" <?php echo $expires_at > 0 ? ' data-expires-at="' . (int) $expires_at . '"' : ' data-expires-minutes="' . (int) $expires_in . '"'; ?>>
+                                <span class="yayboost-ppu-timer-icon" aria-hidden="true">🕐</span>
+                                <span class="yayboost-ppu-timer-text"><?php echo esc_html( __( 'This offer expires in', 'yayboost-sales-booster-for-woocommerce' ) ); ?> <span class="yayboost-ppu-countdown"><?php echo esc_html( $countdown_initial ); ?></span></span>
                             </p>
                         <?php endif; ?>
 
-                        <div class="yayboost-ppu-actions" style="display: flex; flex-direction: column; align-items: stretch; gap: 12px;">
-                            <a href="<?php echo esc_url( $offer['add_to_cart_url'] ); ?>" class="button yayboost-ppu-add-btn" style="display: block; width: 100%; padding: 14px 20px; font-size: 16px; font-weight: 600; text-align: center; background: #2563eb; color: #fff; border: none; border-radius: 8px; text-decoration: none; box-sizing: border-box;">
-                                <?php echo esc_html( $offer['accept_button'] ); ?>
-                            </a>
-                            <a href="<?php echo esc_url( \wc_get_page_permalink( 'shop' ) ); ?>" class="yayboost-ppu-decline" style="display: block; text-align: center; font-size: 14px; color: #4a4a4a; text-decoration: none;">
-                                <?php echo esc_html( $offer['decline_button'] ); ?>
-                            </a>
+                        <div class="yayboost-ppu-actions">
+                            <a href="<?php echo esc_url( $offer['add_to_cart_url'] ); ?>" class="button yayboost-ppu-add-btn"><?php echo esc_html( $offer['accept_button'] ); ?></a>
+                            <a href="<?php echo esc_url( \wc_get_page_permalink( 'shop' ) ); ?>" class="yayboost-ppu-decline"><?php echo esc_html( $offer['decline_button'] ); ?></a>
                         </div>
                     </div>
                 <?php endforeach; ?>
             </div>
-            <?php if ( $show_timer && ! empty( $offers ) ) : ?>
-                <script>
-                (function(){
-                    var timers = document.querySelectorAll('.yayboost-ppu-timer[data-expires-at], .yayboost-ppu-timer[data-expires-minutes]');
-                    function pad(n){ return n < 10 ? '0' + n : n; }
-                    timers.forEach(function(el){
-                        var endMs;
-                        if (el.hasAttribute('data-expires-at')) {
-                            endMs = parseInt(el.getAttribute('data-expires-at'), 10) * 1000;
-                        } else {
-                            var min = parseInt(el.getAttribute('data-expires-minutes'), 10) || 10;
-                            endMs = Date.now() + min * 60 * 1000;
-                        }
-                        function tick(){
-                            var left = Math.max(0, endMs - Date.now());
-                            if (left <= 0) {
-                                var txt = el.querySelector('.yayboost-ppu-timer-text');
-                                if (txt) txt.textContent = '<?php echo esc_js( __( 'Offer expired', 'yayboost-sales-booster-for-woocommerce' ) ); ?>';
-                                return;
-                            }
-                            var m = Math.floor(left / 60000);
-                            var s = Math.floor((left % 60000) / 1000);
-                            var countdown = el.querySelector('.yayboost-ppu-countdown');
-                            if (countdown) countdown.textContent = pad(m) + ':' + pad(s);
-                            setTimeout(tick, 1000);
-                        }
-                        tick();
-                    });
-                })();
-                </script>
-            <?php endif; ?>
         </div>
         <?php
     }
