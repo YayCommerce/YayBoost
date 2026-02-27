@@ -77,7 +77,8 @@ class FBTController extends BaseController {
             // Get batch size from request (default 100)
             $batch_size = $request->get_param( 'batch_size' );
             $batch_size = $batch_size ? absint( $batch_size ) : 100;
-            $batch_size = max( 10, min( 500, $batch_size ) ); // Clamp between 10-500
+            $batch_size = max( 10, min( 500, $batch_size ) );
+            // Clamp between 10-500
 
             // Calculate number of batches
             $batches_count = $unprocessed > 0 ? ceil( $unprocessed / $batch_size ) : 0;
@@ -106,11 +107,11 @@ class FBTController extends BaseController {
             );
         } catch ( \Exception $e ) {
             return $this->error(
-                __( 'Failed to start backfill process.', 'yayboost' ),
+                __( 'Failed to start backfill process.', 'yayboost-sales-booster-for-woocommerce' ),
                 500,
                 [ 'error' => $e->getMessage() ]
             );
-        }
+        }//end try
     }
 
     /**
@@ -127,8 +128,9 @@ class FBTController extends BaseController {
             $batch_size    = $request->get_param( 'batch_size' );
             $last_order_id = $request->get_param( 'last_order_id' );
 
-            $batch_size    = $batch_size ? absint( $batch_size ) : 100;
-            $batch_size    = max( 10, min( 500, $batch_size ) ); // Clamp between 10-500
+            $batch_size = $batch_size ? absint( $batch_size ) : 100;
+            $batch_size = max( 10, min( 500, $batch_size ) );
+            // Clamp between 10-500
             $last_order_id = $last_order_id ? absint( $last_order_id ) : 0;
 
             // Process batch
@@ -158,11 +160,11 @@ class FBTController extends BaseController {
             );
         } catch ( \Exception $e ) {
             return $this->error(
-                __( 'Failed to process batch.', 'yayboost' ),
+                __( 'Failed to process batch.', 'yayboost-sales-booster-for-woocommerce' ),
                 500,
                 [ 'error' => $e->getMessage() ]
             );
-        }
+        }//end try
     }
 
     /**
@@ -191,10 +193,10 @@ class FBTController extends BaseController {
             );
         } catch ( \Exception $e ) {
             return $this->error(
-                __( 'Failed to get backfill status.', 'yayboost' ),
+                __( 'Failed to get backfill status.', 'yayboost-sales-booster-for-woocommerce' ),
                 500,
                 [ 'error' => $e->getMessage() ]
             );
-        }
+        }//end try
     }
 }

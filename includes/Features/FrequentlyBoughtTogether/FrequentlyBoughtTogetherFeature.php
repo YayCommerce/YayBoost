@@ -186,7 +186,7 @@ class FrequentlyBoughtTogetherFeature extends AbstractFeature {
                 'max_products'        => 4,
                 'min_order_threshold' => 5,
                 'layout'              => 'grid',
-                'section_title'       => __( 'Frequently Bought Together', 'yayboost' ),
+                'section_title'       => __( 'Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce' ),
                 'hide_if_in_cart'     => 'hide',
             ]
         );

@@ -127,15 +127,15 @@ class ExitIntentPopupAjaxHandler {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
 
         if ( ! $this->feature->is_enabled() ) {
-            wp_send_json_error( [ 'message' => __( 'Feature disabled.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Feature disabled.', 'yayboost-sales-booster-for-woocommerce' ) ], 400 );
         }
 
         if ( ! $this->check_rate_limit() ) {
-            wp_send_json_error( [ 'message' => __( 'Too many requests.', 'yayboost' ) ], 429 );
+            wp_send_json_error( [ 'message' => __( 'Too many requests.', 'yayboost-sales-booster-for-woocommerce' ) ], 429 );
         }
 
         if ( ! $this->tracker->is_eligible() ) {
-            wp_send_json_error( [ 'message' => __( 'Not eligible.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Not eligible.', 'yayboost-sales-booster-for-woocommerce' ) ], 400 );
         }
 
         $this->tracker->mark_shown();
@@ -152,15 +152,15 @@ class ExitIntentPopupAjaxHandler {
         check_ajax_referer( self::NONCE_ACTION, 'nonce' );
 
         if ( ! $this->check_rate_limit() ) {
-            wp_send_json_error( [ 'message' => __( 'Too many requests.', 'yayboost' ) ], 429 );
+            wp_send_json_error( [ 'message' => __( 'Too many requests.', 'yayboost-sales-booster-for-woocommerce' ) ], 429 );
         }
 
         if ( ! $this->feature->is_enabled() ) {
-            wp_send_json_error( [ 'message' => __( 'Feature disabled.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Feature disabled.', 'yayboost-sales-booster-for-woocommerce' ) ], 400 );
         }
 
         if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
-            wp_send_json_error( [ 'message' => __( 'WooCommerce unavailable.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'WooCommerce unavailable.', 'yayboost-sales-booster-for-woocommerce' ) ], 400 );
         }
 
         // Check if already has coupon (return existing if still valid)
@@ -179,10 +179,10 @@ class ExitIntentPopupAjaxHandler {
                         0,
                         null,
                         [
-                            'coupon_code'  => $existing_code,
+                            'coupon_code'   => $existing_code,
                             'event_message' => sprintf(
                                 /* translators: %s: coupon code */
-                                __( 'Clicked popup – coupon %s applied', 'yayboost' ),
+                                __( 'Clicked popup – coupon %s applied', 'yayboost-sales-booster-for-woocommerce' ),
                                 $existing_code
                             ),
                         ]
@@ -196,16 +196,16 @@ class ExitIntentPopupAjaxHandler {
                     ]
                 );
                 return;
-            }
+            }//end if
 
             // Coupon expired/invalid - clear it from state and create new one
             $this->tracker->clear_coupon();
-        }
+        }//end if
 
         // User must have seen the popup to create coupon (shown_at must be set)
         // This prevents direct AJAX calls without triggering the popup first
         if ( empty( $state['shown_at'] ) ) {
-            wp_send_json_error( [ 'message' => __( 'Not eligible for offer.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'Not eligible for offer.', 'yayboost-sales-booster-for-woocommerce' ) ], 400 );
         }
 
         $settings = $this->feature->get_settings();
@@ -215,12 +215,12 @@ class ExitIntentPopupAjaxHandler {
 
         // If no discount, do not create coupon
         if ( 'no_discount' === $type ) {
-            wp_send_json_error( [ 'message' => __( 'No discount configured.', 'yayboost' ) ], 400 );
+            wp_send_json_error( [ 'message' => __( 'No discount configured.', 'yayboost-sales-booster-for-woocommerce' ) ], 400 );
         }
 
         $code = $this->create_coupon( $offer );
         if ( ! $code ) {
-            wp_send_json_error( [ 'message' => __( 'Failed to create coupon.', 'yayboost' ) ], 500 );
+            wp_send_json_error( [ 'message' => __( 'Failed to create coupon.', 'yayboost-sales-booster-for-woocommerce' ) ], 500 );
             return;
         }
 
@@ -235,14 +235,14 @@ class ExitIntentPopupAjaxHandler {
                 AnalyticsTracker::FEATURE_EXIT_INTENT,
                 0,
                 null,
-                        [
-                            'coupon_code'  => $code,
-                            'event_message' => sprintf(
-                                /* translators: %s: coupon code */
-                                __( 'Clicked popup – coupon %s applied', 'yayboost' ),
-                                $code
-                            ),
-                        ]
+                [
+                    'coupon_code'   => $code,
+                    'event_message' => sprintf(
+                        /* translators: %s: coupon code */
+                        __( 'Clicked popup – coupon %s applied', 'yayboost-sales-booster-for-woocommerce' ),
+                        $code
+                    ),
+                ]
             );
         }
 

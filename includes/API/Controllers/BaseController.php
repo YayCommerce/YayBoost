@@ -71,7 +71,7 @@ abstract class BaseController {
         if ( ! current_user_can( 'manage_woocommerce' )) {
             return new WP_Error(
                 'rest_forbidden',
-                __( 'You do not have permission to access this resource.', 'yayboost' ),
+                __( 'You do not have permission to access this resource.', 'yayboost-sales-booster-for-woocommerce' ),
                 [ 'status' => 403 ]
             );
         }

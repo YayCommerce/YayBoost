@@ -97,7 +97,7 @@ export default function Edit({ attributes }) {
   return (
     <>
       <InspectorControls>
-        <PanelBody title={__("Settings", "yayboost")}>
+        <PanelBody title={__("Settings", "yayboost-sales-booster-for-woocommerce")}>
           <Button
             variant="secondary"
             onClick={() => {
@@ -105,7 +105,7 @@ export default function Edit({ attributes }) {
                 "/wp-admin/admin.php?page=yayboost#/features/live_visitor_count";
             }}
           >
-            {__("Go to settings page", "yayboost")}
+            {__("Go to settings page", "yayboost-sales-booster-for-woocommerce")}
           </Button>
         </PanelBody>
       </InspectorControls>
@@ -114,14 +114,14 @@ export default function Edit({ attributes }) {
           <Notice status="warning" isDismissible={false}>
             {__(
               "This block only works on single product pages. Please use it only in product page templates.",
-              "yayboost"
+              "yayboost-sales-booster-for-woocommerce"
             )}
           </Notice>
         )}
         {isProductPage && (
           <div
             dangerouslySetInnerHTML={{
-              __html: previewContent || __("Preview not available", "yayboost"),
+              __html: previewContent || __("Preview not available", "yayboost-sales-booster-for-woocommerce"),
             }}
           />
         )}

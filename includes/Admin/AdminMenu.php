@@ -25,8 +25,8 @@ class AdminMenu {
     }
 
     public function admin_body_class( $classes ) {
-        if ( strpos( $classes, 'yayboost-ui' ) === false ) {
-            $classes .= ' yayboost-ui';
+        if ( strpos( $classes, 'yay-ui' ) === false ) {
+            $classes .= ' yay-ui';
         }
         return $classes;
     }
@@ -34,8 +34,8 @@ class AdminMenu {
     public function add_menu_page() {
         $menu_args = [
             'parent_slug' => 'yaycommerce',
-            'page_title'  => __( 'YayBoost Settings', 'yayboost' ),
-            'menu_title'  => __( 'YayBoost', 'yayboost' ),
+            'page_title'  => __( 'YayBoost Settings', 'yayboost-sales-booster-for-woocommerce' ),
+            'menu_title'  => __( 'YayBoost', 'yayboost-sales-booster-for-woocommerce' ),
             'capability'  => 'manage_woocommerce',
             'menu_slug'   => 'yayboost',
             'function'    => [ $this, 'render_page' ],
@@ -77,12 +77,6 @@ class AdminMenu {
 
     public function render_page() {
         ?>
-            <style>
-                #wpcontent .notice,
-                .error, .updated {
-                    display: none;
-                }
-            </style>
             <div id="yayboost"></div>
         <?php
     }

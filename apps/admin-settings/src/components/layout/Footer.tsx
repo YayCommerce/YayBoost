@@ -56,7 +56,7 @@ export function Footer() {
 
   const handleReviewClick = async () => {
     window.open(
-      'https://wordpress.org/support/plugin/yayboost/reviews/#new-post',
+      'https://wordpress.org/support/plugin/yayboost-sales-booster-for-woocommerce/reviews/#new-post',
       '_blank',
     );
     setHasReviewed(true);

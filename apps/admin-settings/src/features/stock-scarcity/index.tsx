@@ -78,9 +78,9 @@ const GeneralSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   return (
     <>
       <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('General', 'yayboost')}</h3>
+        <h3 className="text-sm font-medium">{__('General', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <p className="text-muted-foreground text-xs">
-          {__('Configure general settings for stock scarcity', 'yayboost')}
+          {__('Configure general settings for stock scarcity', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
       <FormField
@@ -114,9 +114,9 @@ const DisplaySection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
   return (
     <>
       <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('Display', 'yayboost')}</h3>
+        <h3 className="text-sm font-medium">{__('Display', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <p className="text-muted-foreground text-xs">
-          {__('Configure display settings for stock scarcity', 'yayboost')}
+          {__('Configure display settings for stock scarcity', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
       <div className="flex flex-col gap-2">
@@ -165,9 +165,9 @@ const AlertTextSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) =
   return (
     <>
       <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('Alert Text', 'yayboost')}</h3>
+        <h3 className="text-sm font-medium">{__('Alert Text', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <p className="text-muted-foreground text-xs">
-          {__('Configure alert text for stock scarcity', 'yayboost')}
+          {__('Configure alert text for stock scarcity', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
       <FormField
@@ -239,9 +239,9 @@ const ProgressBarSection = ({ form }: { form: UseFormReturn<SettingsFormData> })
   return (
     <>
       <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('Progress Bar', 'yayboost')}</h3>
+        <h3 className="text-sm font-medium">{__('Progress Bar', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <p className="text-muted-foreground text-xs">
-          {__('Configure progress bar settings for stock scarcity', 'yayboost')}
+          {__('Configure progress bar settings for stock scarcity', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
       <FormField
@@ -335,9 +335,9 @@ const DisplayLocationSection = ({ form }: { form: UseFormReturn<SettingsFormData
   return (
     <>
       <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('Display Location', 'yayboost')}</h3>
+        <h3 className="text-sm font-medium">{__('Display Location', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <p className="text-muted-foreground text-xs">
-          {__('Configure display location for stock scarcity', 'yayboost')}
+          {__('Configure display location for stock scarcity', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
       <FormField
@@ -430,9 +430,9 @@ const ProductTargetingSection = ({ form }: { form: UseFormReturn<SettingsFormDat
   return (
     <>
       <div className="space-y-1">
-        <h3 className="text-sm font-medium">{__('Product Targeting', 'yayboost')}</h3>
+        <h3 className="text-sm font-medium">{__('Product Targeting', 'yayboost-sales-booster-for-woocommerce')}</h3>
         <p className="text-muted-foreground text-xs">
-          {__('Configure product targeting for stock scarcity', 'yayboost')}
+          {__('Configure product targeting for stock scarcity', 'yayboost-sales-booster-for-woocommerce')}
         </p>
       </div>
       <FormField
@@ -573,10 +573,10 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
         <CardHeader>
           <div className="flex items-center gap-2">
             <Eye className="h-5 w-5" />
-            <CardTitle>{__('Live Preview', 'yayboost')}</CardTitle>
+            <CardTitle>{__('Live Preview', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
           </div>
           <CardDescription>
-            {__('See how the section will look on your store', 'yayboost')}
+            {__('See how the section will look on your store', 'yayboost-sales-booster-for-woocommerce')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -618,7 +618,7 @@ const PreviewSection = ({ form }: { form: UseFormReturn<SettingsFormData> }) => 
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          {__('Gutenberg block "Stock Scarcity" is not supported in this version.', 'yayboost')}
+          {__('Gutenberg block "Stock Scarcity" is not supported in this version.', 'yayboost-sales-booster-for-woocommerce')}
         </AlertDescription>
       </Alert>
     </div>

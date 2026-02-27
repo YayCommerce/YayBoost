@@ -284,7 +284,7 @@ class ExitIntentPopupFeature extends AbstractFeature {
         <div id="yayboost-exit-intent-popup" class="yayboost-exit-intent-popup" style="display: none;" data-has-items="<?php echo $has_items ? '1' : '0'; ?>">
             <div class="yayboost-exit-intent-popup__overlay"></div>
             <div class="yayboost-exit-intent-popup__content">
-                <button class="yayboost-exit-intent-popup__close" aria-label="<?php esc_attr_e( 'Close', 'yayboost' ); ?>">&times;</button>
+                <button class="yayboost-exit-intent-popup__close" aria-label="<?php esc_attr_e( 'Close', 'yayboost-sales-booster-for-woocommerce' ); ?>">&times;</button>
                 <h2 class="yayboost-exit-intent-popup__headline"><?php echo esc_html( $content['headline'] ?? '' ); ?></h2>
                 <p class="yayboost-exit-intent-popup__message"><?php echo esc_html( $content['message'] ?? '' ); ?></p>
                 <button class="yayboost-exit-intent-popup__button"><?php echo wp_kses_post( $button_text ); ?></button>
@@ -381,9 +381,9 @@ class ExitIntentPopupFeature extends AbstractFeature {
                     'expires' => 1,
                 ],
                 'content'  => [
-                    'headline'    => __( 'You\'re leaving?', 'yayboost' ),
-                    'message'     => __( 'But we have a discount coupon waiting for you', 'yayboost' ),
-                    'button_text' => __( 'Get {amount} discount', 'yayboost' ),
+                    'headline'    => __( 'You\'re leaving?', 'yayboost-sales-booster-for-woocommerce' ),
+                    'message'     => __( 'But we have a discount coupon waiting for you', 'yayboost-sales-booster-for-woocommerce' ),
+                    'button_text' => __( 'Get {amount} discount', 'yayboost-sales-booster-for-woocommerce' ),
                 ],
                 'behavior' => 'checkout_page',
                 'tracking' => [
@@ -460,8 +460,8 @@ class ExitIntentPopupFeature extends AbstractFeature {
                 $order->update_meta_data( self::ORDER_COUPON_APPLIED_TRACKED_META_KEY, time() );
                 $order->save();
                 break;
-            }
-        }
+            }//end if
+        }//end foreach
     }
 
     /**
@@ -541,12 +541,12 @@ class ExitIntentPopupFeature extends AbstractFeature {
                     // Mark as tracked
                     $order->update_meta_data( self::ORDER_PURCHASE_TRACKED_META_KEY, time() );
                     $order->save();
-                }
+                }//end if
 
                 $this->tracker->mark_converted( $order_id );
                 break;
-            }
-        }
+            }//end if
+        }//end foreach
     }
 
     /**

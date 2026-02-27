@@ -10,6 +10,7 @@ namespace YayBoost\API\Controllers;
 use WP_REST_Request;
 use WP_REST_Server;
 use YayBoost\Repository\EntityRepository;
+use YayBoost\Utils\Price;
 
 /**
  * Handles entity CRUD API endpoints for features
@@ -115,12 +116,66 @@ class EntityController extends BaseController {
         $entities = $repository->get_all( $args );
         $total    = $repository->count( $args['status'] );
 
+        if ( in_array( $entity_type, [ 'bump', 'purchase' ], true ) ) {
+            $entities = $this->enrich_entities( $entities );
+        }
+
         return $this->success(
             [
                 'items' => $entities,
                 'total' => $total,
             ]
         );
+    }
+
+    /**
+     * Enrich entities with product_name and price_display for list display.
+     *
+     * @param array $entities List of entities (each with id, name, settings, status, etc.)
+     * @return array
+     */
+    protected function enrich_entities( array $entities ): array {
+        foreach ( $entities as &$entity ) {
+            $settings   = isset( $entity['settings'] ) && is_array( $entity['settings'] ) ? $entity['settings'] : [];
+            $product_id = isset( $settings['product_id'] ) ? $settings['product_id'] : null;
+
+            $product_name  = null;
+            $regular_price = null;
+
+            if ( $product_id && function_exists( 'wc_get_product' ) ) {
+                $product = wc_get_product( $product_id );
+                if ( $product && is_a( $product, 'WC_Product' ) ) {
+                    $product_name  = $product->get_name();
+                    $regular_price = (float) $product->get_regular_price();
+                    if ( $regular_price === 0.0 && $product->get_regular_price() === '' ) {
+                        $regular_price = (float) $product->get_price();
+                    }
+                }
+            }
+
+            if ( $regular_price === null && isset( $settings['regular_price'] ) ) {
+                $regular_price = (float) $settings['regular_price'];
+            }
+            if ( $regular_price === null ) {
+                $regular_price = 0.0;
+            }
+
+            $settings['product_name'] = $product_name;
+
+            $pricing_type  = $settings['pricing_type'] ?? $settings['discount_type'] ?? 'percent';
+            $pricing_value = isset( $settings['pricing_value'] ) ? (float) $settings['pricing_value'] : (isset( $settings['discount_value'] ) ? (float) $settings['discount_value'] : 0);
+            $entity_price  = Price::get_discounted_price( $regular_price, $pricing_type, $pricing_value );
+
+            // Decode HTML entities (e.g. &#8363; for ₫) so frontend displays the symbol, not literal entity
+            $currency                  = function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : '$';
+            $currency                  = html_entity_decode( $currency, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+            $settings['price_display'] = $currency . number_format( (float) $entity_price, 2 );
+            $settings['price']         = $entity_price;
+
+            $entity['settings'] = $settings;
+        }//end foreach
+
+        return $entities;
     }
 
     /**
@@ -138,7 +193,7 @@ class EntityController extends BaseController {
         $entity     = $repository->find( $id );
 
         if ( ! $entity) {
-            return $this->error( __( 'Entity not found.', 'yayboost' ), 404 );
+            return $this->error( __( 'Entity not found.', 'yayboost-sales-booster-for-woocommerce' ), 404 );
         }
 
         return $this->success( $entity );
@@ -165,7 +220,7 @@ class EntityController extends BaseController {
         $id         = $repository->create( $data );
 
         if ( ! $id) {
-            return $this->error( __( 'Failed to create entity.', 'yayboost' ), 500 );
+            return $this->error( __( 'Failed to create entity.', 'yayboost-sales-booster-for-woocommerce' ), 500 );
         }
 
         $entity = $repository->find( $id );
@@ -173,7 +228,7 @@ class EntityController extends BaseController {
         return $this->success(
             [
                 'entity'  => $entity,
-                'message' => __( 'Entity created successfully.', 'yayboost' ),
+                'message' => __( 'Entity created successfully.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }
@@ -192,7 +247,7 @@ class EntityController extends BaseController {
         $repository = $this->get_repository( $feature_id, $entity_type );
 
         if ( ! $repository->find( $id )) {
-            return $this->error( __( 'Entity not found.', 'yayboost' ), 404 );
+            return $this->error( __( 'Entity not found.', 'yayboost-sales-booster-for-woocommerce' ), 404 );
         }
 
         $data = [];
@@ -216,7 +271,7 @@ class EntityController extends BaseController {
         $result = $repository->update( $id, $data );
 
         if ( ! $result) {
-            return $this->error( __( 'Failed to update entity.', 'yayboost' ), 500 );
+            return $this->error( __( 'Failed to update entity.', 'yayboost-sales-booster-for-woocommerce' ), 500 );
         }
 
         $entity = $repository->find( $id );
@@ -224,7 +279,7 @@ class EntityController extends BaseController {
         return $this->success(
             [
                 'entity'  => $entity,
-                'message' => __( 'Entity updated successfully.', 'yayboost' ),
+                'message' => __( 'Entity updated successfully.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }
@@ -243,18 +298,18 @@ class EntityController extends BaseController {
         $repository = $this->get_repository( $feature_id, $entity_type );
 
         if ( ! $repository->find( $id )) {
-            return $this->error( __( 'Entity not found.', 'yayboost' ), 404 );
+            return $this->error( __( 'Entity not found.', 'yayboost-sales-booster-for-woocommerce' ), 404 );
         }
 
         $result = $repository->delete( $id );
 
         if ( ! $result) {
-            return $this->error( __( 'Failed to delete entity.', 'yayboost' ), 500 );
+            return $this->error( __( 'Failed to delete entity.', 'yayboost-sales-booster-for-woocommerce' ), 500 );
         }
 
         return $this->success(
             [
-                'message' => __( 'Entity deleted successfully.', 'yayboost' ),
+                'message' => __( 'Entity deleted successfully.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }
@@ -272,7 +327,7 @@ class EntityController extends BaseController {
         $ids         = $request->get_param( 'ids' ) ?: [];
 
         if (empty( $ids ) || ! is_array( $ids )) {
-            return $this->error( __( 'No entities selected.', 'yayboost' ), 400 );
+            return $this->error( __( 'No entities selected.', 'yayboost-sales-booster-for-woocommerce' ), 400 );
         }
 
         $repository = $this->get_repository( $feature_id, $entity_type );
@@ -292,7 +347,7 @@ class EntityController extends BaseController {
                 break;
 
             default:
-                return $this->error( __( 'Invalid action.', 'yayboost' ), 400 );
+                return $this->error( __( 'Invalid action.', 'yayboost-sales-booster-for-woocommerce' ), 400 );
         }
 
         return $this->success(
@@ -300,7 +355,7 @@ class EntityController extends BaseController {
                 'count'   => $count,
                 'message' => sprintf(
                     /* translators: %d: number of entities */
-                    __( '%d entities updated.', 'yayboost' ),
+                    __( '%d entities updated.', 'yayboost-sales-booster-for-woocommerce' ),
                     $count
                 ),
             ]
@@ -319,7 +374,7 @@ class EntityController extends BaseController {
         $order       = $request->get_param( 'order' ) ?: [];
 
         if (empty( $order ) || ! is_array( $order )) {
-            return $this->error( __( 'Invalid order data.', 'yayboost' ), 400 );
+            return $this->error( __( 'Invalid order data.', 'yayboost-sales-booster-for-woocommerce' ), 400 );
         }
 
         $repository = $this->get_repository( $feature_id, $entity_type );
@@ -327,7 +382,7 @@ class EntityController extends BaseController {
 
         return $this->success(
             [
-                'message' => __( 'Order updated successfully.', 'yayboost' ),
+                'message' => __( 'Order updated successfully.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }

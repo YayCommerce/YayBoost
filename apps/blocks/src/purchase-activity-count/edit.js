@@ -45,7 +45,7 @@ export default function Edit({ attributes, context }) {
   return (
     <>
       <InspectorControls>
-        <PanelBody title={__("Settings", "yayboost")}>
+        <PanelBody title={__("Settings", "yayboost-sales-booster-for-woocommerce")}>
           <Button
             variant="secondary"
             onClick={() => {
@@ -53,14 +53,14 @@ export default function Edit({ attributes, context }) {
                 "/wp-admin/admin.php?page=yayboost#/features/purchase_activity_count";
             }}
           >
-            {__("Go to settings page", "yayboost")}
+            {__("Go to settings page", "yayboost-sales-booster-for-woocommerce")}
           </Button>
         </PanelBody>
       </InspectorControls>
       <div {...blockProps}>
         <div
           dangerouslySetInnerHTML={{
-            __html: previewContent || __("Preview not available", "yayboost"),
+            __html: previewContent || __("Preview not available", "yayboost-sales-booster-for-woocommerce"),
           }}
         />
       </div>

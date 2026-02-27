@@ -24,16 +24,16 @@ function DefaultFeatureContent({ featureId }: { featureId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{__('Feature Settings', 'yayboost')}</CardTitle>
+        <CardTitle>{__('Feature Settings', 'yayboost-sales-booster-for-woocommerce')}</CardTitle>
         <CardDescription>
-          {__('Configure this feature&apos;s behavior', 'yayboost')}
+          {__('Configure this feature&apos;s behavior', 'yayboost-sales-booster-for-woocommerce')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground text-sm">
           {__(
             'This feature doesn&apos;t have a custom settings page yet. Use the toggle in the header toenable or disable it.',
-            'yayboost',
+            'yayboost-sales-booster-for-woocommerce',
           )}
         </p>
       </CardContent>
@@ -47,7 +47,7 @@ export default function FeaturePage() {
   if (!featureId) {
     return (
       <div className="py-12 text-center">
-        <p className="text-muted-foreground">{__('Feature not specified', 'yayboost')}</p>
+        <p className="text-muted-foreground">{__('Feature not specified', 'yayboost-sales-booster-for-woocommerce')}</p>
       </div>
     );
   }

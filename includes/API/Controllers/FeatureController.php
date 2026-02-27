@@ -97,7 +97,7 @@ class FeatureController extends BaseController {
         $feature = $registry->get( $id );
 
         if ( ! $feature) {
-            return $this->error( __( 'Feature not found.', 'yayboost' ), 404 );
+            return $this->error( __( 'Feature not found.', 'yayboost-sales-booster-for-woocommerce' ), 404 );
         }
 
         return $this->success( $feature->to_array() );
@@ -117,7 +117,7 @@ class FeatureController extends BaseController {
         $feature  = $registry->get( $id );
 
         if ( ! $feature) {
-            return $this->error( __( 'Feature not found.', 'yayboost' ), 404 );
+            return $this->error( __( 'Feature not found.', 'yayboost-sales-booster-for-woocommerce' ), 404 );
         }
 
         if ($enabled !== null) {
@@ -131,7 +131,7 @@ class FeatureController extends BaseController {
         return $this->success(
             [
                 'feature' => $feature->to_array(),
-                'message' => __( 'Feature updated successfully.', 'yayboost' ),
+                'message' => __( 'Feature updated successfully.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }
@@ -150,7 +150,7 @@ class FeatureController extends BaseController {
         $feature  = $registry->get( $id );
 
         if ( ! $feature) {
-            return $this->error( __( 'Feature not found.', 'yayboost' ), 404 );
+            return $this->error( __( 'Feature not found.', 'yayboost-sales-booster-for-woocommerce' ), 404 );
         }
 
         $feature->update_settings( $settings );
@@ -158,7 +158,7 @@ class FeatureController extends BaseController {
         return $this->success(
             [
                 'feature' => $feature->to_array(),
-                'message' => __( 'Settings updated successfully.', 'yayboost' ),
+                'message' => __( 'Settings updated successfully.', 'yayboost-sales-booster-for-woocommerce' ),
             ]
         );
     }

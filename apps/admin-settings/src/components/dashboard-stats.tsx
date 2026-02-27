@@ -32,19 +32,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 const PERIOD_OPTIONS = [
-  { value: '7d', label: __('Last 7 days', 'yayboost') },
-  { value: '30d', label: __('Last 30 days', 'yayboost') },
-  { value: '90d', label: __('Last 90 days', 'yayboost') },
+  { value: '7d', label: __('Last 7 days', 'yayboost-sales-booster-for-woocommerce') },
+  { value: '30d', label: __('Last 30 days', 'yayboost-sales-booster-for-woocommerce') },
+  { value: '90d', label: __('Last 90 days', 'yayboost-sales-booster-for-woocommerce') },
 ];
 
 // Feature name mapping
 const FEATURE_NAMES: Record<string, string> = {
-  fbt: __('Frequently Bought Together', 'yayboost'),
-  free_shipping_bar: __('Free Shipping Bar', 'yayboost'),
-  stock_scarcity: __('Stock Scarcity', 'yayboost'),
-  next_order_coupon: __('Next Order Coupon', 'yayboost'),
-  smart_recommendations: __('Smart Recommendations', 'yayboost'),
-  order_bump: __('Order Bump', 'yayboost'),
+  fbt: __('Frequently Bought Together', 'yayboost-sales-booster-for-woocommerce'),
+  free_shipping_bar: __('Free Shipping Bar', 'yayboost-sales-booster-for-woocommerce'),
+  stock_scarcity: __('Stock Scarcity', 'yayboost-sales-booster-for-woocommerce'),
+  next_order_coupon: __('Next Order Coupon', 'yayboost-sales-booster-for-woocommerce'),
+  smart_recommendations: __('Smart Recommendations', 'yayboost-sales-booster-for-woocommerce'),
+  order_bump: __('Order Bump', 'yayboost-sales-booster-for-woocommerce'),
 };
 
 // Stat card configuration
@@ -150,10 +150,10 @@ function EmptyState() {
         </div>
       </div>
       <p className="text-base font-medium text-foreground">
-        {__('No analytics data yet', 'yayboost')}
+        {__('No analytics data yet', 'yayboost-sales-booster-for-woocommerce')}
       </p>
       <p className="mt-1 max-w-[280px] text-sm leading-relaxed text-muted-foreground">
-        {__('Enable features and wait for customer interactions to see stats here.', 'yayboost')}
+        {__('Enable features and wait for customer interactions to see stats here.', 'yayboost-sales-booster-for-woocommerce')}
       </p>
     </div>
   );
@@ -203,10 +203,10 @@ export function DashboardStats() {
           </div>
           <div>
             <h2 className="text-lg font-semibold tracking-tight">
-              {__('Analytics Overview', 'yayboost')}
+              {__('Analytics Overview', 'yayboost-sales-booster-for-woocommerce')}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {__('Track your boost features performance', 'yayboost')}
+              {__('Track your boost features performance', 'yayboost-sales-booster-for-woocommerce')}
             </p>
           </div>
         </div>
@@ -228,7 +228,7 @@ export function DashboardStats() {
       {error ? (
         <div className="rounded-xl border bg-card p-6 text-center shadow-sm">
           <p className="text-muted-foreground">
-            {__('Failed to load analytics data', 'yayboost')}
+            {__('Failed to load analytics data', 'yayboost-sales-booster-for-woocommerce')}
           </p>
         </div>
       ) : isLoading ? (
@@ -247,28 +247,28 @@ export function DashboardStats() {
           {/* Overview Stats */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              title={__('Total Revenue', 'yayboost')}
+              title={__('Total Revenue', 'yayboost-sales-booster-for-woocommerce')}
               value={formatCurrency(data.totals.revenue)}
               config={STAT_CONFIG.revenue}
-              description={__('From all boost features', 'yayboost')}
+              description={__('From all boost features', 'yayboost-sales-booster-for-woocommerce')}
             />
             <StatCard
-              title={__('Impressions', 'yayboost')}
+              title={__('Impressions', 'yayboost-sales-booster-for-woocommerce')}
               value={formatNumber(data.totals.impressions)}
               config={STAT_CONFIG.impressions}
-              description={__('Feature views', 'yayboost')}
+              description={__('Feature views', 'yayboost-sales-booster-for-woocommerce')}
             />
             <StatCard
-              title={__('Add to Carts', 'yayboost')}
+              title={__('Add to Carts', 'yayboost-sales-booster-for-woocommerce')}
               value={formatNumber(data.totals.add_to_carts)}
               config={STAT_CONFIG.carts}
-              description={__('Products added via features', 'yayboost')}
+              description={__('Products added via features', 'yayboost-sales-booster-for-woocommerce')}
             />
             <StatCard
-              title={__('Conversion Rate', 'yayboost')}
+              title={__('Conversion Rate', 'yayboost-sales-booster-for-woocommerce')}
               value={`${data.conversion_rate}%`}
               config={STAT_CONFIG.conversion}
-              description={__('Impressions to purchases', 'yayboost')}
+              description={__('Impressions to purchases', 'yayboost-sales-booster-for-woocommerce')}
             />
           </div>
 
@@ -283,15 +283,15 @@ export function DashboardStats() {
                   </div>
                   <div>
                     <h3 className="text-sm font-semibold">
-                      {__('Feature Performance', 'yayboost')}
+                      {__('Feature Performance', 'yayboost-sales-booster-for-woocommerce')}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      {__('Breakdown by individual features', 'yayboost')}
+                      {__('Breakdown by individual features', 'yayboost-sales-booster-for-woocommerce')}
                     </p>
                   </div>
                 </div>
                 <span className="flex h-6 items-center rounded-full bg-muted px-2.5 text-xs font-medium text-muted-foreground">
-                  {activeFeatures.length} {__('active', 'yayboost')}
+                  {activeFeatures.length} {__('active', 'yayboost-sales-booster-for-woocommerce')}
                 </span>
               </div>
 
@@ -327,7 +327,7 @@ export function DashboardStats() {
                             {stats.purchases}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {featureConversion}% {__('conv.', 'yayboost')}
+                            {featureConversion}% {__('conv.', 'yayboost-sales-booster-for-woocommerce')}
                           </span>
                         </div>
                       </div>
@@ -338,7 +338,7 @@ export function DashboardStats() {
                           {formatCurrency(stats.revenue)}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {__('revenue', 'yayboost')}
+                          {__('revenue', 'yayboost-sales-booster-for-woocommerce')}
                         </p>
                       </div>
                     </div>

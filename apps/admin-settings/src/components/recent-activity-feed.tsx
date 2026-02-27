@@ -25,25 +25,25 @@ const EVENT_CONFIG: Record<
     icon: <ShoppingBag className="h-3.5 w-3.5" />,
     color: 'text-success',
     bgColor: 'bg-success/10',
-    label: __('Purchase', 'yayboost'),
+    label: __('Purchase', 'yayboost-sales-booster-for-woocommerce'),
   },
   add_to_cart: {
     icon: <ShoppingCart className="h-3.5 w-3.5" />,
     color: 'text-primary',
     bgColor: 'bg-primary/10',
-    label: __('Add to Cart', 'yayboost'),
+    label: __('Add to Cart', 'yayboost-sales-booster-for-woocommerce'),
   },
   click: {
     icon: <BarChart3 className="h-3.5 w-3.5" />,
     color: 'text-primary',
     bgColor: 'bg-primary/10',
-    label: __('Click', 'yayboost'),
+    label: __('Click', 'yayboost-sales-booster-for-woocommerce'),
   },
   threshold_reached: {
     icon: <Truck className="h-3.5 w-3.5" />,
     color: 'text-warning-foreground',
     bgColor: 'bg-warning/20',
-    label: __('Threshold', 'yayboost'),
+    label: __('Threshold', 'yayboost-sales-booster-for-woocommerce'),
   },
 };
 
@@ -163,10 +163,10 @@ function EmptyState() {
         </div>
       </div>
       <p className="text-sm font-medium text-foreground">
-        {__('Waiting for activity...', 'yayboost')}
+        {__('Waiting for activity...', 'yayboost-sales-booster-for-woocommerce')}
       </p>
       <p className="mt-1 max-w-[200px] text-xs leading-relaxed text-muted-foreground">
-        {__('Events will appear here as customers interact with your features', 'yayboost')}
+        {__('Events will appear here as customers interact with your features', 'yayboost-sales-booster-for-woocommerce')}
       </p>
     </div>
   );
@@ -195,15 +195,15 @@ export function RecentActivityFeed() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold">{__('Recent Activity', 'yayboost')}</h3>
-            <p className="text-xs text-muted-foreground">{__('Live updates', 'yayboost')}</p>
+            <h3 className="text-sm font-semibold">{__('Recent Activity', 'yayboost-sales-booster-for-woocommerce')}</h3>
+            <p className="text-xs text-muted-foreground">{__('Live updates', 'yayboost-sales-booster-for-woocommerce')}</p>
           </div>
         </div>
 
         {/* Activity count badge */}
         {activities.length > 0 && (
           <span className="flex h-6 items-center rounded-full bg-primary/10 px-2.5 text-xs font-medium text-primary">
-            {activities.length} {__('events', 'yayboost')}
+            {activities.length} {__('events', 'yayboost-sales-booster-for-woocommerce')}
           </span>
         )}
       </div>

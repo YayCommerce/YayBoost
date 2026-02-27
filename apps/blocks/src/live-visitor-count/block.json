@@ -19,7 +19,7 @@
       "padding": true
     }
   },
-  "textdomain": "yayboost",
+  "textdomain": "yayboost-sales-booster-for-woocommerce",
   "editorScript": "file:./index.js",
   "style": "file:./style-index.css",
   "viewScriptModule": "file:./view.js",
