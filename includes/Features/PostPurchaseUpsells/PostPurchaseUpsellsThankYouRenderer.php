@@ -46,20 +46,38 @@ class PostPurchaseUpsellsThankYouRenderer {
             return;
         }
 
-        $settings = $this->feature->get_settings();
-        $display  = $settings['display'] ?? [];
-        $max      = isset( $display['max_display'] ) ? max( 1, (int) $display['max_display'] ) : 2;
+        $settings   = $this->feature->get_settings();
+        $timing     = $settings['timing'] ?? [];
+        $expires_in = isset( $timing['expires_after'] ) ? max( 0, (int) $timing['expires_after'] ) : 10;
+
+        $order_date = $order->get_date_created();
+        if ( $order_date && $expires_in > 0 ) {
+            $expires_at = $order_date->getTimestamp() + ( $expires_in * 60 );
+            if ( time() >= $expires_at ) {
+                return;
+            }
+        } else {
+            $expires_at = 0;
+        }
+
+        $display = $settings['display'] ?? [];
+        $max     = isset( $display['max_display'] ) ? max( 1, (int) $display['max_display'] ) : 2;
 
         $entities = $this->feature->get_repository()->get_active();
         if ( empty( $entities ) ) {
             return;
         }
 
-        $entities         = array_slice( $entities, 0, $max );
-        $order_product_ids = $this->get_order_product_ids( $order );
-        $offers            = [];
+        $entities            = array_slice( $entities, 0, $max );
+        $order_product_ids   = $this->get_order_product_ids( $order );
+        $used_entity_ids     = $this->get_used_offer_entity_ids( $order );
+        $offers              = [];
 
         foreach ( $entities as $entity ) {
+            if ( in_array( (int) $entity['id'], $used_entity_ids, true ) ) {
+                continue;
+            }
+
             $product_id = isset( $entity['settings']['product_id'] ) ? (int) $entity['settings']['product_id'] : 0;
             if ( ! $product_id ) {
                 continue;
@@ -77,7 +95,7 @@ class PostPurchaseUpsellsThankYouRenderer {
 
             if ( $behavior === 'hide' && $product->is_type( 'variable' ) ) {
                 $variation_ids = $product->get_children();
-                $in_order     = array_intersect( array_map( 'intval', $variation_ids ), $order_product_ids );
+                $in_order      = array_intersect( array_map( 'intval', $variation_ids ), $order_product_ids );
                 if ( ! empty( $in_order ) ) {
                     continue;
                 }
@@ -113,7 +131,7 @@ class PostPurchaseUpsellsThankYouRenderer {
             return;
         }
 
-        $this->output_html( $offers );
+        $this->output_html( $offers, $expires_at );
     }
 
     /**
@@ -208,6 +226,21 @@ class PostPurchaseUpsellsThankYouRenderer {
     }
 
     /**
+     * Get entity IDs for offers the customer already accepted ("Add to My Order") for this order.
+     * Those offers are hidden on subsequent thank you page views.
+     *
+     * @param \WC_Order $order Order. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+     * @return int[]
+     */
+    private function get_used_offer_entity_ids( $order ): array {
+        $used = $order->get_meta( '_yayboost_ppu_offer_used_entities' );
+        if ( ! is_array( $used ) ) {
+            return [];
+        }
+        return array_map( 'intval', $used );
+    }
+
+    /**
      * Get all product IDs (and variation IDs) present in the order.
      * Used to hide offers when "If product already in order: Hide this offer" is set.
      *
@@ -220,7 +253,7 @@ class PostPurchaseUpsellsThankYouRenderer {
             if ( ! $item instanceof \WC_Order_Item_Product ) {
                 continue;
             }
-            $ids[] = (int) $item->get_product_id();
+            $ids[]        = (int) $item->get_product_id();
             $variation_id = (int) $item->get_variation_id();
             if ( $variation_id > 0 ) {
                 $ids[] = $variation_id;
@@ -251,17 +284,39 @@ class PostPurchaseUpsellsThankYouRenderer {
     /**
      * Output thank you block HTML (layout matches admin preview)
      *
-     * @param array $offers Array of offer data.
+     * @param array $offers    Array of offer data.
+     * @param int   $expires_at Unix timestamp when offer expires (0 = no expiry).
      * @return void
      */
-    private function output_html( array $offers ): void {
+    private function output_html( array $offers, int $expires_at = 0 ): void {
         $settings   = $this->feature->get_settings();
+        $display    = $settings['display'] ?? [];
+        $mode       = isset( $display['mode'] ) ? (string) $display['mode'] : 'all';
+        $is_grid    = ( $mode === 'all' );
         $timing     = $settings['timing'] ?? [];
         $expires_in = isset( $timing['expires_after'] ) ? max( 1, (int) $timing['expires_after'] ) : 10;
         $show_timer = ! empty( $timing['show_countdown'] );
+
+        $offers_style = $is_grid
+            ? 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;'
+            : 'display: grid; gap: 24px;';
+        $card_style = $is_grid
+            ? 'padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;'
+            : 'width: 60%; margin: 0 auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;';
         ?>
         <div class="yayboost-post-purchase-upsells" style="margin: 24px 0; padding: 0;">
-            <div class="yayboost-ppu-offers" style="display: grid; gap: 24px;">
+            <?php if ( $is_grid ) : ?>
+            <style type="text/css">
+                .yayboost-ppu-offers.yayboost-ppu-offers--grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+                @media (max-width: 992px) {
+                    .yayboost-ppu-offers.yayboost-ppu-offers--grid { grid-template-columns: repeat(2, 1fr); }
+                }
+                @media (max-width: 576px) {
+                    .yayboost-ppu-offers.yayboost-ppu-offers--grid { grid-template-columns: 1fr; }
+                }
+            </style>
+            <?php endif; ?>
+            <div class="yayboost-ppu-offers <?php echo $is_grid ? 'yayboost-ppu-offers--grid' : ''; ?>" style="<?php echo esc_attr( $offers_style ); ?>">
                 <?php foreach ( $offers as $offer ) : ?>
                     <?php
                     $product  = $offer['product'];
@@ -272,7 +327,7 @@ class PostPurchaseUpsellsThankYouRenderer {
                         $headline = '⚡ ' . $headline;
                     }
                     ?>
-                    <div class="yayboost-ppu-offer yayboost-ppu-modal" style="width: 60%;margin: 0 auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;">
+                    <div class="yayboost-ppu-offer yayboost-ppu-modal <?php echo $is_grid ? 'yayboost-ppu-offer--grid' : ''; ?>" style="<?php echo esc_attr( $card_style ); ?>">
                         <div class="yayboost-ppu-offer-header" style="margin-bottom: 16px;text-align: center;">
                             <?php if ( $headline !== '' ) : ?>
                                 <h4 class="yayboost-ppu-offer-headline" style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1a1a1a; line-height: 1.3;">
@@ -312,7 +367,7 @@ class PostPurchaseUpsellsThankYouRenderer {
                                     </span>
                                     <?php if ( $offer['savings_text'] !== '' ) : ?>
                                         <span class="yayboost-ppu-savings" style="font-size: 14px; color: #1a1a1a;">
-                                            <?php echo esc_html( $offer['savings_text'] ); ?>
+                                            <?php echo wp_kses_post( $offer['savings_text'] ); ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -320,9 +375,9 @@ class PostPurchaseUpsellsThankYouRenderer {
                         </div>
 
                         <?php if ( $show_timer ) : ?>
-                            <p class="yayboost-ppu-timer" style="margin: 0 0 16px 0; font-size: 13px; color: #6c757d;text-align: center;" data-expires-minutes="<?php echo (int) $expires_in; ?>">
+                            <p class="yayboost-ppu-timer" style="margin: 0 0 16px 0; font-size: 13px; color: #6c757d;text-align: center;" <?php echo $expires_at > 0 ? ' data-expires-at="' . (int) $expires_at . '"' : ' data-expires-minutes="' . (int) $expires_in . '"'; ?>>
                                 <span style="display: inline-block; margin-right: 6px; vertical-align: middle;">🕐</span>
-                                <span class="yayboost-ppu-timer-text"><?php echo esc_html( __( 'This offer expires in', 'yayboost-sales-booster-for-woocommerce' ) ); ?> <span class="yayboost-ppu-countdown"><?php echo esc_html( sprintf( '%02d:%02d', $expires_in, 0 ) ); ?></span></span>
+                                <span class="yayboost-ppu-timer-text"><?php echo esc_html( __( 'This offer expires in', 'yayboost-sales-booster-for-woocommerce' ) ); ?> <span class="yayboost-ppu-countdown">--:--</span></span>
                             </p>
                         <?php endif; ?>
 
@@ -340,13 +395,18 @@ class PostPurchaseUpsellsThankYouRenderer {
             <?php if ( $show_timer && ! empty( $offers ) ) : ?>
                 <script>
                 (function(){
-                    var timers = document.querySelectorAll('.yayboost-ppu-timer[data-expires-minutes]');
+                    var timers = document.querySelectorAll('.yayboost-ppu-timer[data-expires-at], .yayboost-ppu-timer[data-expires-minutes]');
+                    function pad(n){ return n < 10 ? '0' + n : n; }
                     timers.forEach(function(el){
-                        var min = parseInt(el.getAttribute('data-expires-minutes'), 10) || 10;
-                        var end = Date.now() + min * 60 * 1000;
-                        function pad(n){ return n < 10 ? '0' + n : n; }
+                        var endMs;
+                        if (el.hasAttribute('data-expires-at')) {
+                            endMs = parseInt(el.getAttribute('data-expires-at'), 10) * 1000;
+                        } else {
+                            var min = parseInt(el.getAttribute('data-expires-minutes'), 10) || 10;
+                            endMs = Date.now() + min * 60 * 1000;
+                        }
                         function tick(){
-                            var left = Math.max(0, end - Date.now());
+                            var left = Math.max(0, endMs - Date.now());
                             if (left <= 0) {
                                 var txt = el.querySelector('.yayboost-ppu-timer-text');
                                 if (txt) txt.textContent = '<?php echo esc_js( __( 'Offer expired', 'yayboost-sales-booster-for-woocommerce' ) ); ?>';

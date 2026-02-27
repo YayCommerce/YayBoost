@@ -169,6 +169,14 @@ class PostPurchaseUpsellsFeature extends AbstractFeature {
 
         WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, [], $cart_item_data );
 
+        $used = $order->get_meta( '_yayboost_ppu_offer_used_entities' );
+        if ( ! is_array( $used ) ) {
+            $used = [];
+        }
+        $used[] = $entity_id;
+        $order->update_meta_data( '_yayboost_ppu_offer_used_entities', array_values( array_unique( array_map( 'intval', $used ) ) ) );
+        $order->save();
+
         wp_safe_redirect( wc_get_cart_url() );
         exit;
     }
