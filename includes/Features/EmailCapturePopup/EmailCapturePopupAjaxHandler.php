@@ -76,7 +76,7 @@ class EmailCapturePopupAjaxHandler {
         $send_after   = (int) ( $email_trigger['send_after_days'] ?? 1 );
         $send_after   = max( 1, min( 30, $send_after ) );
 
-        $captured_at  = current_time( 'mysql' );
+        $captured_at  = current_time( 'mysql', true );
         $scheduled_at = gmdate( 'Y-m-d H:i:s', strtotime( "+{$send_after} days", strtotime( $captured_at ) ) );
         $session_id   = ( function_exists( 'WC' ) && WC()->session ) ? WC()->session->get_customer_id() : null;
 
