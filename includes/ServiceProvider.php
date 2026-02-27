@@ -20,6 +20,7 @@ use YayBoost\Features\PurchaseActivityCount\PurchaseActivityCountFeature;
 use YayBoost\Features\ExitIntentPopup\ExitIntentPopupFeature;
 use YayBoost\Features\RecentPurchaseNotification\RecentPurchaseNotificationFeature;
 use YayBoost\Features\EmailCapturePopup\EmailCapturePopupFeature;
+use YayBoost\Features\DealsFeed\DealsFeedFeature;
 use YayBoost\Utils\FeatureRegistry;
 
 /**
@@ -171,6 +172,15 @@ class ServiceProvider implements ServiceProviderInterface {
             }
         );
         $this->features[] = 'feature.email_capture_popup';
+
+        // Register Deals Feed Feature
+        $container->register(
+            'feature.deals_feed',
+            function ( $c ) {
+                return new DealsFeedFeature( $c );
+            }
+        );
+        $this->features[] = 'feature.deals_feed';
 
         // Register feature registry
         $container->register(

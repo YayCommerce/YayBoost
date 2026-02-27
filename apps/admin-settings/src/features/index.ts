@@ -51,6 +51,9 @@ export const featureComponents: Record<
   recent_purchase_notification: lazy(() => import('./recent-purchase-notification')),
   // Email Capture Popup
   email_capture_popup: lazy(() => import('./email-capture-popup')),
+
+  // Deals Feed
+  deals_feed: lazy(() => import('./deals-feed')),
 };
 
 /**

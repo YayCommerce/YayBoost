@@ -23,6 +23,7 @@ import {
   Record,
   Scroll,
   ShoppingCart,
+  Tag,
   Truck,
   Users,
 } from '@phosphor-icons/react';
@@ -42,6 +43,7 @@ export const iconMap: Record<string, Icon> = {
   chat: Chat,
   record: Record,
   scroll: Scroll,
+  tag: Tag,
 
   // Category icons
   'credit-card': CreditCard,
