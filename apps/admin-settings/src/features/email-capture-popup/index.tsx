@@ -7,21 +7,31 @@
 
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { __ } from '@wordpress/i18n';
-import { Eye, Send } from 'lucide-react';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { __, sprintf } from '@wordpress/i18n';
+import { Eye, Loader2, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { emailCaptureApi } from '@/lib/api';
 import { useFeature, useUpdateFeatureSettings } from '@/hooks/use-features';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { InputNumber } from '@/components/ui/input-number';
 import { Label } from '@/components/ui/label';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import FeatureLayoutHeader from '@/components/feature-layout-header';
@@ -47,18 +57,42 @@ const settingsSchema = z.object({
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
 
-// Mock email options for UI (replace with API data later)
-const mockEmailOptions = [
-  { label: 'user1@example.com', value: 'user1@example.com' },
-  { label: 'user2@example.com', value: 'user2@example.com' },
-  { label: 'user3@example.com', value: 'user3@example.com' },
-];
+const statusLabels: Record<string, string> = {
+  pending: __('Pending', 'yayboost'),
+  sent: __('Sent', 'yayboost'),
+  skipped: __('Skipped', 'yayboost'),
+  account_created: __('Account created', 'yayboost'),
+  failed: __('Failed', 'yayboost'),
+};
 
 export default function EmailCapturePopupFeature({ featureId }: FeatureComponentProps) {
   const { data: feature, isLoading, isFetching } = useFeature(featureId);
   const updateSettings = useUpdateFeatureSettings();
-  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<string>('settings');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const queryClient = useQueryClient();
+  const {
+    data: emailListData,
+    isLoading: listLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['email-capture-list', activeTab],
+    queryFn: ({ pageParam }) => emailCaptureApi.getList({ page: pageParam, per_page: 50 }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
+    enabled: activeTab === 'email-list',
+  });
+
+  const sendBatchMutation = useMutation({
+    mutationFn: (ids: number[]) => emailCaptureApi.sendFollowupBatch(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['email-capture-list', activeTab] });
+    },
+  });
 
   const form = useForm<SettingsFormData>({
     resolver: zodResolver(settingsSchema),
@@ -80,10 +114,30 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
     );
   };
 
-  const handleSendMail = () => {
-    // TODO: Connect to API for manual send
-    console.log('Send mail to:', selectedEmails);
+  const handleSendMail = async () => {
+    const ids = selectedIds.map(Number);
+    try {
+      const { scheduled } = await sendBatchMutation.mutateAsync(ids);
+      setSelectedIds([]);
+      toast.success(
+        scheduled === 1
+          ? __('1 email scheduled for delivery.', 'yayboost')
+          : sprintf(
+              /* translators: %d: number of emails */
+              __('%d emails scheduled for delivery.', 'yayboost'),
+              scheduled,
+            ),
+      );
+    } catch {
+      toast.error(__('Failed to schedule emails.', 'yayboost'));
+    }
   };
+
+  const allItems = emailListData?.pages?.flatMap((page) => page.items) ?? [];
+  const emailOptions = allItems.map((row) => ({
+    label: `${row.email} (${statusLabels[row.status] ?? row.status})`,
+    value: String(row.id),
+  }));
 
   if (isLoading || isFetching) {
     return (
@@ -202,7 +256,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                       <FormItem>
                         <Label>{__('Send email after (days)', 'yayboost')}</Label>
                         <FormControl>
-                          <div className='w-24'>
+                          <div className="w-24">
                             <InputNumber
                               id="email_trigger-send_after_days"
                               placeholder="1"
@@ -212,7 +266,9 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                             />
                           </div>
                         </FormControl>
-                        <FormDescription>{__("Number of days to wait after submission before sending the email")}</FormDescription>
+                        <FormDescription>
+                          {__('Number of days to wait after submission before sending the email')}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -284,18 +340,34 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label>{__('Select emails to send', 'yayboost')}</Label>
-                    <MultiSelect
-                      options={mockEmailOptions}
-                      value={selectedEmails}
-                      onChange={setSelectedEmails}
-                      placeholder={__('Select emails...', 'yayboost')}
-                      showSearch
-                      emptyText={__('No captured emails yet', 'yayboost')}
-                    />
+                    {listLoading ? (
+                      <Skeleton className="h-24 w-full" />
+                    ) : (
+                      <MultiSelect
+                        options={emailOptions}
+                        value={selectedIds}
+                        onChange={setSelectedIds}
+                        placeholder={__('Select emails...', 'yayboost')}
+                        showSearch
+                        emptyText={__('No captured emails yet', 'yayboost')}
+                        hasMore={hasNextPage ?? false}
+                        onLoadMore={() => fetchNextPage()}
+                        isLoading={isFetchingNextPage}
+                      />
+                    )}
                   </div>
-                  <Button onClick={handleSendMail} disabled={selectedEmails.length === 0}>
-                    <Send className="h-4 w-4" />
-                    {__('Send mail', 'yayboost')}
+                  <Button
+                    onClick={() => handleSendMail()}
+                    disabled={selectedIds.length === 0 || sendBatchMutation.isPending}
+                  >
+                    {sendBatchMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    {sendBatchMutation.isPending
+                      ? __('Sending...', 'yayboost')
+                      : __('Send mail', 'yayboost')}
                   </Button>
                 </CardContent>
               </Card>
@@ -304,9 +376,7 @@ export default function EmailCapturePopupFeature({ featureId }: FeatureComponent
         </div>
 
         {/* Right column: Preview with Tabs */}
-        <div
-          className="sticky top-6 h-fit space-y-6 transition-opacity duration-300"
-        >
+        <div className="sticky top-6 h-fit space-y-6 transition-opacity duration-300">
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">

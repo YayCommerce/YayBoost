@@ -420,6 +420,54 @@ export interface ActivityFeedResponse {
   count: number;
 }
 
+// Email Capture types
+export interface CapturedEmail {
+  id: number;
+  email: string;
+  status: 'pending' | 'sent' | 'skipped' | 'account_created' | 'failed';
+  captured_at: string;
+  scheduled_at: string;
+  sent_at: string | null;
+  source: string;
+  session_id: string | null;
+}
+
+export interface EmailCaptureListResponse {
+  items: CapturedEmail[];
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
+// Email Capture API
+export const emailCaptureApi = {
+  /**
+   * List captured emails
+   */
+  getList: async (params?: {
+    status?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<EmailCaptureListResponse> => {
+    const { data } = await api.get<ApiResponse<EmailCaptureListResponse>>('/email-capture', {
+      params,
+    });
+    return data.data;
+  },
+
+  /**
+   * Schedule batch follow-up emails via Action Scheduler (async)
+   */
+  sendFollowupBatch: async (ids: number[]): Promise<{ scheduled: number }> => {
+    const { data } = await api.post<ApiResponse<{ scheduled: number }>>(
+      '/email-capture/send-batch',
+      { ids },
+    );
+    return data.data;
+  },
+};
+
 // Dashboard API
 export const dashboardApi = {
   /**

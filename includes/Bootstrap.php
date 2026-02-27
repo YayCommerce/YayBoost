@@ -16,6 +16,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class Bootstrap {
     /**
+     * Container instance (static for cron/async access)
+     *
+     * @var Container|null
+     */
+    protected static $container_instance = null;
+
+    /**
      * Container instance
      *
      * @var Container
@@ -108,6 +115,8 @@ class Bootstrap {
         // Register analytics cron hooks
         Analytics\AnalyticsAggregator::register();
 
+        self::$container_instance = $this->container;
+
         // Plugin loaded hook
         do_action( 'yayboost_loaded', $this->container );
 
@@ -135,6 +144,15 @@ class Bootstrap {
      */
     public function get_container() {
         return $this->container;
+    }
+
+    /**
+     * Get container instance (static, for cron/async)
+     *
+     * @return Container|null
+     */
+    public static function get_container_static(): ?Container {
+        return self::$container_instance;
     }
 
     /**
