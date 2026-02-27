@@ -119,7 +119,7 @@ const DEFAULT_FORM_VALUES: PurchaseEditorFormData = {
   show_when: 'always',
   conditions: [],
   headline: '⚡ Wait! Exclusive offer just for you',
-  description: '',
+  description: 'Complete your purchase with our best-selling product.',
   accept_button: 'Add to My Order',
   decline_button: 'No, thanks',
   behavior: 'hide',

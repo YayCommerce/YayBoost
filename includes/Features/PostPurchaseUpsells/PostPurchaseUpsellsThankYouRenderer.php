@@ -55,8 +55,9 @@ class PostPurchaseUpsellsThankYouRenderer {
             return;
         }
 
-        $entities = array_slice( $entities, 0, $max );
-        $offers   = [];
+        $entities         = array_slice( $entities, 0, $max );
+        $order_product_ids = $this->get_order_product_ids( $order );
+        $offers            = [];
 
         foreach ( $entities as $entity ) {
             $product_id = isset( $entity['settings']['product_id'] ) ? (int) $entity['settings']['product_id'] : 0;
@@ -64,9 +65,22 @@ class PostPurchaseUpsellsThankYouRenderer {
                 continue;
             }
 
+            $behavior = isset( $entity['settings']['behavior'] ) ? (string) $entity['settings']['behavior'] : 'hide';
+            if ( $behavior === 'hide' && in_array( $product_id, $order_product_ids, true ) ) {
+                continue;
+            }
+
             $product = \wc_get_product( $product_id );
             if ( ! $product || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
                 continue;
+            }
+
+            if ( $behavior === 'hide' && $product->is_type( 'variable' ) ) {
+                $variation_ids = $product->get_children();
+                $in_order     = array_intersect( array_map( 'intval', $variation_ids ), $order_product_ids );
+                if ( ! empty( $in_order ) ) {
+                    continue;
+                }
             }
 
             $regular_price = (float) $product->get_regular_price();
@@ -194,6 +208,28 @@ class PostPurchaseUpsellsThankYouRenderer {
     }
 
     /**
+     * Get all product IDs (and variation IDs) present in the order.
+     * Used to hide offers when "If product already in order: Hide this offer" is set.
+     *
+     * @param \WC_Order $order Order. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound
+     * @return int[]
+     */
+    private function get_order_product_ids( $order ): array {
+        $ids = [];
+        foreach ( $order->get_items() as $item ) {
+            if ( ! $item instanceof \WC_Order_Item_Product ) {
+                continue;
+            }
+            $ids[] = (int) $item->get_product_id();
+            $variation_id = (int) $item->get_variation_id();
+            if ( $variation_id > 0 ) {
+                $ids[] = $variation_id;
+            }
+        }
+        return array_values( array_unique( $ids ) );
+    }
+
+    /**
      * Build URL that adds this upsell to cart and redirects to cart
      *
      * @param int    $order_id  Order ID.
@@ -225,9 +261,6 @@ class PostPurchaseUpsellsThankYouRenderer {
         $show_timer = ! empty( $timing['show_countdown'] );
         ?>
         <div class="yayboost-post-purchase-upsells" style="margin: 24px 0; padding: 0;">
-            <h3 class="yayboost-ppu-title" style="margin: 0 0 20px 0; font-size: 22px; font-weight: 600; color: #1a1a1a;">
-                <?php echo esc_html( __( 'One more thing for you', 'yayboost-sales-booster-for-woocommerce' ) ); ?>
-            </h3>
             <div class="yayboost-ppu-offers" style="display: grid; gap: 24px;">
                 <?php foreach ( $offers as $offer ) : ?>
                     <?php
@@ -239,7 +272,7 @@ class PostPurchaseUpsellsThankYouRenderer {
                         $headline = '⚡ ' . $headline;
                     }
                     ?>
-                    <div class="yayboost-ppu-offer yayboost-ppu-modal" style="margin: 0 auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;">
+                    <div class="yayboost-ppu-offer yayboost-ppu-modal" style="width: 60%;margin: 0 auto; padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 1px solid #e9ecef;">
                         <div class="yayboost-ppu-offer-header" style="margin-bottom: 16px;text-align: center;">
                             <?php if ( $headline !== '' ) : ?>
                                 <h4 class="yayboost-ppu-offer-headline" style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1a1a1a; line-height: 1.3;">
@@ -287,7 +320,7 @@ class PostPurchaseUpsellsThankYouRenderer {
                         </div>
 
                         <?php if ( $show_timer ) : ?>
-                            <p class="yayboost-ppu-timer" style="margin: 0 0 16px 0; font-size: 13px; color: #6c757d;" data-expires-minutes="<?php echo (int) $expires_in; ?>">
+                            <p class="yayboost-ppu-timer" style="margin: 0 0 16px 0; font-size: 13px; color: #6c757d;text-align: center;" data-expires-minutes="<?php echo (int) $expires_in; ?>">
                                 <span style="display: inline-block; margin-right: 6px; vertical-align: middle;">🕐</span>
                                 <span class="yayboost-ppu-timer-text"><?php echo esc_html( __( 'This offer expires in', 'yayboost-sales-booster-for-woocommerce' ) ); ?> <span class="yayboost-ppu-countdown"><?php echo esc_html( sprintf( '%02d:%02d', $expires_in, 0 ) ); ?></span></span>
                             </p>
