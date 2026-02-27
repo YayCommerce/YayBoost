@@ -19,6 +19,6 @@ class PostPurchaseUpsellsRepository extends EntityRepository {
      * Constructor
      */
     public function __construct() {
-        parent::__construct( 'purchase_upsells', 'purchase' );
+        parent::__construct( 'post_purchase_upsells', 'purchase' );
     }
 }
